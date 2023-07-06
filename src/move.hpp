@@ -57,8 +57,8 @@ class MoveList: private std::array<Move, MAX_MOVE_COUNT> {
     MoveList() : idx(0) {};
     using std::array<Move, MAX_MOVE_COUNT>::operator[];
     
-    void add_move(const Move to_add) { _Elems[idx] = to_add; idx += 1; };
-    void add_moves(const MoveList& other_list) { size_t other_len = other_list.len(); memcpy(&_Elems[idx], other_list.data(), other_len * sizeof(Move)); idx += other_len; };
+    void add_move(const Move to_add) { this->data()[idx] = to_add; idx += 1; };
+    void add_moves(const MoveList& other_list) { size_t other_len = other_list.len(); memcpy(&this->data()[idx], other_list.data(), other_len * sizeof(Move)); idx += other_len; };
 
     size_t len() const { return this->idx; };
 };

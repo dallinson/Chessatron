@@ -5,7 +5,6 @@
 
 #include "utils.hpp"
 #include "pieces.hpp"
-#include "bitboard.hpp"
 
 #define KING_OFFSET (2 * ((KING_VALUE) - 1))
 #define QUEEN_OFFSET (2 * ((QUEEN_VALUE) - 1))
