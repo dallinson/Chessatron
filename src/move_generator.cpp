@@ -52,8 +52,8 @@ MoveList MoveGenerator::filter_to_valid_moves(ChessBoard& c, int side, uint64_t 
     uint64_t valid_moves = potential_moves & ~c.get_side_occupancy(side);
     // only move onto spaces unoccupied by friendlies
     int src_idx = idx & 0x3F;
-    while (potential_moves) {
-        int move_idx = pop_min_bit(&potential_moves);
+    while (valid_moves) {
+        int move_idx = pop_min_bit(&valid_moves);
         uint_fast16_t flags = 0;
         flags |= ((GET_BIT(c.get_side_occupancy((side + 1) & 1), move_idx)) << 2);
 

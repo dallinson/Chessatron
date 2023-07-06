@@ -21,8 +21,6 @@ int main(int argc, char** argv) {
 
     //c.print_board();
 
-    int idx = 27;
-
     print_bitboard(0x500000000);
     return 0;
 }
