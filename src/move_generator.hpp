@@ -6,19 +6,20 @@
 #include "chessboard.hpp"
 
 namespace MoveGenerator {
-    MoveList generate_moves(ChessBoard& c, int side);
-    MoveList generate_king_moves(ChessBoard& c, int side);
-    MoveList filter_to_valid_moves(ChessBoard& c, int side, uint64_t potential_moves, int idx);
-    bool is_in_double_check(ChessBoard& c, int side, int king_idx);
+    MoveList generate_moves(const ChessBoard& c, const int side);
+    MoveList generate_king_moves(const ChessBoard& c, const int side);
+    MoveList filter_to_valid_moves(const ChessBoard& c, const int side, const uint64_t potential_moves, const int idx);
+    bool is_in_double_check(const ChessBoard& c, const int side, const int king_idx);
 
-    uint64_t generate_bishop_movemask(ChessBoard& c, int idx);
-    uint64_t generate_rook_movemask(ChessBoard& c, int idx);
-    uint64_t generate_queen_movemask(ChessBoard& c, int idx);
+    uint64_t generate_bishop_movemask(const ChessBoard& c, const int idx);
+    uint64_t generate_rook_movemask(const ChessBoard& c, const int idx);
+    uint64_t generate_queen_movemask(const ChessBoard& c, const int idx);
 
-    MoveList generate_queen_moves(ChessBoard& c, int side);
-    MoveList generate_bishop_moves(ChessBoard& c, int side);
-    MoveList generate_knight_moves(ChessBoard& c, int side);
-    MoveList generate_rook_moves(ChessBoard& c, int side);
+    MoveList generate_queen_moves(const ChessBoard& c, const int side);
+    MoveList generate_bishop_moves(const ChessBoard& c, const int side);
+    MoveList generate_knight_moves(const ChessBoard& c, const int side);
+    MoveList generate_rook_moves(const ChessBoard& c, const int side);
+    MoveList generate_pawn_moves(const ChessBoard& c, const int side);
 }
 
 

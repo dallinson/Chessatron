@@ -16,3 +16,17 @@
 #define KNIGHT_VALUE 3
 #define ROOK_VALUE 2
 #define PAWN_VALUE 1
+
+class Piece {
+    private:
+    uint_fast8_t val;
+    public:
+
+    Piece() : val(0) {};
+    Piece(uint_fast8_t val) : val(val) {};
+
+    void set_value(uint_fast8_t val) { this->val = val; };
+    uint_fast8_t get_value() const { return this->val; };
+    uint_fast8_t get_piece_val() { return GET_BITS(val, 2, 0); };
+    uint_fast8_t get_side() const { return GET_BIT(val, 3); };
+};

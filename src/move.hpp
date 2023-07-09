@@ -11,7 +11,7 @@
 
 enum MoveFlags : uint_fast8_t {
     QUIET_MOVE = 0,
-    DOUBLE_PAWN = 1,
+    DOUBLE_PAWN_PUSH = 1,
     KINGSIDE_CASTLE = 2,
     QUEENSIDE_CASTLE = 3,
     CAPTURE = 4,
@@ -35,6 +35,7 @@ class Move {
 
     Move() : move(0) {};
     Move(uint_fast16_t v) : move(v) {};
+    Move(MoveFlags flags, uint_fast8_t dest, uint_fast8_t src) : move((((uint_fast16_t) flags) << 12) | (dest << 6) | src) {};
 
     uint_fast16_t get_move() { return move; };
     uint_fast8_t get_src_square() { return GET_BITS(move, 5, 0); };

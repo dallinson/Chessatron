@@ -25,7 +25,7 @@ class ChessBoard {
     std::array<uint64_t, 12> bitboards;
 
 
-    std::array<uint_fast8_t, 64> pieces;
+    std::array<Piece, 64> pieces;
 
     inline uint64_t get_pair_occupancy(int offset) const { return bitboards[offset] | bitboards[offset + 1]; }; 
 

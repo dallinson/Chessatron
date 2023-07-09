@@ -8,6 +8,7 @@
 
 #include "utils.hpp"
 #include "magic_numbers.hpp"
+#include "pieces.hpp"
 
 int main(int argc, char** argv) {
     #ifdef IS_TESTING
