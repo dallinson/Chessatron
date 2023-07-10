@@ -66,7 +66,7 @@ MoveList MoveGenerator::filter_to_pseudolegal_moves(const ChessBoard &c, const i
 
 uint64_t MoveGenerator::generate_bishop_movemask(const ChessBoard &c, const int idx) {
     uint64_t masked = (c.get_occupancy() & BMask[idx]);
-    return BAttacks[(1024 * idx) + ((masked * BMagic[idx]) >> (64 - BBits[idx]))];
+    return BAttacks[(512 * idx) + ((masked * BMagic[idx]) >> (64 - BBits[idx]))];
 }
 
 uint64_t MoveGenerator::generate_rook_movemask(const ChessBoard &c, const int idx) {

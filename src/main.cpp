@@ -24,6 +24,9 @@ int main(int argc, char** argv) {
 
     //c.print_board();
 
-    print_bitboard(MoveGenerator::generate_bishop_movemask(c, 30));
+    //print_bitboard(MoveGenerator::generate_bishop_movemask(c, 30));
+    print_bitboard(0x1008040200ULL);
+    print_bitboard(0x201008040200ULL);
+    print_bitboard(0x2040810a000ULL);
     return 0;
 }
