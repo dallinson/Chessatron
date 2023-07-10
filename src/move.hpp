@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <cstring>
+#include <string>
 #include <array>
 
 #include "utils.hpp"
@@ -35,19 +36,21 @@ class Move {
 
     Move() : move(0) {};
     Move(uint_fast16_t v) : move(v) {};
-    Move(MoveFlags flags, uint_fast8_t dest, uint_fast8_t src) : move((((uint_fast16_t) flags) << 12) | (dest << 6) | src) {};
+    Move(MoveFlags flags, uint_fast8_t dest, uint_fast8_t src) : move((((uint_fast16_t) flags) << 12) | (((uint_fast16_t) dest) << 6) | src) {};
 
-    uint_fast16_t get_move() { return move; };
-    uint_fast8_t get_src_square() { return GET_BITS(move, 5, 0); };
-    uint_fast8_t get_dest_square() { return GET_BITS(move, 11, 6); };
+    uint_fast16_t get_move() const { return move; };
+    uint_fast8_t get_src_square() const { return GET_BITS(move, 5, 0); };
+    uint_fast8_t get_dest_square() const { return GET_BITS(move, 11, 6); };
 
-    uint_fast8_t get_src_rank() { return GET_BITS(move, 5, 3); };
-    uint_fast8_t get_src_file() { return GET_BITS(move, 2, 0); };
+    uint_fast8_t get_src_rank() const { return GET_BITS(move, 5, 3); };
+    uint_fast8_t get_src_file() const { return GET_BITS(move, 2, 0); };
 
-    uint_fast8_t get_dest_src_rank() { return GET_BITS(move, 11, 9); };
-    uint_fast8_t get_dest_file() { return GET_BITS(move, 8, 6); };
+    uint_fast8_t get_dest_rank() const { return GET_BITS(move, 11, 9); };
+    uint_fast8_t get_dest_file() const { return GET_BITS(move, 8, 6); };
 
-    MoveFlags get_move_flags() { return (MoveFlags) GET_BITS(move, 15, 12); };
+    MoveFlags get_move_flags() const { return (MoveFlags) GET_BITS(move, 15, 12); };
+
+    std::string to_string() const;
 
 };
 
