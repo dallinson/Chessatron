@@ -167,16 +167,36 @@ MoveList MoveGenerator::generate_pawn_moves(const ChessBoard &c, const int side)
             }
         } else {
             if (!GET_BIT(c.get_occupancy(), pawn_idx - 8)) {
-                if (GET_RANK(pawn_idx) == 1) {
+                if (GET_RANK(pawn_idx) == 6) {
                     to_return.add_move(Move(DOUBLE_PAWN_PUSH, pawn_idx - 16, pawn_idx));
                 }
-                if (GET_RANK(pawn_idx) == 6) {
+                if (GET_RANK(pawn_idx) == 1) {
                     to_return.add_move(Move(ROOK_PROMOTION, pawn_idx - 8, pawn_idx));
                     to_return.add_move(Move(KNIGHT_PROMOTION, pawn_idx - 8, pawn_idx));
                     to_return.add_move(Move(BISHOP_PROMOTION, pawn_idx - 8, pawn_idx));
                     to_return.add_move(Move(QUEEN_PROMOTION, pawn_idx - 8, pawn_idx));
                 } else {
                     to_return.add_move(Move(QUIET_MOVE, pawn_idx - 8, pawn_idx));
+                }
+            }
+            if (GET_FILE(pawn_idx) != 0 && GET_BIT(c.get_side_occupancy((side + 1) & 1), pawn_idx - 9)) {
+                if (GET_RANK(pawn_idx) == 1) {
+                    to_return.add_move(Move(ROOK_PROMOTION_CAPTURE, pawn_idx - 9, pawn_idx));
+                    to_return.add_move(Move(KNIGHT_PROMOTION_CAPTURE, pawn_idx - 9, pawn_idx));
+                    to_return.add_move(Move(BISHOP_PROMOTION_CAPTURE, pawn_idx - 9, pawn_idx));
+                    to_return.add_move(Move(QUEEN_PROMOTION_CAPTURE, pawn_idx - 9, pawn_idx));
+                } else {
+                    to_return.add_move(Move(CAPTURE, pawn_idx - 9, pawn_idx));
+                }
+            }
+            if (GET_FILE(pawn_idx) != 7 && GET_BIT(c.get_side_occupancy((side + 1) & 1), pawn_idx - 7)) {
+                if (GET_RANK(pawn_idx) == 1) {
+                    to_return.add_move(Move(ROOK_PROMOTION_CAPTURE, pawn_idx - 7, pawn_idx));
+                    to_return.add_move(Move(KNIGHT_PROMOTION_CAPTURE, pawn_idx - 7, pawn_idx));
+                    to_return.add_move(Move(BISHOP_PROMOTION_CAPTURE, pawn_idx - 7, pawn_idx));
+                    to_return.add_move(Move(QUEEN_PROMOTION_CAPTURE, pawn_idx - 7, pawn_idx));
+                } else {
+                    to_return.add_move(Move(CAPTURE, pawn_idx - 7, pawn_idx));
                 }
             }
         }
