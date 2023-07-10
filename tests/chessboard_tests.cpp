@@ -91,3 +91,10 @@ TEST(ChessBoardTests, SetFenExplicitStartPosShort) {
     ASSERT_EQ(c.get_queen_occupancy(1), (uint64_t) 0x0800000000000000);
     ASSERT_EQ(c.get_king_occupancy(1), (uint64_t) 0x1000000000000000);
 }
+
+TEST(ChessBoardTests, CheckCorrectScoreEvaluations) {
+    ChessBoard c;
+    c.set_from_fen("5B2/6P1/1p6/8/1N6/kP6/2K5/8 w - -");
+    ASSERT_EQ(c.get_score(0), 9);
+    ASSERT_EQ(c.get_score(1), 1);
+}

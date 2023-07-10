@@ -10,6 +10,8 @@
 
 #define BITS(max, min) ((0xFFFFFFFFFFFFFFFF << (min)) & (0xFFFFFFFFFFFFFFFF >> (64 - ((max) + 1))))
 #define GET_BITS(val, max, min) (((val) & BITS(max, min)) >> (min))
+#define GET_RANK(val) GET_BITS(val, 5, 3)
+#define GET_FILE(val) GET_BITS(val, 2, 0)
 
 void print_bitboard(uint64_t to_print);
 int bitboard_to_idx(uint64_t bitboard);

@@ -8,7 +8,7 @@
 namespace MoveGenerator {
     MoveList generate_moves(const ChessBoard& c, const int side);
     MoveList generate_king_moves(const ChessBoard& c, const int side);
-    MoveList filter_to_valid_moves(const ChessBoard& c, const int side, const uint64_t potential_moves, const int idx);
+    MoveList filter_to_pseudolegal_moves(const ChessBoard& c, const int side, const uint64_t potential_moves, const int idx);
     bool is_in_double_check(const ChessBoard& c, const int side, const int king_idx);
 
     uint64_t generate_bishop_movemask(const ChessBoard& c, const int idx);

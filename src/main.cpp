@@ -10,6 +10,8 @@
 #include "magic_numbers.hpp"
 #include "pieces.hpp"
 
+#include "move_generator.hpp"
+
 int main(int argc, char** argv) {
     #ifdef IS_TESTING
         testing::InitGoogleTest(&argc, argv);
@@ -22,6 +24,6 @@ int main(int argc, char** argv) {
 
     //c.print_board();
 
-    print_bitboard(0x500000000);
+    print_bitboard(MoveGenerator::generate_bishop_movemask(c, 30));
     return 0;
 }
