@@ -5,6 +5,7 @@
 
 #include "pieces.hpp"
 #include "utils.hpp"
+#include "move.hpp"
 
 #define KING_OFFSET (2 * ((KING_VALUE) -1))
 #define QUEEN_OFFSET (2 * ((QUEEN_VALUE) -1))
@@ -24,6 +25,8 @@ class ChessBoard {
     std::array<uint64_t, 12> bitboards;
 
     std::array<Piece, 64> pieces;
+
+    uint8_t en_passant_file = 96;
 
     inline uint64_t get_pair_occupancy(int offset) const { return bitboards[offset] | bitboards[offset + 1]; };
 

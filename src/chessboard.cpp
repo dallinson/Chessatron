@@ -84,7 +84,7 @@ int ChessBoard::get_score(int side) {
     return (_mm_popcnt_u64(get_pawn_occupancy(side)) * PAWN_VALUE) + (_mm_popcnt_u64(get_rook_occupancy(side)) * ROOK_VALUE) + (_mm_popcnt_u64(get_knight_occupancy(side)) * KNIGHT_VALUE) + (_mm_popcnt_u64(get_bishop_occupancy(side)) * BISHOP_VALUE) + (_mm_popcnt_u64(get_queen_occupancy(side)) * QUEEN_VALUE);
 }
 
-void ChessBoard::make_move(Move to_make) {
+void ChessBoard::make_move(const Move to_make, const int side) {
     Piece moved = this->pieces[to_make.get_src_square()];
     this->pieces[to_make.get_src_square()] = 0;
     // get the piece we're moving and clear the origin square
@@ -93,13 +93,34 @@ void ChessBoard::make_move(Move to_make) {
     // get the piece we replace with ourselves and do the replacement
 
     CLEAR_BIT(this->bitboards[moved.to_bitboard_idx()], to_make.get_src_square());
-    if (at_target) {
+    if (at_target.get_value()) {
         // If there _was_ a piece there
         // we do this as en passant captures without a piece at the position
         CLEAR_BIT(this->bitboards[at_target.to_bitboard_idx()], to_make.get_dest_square());
     }
-    if (to_make.get_flags() & 0x8) {
+
+    if (to_make.get_move_flags() & 0x8) {
+        // Any value >= 8 is a promotion
+        int promoted_piece = ((to_make.get_move_flags() & 0x3) + 2) * 2;
+        promoted_piece += moved.get_side();
+        SET_BIT(this->bitboards[promoted_piece], to_make.get_dest_square());
+        // This handles pawn promotions
     } else {
         SET_BIT(this->bitboards[moved.to_bitboard_idx()], to_make.get_dest_square());
+        // otherwise sets pieces if moved normally
     }
+
+    if (to_make.get_move_flags() == DOUBLE_PAWN_PUSH) {
+        this->en_passant_file = to_make.get_dest_file();
+    } else {
+        this->en_passant_file = 96;
+    }
+
+    if (to_make.get_move_flags() == EN_PASSANT_CAPTURE) {
+        int enemy_side = (side + 1) & 0x1;
+        int enemy_pawn_idx = to_make.get_dest_square() - 8 + (16 * side);
+        CLEAR_BIT(this->bitboards[PAWN_OFFSET + side], enemy_pawn_idx);
+    }
+
+
 }
