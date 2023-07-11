@@ -4,3 +4,5 @@ IndentCaseLabels: false
 ColumnLimit: 0
 IndentWidth: 4
 UseTab: Never
+SpaceAfterCStyleCast: true
+NamespaceIndentation: All

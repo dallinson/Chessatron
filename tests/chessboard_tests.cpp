@@ -31,7 +31,6 @@ TEST(ChessboardTests, SetFenStartPos) {
     ASSERT_EQ(c.get_bishop_occupancy(1), (uint64_t) 0x2400000000000000);
     ASSERT_EQ(c.get_queen_occupancy(1), (uint64_t) 0x0800000000000000);
     ASSERT_EQ(c.get_king_occupancy(1), (uint64_t) 0x1000000000000000);
-
 }
 
 TEST(ChessBoardTests, SetFenExplicitStartPos) {

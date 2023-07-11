@@ -2,26 +2,25 @@
 
 #include <cstdint>
 
-#include "move.hpp"
 #include "chessboard.hpp"
+#include "move.hpp"
 
 namespace MoveGenerator {
-    MoveList generate_moves(const ChessBoard& c, const int side);
-    MoveList generate_king_moves(const ChessBoard& c, const int side);
-    MoveList filter_to_pseudolegal_moves(const ChessBoard& c, const int side, const uint64_t potential_moves, const int idx);
-    bool is_in_double_check(const ChessBoard& c, const int side, const int king_idx);
+    MoveList generate_moves(const ChessBoard &c, const int side);
+    MoveList generate_king_moves(const ChessBoard &c, const int side);
+    MoveList filter_to_pseudolegal_moves(const ChessBoard &c, const int side, const uint64_t potential_moves, const int idx);
+    bool is_in_double_check(const ChessBoard &c, const int side, const int king_idx);
 
-    uint64_t generate_bishop_movemask(const ChessBoard& c, const int idx);
-    uint64_t generate_rook_movemask(const ChessBoard& c, const int idx);
-    uint64_t generate_queen_movemask(const ChessBoard& c, const int idx);
+    uint64_t generate_bishop_movemask(const ChessBoard &c, const int idx);
+    uint64_t generate_rook_movemask(const ChessBoard &c, const int idx);
+    uint64_t generate_queen_movemask(const ChessBoard &c, const int idx);
 
-    MoveList generate_queen_moves(const ChessBoard& c, const int side);
-    MoveList generate_bishop_moves(const ChessBoard& c, const int side);
-    MoveList generate_knight_moves(const ChessBoard& c, const int side);
-    MoveList generate_rook_moves(const ChessBoard& c, const int side);
-    MoveList generate_pawn_moves(const ChessBoard& c, const int side);
-}
-
+    MoveList generate_queen_moves(const ChessBoard &c, const int side);
+    MoveList generate_bishop_moves(const ChessBoard &c, const int side);
+    MoveList generate_knight_moves(const ChessBoard &c, const int side);
+    MoveList generate_rook_moves(const ChessBoard &c, const int side);
+    MoveList generate_pawn_moves(const ChessBoard &c, const int side);
+} // namespace MoveGenerator
 
 const uint64_t kingMoves[64] = {
     0x302ULL,
@@ -87,8 +86,7 @@ const uint64_t kingMoves[64] = {
     0x2838000000000000ULL,
     0x5070000000000000ULL,
     0xa0e0000000000000ULL,
-    0x40c0000000000000ULL
-};
+    0x40c0000000000000ULL};
 
 const uint64_t knightMoves[64] = {
     0x20400UL,
@@ -284,5 +282,5 @@ const uint64_t pawnAttackMaps[128] = {
     0x28000000000000,
     0x50000000000000,
     0xa0000000000000,
-    0x40000000000000
+    0x40000000000000,
 };

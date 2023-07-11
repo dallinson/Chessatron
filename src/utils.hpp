@@ -18,10 +18,10 @@ void print_bitboard(uint64_t to_print);
 int bitboard_to_idx(uint64_t bitboard);
 uint64_t idx_to_bitboard(int idx);
 
-int pop_min_bit(uint64_t* num);
+int pop_min_bit(uint64_t *num);
 
 namespace SlidingPieceUtils {
     uint64_t get_bishop_attacks(int idx, uint64_t occupancy);
     uint64_t get_rook_attacks(int idx, uint64_t occupancy);
     uint64_t get_queen_attacks(int idx, uint64_t occupancy);
-}
+} // namespace SlidingPieceUtils

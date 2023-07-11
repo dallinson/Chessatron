@@ -40,7 +40,7 @@ uint64_t SlidingPieceUtils::get_queen_attacks(int idx, uint64_t occupancy) {
     return SlidingPieceUtils::get_bishop_attacks(idx, occupancy) | SlidingPieceUtils::get_rook_attacks(idx, occupancy);
 }
 
-int pop_min_bit(uint64_t* num) {
+int pop_min_bit(uint64_t *num) {
     int to_return = bitboard_to_idx(*num);
     CLEAR_BIT(*num, to_return);
     return to_return;

@@ -1,9 +1,9 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <cstring>
 #include <string>
-#include <array>
 
 #include "utils.hpp"
 
@@ -28,15 +28,13 @@ enum MoveFlags : uint_fast8_t {
 };
 
 class Move {
-    private:
+  private:
     uint_fast16_t move;
 
-    public:
-
-
-    Move() : move(0) {};
-    Move(uint_fast16_t v) : move(v) {};
-    Move(MoveFlags flags, uint_fast8_t dest, uint_fast8_t src) : move((((uint_fast16_t) flags) << 12) | (((uint_fast16_t) dest) << 6) | src) {};
+  public:
+    Move() : move(0){};
+    Move(uint_fast16_t v) : move(v){};
+    Move(MoveFlags flags, uint_fast8_t dest, uint_fast8_t src) : move((((uint_fast16_t) flags) << 12) | (((uint_fast16_t) dest) << 6) | src){};
 
     uint_fast16_t get_move() const { return move; };
     uint_fast8_t get_src_square() const { return GET_BITS(move, 5, 0); };
@@ -51,19 +49,26 @@ class Move {
     MoveFlags get_move_flags() const { return (MoveFlags) GET_BITS(move, 15, 12); };
 
     std::string to_string() const;
-
 };
 
-class MoveList: private std::array<Move, MAX_MOVE_COUNT> {
-    private:
+class MoveList : private std::array<Move, MAX_MOVE_COUNT> {
+  private:
     size_t idx;
 
-    public:
-    MoveList() : idx(0) {};
+  public:
+    MoveList() : idx(0){};
     using std::array<Move, MAX_MOVE_COUNT>::operator[];
-    
-    void add_move(const Move to_add) { this->data()[idx] = to_add; idx += 1; };
-    void add_moves(const MoveList& other_list) { size_t other_len = other_list.len(); memcpy(&this->data()[idx], other_list.data(), other_len * sizeof(Move)); idx += other_len; };
+
+    void add_move(const Move to_add) {
+        this->data()[idx] = to_add;
+        idx += 1;
+    };
+
+    void add_moves(const MoveList &other_list) {
+        size_t other_len = other_list.len();
+        memcpy(&this->data()[idx], other_list.data(), other_len * sizeof(Move));
+        idx += other_len;
+    };
 
     size_t len() const { return this->idx; };
 };

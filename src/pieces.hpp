@@ -18,17 +18,17 @@
 #define PAWN_VALUE 1
 
 class Piece {
-    private:
+  private:
     uint_fast8_t val;
-    public:
 
-    Piece() : val(0) {};
-    Piece(uint_fast8_t val) : val(val) {};
+  public:
+    Piece() : val(0){};
+    Piece(uint_fast8_t val) : val(val){};
 
     void set_value(uint_fast8_t val) { this->val = val; };
     uint_fast8_t get_value() const { return this->val; };
     uint_fast8_t get_piece_val() const { return GET_BITS(val, 2, 0); };
     uint_fast8_t get_side() const { return GET_BIT(val, 3); };
 
-    uint_fast8_t to_bitboard_idx() const { return (get_piece_val() - 1) + get_side();};
+    uint_fast8_t to_bitboard_idx() const { return (get_piece_val() - 1) + get_side(); };
 };

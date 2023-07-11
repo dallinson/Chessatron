@@ -1,17 +1,17 @@
 #pragma once
 
-#include <cstdint>
 #include <array>
+#include <cstdint>
 
-#include "utils.hpp"
 #include "pieces.hpp"
+#include "utils.hpp"
 
-#define KING_OFFSET (2 * ((KING_VALUE) - 1))
-#define QUEEN_OFFSET (2 * ((QUEEN_VALUE) - 1))
-#define BISHOP_OFFSET (2 * ((BISHOP_VALUE) - 1))
-#define KNIGHT_OFFSET (2 * ((KNIGHT_VALUE) - 1))
-#define ROOK_OFFSET (2 * ((ROOK_VALUE) - 1))
-#define PAWN_OFFSET (2 * ((PAWN_VALUE) - 1))
+#define KING_OFFSET (2 * ((KING_VALUE) -1))
+#define QUEEN_OFFSET (2 * ((QUEEN_VALUE) -1))
+#define BISHOP_OFFSET (2 * ((BISHOP_VALUE) -1))
+#define KNIGHT_OFFSET (2 * ((KNIGHT_VALUE) -1))
+#define ROOK_OFFSET (2 * ((ROOK_VALUE) -1))
+#define PAWN_OFFSET (2 * ((PAWN_VALUE) -1))
 
 #define QUEEN_SCORE 9
 #define ROOK_SCORE 5
@@ -20,16 +20,14 @@
 #define PAWN_SCORE 1
 
 class ChessBoard {
-    private:
-
+  private:
     std::array<uint64_t, 12> bitboards;
-
 
     std::array<Piece, 64> pieces;
 
-    inline uint64_t get_pair_occupancy(int offset) const { return bitboards[offset] | bitboards[offset + 1]; }; 
+    inline uint64_t get_pair_occupancy(int offset) const { return bitboards[offset] | bitboards[offset + 1]; };
 
-    public:
+  public:
     uint64_t get_occupancy() const { return get_king_occupancy() | get_queen_occupancy() | get_bishop_occupancy() | get_knight_occupancy() | get_rook_occupancy() | get_pawn_occupancy(); };
     uint64_t get_occupancy(int side) const { return get_side_occupancy(side); };
 
@@ -57,7 +55,7 @@ class ChessBoard {
     void print_board() const;
     void clear_board();
 
-    void set_from_fen(const char* input);
+    void set_from_fen(const char *input);
 
     void make_move(Move to_make);
 };

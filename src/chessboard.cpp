@@ -20,7 +20,7 @@ void ChessBoard::clear_board() {
 }
 
 void ChessBoard::print_board() const {
-    static const char* piece_str = ".PRNBQK..prnbqk.";
+    static const char *piece_str = ".PRNBQK..prnbqk.";
     for (int_fast8_t rank = 7; rank >= 0; rank--) {
         for (uint_fast8_t file = 0; file < 8; file++) {
             printf("%c", piece_str[pieces[(rank * 8) + file].get_value()]);
@@ -29,7 +29,7 @@ void ChessBoard::print_board() const {
     }
 }
 
-void ChessBoard::set_from_fen(const char* input) {
+void ChessBoard::set_from_fen(const char *input) {
     if (std::string(input, strlen(input)) == "startpos") {
         set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
         return;
@@ -50,28 +50,28 @@ void ChessBoard::set_from_fen(const char* input) {
                 current -= 32;
             }
             switch (current) {
-                case 'P': 
-                    piece += PAWN_VALUE;
-                    break;
-                case 'R':
-                    piece += ROOK_VALUE;
-                    break;
-                case 'N':
-                    piece += KNIGHT_VALUE;
-                    break;
-                case 'B':
-                    piece += BISHOP_VALUE;
-                    break;
-                case 'Q':
-                    piece += QUEEN_VALUE;
-                    break;
-                case 'K':
-                    piece += KING_VALUE;
-                    break;
-                default:
-                    file += (current - 48);
-                    char_idx += 1;
-                    continue;
+            case 'P':
+                piece += PAWN_VALUE;
+                break;
+            case 'R':
+                piece += ROOK_VALUE;
+                break;
+            case 'N':
+                piece += KNIGHT_VALUE;
+                break;
+            case 'B':
+                piece += BISHOP_VALUE;
+                break;
+            case 'Q':
+                piece += QUEEN_VALUE;
+                break;
+            case 'K':
+                piece += KING_VALUE;
+                break;
+            default:
+                file += (current - 48);
+                char_idx += 1;
+                continue;
             }
             set_piece(piece, (rank * 8) + file);
             file += 1;
@@ -81,11 +81,7 @@ void ChessBoard::set_from_fen(const char* input) {
 }
 
 int ChessBoard::get_score(int side) {
-    return (_mm_popcnt_u64(get_pawn_occupancy(side)) * PAWN_VALUE)
-        + (_mm_popcnt_u64(get_rook_occupancy(side)) * ROOK_VALUE)
-        + (_mm_popcnt_u64(get_knight_occupancy(side)) * KNIGHT_VALUE)
-        + (_mm_popcnt_u64(get_bishop_occupancy(side)) * BISHOP_VALUE)
-        + (_mm_popcnt_u64(get_queen_occupancy(side)) * QUEEN_VALUE);
+    return (_mm_popcnt_u64(get_pawn_occupancy(side)) * PAWN_VALUE) + (_mm_popcnt_u64(get_rook_occupancy(side)) * ROOK_VALUE) + (_mm_popcnt_u64(get_knight_occupancy(side)) * KNIGHT_VALUE) + (_mm_popcnt_u64(get_bishop_occupancy(side)) * BISHOP_VALUE) + (_mm_popcnt_u64(get_queen_occupancy(side)) * QUEEN_VALUE);
 }
 
 void ChessBoard::make_move(Move to_make) {
@@ -106,6 +102,4 @@ void ChessBoard::make_move(Move to_make) {
     } else {
         SET_BIT(this->bitboards[moved.to_bitboard_idx()], to_make.get_dest_square());
     }
-
-
 }
