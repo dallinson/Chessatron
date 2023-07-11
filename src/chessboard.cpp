@@ -87,3 +87,25 @@ int ChessBoard::get_score(int side) {
         + (_mm_popcnt_u64(get_bishop_occupancy(side)) * BISHOP_VALUE)
         + (_mm_popcnt_u64(get_queen_occupancy(side)) * QUEEN_VALUE);
 }
+
+void ChessBoard::make_move(Move to_make) {
+    Piece moved = this->pieces[to_make.get_src_square()];
+    this->pieces[to_make.get_src_square()] = 0;
+    // get the piece we're moving and clear the origin square
+    Piece at_target = this->pieces[to_make.get_dest_square()];
+    this->pieces[to_make.get_dest_square()] = moved;
+    // get the piece we replace with ourselves and do the replacement
+
+    CLEAR_BIT(this->bitboards[moved.to_bitboard_idx()], to_make.get_src_square());
+    if (at_target) {
+        // If there _was_ a piece there
+        // we do this as en passant captures without a piece at the position
+        CLEAR_BIT(this->bitboards[at_target.to_bitboard_idx()], to_make.get_dest_square());
+    }
+    if (to_make.get_flags() & 0x8) {
+    } else {
+        SET_BIT(this->bitboards[moved.to_bitboard_idx()], to_make.get_dest_square());
+    }
+
+
+}

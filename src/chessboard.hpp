@@ -31,8 +31,9 @@ class ChessBoard {
 
     public:
     uint64_t get_occupancy() const { return get_king_occupancy() | get_queen_occupancy() | get_bishop_occupancy() | get_knight_occupancy() | get_rook_occupancy() | get_pawn_occupancy(); };
+    uint64_t get_occupancy(int side) const { return get_side_occupancy(side); };
 
-    uint64_t get_side_occupancy(int side) const { return bitboards[KING_OFFSET + side] | bitboards[QUEEN_OFFSET + side ] | bitboards[BISHOP_OFFSET + side] | bitboards[KNIGHT_OFFSET + side] | bitboards[ROOK_OFFSET + side] | bitboards[PAWN_OFFSET + side]; };
+    uint64_t get_side_occupancy(int side) const { return bitboards[KING_OFFSET + side] | bitboards[QUEEN_OFFSET + side] | bitboards[BISHOP_OFFSET + side] | bitboards[KNIGHT_OFFSET + side] | bitboards[ROOK_OFFSET + side] | bitboards[PAWN_OFFSET + side]; };
     uint64_t get_white_occupancy() const { return get_side_occupancy(WHITE_IDX); };
     uint64_t get_black_occupancy() const { return get_side_occupancy(BLACK_IDX); };
 
@@ -57,4 +58,6 @@ class ChessBoard {
     void clear_board();
 
     void set_from_fen(const char* input);
+
+    void make_move(Move to_make);
 };

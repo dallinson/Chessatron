@@ -7,6 +7,7 @@
 #define GET_BIT(val, x) (((val) >> (x)) & 0x1)
 #define SET_BIT(val, x) val |= BIT(x)
 #define CLEAR_BIT(val, x) val &= ~BIT(x)
+#define TOGGLE_BIT(val, x) val ^= BIT(x)
 
 #define BITS(max, min) ((0xFFFFFFFFFFFFFFFF << (min)) & (0xFFFFFFFFFFFFFFFF >> (64 - ((max) + 1))))
 #define GET_BITS(val, max, min) (((val) & BITS(max, min)) >> (min))
