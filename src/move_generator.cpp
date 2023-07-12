@@ -165,6 +165,9 @@ MoveList MoveGenerator::generate_pawn_moves(const ChessBoard &c, const int side)
                     to_return.add_move(Move(CAPTURE, pawn_idx + 9, pawn_idx));
                 }
             }
+            if (GET_RANK(pawn_idx) == 4 && (std::abs(((int) c.get_en_passant_file()) - (int) GET_FILE(pawn_idx)) == 1)) {
+                to_return.add_move(Move(EN_PASSANT_CAPTURE, POSITION(5, c.get_en_passant_file()), pawn_idx));
+            }
         } else {
             if (!GET_BIT(c.get_occupancy(), pawn_idx - 8)) {
                 if (GET_RANK(pawn_idx) == 6) {
@@ -199,6 +202,21 @@ MoveList MoveGenerator::generate_pawn_moves(const ChessBoard &c, const int side)
                     to_return.add_move(Move(CAPTURE, pawn_idx - 7, pawn_idx));
                 }
             }
+            if (GET_RANK(pawn_idx) == 3 && (std::abs(((int) c.get_en_passant_file()) - (int) GET_FILE(pawn_idx)) == 1)) {
+                to_return.add_move(Move(EN_PASSANT_CAPTURE, POSITION(2, c.get_en_passant_file()), pawn_idx));
+            }
+        }
+    }
+
+    return to_return;
+}
+
+MoveList MoveGenerator::generate_castling_moves(const ChessBoard& c, const int side) {
+    MoveList to_return;
+    if (c.get_kingside_castling(side)) {
+        int shift_val = 56 * side;
+        if (((uint64_t) 0b10010000 ^ ((c.get_side_occupancy(side) >> shift_val) & 0xF0)) == 0) {
+
         }
     }
 

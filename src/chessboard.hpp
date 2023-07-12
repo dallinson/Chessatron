@@ -26,9 +26,13 @@ class ChessBoard {
 
     std::array<Piece, 64> pieces;
 
-    uint8_t en_passant_file = 96;
+    uint_fast8_t en_passant_file = 96;
+
+    std::array<bool, 2> kingside_castling;
+    std::array<bool, 2> queenside_castling;
 
     inline uint64_t get_pair_occupancy(int offset) const { return bitboards[offset] | bitboards[offset + 1]; };
+
 
   public:
     uint64_t get_occupancy() const { return get_king_occupancy() | get_queen_occupancy() | get_bishop_occupancy() | get_knight_occupancy() | get_rook_occupancy() | get_pawn_occupancy(); };
@@ -52,6 +56,12 @@ class ChessBoard {
     uint64_t get_rook_occupancy(int side) const { return bitboards[ROOK_OFFSET + side]; };
     uint64_t get_pawn_occupancy(int side) const { return bitboards[PAWN_OFFSET + side]; };
 
+    uint_fast8_t get_en_passant_file() const { return en_passant_file; };
+    void set_en_passant_file(int file) { en_passant_file = file; };
+
+    bool get_queenside_castling(int side) const { return queenside_castling[side]; };
+    bool get_kingside_castling(int side) const { return kingside_castling[side]; };
+
     int get_score(int side);
 
     void set_piece(uint_fast8_t piece, uint_fast8_t pos);
@@ -60,5 +70,5 @@ class ChessBoard {
 
     void set_from_fen(const char *input);
 
-    void make_move(Move to_make);
+    void make_move(Move to_make, const int side);
 };

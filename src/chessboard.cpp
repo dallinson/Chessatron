@@ -117,9 +117,9 @@ void ChessBoard::make_move(const Move to_make, const int side) {
     }
 
     if (to_make.get_move_flags() == EN_PASSANT_CAPTURE) {
-        int enemy_side = (side + 1) & 0x1;
+        int enemy_side = (moved.get_side() + 1) & 0x1;
         int enemy_pawn_idx = to_make.get_dest_square() - 8 + (16 * side);
-        CLEAR_BIT(this->bitboards[PAWN_OFFSET + side], enemy_pawn_idx);
+        CLEAR_BIT(this->bitboards[PAWN_OFFSET + enemy_side], enemy_pawn_idx);
     }
 
 

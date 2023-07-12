@@ -27,3 +27,15 @@ TEST(MoveGeneratorTests, CheckCorrectMoveCountMaxMoves) {
     auto lst = MoveGenerator::generate_moves(c, 0);
     ASSERT_EQ(lst.len(), 218);
 }
+
+TEST(MoveGeneratorTests, CheckEnPassant) {
+    ChessBoard c;
+    c.set_from_fen("rnbqkbnr/pppp1ppp/8/3Pp3/8/8/PPP1PPPP/RNBQKBNR ");
+    c.set_en_passant_file(4);
+
+    auto pawn_moves = MoveGenerator::generate_pawn_moves(c, 0);
+    for (size_t i = 0; i < pawn_moves.len(); i++) {
+        printf("%s\n", pawn_moves[i].to_string().c_str());
+    }
+    ASSERT_EQ(pawn_moves.len(), 16);
+}

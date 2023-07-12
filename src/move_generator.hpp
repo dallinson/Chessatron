@@ -20,7 +20,9 @@ namespace MoveGenerator {
     MoveList generate_knight_moves(const ChessBoard &c, const int side);
     MoveList generate_rook_moves(const ChessBoard &c, const int side);
     MoveList generate_pawn_moves(const ChessBoard &c, const int side);
-} // namespace MoveGenerator
+
+    MoveList generate_castling_moves(const ChessBoard &c, const int side);
+}
 
 const uint64_t kingMoves[64] = {
     0x302ULL,
