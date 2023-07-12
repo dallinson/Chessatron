@@ -32,7 +32,7 @@ jobs:
         working-directory: build
         run: |
           cmake .. -DCMAKE_BUILD_TYPE=Debug
-          make
+          make chesstaron_tests
       - name: Install gcovr
         run: |
           python -m pip install --upgrade pip
@@ -40,6 +40,7 @@ jobs:
       - name: Generate cobertura output
         working-directory: build
         run: |
+          ./chessatron_tests
           sudo gcovr -r .. -f '\.\./src' --cobertura cobertura.xml
           cat cobertura.xml
       - name: Code Coverage Summary
