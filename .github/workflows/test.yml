@@ -32,7 +32,7 @@ jobs:
         working-directory: build
         run: |
           cmake .. -DCMAKE_BUILD_TYPE=Debug
-          make chesstaron_tests
+          make chessatron_tests
       - name: Install gcovr
         run: |
           python -m pip install --upgrade pip
