@@ -28,7 +28,7 @@ jobs:
     - name: Generate cobertura output
       run: |
         cd build/
-        gcovr -r .. -f '\.\./src' --cobertura cobertura.xml
+        sudo gcovr -r .. -f '\.\./src' --cobertura cobertura.xml
     - name: Code Coverage Summary
       uses: irongut/CodeCoverageSummary@v1.3.0
       with:
