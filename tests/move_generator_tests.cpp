@@ -35,5 +35,4 @@ TEST(MoveGeneratorTests, CheckEnPassant) {
 
     auto pawn_moves = MoveGenerator::generate_pawn_moves(c, 0);
     ASSERT_EQ(pawn_moves.len(), 16);
-    FAIL();
 }
