@@ -26,8 +26,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: Create build dir
+        run: mkdir build
       - name: Build tests
-        working-directory: ./build
+        working-directory: build
         run: |
           cmake .. -DCMAKE_BUILD_TYPE=Debug
           make
@@ -36,7 +38,7 @@ jobs:
           python -m pip install --upgrade pip
           sudo pip install gcovr
       - name: Generate cobertura output
-        working-directory: ./build
+        working-directory: build
         run: |
           sudo gcovr -r .. -f '\.\./src' --cobertura cobertura.xml
           cat cobertura.xml
