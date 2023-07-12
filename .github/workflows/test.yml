@@ -27,9 +27,11 @@ jobs:
         sudo pip install gcovr
     - name: Generate cobertura output
       run: |
+        pwd
         ls
         cd build/
         sudo gcovr -r .. -f '\.\./src' --cobertura cobertura.xml
+        ls
     - name: Code Coverage Summary
       uses: irongut/CodeCoverageSummary@v1.3.0
       with:
