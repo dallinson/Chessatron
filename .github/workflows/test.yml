@@ -42,7 +42,6 @@ jobs:
         run: |
           ./chessatron_tests
           sudo gcovr -r .. -f '\.\./src' --cobertura cobertura.xml
-          cat cobertura.xml
       - name: Code Coverage Summary
         uses: irongut/CodeCoverageSummary@v1.3.0
         with:

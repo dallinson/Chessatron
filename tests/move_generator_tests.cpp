@@ -34,8 +34,6 @@ TEST(MoveGeneratorTests, CheckEnPassant) {
     c.set_en_passant_file(4);
 
     auto pawn_moves = MoveGenerator::generate_pawn_moves(c, 0);
-    for (size_t i = 0; i < pawn_moves.len(); i++) {
-        printf("%s\n", pawn_moves[i].to_string().c_str());
-    }
     ASSERT_EQ(pawn_moves.len(), 16);
+    FAIL();
 }
