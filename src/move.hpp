@@ -5,9 +5,11 @@
 #include <cstring>
 #include <string>
 
+#include "pieces.hpp"
 #include "utils.hpp"
 
-#define MAX_MOVE_COUNT 218
+#define MAX_TURN_MOVE_COUNT 218
+#define MAX_GAME_MOVE_COUNT 5899
 // the maximum possible number of moves, currently 218 on position R6R/3Q4/1Q4Q1/4Q3/2Q4Q/Q4Q2/pp1Q4/kBNN1KB1
 
 enum MoveFlags : uint_fast8_t {
@@ -51,13 +53,13 @@ class Move {
     std::string to_string() const;
 };
 
-class MoveList : private std::array<Move, MAX_MOVE_COUNT> {
+class MoveList : public std::array<Move, MAX_TURN_MOVE_COUNT> {
   private:
     size_t idx;
 
   public:
-    MoveList() : idx(0){};
-    using std::array<Move, MAX_MOVE_COUNT>::operator[];
+    MoveList() : idx(0) {};
+    using std::array<Move, MAX_TURN_MOVE_COUNT>::operator[];
 
     void add_move(const Move to_add) {
         this->data()[idx] = to_add;
@@ -71,4 +73,35 @@ class MoveList : private std::array<Move, MAX_MOVE_COUNT> {
     };
 
     size_t len() const { return this->idx; };
+};
+
+class PreviousMoveState {
+  private:
+    uint_fast16_t info;
+
+  public:
+    PreviousMoveState() : info(0) {};
+    PreviousMoveState(const Piece target_piece, const uint_fast8_t previous_en_passant_state, const bool white_kingside_castle, const bool white_queenside_castle, const bool black_kingside_castle, const bool black_queenside_castle) : info(target_piece.get_value() | previous_en_passant_state << 4 | white_kingside_castle << 8 | white_queenside_castle << 9 | black_kingside_castle << 10 | black_queenside_castle << 11){};
+    Piece get_piece() const { return GET_BITS(info, 3, 0); };
+    uint_fast8_t get_previous_en_passant_file() const { return GET_BITS(info, 7, 4); };
+    bool get_white_kingside_castle() const { return GET_BIT(info, 8); };
+    bool get_white_queenside_castle() const { return GET_BIT(info, 9); };
+    bool get_black_kingside_castle() const { return GET_BIT(info, 10); };
+    bool get_black_queenside_castle() const { return GET_BIT(info, 11); };
+};
+
+class MoveHistory : public std::array<std::pair<Move, PreviousMoveState>, MAX_GAME_MOVE_COUNT> {
+  private:
+    size_t idx;
+
+  public:
+    MoveHistory() : idx(0) {};
+    void push_move(std::pair<Move, PreviousMoveState> to_add) {
+        this->data()[idx] = to_add;
+        idx += 1;
+    };
+    std::pair<Move, PreviousMoveState> pop_move() {
+        idx -= 1;
+        return this->data()[idx];
+    };
 };

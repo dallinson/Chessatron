@@ -26,7 +26,7 @@ class ChessBoard {
 
     std::array<Piece, 64> pieces;
 
-    uint_fast8_t en_passant_file = 96;
+    uint_fast8_t en_passant_file = 9;
 
     std::array<bool, 2> kingside_castling;
     std::array<bool, 2> queenside_castling;
@@ -72,5 +72,6 @@ class ChessBoard {
 
     void set_from_fen(const char *input);
 
-    void make_move(Move to_make, const int side);
+    void make_move(Move to_make, MoveHistory& move_history);
+    void unmake_move(MoveHistory& move_history);
 };

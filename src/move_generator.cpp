@@ -4,12 +4,12 @@
 
 #include "magic_numbers.hpp"
 
-MoveList MoveGenerator::generate_moves(const ChessBoard &c, const int side) {
+MoveList MoveGenerator::generate_moves(ChessBoard &c, const int side) {
     MoveList to_return = MoveGenerator::generate_king_moves(c, side);
 
-    if (is_in_double_check(c, side,
-                           bitboard_to_idx(c.get_king_occupancy(side)))) {
-        return to_return;
+    if (get_checking_piece_count(c, side,
+                           bitboard_to_idx(c.get_king_occupancy(side))) >= 2) {
+        return filter_to_legal_moves(c, side, to_return);
     }
 
     to_return.add_moves(MoveGenerator::generate_castling_moves(c, side));
@@ -19,10 +19,10 @@ MoveList MoveGenerator::generate_moves(const ChessBoard &c, const int side) {
     to_return.add_moves(MoveGenerator::generate_rook_moves(c, side));
     to_return.add_moves(MoveGenerator::generate_pawn_moves(c, side));
 
-    return to_return;
+    return filter_to_legal_moves(c, side, to_return);
 }
 
-bool MoveGenerator::is_in_double_check(const ChessBoard &c, const int side, const int king_idx) {
+int MoveGenerator::get_checking_piece_count(const ChessBoard &c, const int side, const int king_idx) {
     uint64_t bishop_mask = MoveGenerator::generate_bishop_movemask(c, king_idx);
     uint64_t rook_mask = MoveGenerator::generate_rook_movemask(c, king_idx);
 
@@ -40,7 +40,7 @@ bool MoveGenerator::is_in_double_check(const ChessBoard &c, const int side, cons
     checking_pieces +=
         _mm_popcnt_u64(c.get_pawn_occupancy(enemy_side) & pawns_attacking_here);
 
-    return checking_pieces >= 2;
+    return checking_pieces;
 }
 
 MoveList MoveGenerator::generate_king_moves(const ChessBoard &c,
@@ -227,8 +227,22 @@ MoveList MoveGenerator::generate_castling_moves(const ChessBoard& c, const int s
             // if only these spaces are occupied
             to_return.add_move(Move(QUEENSIDE_CASTLE, 4 + shift_val, 2 + shift_val));
         }
-
     }
 
+    return to_return;
+}
+
+MoveList MoveGenerator::filter_to_legal_moves(ChessBoard &c, const int side, MoveList& move_list) {
+    MoveList to_return;
+    MoveHistory history;
+    for (size_t i = 0; i < move_list.len(); i++) {
+        Move m = move_list[i];
+        c.make_move(m, history);
+        if (get_checking_piece_count(c, side, bitboard_to_idx(c.get_king_occupancy(side))) == 0) {
+            printf("%d\n", m.get_move());
+            to_return.add_move(m);
+        }
+        c.unmake_move(history);
+    }
     return to_return;
 }

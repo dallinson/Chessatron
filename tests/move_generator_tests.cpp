@@ -42,7 +42,7 @@ TEST(MoveGeneratorTests, TestDoubleCheck) {
     c.set_from_fen("7k/8/b3r3/8/8/8/4K3/1Q6 w - - 0 1");
     auto moves = MoveGenerator::generate_moves(c, 0);
     ASSERT_EQ(moves.len(), 4);
-    auto king_moves = MoveGenerator::generate_king_moves(c, 0);
+    auto king_moves = MoveGenerator::generate_moves(c, 0);
     ASSERT_EQ(king_moves.len(), moves.len());
 }
 

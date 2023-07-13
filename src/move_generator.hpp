@@ -6,10 +6,10 @@
 #include "move.hpp"
 
 namespace MoveGenerator {
-    MoveList generate_moves(const ChessBoard &c, const int side);
+    MoveList generate_moves(ChessBoard &c, const int side);
     MoveList generate_king_moves(const ChessBoard &c, const int side);
     MoveList filter_to_pseudolegal_moves(const ChessBoard &c, const int side, const uint64_t potential_moves, const int idx);
-    bool is_in_double_check(const ChessBoard &c, const int side, const int king_idx);
+    int get_checking_piece_count(const ChessBoard &c, const int side, const int king_idx);
 
     uint64_t generate_bishop_movemask(const ChessBoard &c, const int idx);
     uint64_t generate_rook_movemask(const ChessBoard &c, const int idx);
@@ -22,6 +22,7 @@ namespace MoveGenerator {
     MoveList generate_pawn_moves(const ChessBoard &c, const int side);
 
     MoveList generate_castling_moves(const ChessBoard &c, const int side);
+    MoveList filter_to_legal_moves(ChessBoard &c, const int side, MoveList& move_list);
 }
 
 const uint64_t kingMoves[64] = {
