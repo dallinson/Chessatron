@@ -12,6 +12,7 @@ MoveList MoveGenerator::generate_moves(const ChessBoard &c, const int side) {
         return to_return;
     }
 
+    to_return.add_moves(MoveGenerator::generate_castling_moves(c, side));
     to_return.add_moves(MoveGenerator::generate_queen_moves(c, side));
     to_return.add_moves(MoveGenerator::generate_bishop_moves(c, side));
     to_return.add_moves(MoveGenerator::generate_knight_moves(c, side));
@@ -215,9 +216,18 @@ MoveList MoveGenerator::generate_castling_moves(const ChessBoard& c, const int s
     MoveList to_return;
     if (c.get_kingside_castling(side)) {
         int shift_val = 56 * side;
-        if (((uint64_t) 0b10010000 ^ ((c.get_side_occupancy(side) >> shift_val) & 0xF0)) == 0) {
-
+        if (((uint64_t) 0b10010000 ^ ((c.get_occupancy() >> shift_val) & 0xF0)) == 0) {
+            // if only these spaces are occupied
+            to_return.add_move(Move(KINGSIDE_CASTLE, 4 + shift_val, 6 + shift_val));
         }
+    }
+    if (c.get_queenside_castling(side)) {
+        int shift_val = 56 * side;
+        if (((uint64_t) 0b00010001 ^ ((c.get_occupancy() >> shift_val) & 0x1F)) == 0) {
+            // if only these spaces are occupied
+            to_return.add_move(Move(QUEENSIDE_CASTLE, 4 + shift_val, 2 + shift_val));
+        }
+
     }
 
     return to_return;

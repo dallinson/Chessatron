@@ -61,6 +61,8 @@ class ChessBoard {
 
     bool get_queenside_castling(int side) const { return queenside_castling[side]; };
     bool get_kingside_castling(int side) const { return kingside_castling[side]; };
+    void set_kingside_castling(int side, bool val) { kingside_castling[side] = val; };
+    void set_queenside_castling(int side, bool val) { queenside_castling[side] = val; };
 
     int get_score(int side);
 
