@@ -239,7 +239,6 @@ MoveList MoveGenerator::filter_to_legal_moves(ChessBoard &c, const int side, Mov
         Move m = move_list[i];
         c.make_move(m, history);
         if (get_checking_piece_count(c, side, bitboard_to_idx(c.get_king_occupancy(side))) == 0) {
-            printf("%d\n", m.get_move());
             to_return.add_move(m);
         }
         c.unmake_move(history);
