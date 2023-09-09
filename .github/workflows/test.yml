@@ -31,7 +31,7 @@ jobs:
       - name: Build tests
         working-directory: build
         run: |
-          cmake .. -DCMAKE_BUILD_TYPE=Debug
+          cmake .. -DCMAKE_BUILD_TYPE=Release
           make chessatron_tests
       - name: Install gcovr
         run: |
@@ -40,7 +40,7 @@ jobs:
       - name: Generate cobertura output
         working-directory: build
         run: |
-          ctest -c Debug
+          ctest -c Release
           sudo gcovr -r .. -f '\.\./src' --cobertura cobertura.xml
       - name: Code Coverage Summary
         uses: irongut/CodeCoverageSummary@v1.3.0
