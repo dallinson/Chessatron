@@ -14,7 +14,7 @@
 #define GET_RANK(val) GET_BITS(val, 5, 3)
 #define GET_FILE(val) GET_BITS(val, 2, 0)
 
-#define POSITION(rank, file) ((((rank) & 0x3) * 8) + ((file) & 0x3))
+#define POSITION(rank, file) ((((rank) & 0x7) * 8) + ((file) & 0x7))
 
 void print_bitboard(uint64_t to_print);
 int bitboard_to_idx(uint64_t bitboard);

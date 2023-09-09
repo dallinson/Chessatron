@@ -96,6 +96,7 @@ class MoveHistory : public std::array<std::pair<Move, PreviousMoveState>, MAX_GA
 
   public:
     MoveHistory() : idx(0) {};
+    size_t len() { return idx; };
     void push_move(std::pair<Move, PreviousMoveState> to_add) {
         this->data()[idx] = to_add;
         idx += 1;

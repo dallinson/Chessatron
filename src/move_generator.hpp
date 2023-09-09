@@ -6,7 +6,7 @@
 #include "move.hpp"
 
 namespace MoveGenerator {
-    MoveList generate_moves(ChessBoard &c, const int side);
+    MoveList generate_legal_moves(ChessBoard &c, const int side);
     MoveList generate_king_moves(const ChessBoard &c, const int side);
     MoveList filter_to_pseudolegal_moves(const ChessBoard &c, const int side, const uint64_t potential_moves, const int idx);
     int get_checking_piece_count(const ChessBoard &c, const int side, const int king_idx);
@@ -22,7 +22,9 @@ namespace MoveGenerator {
     MoveList generate_pawn_moves(const ChessBoard &c, const int side);
 
     MoveList generate_castling_moves(const ChessBoard &c, const int side);
-    MoveList filter_to_legal_moves(ChessBoard &c, const int side, MoveList& move_list);
+    MoveList filter_to_legal_moves(ChessBoard &c, const int side, const MoveList& move_list);
+
+    MoveList generate_pseudolegal_moves(const ChessBoard& c, const int side);
 }
 
 const uint64_t kingMoves[64] = {
@@ -265,6 +267,7 @@ const uint64_t pawnAttackMaps[128] = {
     0x40000000,
     0x200000000,
     0x500000000,
+    0xa00000000,
     0x1400000000,
     0x2800000000,
     0x5000000000,

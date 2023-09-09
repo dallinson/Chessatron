@@ -33,3 +33,7 @@ class Piece {
 
     uint_fast8_t to_bitboard_idx() const { return (2 * (get_piece_value() - 1)) + get_side(); };
 };
+
+inline bool operator==(const Piece& lhs, const Piece& rhs) {
+  return lhs.get_piece_value() == rhs.get_piece_value();
+}

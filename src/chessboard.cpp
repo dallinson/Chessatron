@@ -24,6 +24,19 @@ void ChessBoard::print_board() const {
     for (int_fast8_t rank = 7; rank >= 0; rank--) {
         for (uint_fast8_t file = 0; file < 8; file++) {
             printf("%c", piece_str[pieces[(rank * 8) + file].get_value()]);
+            /*if (pieces[(rank * 8) + file].get_value()) {
+                if (!GET_BIT(bitboards[pieces[(rank * 8) + file].to_bitboard_idx()], (rank * 8) + file)) {
+                    printf("ERROR at idx %d, missing in bitboard\n", (rank * 8) + file);
+                    print_bitboard(bitboards[pieces[(rank * 8) + file].to_bitboard_idx()]);
+                    exit(1);
+                }
+            } else {
+                if (GET_BIT(get_occupancy(), (rank * 8) + file)) {
+                    printf("ERROR at idx %d, presence in bitboard\n", (rank * 8) + file);
+                    print_bitboard(get_pawn_occupancy());
+                    exit(1);
+                }
+            }*/
         }
         printf("\n");
     }
@@ -78,6 +91,24 @@ void ChessBoard::set_from_fen(const char *input) {
         }
         char_idx += 1;
     }
+    char_idx += 3;
+    while (input[char_idx] != ' ') {
+        switch (input[char_idx]) {
+            case 'K':
+                set_kingside_castling(WHITE_IDX, true);
+                break;
+            case 'Q':
+                set_queenside_castling(WHITE_IDX, true);
+                break;
+            case 'k':
+                set_kingside_castling(BLACK_IDX, true);
+                break;
+            case 'q':
+                set_queenside_castling(BLACK_IDX, true);
+                break;
+        }
+        char_idx += 1;
+    }
 }
 
 int ChessBoard::get_score(int side) {
@@ -102,11 +133,12 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
         CLEAR_BIT(this->bitboards[at_target.to_bitboard_idx()], to_make.get_dest_square());
     }
 
-    if (to_make.get_move_flags() & 0x8) {
+    if (to_make.get_move_flags() >= 8) {
         // Any value >= 8 is a promotion
-        int promoted_piece = ((to_make.get_move_flags() & 0x3) + 2) * 2;
-        promoted_piece += side;
-        SET_BIT(this->bitboards[promoted_piece], to_make.get_dest_square());
+        Piece promoted_piece = Piece(side, (to_make.get_move_flags() & 0b0011) + 2);
+        this->pieces[to_make.get_dest_square()] = promoted_piece;
+        //promoted_piece += side;
+        SET_BIT(this->bitboards[promoted_piece.to_bitboard_idx()], to_make.get_dest_square());
         // This handles pawn promotions
     } else {
         SET_BIT(this->bitboards[moved.to_bitboard_idx()], to_make.get_dest_square());
@@ -152,10 +184,10 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
     }
 
     if (to_make.get_src_square() == 56 || to_make.get_dest_square() == 56) {
-        set_queenside_castling(0, false);
+        set_queenside_castling(1, false);
     }
     if (to_make.get_src_square() == 63 || to_make.get_dest_square() == 63) {
-        set_kingside_castling(0, false);
+        set_kingside_castling(1, false);
     }
 }
 
@@ -183,7 +215,7 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
             const int enemy_side = (side + 1) & 1;
             const int enemy_pawn_idx = previous_move_pair.first.get_dest_square() - 8 + (16 * side);
             this->pieces[enemy_pawn_idx] = Piece(enemy_side, PAWN_VALUE);
-            SET_BIT(this->bitboards[PAWN_OFFSET + side], enemy_pawn_idx);
+            SET_BIT(this->bitboards[PAWN_OFFSET + enemy_side], enemy_pawn_idx);
         }
     }
 
@@ -199,7 +231,7 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
         this->pieces[origin_square + 1] = 0;
         CLEAR_BIT(this->bitboards[ROOK_OFFSET + side], origin_square + 1);
         this->pieces[origin_square - 2] = Piece(side, ROOK_VALUE);
-        SET_BIT(this->bitboards[ROOK_OFFSET - side], origin_square - 2);
+        SET_BIT(this->bitboards[ROOK_OFFSET + side], origin_square - 2);
     }
 
     set_en_passant_file(previous_move_pair.second.get_previous_en_passant_file());
@@ -207,4 +239,25 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
     set_queenside_castling(0, previous_move_pair.second.get_white_queenside_castle());
     set_kingside_castling(1, previous_move_pair.second.get_black_kingside_castle());
     set_queenside_castling(1, previous_move_pair.second.get_black_queenside_castle());
+}
+
+bool operator==(const ChessBoard& lhs, const ChessBoard& rhs) {
+  bool is_equal = true;
+  for (int i = 0; i < 64; i++) {
+    is_equal &= (lhs.get_piece(i) == rhs.get_piece(i));
+  }
+
+  for (int i = 0; i < 12; i++) {
+    is_equal &= (lhs.get_pawn_occupancy(i) == rhs.get_pawn_occupancy(i));
+    // this just makes it a bit nicer to use
+  }
+
+  is_equal &= (lhs.get_en_passant_file() == rhs.get_en_passant_file());
+
+  for (int i = 0; i < 2; i++) {
+    is_equal &= (lhs.get_queenside_castling(i) == rhs.get_queenside_castling(i));
+    is_equal &= (lhs.get_kingside_castling(i) == rhs.get_kingside_castling(i));
+  }
+
+  return is_equal;
 }

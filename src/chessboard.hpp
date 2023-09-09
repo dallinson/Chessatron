@@ -67,6 +67,7 @@ class ChessBoard {
     int get_score(int side);
 
     void set_piece(uint_fast8_t piece, uint_fast8_t pos);
+    Piece get_piece(int i) const { return this->pieces[i]; };
     void print_board() const;
     void clear_board();
 
@@ -75,3 +76,5 @@ class ChessBoard {
     void make_move(Move to_make, MoveHistory& move_history);
     void unmake_move(MoveHistory& move_history);
 };
+
+bool operator==(const ChessBoard& lhs, const ChessBoard& rhs);
