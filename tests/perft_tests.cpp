@@ -3,16 +3,12 @@
 #include "../src/chessboard.hpp"
 #include "../src/move_generator.hpp"
 
-uint64_t perft(ChessBoard& c, MoveHistory& m, int depth, const int side) {
+uint64_t perft(ChessBoard& c, MoveHistory& m, int depth, const int side, const bool print_debug=false) {
     MoveList moves;
     uint64_t to_return = 0;
     //c.print_board();
 
     moves = MoveGenerator::generate_legal_moves(c, side);
-
-    for (size_t i = 0; i < moves.len(); i++) {
-        //printf("%s %d\n", moves[i].to_string().c_str(), moves[i].get_move());
-    }
 
     if (depth == 1) {
         return moves.len();
@@ -24,9 +20,6 @@ uint64_t perft(ChessBoard& c, MoveHistory& m, int depth, const int side) {
         uint64_t val;
         c.make_move(l, m);
         val = perft(c, m, depth - 1, (side + 1) & 1);
-        if (depth == 2) {
-            //printf("%s: %lld\n", l.to_string().c_str(), val);
-        }
         to_return += val;
         c.unmake_move(m);
     }

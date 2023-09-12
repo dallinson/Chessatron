@@ -7,7 +7,7 @@
 
 TEST(ChessboardTests, SetFenStartPos) {
     ChessBoard c;
-    c.set_from_fen("startpos");
+    ASSERT_TRUE(c.set_from_fen("startpos"));
 
     ASSERT_EQ(c.get_occupancy(), (uint64_t) 0xFFFF00000000FFFF);
     ASSERT_EQ(c.get_pawn_occupancy(), (uint64_t) 0x00FF00000000FF00);
@@ -32,11 +32,14 @@ TEST(ChessboardTests, SetFenStartPos) {
     ASSERT_EQ(c.get_bishop_occupancy(1), (uint64_t) 0x2400000000000000);
     ASSERT_EQ(c.get_queen_occupancy(1), (uint64_t) 0x0800000000000000);
     ASSERT_EQ(c.get_king_occupancy(1), (uint64_t) 0x1000000000000000);
+
+    ASSERT_EQ(c.get_side(), 0);
+    ASSERT_EQ(c.get_en_passant_file(), 9);
 }
 
 TEST(ChessBoardTests, SetFenExplicitStartPos) {
     ChessBoard c;
-    c.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    ASSERT_TRUE(c.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"));
 
     ASSERT_EQ(c.get_occupancy(), (uint64_t) 0xFFFF00000000FFFF);
     ASSERT_EQ(c.get_pawn_occupancy(), (uint64_t) 0x00FF00000000FF00);
@@ -61,11 +64,14 @@ TEST(ChessBoardTests, SetFenExplicitStartPos) {
     ASSERT_EQ(c.get_bishop_occupancy(1), (uint64_t) 0x2400000000000000);
     ASSERT_EQ(c.get_queen_occupancy(1), (uint64_t) 0x0800000000000000);
     ASSERT_EQ(c.get_king_occupancy(1), (uint64_t) 0x1000000000000000);
+
+    ASSERT_EQ(c.get_side(), 0);
+    ASSERT_EQ(c.get_en_passant_file(), 9);
 }
 
 TEST(ChessBoardTests, SetFenExplicitStartPosShort) {
     ChessBoard c;
-    c.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR ");
+    ASSERT_FALSE(c.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR "));
 
     ASSERT_EQ(c.get_occupancy(), (uint64_t) 0xFFFF00000000FFFF);
     ASSERT_EQ(c.get_pawn_occupancy(), (uint64_t) 0x00FF00000000FF00);

@@ -42,19 +42,24 @@ void ChessBoard::print_board() const {
     }
 }
 
-void ChessBoard::set_from_fen(const char *input) {
+#define RETURN_FALSE_IF_PAST_END if ((size_t) char_idx >= strlen(input)) { return false; }
+
+bool ChessBoard::set_from_fen(const char *input) {
     if (std::string(input, strlen(input)) == "startpos") {
-        set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-        return;
+        return set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     }
     clear_board();
     int rank = 7;
     int file = 0;
     int char_idx = 0;
+    // set up the board
     while (input[char_idx] != ' ') {
         if (input[char_idx] == '/') {
             file = 0;
             rank -= 1;
+            if (rank < 0) {
+                return false;
+            }
         } else {
             char current = input[char_idx];
             uint_fast8_t piece = 0;
@@ -81,18 +86,51 @@ void ChessBoard::set_from_fen(const char *input) {
             case 'K':
                 piece += KING_VALUE;
                 break;
-            default:
+            case '1':
+                [[fallthrough]];
+            case '2':
+                [[fallthrough]];
+            case '3':
+                [[fallthrough]];
+            case '4':
+                [[fallthrough]];
+            case '5':
+                [[fallthrough]];
+            case '6':
+                [[fallthrough]];
+            case '7':
+                [[fallthrough]];
+            case '8':
                 file += (current - 48);
                 char_idx += 1;
                 continue;
+
+            default:
+                return false;
             }
             set_piece(piece, (rank * 8) + file);
             file += 1;
+            if (file > 8) {
+                return false;
+            }
         }
         char_idx += 1;
+        RETURN_FALSE_IF_PAST_END;
     }
-    char_idx += 3;
+    char_idx += 1;
+    RETURN_FALSE_IF_PAST_END;
+    // set whose turn it is
+    if (input[char_idx] == 'w') {
+        side = 0;
+    } else if (input[char_idx] == 'b') {
+        side = 1;
+    } else {
+        return false;
+    }
+    char_idx += 2;
+    // set castling
     while (input[char_idx] != ' ') {
+        RETURN_FALSE_IF_PAST_END;
         switch (input[char_idx]) {
             case 'K':
                 set_kingside_castling(WHITE_IDX, true);
@@ -106,9 +144,29 @@ void ChessBoard::set_from_fen(const char *input) {
             case 'q':
                 set_queenside_castling(BLACK_IDX, true);
                 break;
+            case '-':
+                break;
+            default:
+                return false;
         }
         char_idx += 1;
     }
+    char_idx += 1;
+
+    RETURN_FALSE_IF_PAST_END;
+    if (input[char_idx] == '-') {
+        set_en_passant_file(9);
+        char_idx += 1;
+    } else {
+        if (input[char_idx] >= 'a' && input[char_idx] <= 'h') {
+            set_en_passant_file(input[char_idx] - 48);
+            char_idx += 1;
+        } else {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 int ChessBoard::get_score(int side) {

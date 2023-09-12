@@ -31,6 +31,8 @@ class ChessBoard {
     std::array<bool, 2> kingside_castling;
     std::array<bool, 2> queenside_castling;
 
+    uint_fast8_t side;
+
     inline uint64_t get_pair_occupancy(int offset) const { return bitboards[offset] | bitboards[offset + 1]; };
 
 
@@ -56,6 +58,11 @@ class ChessBoard {
     uint64_t get_rook_occupancy(int side) const { return bitboards[ROOK_OFFSET + side]; };
     uint64_t get_pawn_occupancy(int side) const { return bitboards[PAWN_OFFSET + side]; };
 
+    /**
+     * @brief Get the en passant file 
+     * 
+     * @return A uint_fast8_t of the en passant file from 0 to 7.  If en passant is not possible, its value is 9.
+     */
     uint_fast8_t get_en_passant_file() const { return en_passant_file; };
     void set_en_passant_file(int file) { en_passant_file = file; };
 
@@ -71,7 +78,9 @@ class ChessBoard {
     void print_board() const;
     void clear_board();
 
-    void set_from_fen(const char *input);
+    bool set_from_fen(const char *input);
+
+    uint_fast8_t get_side() { return this->side; };
 
     void make_move(Move to_make, MoveHistory& move_history);
     void unmake_move(MoveHistory& move_history);
