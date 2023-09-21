@@ -250,18 +250,10 @@ MoveList MoveGenerator::filter_to_legal_moves(ChessBoard &c, const int side, con
     MoveList to_return;
     MoveHistory history;
     for (size_t i = 0; i < move_list.len(); i++) {
-        Move m = move_list[i];
-        c.make_move(m, history);
+        c.make_move(move_list[i], history);
         if (get_checking_piece_count(
                 c, side, bitboard_to_idx(c.get_king_occupancy(side))) == 0) {
-            to_return.add_move(m);
-        } else {
-            //print_bitboard((generate_bishop_movemask(c, bitboard_to_idx(c.get_king_occupancy(side))) & c.get_bishop_occupancy(side + 1)) | c.get_king_occupancy(side));
-            /*printf("%s\n", m.to_string().c_str());
-            print_bitboard(c.get_king_occupancy(side));
-            printf("---\n");
-            c.print_board();
-            printf("---\n");*/
+            to_return.add_move(move_list[i]);
         }
         c.unmake_move(history);
     }

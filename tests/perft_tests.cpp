@@ -14,11 +14,9 @@ uint64_t perft(ChessBoard& c, MoveHistory& m, int depth, const int side, const b
         return moves.len();
     }
 
-    Move l;
     for (size_t i = 0; i < moves.len(); i++) {
-        l = moves[i];
         uint64_t val;
-        c.make_move(l, m);
+        c.make_move(moves[i], m);
         val = perft(c, m, depth - 1, (side + 1) & 1);
         to_return += val;
         c.unmake_move(m);

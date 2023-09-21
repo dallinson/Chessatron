@@ -34,7 +34,7 @@ class Move {
     uint_fast16_t move;
 
   public:
-    Move() : move(0){};
+    Move() : move(0) {};
     Move(uint_fast16_t v) : move(v){};
     Move(MoveFlags flags, uint_fast8_t dest, uint_fast8_t src) : move((((uint_fast16_t) flags) << 12) | (((uint_fast16_t) dest) << 6) | src){};
 
