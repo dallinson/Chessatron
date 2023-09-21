@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <immintrin.h>
 
+typedef uint64_t Bitboard;
+
 #define BIT(x) (((uint64_t) 1) << (x))
 #define GET_BIT(val, x) (((val) >> (x)) & 0x1)
 #define SET_BIT(val, x) val |= BIT(x)
@@ -16,14 +18,20 @@
 
 #define POSITION(rank, file) ((((rank) & 0x7) * 8) + ((file) & 0x7))
 
-void print_bitboard(uint64_t to_print);
-int bitboard_to_idx(uint64_t bitboard);
-uint64_t idx_to_bitboard(int idx);
+void print_bitboard(Bitboard to_print);
+
+inline int bitboard_to_idx(Bitboard bitboard) {
+    return __builtin_ctzll(bitboard);
+};
+
+inline Bitboard idx_to_bitboard(int idx) {
+    return BIT(idx);
+};
 
 int pop_min_bit(uint64_t *num);
 
 namespace SlidingPieceUtils {
-    uint64_t get_bishop_attacks(int idx, uint64_t occupancy);
-    uint64_t get_rook_attacks(int idx, uint64_t occupancy);
-    uint64_t get_queen_attacks(int idx, uint64_t occupancy);
+    Bitboard get_bishop_attacks(int idx, Bitboard occupancy);
+    Bitboard get_rook_attacks(int idx, Bitboard occupancy);
+    Bitboard get_queen_attacks(int idx, Bitboard occupancy);
 } // namespace SlidingPieceUtils

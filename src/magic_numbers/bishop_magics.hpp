@@ -2,7 +2,9 @@
 
 #include <cstdint>
 
-const uint64_t BAttacks[32768] = {
+#include "../utils.hpp"
+
+const Bitboard BAttacks[32768] = {
     0x8040201008040200ULL,
     0x40201008040200ULL,
     0x200ULL,

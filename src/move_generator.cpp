@@ -33,11 +33,11 @@ MoveList MoveGenerator::generate_pseudolegal_moves(const ChessBoard &c, const in
 }
 
 int MoveGenerator::get_checking_piece_count(const ChessBoard &c, const int side, const int king_idx) {
-    uint64_t bishop_mask = MoveGenerator::generate_bishop_movemask(c, king_idx);
-    uint64_t rook_mask = MoveGenerator::generate_rook_movemask(c, king_idx);
+    Bitboard bishop_mask = MoveGenerator::generate_bishop_movemask(c, king_idx);
+    Bitboard rook_mask = MoveGenerator::generate_rook_movemask(c, king_idx);
 
     int enemy_side = (side + 1) & 0x01;
-    uint64_t enemy_queen_mask = c.get_queen_occupancy(enemy_side);
+    Bitboard enemy_queen_mask = c.get_queen_occupancy(enemy_side);
 
     int checking_pieces = _mm_popcnt_u64(enemy_queen_mask & (bishop_mask | rook_mask));
     checking_pieces += _mm_popcnt_u64(c.get_bishop_occupancy(enemy_side) & bishop_mask);
@@ -45,7 +45,7 @@ int MoveGenerator::get_checking_piece_count(const ChessBoard &c, const int side,
     // this calculates the checking pieces for the sliding pieces
     checking_pieces += _mm_popcnt_u64(c.get_knight_occupancy(enemy_side) & knightMoves[king_idx]);
 
-    uint64_t pawns_attacking_here = pawnAttackMaps[(64 * side) + king_idx];
+    Bitboard pawns_attacking_here = pawnAttackMaps[(64 * side) + king_idx];
     // black is in the latter 64 spaces
     checking_pieces +=
         _mm_popcnt_u64(c.get_pawn_occupancy(enemy_side) & pawns_attacking_here);
@@ -56,13 +56,13 @@ int MoveGenerator::get_checking_piece_count(const ChessBoard &c, const int side,
 MoveList MoveGenerator::generate_king_moves(const ChessBoard &c,
                                             const int side) {
     int king_idx = bitboard_to_idx(c.get_king_occupancy(side));
-    uint64_t king_moves = kingMoves[king_idx];
+    Bitboard king_moves = kingMoves[king_idx];
     return filter_to_pseudolegal_moves(c, side, king_moves, king_idx);
 }
 
-MoveList MoveGenerator::filter_to_pseudolegal_moves(const ChessBoard &c, const int side, const uint64_t potential_moves, const int idx) {
+MoveList MoveGenerator::filter_to_pseudolegal_moves(const ChessBoard &c, const int side, const Bitboard potential_moves, const int idx) {
     MoveList to_return;
-    uint64_t valid_moves = potential_moves & ~c.get_side_occupancy(side);
+    Bitboard valid_moves = potential_moves & ~c.get_side_occupancy(side);
     // only move onto spaces unoccupied by friendlies
     int src_idx = idx & 0x3F;
     while (valid_moves) {
@@ -75,38 +75,38 @@ MoveList MoveGenerator::filter_to_pseudolegal_moves(const ChessBoard &c, const i
     return to_return;
 }
 
-uint64_t MoveGenerator::generate_bishop_movemask(const ChessBoard &c, const int idx) {
-    uint64_t masked = (c.get_occupancy() & BMask[idx]);
+Bitboard MoveGenerator::generate_bishop_movemask(const ChessBoard &c, const int idx) {
+    Bitboard masked = (c.get_occupancy() & BMask[idx]);
     return BAttacks[(512 * idx) + ((masked * BMagic[idx]) >> (64 - BBits[idx]))];
 }
 
-uint64_t MoveGenerator::generate_rook_movemask(const ChessBoard &c, const int idx) {
-    uint64_t masked = (c.get_occupancy() & RMask[idx]);
+Bitboard MoveGenerator::generate_rook_movemask(const ChessBoard &c, const int idx) {
+    Bitboard masked = (c.get_occupancy() & RMask[idx]);
     return RAttacks[(4096 * idx) + ((masked * RMagic[idx]) >> (64 - RBits[idx]))];
 }
 
-uint64_t MoveGenerator::generate_queen_movemask(const ChessBoard &c, const int idx) {
+Bitboard MoveGenerator::generate_queen_movemask(const ChessBoard &c, const int idx) {
     return MoveGenerator::generate_bishop_movemask(c, idx) |
            MoveGenerator::generate_rook_movemask(c, idx);
 }
 
 MoveList MoveGenerator::generate_queen_moves(const ChessBoard &c, const int side) {
-    uint64_t queen_mask = c.get_queen_occupancy(side);
+    Bitboard queen_mask = c.get_queen_occupancy(side);
     MoveList to_return;
     while (queen_mask) {
         int queen_idx = pop_min_bit(&queen_mask);
-        uint64_t queen_moves = MoveGenerator::generate_queen_movemask(c, queen_idx);
+        Bitboard queen_moves = MoveGenerator::generate_queen_movemask(c, queen_idx);
         to_return.add_moves(filter_to_pseudolegal_moves(c, side, queen_moves, queen_idx));
     }
     return to_return;
 }
 
 MoveList MoveGenerator::generate_bishop_moves(const ChessBoard &c, const int side) {
-    uint64_t bishop_mask = c.get_bishop_occupancy(side);
+    Bitboard bishop_mask = c.get_bishop_occupancy(side);
     MoveList to_return;
     while (bishop_mask) {
         int bishop_idx = pop_min_bit(&bishop_mask);
-        uint64_t bishop_moves =
+        Bitboard bishop_moves =
             MoveGenerator::generate_bishop_movemask(c, bishop_idx);
         to_return.add_moves(
             filter_to_pseudolegal_moves(c, side, bishop_moves, bishop_idx));
@@ -115,11 +115,11 @@ MoveList MoveGenerator::generate_bishop_moves(const ChessBoard &c, const int sid
 }
 
 MoveList MoveGenerator::generate_knight_moves(const ChessBoard &c, const int side) {
-    uint64_t knight_mask = c.get_knight_occupancy(side);
+    Bitboard knight_mask = c.get_knight_occupancy(side);
     MoveList to_return;
     while (knight_mask) {
         int knight_idx = pop_min_bit(&knight_mask);
-        uint64_t knight_moves = knightMoves[knight_idx];
+        Bitboard knight_moves = knightMoves[knight_idx];
         to_return.add_moves(
             filter_to_pseudolegal_moves(c, side, knight_moves, knight_idx));
     }
@@ -127,18 +127,18 @@ MoveList MoveGenerator::generate_knight_moves(const ChessBoard &c, const int sid
 }
 
 MoveList MoveGenerator::generate_rook_moves(const ChessBoard &c, const int side) {
-    uint64_t rook_mask = c.get_rook_occupancy(side);
+    Bitboard rook_mask = c.get_rook_occupancy(side);
     MoveList to_return;
     while (rook_mask) {
         int rook_idx = pop_min_bit(&rook_mask);
-        uint64_t rook_moves = MoveGenerator::generate_rook_movemask(c, rook_idx);
+        Bitboard rook_moves = MoveGenerator::generate_rook_movemask(c, rook_idx);
         to_return.add_moves(filter_to_pseudolegal_moves(c, side, rook_moves, rook_idx));
     }
     return to_return;
 }
 
 MoveList MoveGenerator::generate_pawn_moves(const ChessBoard &c, const int side) {
-    uint64_t pawn_mask = c.get_pawn_occupancy(side);
+    Bitboard pawn_mask = c.get_pawn_occupancy(side);
     MoveList to_return;
     while (pawn_mask) {
         int pawn_idx = pop_min_bit(&pawn_mask);

@@ -4,11 +4,12 @@
 
 #include "magic_numbers/bishop_magics.hpp"
 #include "magic_numbers/rook_magics.hpp"
+#include "utils.hpp"
 
 #define BISHOP_MOVES 512
 #define ROOK_MOVES 4096
 
-const uint64_t RMagic[64] = {
+const Bitboard RMagic[64] = {
     0x6080008040062850ULL,
     0x1300204002810010ULL,
     0x100110440082000ULL,
@@ -75,7 +76,7 @@ const uint64_t RMagic[64] = {
     0x2c011400852442ULL,
 };
 
-const uint64_t BMagic[64] = {
+const Bitboard BMagic[64] = {
     0x1004040846040012ULL,
     0x84410851070008ULL,
     0x610008208400808ULL,
@@ -142,7 +143,7 @@ const uint64_t BMagic[64] = {
     0x1c1042102102100ULL,
 };
 
-const uint64_t RMask[64] = {
+const Bitboard RMask[64] = {
     0x101010101017eULL,
     0x202020202027cULL,
     0x404040404047aULL,
@@ -209,7 +210,7 @@ const uint64_t RMask[64] = {
     0x7e80808080808000ULL,
 };
 
-const uint64_t BMask[64] = {
+const Bitboard BMask[64] = {
     0x40201008040200ULL,
     0x402010080400ULL,
     0x4020100a00ULL,
