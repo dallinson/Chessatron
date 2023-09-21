@@ -1,5 +1,6 @@
 #include "move_generator.hpp"
 
+#include <bit>
 #include <immintrin.h>
 
 #include "magic_numbers.hpp"
@@ -39,16 +40,16 @@ int MoveGenerator::get_checking_piece_count(const ChessBoard &c, const int side,
     int enemy_side = (side + 1) & 0x01;
     Bitboard enemy_queen_mask = c.get_queen_occupancy(enemy_side);
 
-    int checking_pieces = _mm_popcnt_u64(enemy_queen_mask & (bishop_mask | rook_mask));
-    checking_pieces += _mm_popcnt_u64(c.get_bishop_occupancy(enemy_side) & bishop_mask);
-    checking_pieces += _mm_popcnt_u64(c.get_rook_occupancy(enemy_side) & rook_mask);
+    int checking_pieces = std::popcount(enemy_queen_mask & (bishop_mask | rook_mask));
+    checking_pieces += std::popcount(c.get_bishop_occupancy(enemy_side) & bishop_mask);
+    checking_pieces += std::popcount(c.get_rook_occupancy(enemy_side) & rook_mask);
     // this calculates the checking pieces for the sliding pieces
-    checking_pieces += _mm_popcnt_u64(c.get_knight_occupancy(enemy_side) & knightMoves[king_idx]);
+    checking_pieces += std::popcount(c.get_knight_occupancy(enemy_side) & knightMoves[king_idx]);
 
     Bitboard pawns_attacking_here = pawnAttackMaps[(64 * side) + king_idx];
     // black is in the latter 64 spaces
     checking_pieces +=
-        _mm_popcnt_u64(c.get_pawn_occupancy(enemy_side) & pawns_attacking_here);
+        std::popcount(c.get_pawn_occupancy(enemy_side) & pawns_attacking_here);
 
     return checking_pieces;
 }

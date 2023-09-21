@@ -1,5 +1,6 @@
 #pragma once
 
+#include <bit>
 #include <cstdint>
 #include <immintrin.h>
 
@@ -21,7 +22,7 @@ typedef uint64_t Bitboard;
 void print_bitboard(Bitboard to_print);
 
 inline int bitboard_to_idx(Bitboard bitboard) {
-    return __builtin_ctzll(bitboard);
+    return std::countr_zero(bitboard);
 };
 
 inline Bitboard idx_to_bitboard(int idx) {

@@ -1,7 +1,7 @@
 #include "chessboard.hpp"
 
 #include <string>
-
+#include <bit>
 #include <cstring>
 
 void ChessBoard::set_piece(uint_fast8_t piece, uint_fast8_t pos) {
@@ -170,7 +170,7 @@ bool ChessBoard::set_from_fen(const char *input) {
 }
 
 int ChessBoard::get_score(int side) {
-    return (_mm_popcnt_u64(get_pawn_occupancy(side)) * PAWN_VALUE) + (_mm_popcnt_u64(get_rook_occupancy(side)) * ROOK_VALUE) + (_mm_popcnt_u64(get_knight_occupancy(side)) * KNIGHT_VALUE) + (_mm_popcnt_u64(get_bishop_occupancy(side)) * BISHOP_VALUE) + (_mm_popcnt_u64(get_queen_occupancy(side)) * QUEEN_VALUE);
+    return (std::popcount(get_pawn_occupancy(side)) * PAWN_VALUE) + (std::popcount(get_rook_occupancy(side)) * ROOK_VALUE) + (std::popcount(get_knight_occupancy(side)) * KNIGHT_VALUE) + (std::popcount(get_bishop_occupancy(side)) * BISHOP_VALUE) + (std::popcount(get_queen_occupancy(side)) * QUEEN_VALUE);
 }
 
 void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
