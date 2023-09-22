@@ -18,7 +18,7 @@ void print_bitboard(Bitboard to_print) {
     }
 }
 
-int pop_min_bit(uint64_t *num) {
+int pop_min_bit(uint64_t* num) {
     int to_return = bitboard_to_idx(*num);
     CLEAR_BIT(*num, to_return);
     return to_return;

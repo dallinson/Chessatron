@@ -22,9 +22,9 @@ class Piece {
     uint_fast8_t val;
 
   public:
-    Piece() : val(0) {};
-    Piece(uint_fast8_t val) : val(val) {};
-    Piece(uint_fast8_t side, uint_fast8_t piece_val) : val(side << 3 | piece_val) {};
+    Piece() : val(0){};
+    Piece(uint_fast8_t val) : val(val){};
+    Piece(uint_fast8_t side, uint_fast8_t piece_val) : val(side << 3 | piece_val){};
 
     void set_value(uint_fast8_t val) { this->val = val; };
     uint_fast8_t get_value() const { return this->val; };
@@ -35,5 +35,5 @@ class Piece {
 };
 
 inline bool operator==(const Piece& lhs, const Piece& rhs) {
-  return lhs.get_piece_value() == rhs.get_piece_value();
+    return lhs.get_piece_value() == rhs.get_piece_value();
 }

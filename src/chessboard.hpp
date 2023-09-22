@@ -3,9 +3,9 @@
 #include <array>
 #include <cstdint>
 
+#include "move.hpp"
 #include "pieces.hpp"
 #include "utils.hpp"
-#include "move.hpp"
 
 #define KING_OFFSET (2 * ((KING_VALUE) -1))
 #define QUEEN_OFFSET (2 * ((QUEEN_VALUE) -1))
@@ -34,7 +34,6 @@ class ChessBoard {
     uint_fast8_t side = 0;
 
     inline Bitboard get_pair_occupancy(int offset) const { return bitboards[offset] | bitboards[offset + 1]; };
-
 
   public:
     Bitboard get_occupancy() const { return get_king_occupancy() | get_queen_occupancy() | get_bishop_occupancy() | get_knight_occupancy() | get_rook_occupancy() | get_pawn_occupancy(); };
@@ -78,9 +77,9 @@ class ChessBoard {
     void print_board() const;
     void clear_board();
 
-    bool set_from_fen(const char *input);
+    bool set_from_fen(const char* input);
 
-    uint_fast8_t get_side() { return this->side; };
+    uint_fast8_t get_side() const { return this->side; };
 
     void make_move(const Move to_make, MoveHistory& move_history);
     void unmake_move(MoveHistory& move_history);

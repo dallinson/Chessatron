@@ -158,5 +158,4 @@ TEST(ChessBoardTests, TestMakeMove) {
     for (int i = 0; i < 64; i++) {
         ASSERT_EQ(c.get_piece(i).get_value(), o.get_piece(i).get_value()) << "Mismatch at piece " << std::to_string(i) << "!";
     }
-
 }

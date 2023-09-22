@@ -34,7 +34,7 @@ class Move {
     uint_fast16_t move;
 
   public:
-    Move() : move(0) {};
+    Move() : move(0){};
     Move(uint_fast16_t v) : move(v){};
     Move(MoveFlags flags, uint_fast8_t dest, uint_fast8_t src) : move((((uint_fast16_t) flags) << 12) | (((uint_fast16_t) dest) << 6) | src){};
 
@@ -58,7 +58,7 @@ class MoveList : public std::array<Move, MAX_TURN_MOVE_COUNT> {
     size_t idx;
 
   public:
-    MoveList() : idx(0) {};
+    MoveList() : idx(0){};
     using std::array<Move, MAX_TURN_MOVE_COUNT>::operator[];
 
     void add_move(const Move to_add) {
@@ -66,7 +66,7 @@ class MoveList : public std::array<Move, MAX_TURN_MOVE_COUNT> {
         idx += 1;
     };
 
-    void add_moves(const MoveList &other_list) {
+    void add_moves(const MoveList& other_list) {
         size_t other_len = other_list.len();
         memcpy(&this->data()[idx], other_list.data(), other_len * sizeof(Move));
         idx += other_len;
@@ -80,7 +80,7 @@ class PreviousMoveState {
     uint_fast16_t info;
 
   public:
-    PreviousMoveState() : info(0) {};
+    PreviousMoveState() : info(0){};
     PreviousMoveState(const Piece target_piece, const uint_fast8_t previous_en_passant_state, const bool white_kingside_castle, const bool white_queenside_castle, const bool black_kingside_castle, const bool black_queenside_castle) : info(target_piece.get_value() | previous_en_passant_state << 4 | white_kingside_castle << 8 | white_queenside_castle << 9 | black_kingside_castle << 10 | black_queenside_castle << 11){};
     Piece get_piece() const { return GET_BITS(info, 3, 0); };
     uint_fast8_t get_previous_en_passant_file() const { return GET_BITS(info, 7, 4); };
@@ -95,7 +95,7 @@ class MoveHistory : public std::array<std::pair<Move, PreviousMoveState>, MAX_GA
     size_t idx;
 
   public:
-    MoveHistory() : idx(0) {};
+    MoveHistory() : idx(0){};
     size_t len() { return idx; };
     void push_move(std::pair<Move, PreviousMoveState> to_add) {
         this->data()[idx] = to_add;

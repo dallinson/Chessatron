@@ -133,7 +133,7 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountKiwipete) {
 
     auto pawn_moves = MoveGenerator::generate_pawn_moves(c, 0);
     ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, 0, pawn_moves).len(), 8);
-    
+
     ASSERT_EQ(legal_moves.len(), 48);
 }
 
@@ -162,7 +162,7 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountKiwipeteB2B3) {
 
     auto pawn_moves = MoveGenerator::generate_pawn_moves(c, 1);
     ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, 1, pawn_moves).len(), 7);
-    
+
     ASSERT_EQ(legal_moves.len(), 42);
 }
 
@@ -194,7 +194,7 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountKiwipeteE1D1C7C6) {
 
     auto pawn_moves = MoveGenerator::generate_pawn_moves(c, 0);
     ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, 0, pawn_moves).len(), 9);
-    
+
     ASSERT_EQ(legal_moves.len(), 46);
 }
 
@@ -205,4 +205,3 @@ TEST(MoveGeneratorTests, TestRookMoves) {
     auto legal_moves = MoveGenerator::filter_to_legal_moves(c, 0, rook_moves);
     ASSERT_EQ(legal_moves.len(), 5);
 }
-

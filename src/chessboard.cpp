@@ -1,8 +1,8 @@
 #include "chessboard.hpp"
 
-#include <string>
 #include <bit>
 #include <cstring>
+#include <string>
 
 void ChessBoard::set_piece(uint_fast8_t piece, uint_fast8_t pos) {
     pieces[pos] = piece;
@@ -20,7 +20,7 @@ void ChessBoard::clear_board() {
 }
 
 void ChessBoard::print_board() const {
-    static const char *piece_str = ".PRNBQK..prnbqk.";
+    static const char* piece_str = ".PRNBQK..prnbqk.";
     for (int_fast8_t rank = 7; rank >= 0; rank--) {
         for (uint_fast8_t file = 0; file < 8; file++) {
             printf("%c", piece_str[pieces[(rank * 8) + file].get_value()]);
@@ -42,9 +42,12 @@ void ChessBoard::print_board() const {
     }
 }
 
-#define RETURN_FALSE_IF_PAST_END if ((size_t) char_idx >= strlen(input)) { return false; }
+#define RETURN_FALSE_IF_PAST_END              \
+    if ((size_t) char_idx >= strlen(input)) { \
+        return false;                         \
+    }
 
-bool ChessBoard::set_from_fen(const char *input) {
+bool ChessBoard::set_from_fen(const char* input) {
     if (std::string(input, strlen(input)) == "startpos") {
         return set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     }
@@ -132,22 +135,22 @@ bool ChessBoard::set_from_fen(const char *input) {
     while (input[char_idx] != ' ') {
         RETURN_FALSE_IF_PAST_END;
         switch (input[char_idx]) {
-            case 'K':
-                set_kingside_castling(WHITE_IDX, true);
-                break;
-            case 'Q':
-                set_queenside_castling(WHITE_IDX, true);
-                break;
-            case 'k':
-                set_kingside_castling(BLACK_IDX, true);
-                break;
-            case 'q':
-                set_queenside_castling(BLACK_IDX, true);
-                break;
-            case '-':
-                break;
-            default:
-                return false;
+        case 'K':
+            set_kingside_castling(WHITE_IDX, true);
+            break;
+        case 'Q':
+            set_queenside_castling(WHITE_IDX, true);
+            break;
+        case 'k':
+            set_kingside_castling(BLACK_IDX, true);
+            break;
+        case 'q':
+            set_queenside_castling(BLACK_IDX, true);
+            break;
+        case '-':
+            break;
+        default:
+            return false;
         }
         char_idx += 1;
     }
@@ -300,22 +303,22 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
 }
 
 bool operator==(const ChessBoard& lhs, const ChessBoard& rhs) {
-  bool is_equal = true;
-  for (int i = 0; i < 64; i++) {
-    is_equal &= (lhs.get_piece(i) == rhs.get_piece(i));
-  }
+    bool is_equal = true;
+    for (int i = 0; i < 64; i++) {
+        is_equal &= (lhs.get_piece(i) == rhs.get_piece(i));
+    }
 
-  for (int i = 0; i < 12; i++) {
-    is_equal &= (lhs.get_pawn_occupancy(i) == rhs.get_pawn_occupancy(i));
-    // this just makes it a bit nicer to use
-  }
+    for (int i = 0; i < 12; i++) {
+        is_equal &= (lhs.get_pawn_occupancy(i) == rhs.get_pawn_occupancy(i));
+        // this just makes it a bit nicer to use
+    }
 
-  is_equal &= (lhs.get_en_passant_file() == rhs.get_en_passant_file());
+    is_equal &= (lhs.get_en_passant_file() == rhs.get_en_passant_file());
 
-  for (int i = 0; i < 2; i++) {
-    is_equal &= (lhs.get_queenside_castling(i) == rhs.get_queenside_castling(i));
-    is_equal &= (lhs.get_kingside_castling(i) == rhs.get_kingside_castling(i));
-  }
+    for (int i = 0; i < 2; i++) {
+        is_equal &= (lhs.get_queenside_castling(i) == rhs.get_queenside_castling(i));
+        is_equal &= (lhs.get_kingside_castling(i) == rhs.get_kingside_castling(i));
+    }
 
-  return is_equal;
+    return is_equal;
 }

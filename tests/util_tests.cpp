@@ -2,8 +2,8 @@
 
 #include <cstdint>
 
-#include "../src/utils.hpp"
 #include "../src/chessboard.hpp"
+#include "../src/utils.hpp"
 
 TEST(UtilTests, TestTrailingZeroBits) {
     for (int i = 0; i < 64; i++) {

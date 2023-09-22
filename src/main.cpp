@@ -32,7 +32,7 @@ std::vector<std::string> split_on_whitespace(const std::string& data) {
     return to_return;
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
 #ifdef IS_TESTING
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
@@ -51,7 +51,6 @@ int main(int argc, char **argv) {
         } else {
             auto parsed_line = split_on_whitespace(line);
             if (parsed_line.size() >= 1) {
-
             }
         }
     }
