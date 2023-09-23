@@ -28,12 +28,10 @@ class Piece {
 
     void set_value(uint_fast8_t val) { this->val = val; };
     uint_fast8_t get_value() const { return this->val; };
-    uint_fast8_t get_piece_value() const { return GET_BITS(val, 2, 0); };
+    uint_fast8_t get_type() const { return GET_BITS(val, 2, 0); };
     uint_fast8_t get_side() const { return GET_BIT(val, 3); };
 
-    uint_fast8_t to_bitboard_idx() const { return (2 * (get_piece_value() - 1)) + get_side(); };
+    uint_fast8_t to_bitboard_idx() const { return (2 * (get_type() - 1)) + get_side(); };
 };
 
-inline bool operator==(const Piece& lhs, const Piece& rhs) {
-    return lhs.get_piece_value() == rhs.get_piece_value();
-}
+inline bool operator==(const Piece& lhs, const Piece& rhs) { return lhs.get_value() == rhs.get_value(); }

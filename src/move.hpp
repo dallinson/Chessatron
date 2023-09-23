@@ -81,7 +81,10 @@ class PreviousMoveState {
 
   public:
     PreviousMoveState() : info(0){};
-    PreviousMoveState(const Piece target_piece, const uint_fast8_t previous_en_passant_state, const bool white_kingside_castle, const bool white_queenside_castle, const bool black_kingside_castle, const bool black_queenside_castle) : info(target_piece.get_value() | previous_en_passant_state << 4 | white_kingside_castle << 8 | white_queenside_castle << 9 | black_kingside_castle << 10 | black_queenside_castle << 11){};
+    PreviousMoveState(const Piece target_piece, const uint_fast8_t previous_en_passant_state, const bool white_kingside_castle,
+                      const bool white_queenside_castle, const bool black_kingside_castle, const bool black_queenside_castle)
+        : info(target_piece.get_value() | previous_en_passant_state << 4 | white_kingside_castle << 8 | white_queenside_castle << 9 |
+               black_kingside_castle << 10 | black_queenside_castle << 11){};
     Piece get_piece() const { return GET_BITS(info, 3, 0); };
     uint_fast8_t get_previous_en_passant_file() const { return GET_BITS(info, 7, 4); };
     bool get_white_kingside_castle() const { return GET_BIT(info, 8); };
@@ -97,10 +100,12 @@ class MoveHistory : public std::array<std::pair<Move, PreviousMoveState>, MAX_GA
   public:
     MoveHistory() : idx(0){};
     size_t len() { return idx; };
+
     void push_move(std::pair<Move, PreviousMoveState> to_add) {
         this->data()[idx] = to_add;
         idx += 1;
     };
+
     std::pair<Move, PreviousMoveState> pop_move() {
         idx -= 1;
         return this->data()[idx];

@@ -42,9 +42,9 @@ void ChessBoard::print_board() const {
     }
 }
 
-#define RETURN_FALSE_IF_PAST_END              \
-    if ((size_t) char_idx >= strlen(input)) { \
-        return false;                         \
+#define RETURN_FALSE_IF_PAST_END                                                                                                                     \
+    if ((size_t) char_idx >= strlen(input)) {                                                                                                        \
+        return false;                                                                                                                                \
     }
 
 bool ChessBoard::set_from_fen(const char* input) {
@@ -173,7 +173,9 @@ bool ChessBoard::set_from_fen(const char* input) {
 }
 
 int ChessBoard::get_score(int side) {
-    return (std::popcount(get_pawn_occupancy(side)) * PAWN_VALUE) + (std::popcount(get_rook_occupancy(side)) * ROOK_VALUE) + (std::popcount(get_knight_occupancy(side)) * KNIGHT_VALUE) + (std::popcount(get_bishop_occupancy(side)) * BISHOP_VALUE) + (std::popcount(get_queen_occupancy(side)) * QUEEN_VALUE);
+    return (std::popcount(get_pawn_occupancy(side)) * PAWN_VALUE) + (std::popcount(get_rook_occupancy(side)) * ROOK_VALUE) +
+           (std::popcount(get_knight_occupancy(side)) * KNIGHT_VALUE) + (std::popcount(get_bishop_occupancy(side)) * BISHOP_VALUE) +
+           (std::popcount(get_queen_occupancy(side)) * QUEEN_VALUE);
 }
 
 void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
@@ -184,7 +186,9 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
     Piece at_target = this->pieces[to_make.get_dest_square()];
     this->pieces[to_make.get_dest_square()] = moved;
     // get the piece we replace with ourselves and do the replacement
-    auto to_add = std::make_pair(to_make, PreviousMoveState(at_target, this->get_en_passant_file(), get_kingside_castling(WHITE_IDX), get_queenside_castling(WHITE_IDX), get_kingside_castling(BLACK_IDX), get_queenside_castling(BLACK_IDX)));
+    auto to_add = std::make_pair(to_make, PreviousMoveState(at_target, this->get_en_passant_file(), get_kingside_castling(WHITE_IDX),
+                                                            get_queenside_castling(WHITE_IDX), get_kingside_castling(BLACK_IDX),
+                                                            get_queenside_castling(BLACK_IDX)));
     move_history.push_move(to_add);
 
     CLEAR_BIT(this->bitboards[moved.to_bitboard_idx()], to_make.get_src_square());
@@ -198,7 +202,7 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
         // Any value >= 8 is a promotion
         Piece promoted_piece = Piece(side, (to_make.get_move_flags() & 0b0011) + 2);
         this->pieces[to_make.get_dest_square()] = promoted_piece;
-        //promoted_piece += side;
+        // promoted_piece += side;
         SET_BIT(this->bitboards[promoted_piece.to_bitboard_idx()], to_make.get_dest_square());
         // This handles pawn promotions
     } else {
@@ -233,7 +237,7 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
         SET_BIT(this->bitboards[ROOK_OFFSET + side], to_make.get_dest_square() + 1);
     }
 
-    if (moved.get_piece_value() == KING_VALUE) {
+    if (moved.get_type() == KING_VALUE) {
         set_kingside_castling(side, false);
         set_queenside_castling(side, false);
     }

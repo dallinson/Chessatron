@@ -1,7 +1,7 @@
 BreakBeforeBraces: Attach
 AllowShortIfStatementsOnASingleLine: false
 IndentCaseLabels: false
-ColumnLimit: 0
+ColumnLimit: 150
 IndentWidth: 4
 UseTab: Never
 SpaceAfterCStyleCast: true

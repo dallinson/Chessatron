@@ -21,13 +21,9 @@ typedef uint64_t Bitboard;
 
 void print_bitboard(Bitboard to_print);
 
-inline int bitboard_to_idx(Bitboard bitboard) {
-    return std::countr_zero(bitboard);
-};
+inline int bitboard_to_idx(Bitboard bitboard) { return std::countr_zero(bitboard); };
 
-inline Bitboard idx_to_bitboard(int idx) {
-    return BIT(idx);
-};
+inline Bitboard idx_to_bitboard(int idx) { return BIT(idx); };
 
 int pop_min_bit(uint64_t* num);
 

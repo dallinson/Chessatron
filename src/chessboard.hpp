@@ -36,10 +36,16 @@ class ChessBoard {
     inline Bitboard get_pair_occupancy(int offset) const { return bitboards[offset] | bitboards[offset + 1]; };
 
   public:
-    Bitboard get_occupancy() const { return get_king_occupancy() | get_queen_occupancy() | get_bishop_occupancy() | get_knight_occupancy() | get_rook_occupancy() | get_pawn_occupancy(); };
+    Bitboard get_occupancy() const {
+        return get_king_occupancy() | get_queen_occupancy() | get_bishop_occupancy() | get_knight_occupancy() | get_rook_occupancy() |
+               get_pawn_occupancy();
+    };
     Bitboard get_occupancy(const int side) const { return get_side_occupancy(side); };
 
-    Bitboard get_side_occupancy(const int side) const { return bitboards[KING_OFFSET + side] | bitboards[QUEEN_OFFSET + side] | bitboards[BISHOP_OFFSET + side] | bitboards[KNIGHT_OFFSET + side] | bitboards[ROOK_OFFSET + side] | bitboards[PAWN_OFFSET + side]; };
+    Bitboard get_side_occupancy(const int side) const {
+        return bitboards[KING_OFFSET + side] | bitboards[QUEEN_OFFSET + side] | bitboards[BISHOP_OFFSET + side] | bitboards[KNIGHT_OFFSET + side] |
+               bitboards[ROOK_OFFSET + side] | bitboards[PAWN_OFFSET + side];
+    };
     Bitboard get_white_occupancy() const { return get_side_occupancy(WHITE_IDX); };
     Bitboard get_black_occupancy() const { return get_side_occupancy(BLACK_IDX); };
 
@@ -58,8 +64,8 @@ class ChessBoard {
     Bitboard get_pawn_occupancy(const int side) const { return bitboards[PAWN_OFFSET + side]; };
 
     /**
-     * @brief Get the en passant file 
-     * 
+     * @brief Get the en passant file
+     *
      * @return A uint_fast8_t of the en passant file from 0 to 7.  If en passant is not possible, its value is 9.
      */
     uint_fast8_t get_en_passant_file() const { return en_passant_file; };

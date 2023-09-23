@@ -94,7 +94,8 @@ const Bitboard kingMoves[64] = {
     0x2838000000000000ULL,
     0x5070000000000000ULL,
     0xa0e0000000000000ULL,
-    0x40c0000000000000ULL};
+    0x40c0000000000000ULL
+};
 
 const Bitboard knightMoves[64] = {
     0x20400UL,
