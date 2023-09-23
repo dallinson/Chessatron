@@ -3,6 +3,7 @@ AllowShortIfStatementsOnASingleLine: false
 IndentCaseLabels: false
 ColumnLimit: 150
 IndentWidth: 4
+IndentAccessModifiers: true
 UseTab: Never
 SpaceAfterCStyleCast: true
 NamespaceIndentation: All

@@ -6,7 +6,7 @@
 uint64_t perft(ChessBoard& c, MoveHistory& m, int depth, const int side, const bool print_debug = false) {
     MoveList moves;
     uint64_t to_return = 0;
-    //c.print_board();
+    // c.print_board();
 
     moves = MoveGenerator::generate_legal_moves(c, side);
 

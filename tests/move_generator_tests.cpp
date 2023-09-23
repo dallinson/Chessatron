@@ -83,7 +83,7 @@ TEST(MoveGeneratorTests, TestCastling) {
     c.set_kingside_castling(0, true);
     c.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQK2R w KQkq - 0 1");
     ASSERT_EQ(MoveGenerator::generate_castling_moves(c, 0).len(), 1);
-    //ASSERT_EQ(MoveGenerator::generate_castling_moves(c, 0)[0].get_move(), 8454);
+    // ASSERT_EQ(MoveGenerator::generate_castling_moves(c, 0)[0].get_move(), 8454);
     c.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKn1R w KQkq - 0 1");
     ASSERT_EQ(MoveGenerator::generate_castling_moves(c, 0).len(), 0);
 
