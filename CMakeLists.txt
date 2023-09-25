@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.16)
 
 project(Chessatron)
 
-file(GLOB SOURCES "src/*.cpp")
-file(GLOB TESTS "tests/*.cpp")
+file(GLOB SOURCES "src/*.cpp" "src/**/*.cpp")
+file(GLOB TESTS "tests/*.cpp" "tests/**/*.cpp")
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

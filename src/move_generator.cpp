@@ -74,13 +74,13 @@ MoveList MoveGenerator::filter_to_pseudolegal_moves(const ChessBoard& c, const i
 }
 
 Bitboard MoveGenerator::generate_bishop_movemask(const Bitboard b, const int idx) {
-    Bitboard masked = (b & BMask[idx]);
-    return BAttacks[(512 * idx) + ((masked * BMagic[idx]) >> (64 - BBits[idx]))];
+    Bitboard masked = (b & MagicNumbers::BishopMasks[idx]);
+    return MagicNumbers::BishopAttacks[(512 * idx) + ((masked * MagicNumbers::BishopMagics[idx]) >> (64 - MagicNumbers::BishopBits[idx]))];
 }
 
 Bitboard MoveGenerator::generate_rook_movemask(const Bitboard b, const int idx) {
-    Bitboard masked = (b & RMask[idx]);
-    return RAttacks[(4096 * idx) + ((masked * RMagic[idx]) >> (64 - RBits[idx]))];
+    Bitboard masked = (b & MagicNumbers::RookMasks[idx]);
+    return MagicNumbers::RookAttacks[(4096 * idx) + ((masked * MagicNumbers::RookMagics[idx]) >> (64 - MagicNumbers::RookBits[idx]))];
 }
 
 Bitboard MoveGenerator::generate_queen_movemask(const Bitboard b, const int idx) {
