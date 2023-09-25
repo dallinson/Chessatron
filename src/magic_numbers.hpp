@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <array>
 
 #include "utils.hpp"
 
@@ -18,4 +19,6 @@ namespace MagicNumbers {
 
     extern const Bitboard BishopAttacks[32768];
     extern const Bitboard RookAttacks[262144];
+
+    extern const std::array<std::array<Bitboard, 64>, 64> ConnectingSquares;
 }

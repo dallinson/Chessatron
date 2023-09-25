@@ -16,14 +16,15 @@ typedef uint64_t Bitboard;
 #define GET_BITS(val, max, min) (((val) &BITS(max, min)) >> (min))
 #define GET_RANK(val) GET_BITS(val, 5, 3)
 #define GET_FILE(val) GET_BITS(val, 2, 0)
+// rank is the row and file the column
 
-#define POSITION(rank, file) ((((rank) &0x7) * 8) + ((file) &0x7))
+#define POSITION(rank, file) ((((rank) & 0x7) << 3) + ((file) & 0x7))
 
 void print_bitboard(Bitboard to_print);
 
-inline int bitboard_to_idx(Bitboard bitboard) { return std::countr_zero(bitboard); };
+constexpr inline int bitboard_to_idx(Bitboard bitboard) { return std::countr_zero(bitboard); };
 
-inline Bitboard idx_to_bitboard(int idx) { return BIT(idx); };
+constexpr inline Bitboard idx_to_bitboard(int idx) { return BIT(idx); };
 
 int pop_min_bit(uint64_t* num);
 

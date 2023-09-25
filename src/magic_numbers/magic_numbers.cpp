@@ -56,8 +56,59 @@ constexpr Bitboard MagicNumbers::BishopMasks[64] = {
 };
 
 constexpr int MagicNumbers::RookBits[64] = {12, 11, 11, 11, 11, 11, 11, 12, 11, 10, 10, 10, 10, 10, 10, 11, 11, 10, 10, 10, 10, 10,
-                       10, 11, 11, 10, 10, 10, 10, 10, 10, 11, 11, 10, 10, 10, 10, 10, 10, 11, 11, 10, 10, 10,
-                       10, 10, 10, 11, 11, 10, 10, 10, 10, 10, 10, 11, 12, 11, 11, 11, 11, 11, 11, 12};
+                                            10, 11, 11, 10, 10, 10, 10, 10, 10, 11, 11, 10, 10, 10, 10, 10, 10, 11, 11, 10, 10, 10,
+                                            10, 10, 10, 11, 11, 10, 10, 10, 10, 10, 10, 11, 12, 11, 11, 11, 11, 11, 11, 12};
 
 constexpr int MagicNumbers::BishopBits[64] = {6, 5, 5, 5, 5, 5, 5, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 7, 7, 7, 7, 5, 5, 5, 5, 7, 9, 9, 7, 5, 5,
-                       5, 5, 7, 9, 9, 7, 5, 5, 5, 5, 7, 7, 7, 7, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 5, 5, 5, 5, 5, 5, 6};
+                                              5, 5, 7, 9, 9, 7, 5, 5, 5, 5, 7, 7, 7, 7, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 5, 5, 5, 5, 5, 5, 6};
+
+#define GET_SIGN(x) (((x) > 0) - ((x) < 0))
+// clever way of doing a sign function, from https://stackoverflow.com/a/1903975
+
+consteval std::array<std::array<Bitboard, 64>, 64> compute_connecting_squares() {
+    std::array<std::array<Bitboard, 64>, 64> to_return;
+    for (int first_square = 0; first_square < 64; first_square++) {
+        std::array<Bitboard, 64> inner_array;
+        for (int second_square = 0; second_square < 64; second_square++) {
+            Bitboard b = 0;
+            if (first_square == second_square) {
+                b = 0;
+            } else if (GET_RANK(first_square) == GET_RANK(second_square)) {
+                for (int i = 0; i < 8; i++) {
+                    b |= idx_to_bitboard(POSITION(GET_RANK(first_square), i));
+                }
+            } else if (GET_FILE(first_square) == GET_FILE(second_square)) {
+                for (int i = 0; i < 8; i++) {
+                    b |= idx_to_bitboard(POSITION(i, GET_FILE(first_square)));
+                }
+            } else {
+                int rank_diff = GET_RANK(first_square) - GET_RANK(second_square);
+                int file_diff = GET_FILE(first_square) - GET_FILE(second_square);
+                if (std::abs(rank_diff) == std::abs(file_diff)) {
+                    if (GET_SIGN(rank_diff) == GET_SIGN(file_diff)) {
+                        // from bottom left to top right
+                        for (int i = 0; i < 64; i++) {
+                            int abs_diff = std::abs(first_square - i);
+                            if ((abs_diff % 9) == 0) {
+                                b |= BIT(i);
+                            }
+                        }
+                    } else {
+                        // from top left to bottom right
+                        for (int i = 0; i < 64; i++) {
+                            int abs_diff = std::abs(first_square - i);
+                            if ((abs_diff % 7) == 0) {
+                                b |= BIT(i);
+                            }
+                        }
+                    }
+                }
+                inner_array[second_square] = b;
+            }
+            to_return[first_square] = inner_array;
+        }
+        return to_return;
+    }
+}
+
+constexpr std::array<std::array<Bitboard, 64>, 64> MagicNumbers::ConnectingSquares = compute_connecting_squares();
