@@ -124,9 +124,9 @@ bool ChessBoard::set_from_fen(const char* input) {
     RETURN_FALSE_IF_PAST_END;
     // set whose turn it is
     if (input[char_idx] == 'w') {
-        side = 0;
+        side_to_move = 0;
     } else if (input[char_idx] == 'b') {
-        side = 1;
+        side_to_move = 1;
     } else {
         return false;
     }
@@ -254,6 +254,8 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
     if (to_make.get_src_square() == 63 || to_make.get_dest_square() == 63) {
         set_kingside_castling(1, false);
     }
+
+    side_to_move = (side_to_move + 1) & 1;
 }
 
 void ChessBoard::unmake_move(MoveHistory& move_history) {
@@ -304,6 +306,7 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
     set_queenside_castling(0, previous_move_pair.second.get_white_queenside_castle());
     set_kingside_castling(1, previous_move_pair.second.get_black_kingside_castle());
     set_queenside_castling(1, previous_move_pair.second.get_black_queenside_castle());
+    side_to_move = (side_to_move + 1) & 1;
 }
 
 bool operator==(const ChessBoard& lhs, const ChessBoard& rhs) {

@@ -33,23 +33,23 @@ MoveList MoveGenerator::generate_pseudolegal_moves(const ChessBoard& c, const in
 }
 
 int MoveGenerator::get_checking_piece_count(const ChessBoard& c, const int side, const int king_idx) {
+    return std::popcount(MoveGenerator::get_checkers(c, side, king_idx));
+}
+
+Bitboard MoveGenerator::get_checkers(const ChessBoard& c, const int side, const int king_idx) {
     Bitboard bishop_mask = MoveGenerator::generate_bishop_movemask(c.get_occupancy(), king_idx);
     Bitboard rook_mask = MoveGenerator::generate_rook_movemask(c.get_occupancy(), king_idx);
 
+    Bitboard to_return = 0;
     int enemy_side = (side + 1) & 0x01;
-    Bitboard enemy_queen_mask = c.get_queen_occupancy(enemy_side);
 
-    int checking_pieces = std::popcount(enemy_queen_mask & (bishop_mask | rook_mask));
-    checking_pieces += std::popcount(c.get_bishop_occupancy(enemy_side) & bishop_mask);
-    checking_pieces += std::popcount(c.get_rook_occupancy(enemy_side) & rook_mask);
-    // this calculates the checking pieces for the sliding pieces
-    checking_pieces += std::popcount(c.get_knight_occupancy(enemy_side) & knightMoves[king_idx]);
+    to_return |= c.get_queen_occupancy(enemy_side) & (bishop_mask | rook_mask);
+    to_return |= c.get_bishop_occupancy(enemy_side) & bishop_mask;
+    to_return |= c.get_rook_occupancy(enemy_side) & rook_mask;
+    to_return |= c.get_knight_occupancy(enemy_side) & knightMoves[king_idx];
+    to_return |= c.get_pawn_occupancy(enemy_side) & pawnAttackMaps[(64 * side) + king_idx];
 
-    Bitboard pawns_attacking_here = pawnAttackMaps[(64 * side) + king_idx];
-    // black is in the latter 64 spaces
-    checking_pieces += std::popcount(c.get_pawn_occupancy(enemy_side) & pawns_attacking_here);
-
-    return checking_pieces;
+    return to_return;
 }
 
 MoveList MoveGenerator::generate_king_moves(const ChessBoard& c, const int side) {
@@ -249,6 +249,8 @@ MoveList MoveGenerator::filter_to_legal_moves(ChessBoard& c, const int side, con
         }
         c.make_move(move_list[i], history);
         if (get_checking_piece_count(c, side, bitboard_to_idx(c.get_king_occupancy(side))) == 0) {
+            bool a = is_move_legal(c, move_list[i]);
+            a = a;
             to_return.add_move(move_list[i]);
         }
         c.unmake_move(history);
@@ -257,7 +259,7 @@ MoveList MoveGenerator::filter_to_legal_moves(ChessBoard& c, const int side, con
 }
 
 bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
-    int king_idx = bitboard_to_idx(c.get_king_occupancy(c.get_side()));
+    int king_idx = bitboard_to_idx(c.get_king_occupancy(c.get_side_to_move()));
     if (m.get_move_flags() == EN_PASSANT_CAPTURE) {
         // with en passant knights and pawns _cannot_ capture as the previous
         // move was moving a pawn, and therefore knights/pawns were not in
@@ -265,11 +267,11 @@ bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
         // and we would have moved out of check
         Bitboard occupancy = c.get_occupancy();
         Bitboard cleared_occupancy =
-            occupancy ^ (idx_to_bitboard(m.get_src_square()) | idx_to_bitboard(m.get_dest_square() - 8 + (16 * c.get_side())));
+            occupancy ^ (idx_to_bitboard(m.get_src_square()) | idx_to_bitboard(m.get_dest_square() - 8 + (16 * c.get_side_to_move())));
         // clear the origin and capture spaces
         // then set the destination square
         cleared_occupancy |= idx_to_bitboard(m.get_dest_square());
-        int enemy_side = (c.get_side() + 1) & 1;
+        int enemy_side = (c.get_side_to_move() + 1) & 1;
         return !((MoveGenerator::generate_bishop_movemask(cleared_occupancy, king_idx) &
                   (c.get_bishop_occupancy(enemy_side) | c.get_queen_occupancy(enemy_side))) ||
                  (MoveGenerator::generate_rook_movemask(cleared_occupancy, king_idx) &
@@ -285,6 +287,12 @@ bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
             (generate_rook_movemask(cleared_bitboard, target_idx) & (c.get_rook_occupancy(enemy_side) | c.get_queen_occupancy(enemy_side))) ||
             (c.get_knight_occupancy(enemy_side) & knightMoves[target_idx]) ||
             (c.get_pawn_occupancy(enemy_side) & pawnAttackMaps[(64 * c.get_piece(m.get_src_square()).get_side()) + target_idx]));
+    }
+
+    Bitboard checking_pieces = get_checkers(c, c.get_side_to_move(), king_idx);
+    if (checking_pieces) {
+        // if there's a piece checking our king - we know at most one piece can be checking as double checks are king moves only
+        return (MagicNumbers::ConnectingSquares[king_idx][bitboard_to_idx(checking_pieces)] & idx_to_bitboard(m.get_dest_square())) != 0;
     }
 
     return true;

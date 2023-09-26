@@ -31,7 +31,7 @@ class ChessBoard {
         std::array<bool, 2> kingside_castling = {false, false};
         std::array<bool, 2> queenside_castling = {false, false};
 
-        uint_fast8_t side = 0;
+        uint_fast8_t side_to_move = 0;
 
         inline Bitboard get_pair_occupancy(int offset) const { return bitboards[offset] | bitboards[offset + 1]; };
 
@@ -85,7 +85,7 @@ class ChessBoard {
 
         bool set_from_fen(const char* input);
 
-        uint_fast8_t get_side() const { return this->side; };
+        uint_fast8_t get_side_to_move() const { return this->side_to_move; };
 
         void make_move(const Move to_make, MoveHistory& move_history);
         void unmake_move(MoveHistory& move_history);

@@ -33,7 +33,7 @@ TEST(ChessboardTests, SetFenStartPos) {
     ASSERT_EQ(c.get_queen_occupancy(1), (uint64_t) 0x0800000000000000);
     ASSERT_EQ(c.get_king_occupancy(1), (uint64_t) 0x1000000000000000);
 
-    ASSERT_EQ(c.get_side(), 0);
+    ASSERT_EQ(c.get_side_to_move(), 0);
     ASSERT_EQ(c.get_en_passant_file(), 9);
 }
 
@@ -65,7 +65,7 @@ TEST(ChessBoardTests, SetFenExplicitStartPos) {
     ASSERT_EQ(c.get_queen_occupancy(1), (uint64_t) 0x0800000000000000);
     ASSERT_EQ(c.get_king_occupancy(1), (uint64_t) 0x1000000000000000);
 
-    ASSERT_EQ(c.get_side(), 0);
+    ASSERT_EQ(c.get_side_to_move(), 0);
     ASSERT_EQ(c.get_en_passant_file(), 9);
 }
 

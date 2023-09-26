@@ -65,31 +65,44 @@ constexpr int MagicNumbers::BishopBits[64] = {6, 5, 5, 5, 5, 5, 5, 6, 5, 5, 5, 5
 #define GET_SIGN(x) (((x) > 0) - ((x) < 0))
 // clever way of doing a sign function, from https://stackoverflow.com/a/1903975
 
+/**
+ * @brief This generates the squares between a first square and a second square for each pair of squares, as used in the pin detection algorithm used
+ * in Stockfish and reimplemented here.  If the two spaces have a line between them, the attacking/pinning piece is a slider and the attack can be
+ * stopped by moving into any of these spaces or capturing the attacking piece.  If not, the attack can only be stopped by capturing the attacking
+ * piece
+ *
+ * @return consteval
+ */
 consteval std::array<std::array<Bitboard, 64>, 64> compute_connecting_squares() {
     std::array<std::array<Bitboard, 64>, 64> to_return;
     for (int first_square = 0; first_square < 64; first_square++) {
         std::array<Bitboard, 64> inner_array;
         for (int second_square = 0; second_square < 64; second_square++) {
-            Bitboard b = 0;
+            Bitboard b = idx_to_bitboard(second_square);
+            int rank_diff = GET_RANK(first_square) - GET_RANK(second_square);
+            int file_diff = GET_FILE(first_square) - GET_FILE(second_square);
+
             if (first_square == second_square) {
-                b = 0;
+                b = idx_to_bitboard(second_square);
             } else if (GET_RANK(first_square) == GET_RANK(second_square)) {
-                for (int i = 0; i < 8; i++) {
+                for (int8_t i = GET_FILE(first_square) - GET_SIGN(file_diff); i != ((int8_t) GET_FILE(second_square)); i -= GET_SIGN(file_diff)) {
+                    // use int8_t to satisfy the compiler re loop iteration count
                     b |= idx_to_bitboard(POSITION(GET_RANK(first_square), i));
                 }
             } else if (GET_FILE(first_square) == GET_FILE(second_square)) {
-                for (int i = 0; i < 8; i++) {
+                for (int8_t i = GET_RANK(first_square) - GET_SIGN(rank_diff); i != ((int8_t) GET_RANK(second_square)); i -= GET_SIGN(rank_diff)) {
                     b |= idx_to_bitboard(POSITION(i, GET_FILE(first_square)));
                 }
             } else {
-                int rank_diff = GET_RANK(first_square) - GET_RANK(second_square);
-                int file_diff = GET_FILE(first_square) - GET_FILE(second_square);
+                int min_square = std::min(first_square, second_square);
+                int max_square = std::max(first_square, second_square);
+
                 if (std::abs(rank_diff) == std::abs(file_diff)) {
                     if (GET_SIGN(rank_diff) == GET_SIGN(file_diff)) {
                         // from bottom left to top right
                         for (int i = 0; i < 64; i++) {
                             int abs_diff = std::abs(first_square - i);
-                            if ((abs_diff % 9) == 0) {
+                            if ((abs_diff % 9) == 0 && i > min_square && i < max_square) {
                                 b |= BIT(i);
                             }
                         }
@@ -97,18 +110,18 @@ consteval std::array<std::array<Bitboard, 64>, 64> compute_connecting_squares() 
                         // from top left to bottom right
                         for (int i = 0; i < 64; i++) {
                             int abs_diff = std::abs(first_square - i);
-                            if ((abs_diff % 7) == 0) {
+                            if ((abs_diff % 7) == 0 && i > min_square && i < max_square) {
                                 b |= BIT(i);
                             }
                         }
                     }
                 }
-                inner_array[second_square] = b;
             }
-            to_return[first_square] = inner_array;
+            inner_array[second_square] = b;
         }
-        return to_return;
+        to_return[first_square] = inner_array;
     }
+    return to_return;
 }
 
 constexpr std::array<std::array<Bitboard, 64>, 64> MagicNumbers::ConnectingSquares = compute_connecting_squares();
