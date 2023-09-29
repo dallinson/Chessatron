@@ -64,6 +64,10 @@ constexpr int MagicNumbers::BishopBits[64] = {6, 5, 5, 5, 5, 5, 5, 6, 5, 5, 5, 5
 
 #define GET_SIGN(x) (((x) > 0) - ((x) < 0))
 // clever way of doing a sign function, from https://stackoverflow.com/a/1903975
+#define ABS(x) (((x) < 0) ? -(x) : (x))
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+// pre-C++23 these functions are not constexpr so are reimplemented here
 
 /**
  * @brief This generates the squares between a first square and a second square for each pair of squares, as used in the pin detection algorithm used
@@ -94,14 +98,14 @@ consteval std::array<std::array<Bitboard, 64>, 64> compute_connecting_squares() 
                     b |= idx_to_bitboard(POSITION(i, GET_FILE(first_square)));
                 }
             } else {
-                int min_square = std::min(first_square, second_square);
-                int max_square = std::max(first_square, second_square);
+                int min_square = MIN(first_square, second_square);
+                int max_square = MAX(first_square, second_square);
 
-                if (std::abs(rank_diff) == std::abs(file_diff)) {
+                if (ABS(rank_diff) == ABS(file_diff)) {
                     if (GET_SIGN(rank_diff) == GET_SIGN(file_diff)) {
                         // from bottom left to top right
                         for (int i = 0; i < 64; i++) {
-                            int abs_diff = std::abs(first_square - i);
+                            int abs_diff = ABS(first_square - i);
                             if ((abs_diff % 9) == 0 && i > min_square && i < max_square) {
                                 b |= BIT(i);
                             }
@@ -109,7 +113,7 @@ consteval std::array<std::array<Bitboard, 64>, 64> compute_connecting_squares() 
                     } else {
                         // from top left to bottom right
                         for (int i = 0; i < 64; i++) {
-                            int abs_diff = std::abs(first_square - i);
+                            int abs_diff = ABS(first_square - i);
                             if ((abs_diff % 7) == 0 && i > min_square && i < max_square) {
                                 b |= BIT(i);
                             }

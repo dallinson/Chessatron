@@ -161,3 +161,12 @@ TEST(ChessBoardTests, TestMakeMove) {
         ASSERT_EQ(c.get_piece(i).get_value(), o.get_piece(i).get_value()) << "Mismatch at piece " << std::to_string(i) << "!";
     }
 }
+
+TEST(ChessBoardTests, TestMakePromotion) {
+    ChessBoard c, o;
+    c.set_from_fen("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1R1K b kq - 1 1");
+    o.set_from_fen("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/P2P2PP/b2Q1R1K w kq - 0 2");
+    MoveHistory m;
+    c.make_move(Move(BISHOP_PROMOTION_CAPTURE, 0, 9), m);
+    ASSERT_EQ(c, o);
+}

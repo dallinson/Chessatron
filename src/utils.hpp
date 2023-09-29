@@ -26,7 +26,7 @@ constexpr inline int bitboard_to_idx(Bitboard bitboard) { return std::countr_zer
 
 constexpr inline Bitboard idx_to_bitboard(int idx) { return BIT(idx); };
 
-int pop_min_bit(uint64_t* num);
+int pop_min_bit(Bitboard& num);
 
 namespace SlidingPieceUtils {
     Bitboard get_bishop_attacks(int idx, Bitboard occupancy);
