@@ -17,9 +17,3 @@ void print_bitboard(Bitboard to_print) {
         printf("\n");
     }
 }
-
-int pop_min_bit(Bitboard& num) {
-    int to_return = bitboard_to_idx(num);
-    CLEAR_BIT(num, to_return);
-    return to_return;
-}
