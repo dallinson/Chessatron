@@ -6,7 +6,6 @@
 uint64_t perft(ChessBoard& c, MoveHistory& m, int depth, const int side, const bool print_debug = false) {
     MoveList moves;
     uint64_t to_return = 0;
-    // c.print_board();
 
     moves = MoveGenerator::generate_legal_moves(c, side);
 
@@ -24,7 +23,7 @@ uint64_t perft(ChessBoard& c, MoveHistory& m, int depth, const int side, const b
         c.make_move(moves[i], m);
         val = perft(c, m, depth - 1, (side + 1) & 1);
         if (print_debug) [[unlikely]] {
-            printf("%s: %llu\n", moves[i].to_string().c_str(), val);
+            printf("%s: %lu\n", moves[i].to_string().c_str(), val);
         }
         to_return += val;
         c.unmake_move(m);

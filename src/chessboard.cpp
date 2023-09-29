@@ -4,8 +4,8 @@
 #include <cstring>
 #include <string>
 
-#include "move_generator.hpp"
 #include "magic_numbers.hpp"
+#include "move_generator.hpp"
 
 void ChessBoard::set_piece(uint_fast8_t piece, uint_fast8_t pos) {
     pieces[pos] = piece;
@@ -309,10 +309,11 @@ void ChessBoard::recompute_blockers_and_checkers(const int side) {
     checkers[side] = MoveGenerator::get_checkers(*this, this->get_side_to_move(), king_idx);
 
     pinned_pieces[side] = 0;
-    
+
     Bitboard potential_checks =
         ((MoveGenerator::generate_bishop_movemask(0, king_idx) & (get_bishop_occupancy(enemy_side) | get_queen_occupancy(enemy_side))) |
-        (MoveGenerator::generate_rook_movemask(0, king_idx) & (get_rook_occupancy(enemy_side) | get_queen_occupancy(enemy_side)))) ^ checkers[side];
+         (MoveGenerator::generate_rook_movemask(0, king_idx) & (get_rook_occupancy(enemy_side) | get_queen_occupancy(enemy_side)))) ^
+        checkers[side];
     const Bitboard check_blockers = get_occupancy() ^ potential_checks;
     // don't evaluate ones where we already check the king
 
@@ -322,7 +323,6 @@ void ChessBoard::recompute_blockers_and_checkers(const int side) {
             pinned_pieces[side] |= line_to_king & check_blockers;
         }
     }
-
 }
 
 bool operator==(const ChessBoard& lhs, const ChessBoard& rhs) {
