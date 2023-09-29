@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <iostream>
+
 #include "../src/chessboard.hpp"
 #include "../src/move_generator.hpp"
 
@@ -23,7 +25,7 @@ uint64_t perft(ChessBoard& c, MoveHistory& m, int depth, const int side, const b
         c.make_move(moves[i], m);
         val = perft(c, m, depth - 1, (side + 1) & 1);
         if (print_debug) [[unlikely]] {
-            printf("%s: %lu\n", moves[i].to_string().c_str(), val);
+            std::cout << moves[i].to_string() << ": " << val << std::endl;
         }
         to_return += val;
         c.unmake_move(m);

@@ -108,7 +108,10 @@ bool ChessBoard::set_from_fen(const char* input) {
             }
         }
         char_idx += 1;
-        recompute_blockers_and_checkers();
+        if (get_king_occupancy(0) && get_king_occupancy(1)) {
+            // prevents array index out of range exception
+            recompute_blockers_and_checkers();
+        }
         RETURN_FALSE_IF_PAST_END;
     }
     char_idx += 1;
