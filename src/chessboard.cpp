@@ -4,6 +4,9 @@
 #include <cstring>
 #include <string>
 
+#include "move_generator.hpp"
+#include "magic_numbers.hpp"
+
 void ChessBoard::set_piece(uint_fast8_t piece, uint_fast8_t pos) {
     pieces[pos] = piece;
     SET_BIT(bitboards[(((piece & PIECE_MASK) - 1) * 2) + GET_BIT(piece, 3)], pos);
@@ -24,19 +27,6 @@ void ChessBoard::print_board() const {
     for (int_fast8_t rank = 7; rank >= 0; rank--) {
         for (uint_fast8_t file = 0; file < 8; file++) {
             printf("%c", piece_str[pieces[(rank * 8) + file].get_value()]);
-            /*if (pieces[(rank * 8) + file].get_value()) {
-                if (!GET_BIT(bitboards[pieces[(rank * 8) + file].to_bitboard_idx()], (rank * 8) + file)) {
-                    printf("ERROR at idx %d, missing in bitboard\n", (rank * 8) + file);
-                    print_bitboard(bitboards[pieces[(rank * 8) + file].to_bitboard_idx()]);
-                    exit(1);
-                }
-            } else {
-                if (GET_BIT(get_occupancy(), (rank * 8) + file)) {
-                    printf("ERROR at idx %d, presence in bitboard\n", (rank * 8) + file);
-                    print_bitboard(get_pawn_occupancy());
-                    exit(1);
-                }
-            }*/
         }
         printf("\n");
     }
@@ -118,6 +108,7 @@ bool ChessBoard::set_from_fen(const char* input) {
             }
         }
         char_idx += 1;
+        recompute_blockers_and_checkers();
         RETURN_FALSE_IF_PAST_END;
     }
     char_idx += 1;
@@ -256,6 +247,7 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
     }
 
     side_to_move = (side_to_move + 1) & 1;
+    recompute_blockers_and_checkers();
 }
 
 void ChessBoard::unmake_move(MoveHistory& move_history) {
@@ -306,7 +298,31 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
     set_queenside_castling(0, previous_move_pair.second.get_white_queenside_castle());
     set_kingside_castling(1, previous_move_pair.second.get_black_kingside_castle());
     set_queenside_castling(1, previous_move_pair.second.get_black_queenside_castle());
+
     side_to_move = (side_to_move + 1) & 1;
+    recompute_blockers_and_checkers();
+}
+
+void ChessBoard::recompute_blockers_and_checkers(const int side) {
+    const int king_idx = bitboard_to_idx(this->get_king_occupancy(this->get_side_to_move()));
+    const int enemy_side = ENEMY_SIDE(side);
+    checkers[side] = MoveGenerator::get_checkers(*this, this->get_side_to_move(), king_idx);
+
+    pinned_pieces[side] = 0;
+    
+    Bitboard potential_checks =
+        ((MoveGenerator::generate_bishop_movemask(0, king_idx) & (get_bishop_occupancy(enemy_side) | get_queen_occupancy(enemy_side))) |
+        (MoveGenerator::generate_rook_movemask(0, king_idx) & (get_rook_occupancy(enemy_side) | get_queen_occupancy(enemy_side)))) ^ checkers[side];
+    const Bitboard check_blockers = get_occupancy() ^ potential_checks;
+    // don't evaluate ones where we already check the king
+
+    while (potential_checks) {
+        const Bitboard line_to_king = MagicNumbers::ConnectingSquares[king_idx][pop_min_bit(potential_checks)];
+        if (std::popcount(line_to_king & check_blockers) <= 1) {
+            pinned_pieces[side] |= line_to_king & check_blockers;
+        }
+    }
+
 }
 
 bool operator==(const ChessBoard& lhs, const ChessBoard& rhs) {

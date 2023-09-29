@@ -35,6 +35,9 @@ class ChessBoard {
 
         inline Bitboard get_pair_occupancy(int offset) const { return bitboards[offset] | bitboards[offset + 1]; };
 
+        std::array<Bitboard, 2> checkers = {0};
+        std::array<Bitboard, 2> pinned_pieces = {0};
+
     public:
         inline Bitboard get_occupancy() const {
             return get_king_occupancy() | get_queen_occupancy() | get_bishop_occupancy() | get_knight_occupancy() | get_rook_occupancy() |
@@ -89,6 +92,11 @@ class ChessBoard {
 
         void make_move(const Move to_make, MoveHistory& move_history);
         void unmake_move(MoveHistory& move_history);
+
+        void recompute_blockers_and_checkers() { recompute_blockers_and_checkers(0); recompute_blockers_and_checkers(1); };
+        void recompute_blockers_and_checkers(const int side);
+        inline Bitboard get_checkers(const int side) const { return checkers[side]; };
+        inline Bitboard get_pinned_pieces(const int side) const { return pinned_pieces[side]; };
 };
 
 bool operator==(const ChessBoard& lhs, const ChessBoard& rhs);

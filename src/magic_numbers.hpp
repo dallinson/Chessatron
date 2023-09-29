@@ -21,4 +21,9 @@ namespace MagicNumbers {
     extern const Bitboard RookAttacks[262144];
 
     extern const std::array<std::array<Bitboard, 64>, 64> ConnectingSquares;
+    extern const std::array<std::array<Bitboard, 64>, 64> AlignedSquares;
+
+    extern const Bitboard KingMoves[64];
+    extern const Bitboard KnightMoves[64];
+    extern const Bitboard PawnAttacks[128];
 }

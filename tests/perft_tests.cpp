@@ -11,7 +11,7 @@ uint64_t perft(ChessBoard& c, MoveHistory& m, int depth, const int side, const b
     moves = MoveGenerator::generate_legal_moves(c, side);
 
     if (depth == 1) {
-        if (print_debug) {
+        if (print_debug) [[unlikely]] {
             for (size_t i = 0; i < moves.len(); i++) {
                 printf("%s: 1\n", moves[i].to_string().c_str());
             }
@@ -23,7 +23,7 @@ uint64_t perft(ChessBoard& c, MoveHistory& m, int depth, const int side, const b
         uint64_t val;
         c.make_move(moves[i], m);
         val = perft(c, m, depth - 1, (side + 1) & 1);
-        if (print_debug) {
+        if (print_debug) [[unlikely]] {
             printf("%s: %llu\n", moves[i].to_string().c_str(), val);
         }
         to_return += val;

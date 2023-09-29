@@ -19,6 +19,7 @@ typedef uint64_t Bitboard;
 // rank is the row and file the column
 
 #define POSITION(rank, file) ((((rank) & 0x7) << 3) + ((file) & 0x7))
+#define ENEMY_SIDE(side) (((side) + 1) & 1)
 
 void print_bitboard(Bitboard to_print);
 
