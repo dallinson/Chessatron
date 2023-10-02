@@ -6,6 +6,7 @@
 
 #include "magic_numbers.hpp"
 #include "move_generator.hpp"
+#include "zobrist_hashing.hpp"
 
 void ChessBoard::set_piece(uint_fast8_t piece, uint_fast8_t pos) {
     pieces[pos] = piece;
@@ -19,6 +20,12 @@ void ChessBoard::clear_board() {
 
     for (size_t i = 0; i < pieces.size(); i++) {
         pieces[i] = 0;
+    }
+
+    side_to_move = 0;
+    en_passant_file = 9;
+    for (int i = 0; i < 4; i++) {
+        castling[i] = false;
     }
 }
 
@@ -101,7 +108,8 @@ bool ChessBoard::set_from_fen(const char* input) {
             default:
                 return false;
             }
-            set_piece(piece, (rank * 8) + file);
+            set_piece(piece, POSITION(rank, file));
+            zobrist_key ^= ZobristKeys::PositionKeys[(piece * 64) + POSITION(rank, file)];
             file += 1;
             if (file > 8) {
                 return false;
@@ -121,6 +129,7 @@ bool ChessBoard::set_from_fen(const char* input) {
         side_to_move = 0;
     } else if (input[char_idx] == 'b') {
         side_to_move = 1;
+        zobrist_key ^= ZobristKeys::SideToMove;
     } else {
         return false;
     }
@@ -176,9 +185,11 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
     Piece moved = this->pieces[to_make.get_src_square()];
     const int side = moved.get_side();
     this->pieces[to_make.get_src_square()] = 0;
+    zobrist_key ^= ZobristKeys::PositionKeys[ZOBRIST_POSITION_KEY(moved, to_make.get_src_square())];
     // get the piece we're moving and clear the origin square
     Piece at_target = this->pieces[to_make.get_dest_square()];
     this->pieces[to_make.get_dest_square()] = moved;
+    zobrist_key ^= ZobristKeys::PositionKeys[ZOBRIST_POSITION_KEY(moved, to_make.get_dest_square())];
     // get the piece we replace with ourselves and do the replacement
     auto to_add = std::make_pair(to_make, PreviousMoveState(at_target, this->get_en_passant_file(), get_kingside_castling(WHITE_IDX),
                                                             get_queenside_castling(WHITE_IDX), get_kingside_castling(BLACK_IDX),
@@ -204,17 +215,22 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
         // otherwise sets pieces if moved normally
     }
 
-    if (to_make.get_move_flags() == DOUBLE_PAWN_PUSH) {
+    this->zobrist_key ^= ZobristKeys::EnPassantKeys[en_passant_file];
+    if (to_make.get_move_flags() == DOUBLE_PAWN_PUSH) [[unlikely]] {
         this->en_passant_file = to_make.get_dest_file();
+        this->zobrist_key ^= ZobristKeys::EnPassantKeys[en_passant_file];
     } else {
         this->en_passant_file = 9;
+        // the en passant zobrist key for 9 is 0 so no need to XOR (would be a no-op)
     }
     // set where the last en passant happened, else clear it
 
-    if (to_make.get_move_flags() == EN_PASSANT_CAPTURE) {
-        int enemy_side = (side + 1) & 0x1;
+    if (to_make.get_move_flags() == EN_PASSANT_CAPTURE) [[unlikely]] {
+        int enemy_side = ENEMY_SIDE(side);
         int enemy_pawn_idx = to_make.get_dest_square() - 8 + (16 * side);
         CLEAR_BIT(this->bitboards[PAWN_OFFSET + enemy_side], enemy_pawn_idx);
+        this->pieces[enemy_pawn_idx] = 0;
+        this->zobrist_key ^= ZobristKeys::PositionKeys[ZOBRIST_POSITION_KEY(Piece(enemy_side, PAWN_VALUE), enemy_pawn_idx)];
     }
 
     if (to_make.get_move_flags() == KINGSIDE_CASTLE) {
@@ -250,6 +266,7 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
     }
 
     side_to_move = (side_to_move + 1) & 1;
+    zobrist_key ^= ZobristKeys::SideToMove;
     recompute_blockers_and_checkers();
 }
 
@@ -259,6 +276,7 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
     const int side = original.get_side();
     CLEAR_BIT(this->bitboards[original.to_bitboard_idx()], previous_move_pair.first.get_dest_square());
     pieces[previous_move_pair.first.get_dest_square()] = previous_move_pair.second.get_piece();
+
     if (previous_move_pair.first.get_move_flags() >= 8) {
         // if it's a promotion
         Piece new_piece = Piece(original.get_side(), PAWN_VALUE);
@@ -303,6 +321,7 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
     set_queenside_castling(1, previous_move_pair.second.get_black_queenside_castle());
 
     side_to_move = (side_to_move + 1) & 1;
+    zobrist_key ^= ZobristKeys::SideToMove;
     recompute_blockers_and_checkers();
 }
 

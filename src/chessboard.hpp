@@ -28,8 +28,8 @@ class ChessBoard {
 
         uint_fast8_t en_passant_file = 9;
 
-        std::array<bool, 2> kingside_castling = {false, false};
-        std::array<bool, 2> queenside_castling = {false, false};
+        // first 2 elems are kingside, second two queenside
+        std::array<bool, 4> castling = {false, false, false, false};
 
         uint_fast8_t side_to_move = 0;
 
@@ -37,6 +37,8 @@ class ChessBoard {
 
         std::array<Bitboard, 2> checkers = {0};
         std::array<Bitboard, 2> pinned_pieces = {0};
+
+        ZobristKey zobrist_key;
 
     public:
         inline Bitboard get_occupancy() const {
@@ -74,10 +76,10 @@ class ChessBoard {
         uint_fast8_t get_en_passant_file() const { return en_passant_file; };
         void set_en_passant_file(int file) { en_passant_file = file; };
 
-        inline bool get_queenside_castling(const int side) const { return queenside_castling[side]; };
-        inline bool get_kingside_castling(const int side) const { return kingside_castling[side]; };
-        inline void set_kingside_castling(const int side, const bool val) { kingside_castling[side] = val; };
-        inline void set_queenside_castling(const int side, const bool val) { queenside_castling[side] = val; };
+        inline bool get_queenside_castling(const int side) const { return castling[2 + side]; };
+        inline bool get_kingside_castling(const int side) const { return castling[side]; };
+        inline void set_kingside_castling(const int side, const bool val) { castling[side] = val; };
+        inline void set_queenside_castling(const int side, const bool val) { castling[2 + side] = val; };
 
         int get_score(int side);
 
@@ -97,6 +99,8 @@ class ChessBoard {
         void recompute_blockers_and_checkers(const int side);
         inline Bitboard get_checkers(const int side) const { return checkers[side]; };
         inline Bitboard get_pinned_pieces(const int side) const { return pinned_pieces[side]; };
+
+        inline ZobristKey get_zobrist_key() const { return zobrist_key; };
 };
 
 bool operator==(const ChessBoard& lhs, const ChessBoard& rhs);

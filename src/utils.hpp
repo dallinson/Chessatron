@@ -5,6 +5,7 @@
 #include <immintrin.h>
 
 typedef uint64_t Bitboard;
+typedef size_t ZobristKey;
 
 #define BIT(x) (((uint64_t) 1) << (x))
 #define GET_BIT(val, x) (((val) >> (x)) & 0x1)
