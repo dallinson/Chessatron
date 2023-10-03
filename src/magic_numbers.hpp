@@ -1,7 +1,7 @@
 #pragma once
 
-#include <cstdint>
 #include <array>
+#include <cstdint>
 
 #include "utils.hpp"
 
@@ -26,4 +26,4 @@ namespace MagicNumbers {
     extern const Bitboard KingMoves[64];
     extern const Bitboard KnightMoves[64];
     extern const Bitboard PawnAttacks[128];
-}
+} // namespace MagicNumbers

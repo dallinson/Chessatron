@@ -19,12 +19,12 @@ enum Side : uint_fast8_t {
 #define TOGGLE_BIT(val, x) val ^= BIT(x)
 
 #define BITS(max, min) ((0xFFFFFFFFFFFFFFFF << (min)) & (0xFFFFFFFFFFFFFFFF >> (64 - ((max) + 1))))
-#define GET_BITS(val, max, min) (((val) & BITS(max, min)) >> (min))
+#define GET_BITS(val, max, min) (((val) &BITS(max, min)) >> (min))
 #define GET_RANK(val) GET_BITS(val, 5, 3)
 #define GET_FILE(val) GET_BITS(val, 2, 0)
 // rank is the row and file the column
 
-#define POSITION(rank, file) ((((rank) & 0x7) << 3) + ((file) & 0x7))
+#define POSITION(rank, file) ((((rank) &0x7) << 3) + ((file) &0x7))
 #define ENEMY_SIDE(side) (((side) == Side::WHITE) ? Side::BLACK : Side::WHITE)
 
 void print_bitboard(Bitboard to_print);

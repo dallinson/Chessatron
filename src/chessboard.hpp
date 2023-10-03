@@ -48,8 +48,9 @@ class ChessBoard {
         inline Bitboard get_occupancy(const Side side) const { return get_side_occupancy(side); };
 
         inline Bitboard get_side_occupancy(const Side side) const {
-            return bitboards[KING_OFFSET + static_cast<uint_fast8_t>(side)] | bitboards[QUEEN_OFFSET + static_cast<uint_fast8_t>(side)] | bitboards[BISHOP_OFFSET + static_cast<uint_fast8_t>(side)] |
-                   bitboards[KNIGHT_OFFSET + static_cast<uint_fast8_t>(side)] | bitboards[ROOK_OFFSET + static_cast<uint_fast8_t>(side)] | bitboards[PAWN_OFFSET + static_cast<uint_fast8_t>(side)];
+            return bitboards[KING_OFFSET + static_cast<uint_fast8_t>(side)] | bitboards[QUEEN_OFFSET + static_cast<uint_fast8_t>(side)] |
+                   bitboards[BISHOP_OFFSET + static_cast<uint_fast8_t>(side)] | bitboards[KNIGHT_OFFSET + static_cast<uint_fast8_t>(side)] |
+                   bitboards[ROOK_OFFSET + static_cast<uint_fast8_t>(side)] | bitboards[PAWN_OFFSET + static_cast<uint_fast8_t>(side)];
         };
         inline Bitboard get_white_occupancy() const { return get_side_occupancy(Side::WHITE); };
         inline Bitboard get_black_occupancy() const { return get_side_occupancy(Side::WHITE); };
@@ -95,7 +96,10 @@ class ChessBoard {
         void make_move(const Move to_make, MoveHistory& move_history);
         void unmake_move(MoveHistory& move_history);
 
-        void recompute_blockers_and_checkers() { recompute_blockers_and_checkers(Side::WHITE); recompute_blockers_and_checkers(Side::BLACK); };
+        void recompute_blockers_and_checkers() {
+            recompute_blockers_and_checkers(Side::WHITE);
+            recompute_blockers_and_checkers(Side::BLACK);
+        };
         void recompute_blockers_and_checkers(const Side side);
         inline Bitboard get_checkers(const Side side) const { return checkers[side]; };
         inline Bitboard get_pinned_pieces(const Side side) const { return pinned_pieces[side]; };
