@@ -268,7 +268,7 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
 
     side_to_move = ENEMY_SIDE(side_to_move);
     zobrist_key ^= ZobristKeys::SideToMove;
-    recompute_blockers_and_checkers();
+    recompute_blockers_and_checkers(side_to_move);
 }
 
 void ChessBoard::unmake_move(MoveHistory& move_history) {
@@ -323,7 +323,7 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
 
     side_to_move = ENEMY_SIDE(side_to_move);
     zobrist_key ^= ZobristKeys::SideToMove;
-    recompute_blockers_and_checkers();
+    recompute_blockers_and_checkers(side_to_move);
 }
 
 void ChessBoard::recompute_blockers_and_checkers(const Side side) {
