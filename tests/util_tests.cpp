@@ -12,7 +12,7 @@ TEST(UtilTests, TestTrailingZeroBits) {
 
     ChessBoard c;
     c.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K3 w Qkq - 0 1");
-    ASSERT_EQ(bitboard_to_idx(c.get_king_occupancy(0)), 4);
+    ASSERT_EQ(bitboard_to_idx(c.get_king_occupancy(Side::WHITE)), 4);
 }
 
 TEST(UtilTests, TestBitboardFromIdx) {

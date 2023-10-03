@@ -7,6 +7,11 @@
 typedef uint64_t Bitboard;
 typedef size_t ZobristKey;
 
+enum Side : uint_fast8_t {
+    WHITE = 0,
+    BLACK = 1,
+};
+
 #define BIT(x) (((uint64_t) 1) << (x))
 #define GET_BIT(val, x) (((val) >> (x)) & 0x1)
 #define SET_BIT(val, x) val |= BIT(x)
@@ -20,7 +25,7 @@ typedef size_t ZobristKey;
 // rank is the row and file the column
 
 #define POSITION(rank, file) ((((rank) & 0x7) << 3) + ((file) & 0x7))
-#define ENEMY_SIDE(side) (((side) + 1) & 1)
+#define ENEMY_SIDE(side) (((side) == Side::WHITE) ? Side::BLACK : Side::WHITE)
 
 void print_bitboard(Bitboard to_print);
 

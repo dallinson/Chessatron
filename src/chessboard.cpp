@@ -22,7 +22,7 @@ void ChessBoard::clear_board() {
         pieces[i] = 0;
     }
 
-    side_to_move = 0;
+    side_to_move = WHITE;
     en_passant_file = 9;
     for (int i = 0; i < 4; i++) {
         castling[i] = false;
@@ -116,19 +116,20 @@ bool ChessBoard::set_from_fen(const char* input) {
             }
         }
         char_idx += 1;
-        if (get_king_occupancy(0) && get_king_occupancy(1)) {
+        if (get_king_occupancy(Side::WHITE) && get_king_occupancy(Side::BLACK)) {
             // prevents array index out of range exception
             recompute_blockers_and_checkers();
         }
         RETURN_FALSE_IF_PAST_END;
     }
     char_idx += 1;
+    recompute_blockers_and_checkers();
     RETURN_FALSE_IF_PAST_END;
     // set whose turn it is
     if (input[char_idx] == 'w') {
-        side_to_move = 0;
+        side_to_move = WHITE;
     } else if (input[char_idx] == 'b') {
-        side_to_move = 1;
+        side_to_move = BLACK;
         zobrist_key ^= ZobristKeys::SideToMove;
     } else {
         return false;
@@ -175,7 +176,7 @@ bool ChessBoard::set_from_fen(const char* input) {
     return true;
 }
 
-int ChessBoard::get_score(int side) {
+int ChessBoard::get_score(Side side) {
     return (std::popcount(get_pawn_occupancy(side)) * PAWN_VALUE) + (std::popcount(get_rook_occupancy(side)) * ROOK_VALUE) +
            (std::popcount(get_knight_occupancy(side)) * KNIGHT_VALUE) + (std::popcount(get_bishop_occupancy(side)) * BISHOP_VALUE) +
            (std::popcount(get_queen_occupancy(side)) * QUEEN_VALUE);
@@ -183,7 +184,7 @@ int ChessBoard::get_score(int side) {
 
 void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
     Piece moved = this->pieces[to_make.get_src_square()];
-    const int side = moved.get_side();
+    const Side side = moved.get_side();
     this->pieces[to_make.get_src_square()] = 0;
     zobrist_key ^= ZobristKeys::PositionKeys[ZOBRIST_POSITION_KEY(moved, to_make.get_src_square())];
     // get the piece we're moving and clear the origin square
@@ -265,7 +266,7 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
         set_kingside_castling(1, false);
     }
 
-    side_to_move = (side_to_move + 1) & 1;
+    side_to_move = ENEMY_SIDE(side_to_move);
     zobrist_key ^= ZobristKeys::SideToMove;
     recompute_blockers_and_checkers();
 }
@@ -273,7 +274,7 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
 void ChessBoard::unmake_move(MoveHistory& move_history) {
     const std::pair<Move, PreviousMoveState> previous_move_pair = move_history.pop_move();
     Piece original = pieces[previous_move_pair.first.get_dest_square()];
-    const int side = original.get_side();
+    const Side moved_piece_side = original.get_side();
     CLEAR_BIT(this->bitboards[original.to_bitboard_idx()], previous_move_pair.first.get_dest_square());
     pieces[previous_move_pair.first.get_dest_square()] = previous_move_pair.second.get_piece();
 
@@ -292,8 +293,8 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
             // if it is a capture
             SET_BIT(this->bitboards[previous_move_pair.second.get_piece().to_bitboard_idx()], previous_move_pair.first.get_dest_square());
         } else {
-            const int enemy_side = (side + 1) & 1;
-            const int enemy_pawn_idx = previous_move_pair.first.get_dest_square() - 8 + (16 * side);
+            const int enemy_side = (moved_piece_side + 1) & 1;
+            const int enemy_pawn_idx = previous_move_pair.first.get_dest_square() - 8 + (16 * moved_piece_side);
             this->pieces[enemy_pawn_idx] = Piece(enemy_side, PAWN_VALUE);
             SET_BIT(this->bitboards[PAWN_OFFSET + enemy_side], enemy_pawn_idx);
         }
@@ -303,15 +304,15 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
         // We need to unmove the rook
         const int origin_square = previous_move_pair.first.get_dest_square();
         this->pieces[origin_square - 1] = 0;
-        CLEAR_BIT(this->bitboards[ROOK_OFFSET + side], origin_square - 1);
-        this->pieces[origin_square + 1] = Piece(side, ROOK_VALUE);
-        SET_BIT(this->bitboards[ROOK_OFFSET + side], origin_square + 1);
+        CLEAR_BIT(this->bitboards[ROOK_OFFSET + moved_piece_side], origin_square - 1);
+        this->pieces[origin_square + 1] = Piece(moved_piece_side, ROOK_VALUE);
+        SET_BIT(this->bitboards[ROOK_OFFSET + moved_piece_side], origin_square + 1);
     } else if (previous_move_pair.first.get_move_flags() == QUEENSIDE_CASTLE) {
         const int origin_square = previous_move_pair.first.get_dest_square();
         this->pieces[origin_square + 1] = 0;
-        CLEAR_BIT(this->bitboards[ROOK_OFFSET + side], origin_square + 1);
-        this->pieces[origin_square - 2] = Piece(side, ROOK_VALUE);
-        SET_BIT(this->bitboards[ROOK_OFFSET + side], origin_square - 2);
+        CLEAR_BIT(this->bitboards[ROOK_OFFSET + moved_piece_side], origin_square + 1);
+        this->pieces[origin_square - 2] = Piece(moved_piece_side, ROOK_VALUE);
+        SET_BIT(this->bitboards[ROOK_OFFSET + moved_piece_side], origin_square - 2);
     }
 
     set_en_passant_file(previous_move_pair.second.get_previous_en_passant_file());
@@ -320,15 +321,15 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
     set_kingside_castling(1, previous_move_pair.second.get_black_kingside_castle());
     set_queenside_castling(1, previous_move_pair.second.get_black_queenside_castle());
 
-    side_to_move = (side_to_move + 1) & 1;
+    side_to_move = ENEMY_SIDE(side_to_move);
     zobrist_key ^= ZobristKeys::SideToMove;
     recompute_blockers_and_checkers();
 }
 
-void ChessBoard::recompute_blockers_and_checkers(const int side) {
-    const int king_idx = bitboard_to_idx(this->get_king_occupancy(this->get_side_to_move()));
-    const int enemy_side = ENEMY_SIDE(side);
-    checkers[side] = MoveGenerator::get_checkers(*this, this->get_side_to_move(), king_idx);
+void ChessBoard::recompute_blockers_and_checkers(const Side side) {
+    const int king_idx = bitboard_to_idx(this->get_king_occupancy(side));
+    const Side enemy_side = ENEMY_SIDE(side);
+    checkers[side] = MoveGenerator::get_checkers(*this, side, king_idx);
 
     pinned_pieces[side] = 0;
 
@@ -354,7 +355,7 @@ bool operator==(const ChessBoard& lhs, const ChessBoard& rhs) {
     }
 
     for (int i = 0; i < 12; i++) {
-        is_equal &= (lhs.get_pawn_occupancy(i) == rhs.get_pawn_occupancy(i));
+        is_equal &= (lhs.get_pawn_occupancy(Side(i)) == rhs.get_pawn_occupancy(Side(i)));
         // this just makes it a bit nicer to use
     }
 

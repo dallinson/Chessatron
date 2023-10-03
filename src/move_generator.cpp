@@ -5,13 +5,13 @@
 
 #include "magic_numbers.hpp"
 
-MoveList MoveGenerator::generate_legal_moves(ChessBoard& c, const int side) {
+MoveList MoveGenerator::generate_legal_moves(const ChessBoard& c, const Side side) {
     MoveList to_return = generate_pseudolegal_moves(c, side);
 
     return filter_to_legal_moves(c, side, to_return);
 }
 
-MoveList MoveGenerator::generate_pseudolegal_moves(const ChessBoard& c, const int side) {
+MoveList MoveGenerator::generate_pseudolegal_moves(const ChessBoard& c, const Side side) {
     MoveList to_return = MoveGenerator::generate_king_moves(c, side);
 
     int checking_piece_count = MoveGenerator::get_checking_piece_count(c, side, bitboard_to_idx(c.get_king_occupancy(side)));
@@ -32,12 +32,12 @@ MoveList MoveGenerator::generate_pseudolegal_moves(const ChessBoard& c, const in
     return to_return;
 }
 
-int MoveGenerator::get_checking_piece_count(const ChessBoard& c, const int side, const int king_idx) {
+int MoveGenerator::get_checking_piece_count(const ChessBoard& c, const Side side, const int king_idx) {
     return std::popcount(MoveGenerator::get_checkers(c, side, king_idx));
 }
 
-Bitboard MoveGenerator::get_checkers(const ChessBoard& c, const int side, const int king_idx) {
-    const int enemy_side = ENEMY_SIDE(side);
+Bitboard MoveGenerator::get_checkers(const ChessBoard& c, const Side side, const int king_idx) {
+    const Side enemy_side = ENEMY_SIDE(side);
 
     Bitboard bishop_mask = MoveGenerator::generate_bishop_movemask(c.get_occupancy(), king_idx);
     Bitboard rook_mask = MoveGenerator::generate_rook_movemask(c.get_occupancy(), king_idx);
@@ -53,13 +53,13 @@ Bitboard MoveGenerator::get_checkers(const ChessBoard& c, const int side, const 
     return to_return;
 }
 
-MoveList MoveGenerator::generate_king_moves(const ChessBoard& c, const int side) {
+MoveList MoveGenerator::generate_king_moves(const ChessBoard& c, const Side side) {
     int king_idx = bitboard_to_idx(c.get_king_occupancy(side));
     Bitboard king_moves = MagicNumbers::KingMoves[king_idx];
     return filter_to_pseudolegal_moves(c, side, king_moves, king_idx);
 }
 
-MoveList MoveGenerator::filter_to_pseudolegal_moves(const ChessBoard& c, const int side, const Bitboard potential_moves, const int idx) {
+MoveList MoveGenerator::filter_to_pseudolegal_moves(const ChessBoard& c, const Side side, const Bitboard potential_moves, const int idx) {
     MoveList to_return;
     Bitboard valid_moves = potential_moves & ~c.get_side_occupancy(side);
     // only move onto spaces unoccupied by friendlies
@@ -67,7 +67,7 @@ MoveList MoveGenerator::filter_to_pseudolegal_moves(const ChessBoard& c, const i
     while (valid_moves) {
         int move_idx = pop_min_bit(valid_moves);
         uint_fast16_t flags = 0;
-        flags |= ((GET_BIT(c.get_side_occupancy((side + 1) & 1), move_idx)) << 2);
+        flags |= ((GET_BIT(c.get_side_occupancy(ENEMY_SIDE(side)), move_idx)) << 2);
 
         to_return.add_move(Move((MoveFlags) flags, move_idx & 0x3F, src_idx));
     }
@@ -88,7 +88,7 @@ Bitboard MoveGenerator::generate_queen_movemask(const Bitboard b, const int idx)
     return MoveGenerator::generate_bishop_movemask(b, idx) | MoveGenerator::generate_rook_movemask(b, idx);
 }
 
-MoveList MoveGenerator::generate_queen_moves(const ChessBoard& c, const int side) {
+MoveList MoveGenerator::generate_queen_moves(const ChessBoard& c, const Side side) {
     Bitboard queen_mask = c.get_queen_occupancy(side);
     MoveList to_return;
     while (queen_mask) {
@@ -99,7 +99,7 @@ MoveList MoveGenerator::generate_queen_moves(const ChessBoard& c, const int side
     return to_return;
 }
 
-MoveList MoveGenerator::generate_bishop_moves(const ChessBoard& c, const int side) {
+MoveList MoveGenerator::generate_bishop_moves(const ChessBoard& c, const Side side) {
     Bitboard bishop_mask = c.get_bishop_occupancy(side);
     MoveList to_return;
     while (bishop_mask) {
@@ -110,7 +110,7 @@ MoveList MoveGenerator::generate_bishop_moves(const ChessBoard& c, const int sid
     return to_return;
 }
 
-MoveList MoveGenerator::generate_knight_moves(const ChessBoard& c, const int side) {
+MoveList MoveGenerator::generate_knight_moves(const ChessBoard& c, const Side side) {
     Bitboard knight_mask = c.get_knight_occupancy(side);
     MoveList to_return;
     while (knight_mask) {
@@ -121,7 +121,7 @@ MoveList MoveGenerator::generate_knight_moves(const ChessBoard& c, const int sid
     return to_return;
 }
 
-MoveList MoveGenerator::generate_rook_moves(const ChessBoard& c, const int side) {
+MoveList MoveGenerator::generate_rook_moves(const ChessBoard& c, const Side side) {
     Bitboard rook_mask = c.get_rook_occupancy(side);
     MoveList to_return;
     while (rook_mask) {
@@ -132,12 +132,13 @@ MoveList MoveGenerator::generate_rook_moves(const ChessBoard& c, const int side)
     return to_return;
 }
 
-MoveList MoveGenerator::generate_pawn_moves(const ChessBoard& c, const int side) {
+MoveList MoveGenerator::generate_pawn_moves(const ChessBoard& c, const Side side) {
     Bitboard pawn_mask = c.get_pawn_occupancy(side);
     MoveList to_return;
+    const Side enemy_side = ENEMY_SIDE(side);
     while (pawn_mask) {
         int pawn_idx = pop_min_bit(pawn_mask);
-        if (side == 0) {
+        if (side == Side::WHITE) {
             if (!GET_BIT(c.get_occupancy(), pawn_idx + 8)) {
                 if (GET_RANK(pawn_idx) == 1 && !GET_BIT(c.get_occupancy(), pawn_idx + 16)) {
                     to_return.add_move(Move(DOUBLE_PAWN_PUSH, pawn_idx + 16, pawn_idx));
@@ -151,7 +152,7 @@ MoveList MoveGenerator::generate_pawn_moves(const ChessBoard& c, const int side)
                     to_return.add_move(Move(QUIET_MOVE, pawn_idx + 8, pawn_idx));
                 }
             }
-            if (GET_FILE(pawn_idx) != 0 && GET_BIT(c.get_side_occupancy((side + 1) & 1), pawn_idx + 7)) {
+            if (GET_FILE(pawn_idx) != 0 && GET_BIT(c.get_side_occupancy(enemy_side), pawn_idx + 7)) {
                 if (GET_RANK(pawn_idx) == 6) {
                     to_return.add_move(Move(ROOK_PROMOTION_CAPTURE, pawn_idx + 7, pawn_idx));
                     to_return.add_move(Move(KNIGHT_PROMOTION_CAPTURE, pawn_idx + 7, pawn_idx));
@@ -161,7 +162,7 @@ MoveList MoveGenerator::generate_pawn_moves(const ChessBoard& c, const int side)
                     to_return.add_move(Move(CAPTURE, pawn_idx + 7, pawn_idx));
                 }
             }
-            if (GET_FILE(pawn_idx) != 7 && GET_BIT(c.get_side_occupancy((side + 1) & 1), pawn_idx + 9)) {
+            if (GET_FILE(pawn_idx) != 7 && GET_BIT(c.get_side_occupancy(enemy_side), pawn_idx + 9)) {
                 if (GET_RANK(pawn_idx) == 6) {
                     to_return.add_move(Move(ROOK_PROMOTION_CAPTURE, pawn_idx + 9, pawn_idx));
                     to_return.add_move(Move(KNIGHT_PROMOTION_CAPTURE, pawn_idx + 9, pawn_idx));
@@ -188,7 +189,7 @@ MoveList MoveGenerator::generate_pawn_moves(const ChessBoard& c, const int side)
                     to_return.add_move(Move(QUIET_MOVE, pawn_idx - 8, pawn_idx));
                 }
             }
-            if (GET_FILE(pawn_idx) != 0 && GET_BIT(c.get_side_occupancy((side + 1) & 1), pawn_idx - 9)) {
+            if (GET_FILE(pawn_idx) != 0 && GET_BIT(c.get_side_occupancy(enemy_side), pawn_idx - 9)) {
                 if (GET_RANK(pawn_idx) == 1) {
                     to_return.add_move(Move(ROOK_PROMOTION_CAPTURE, pawn_idx - 9, pawn_idx));
                     to_return.add_move(Move(KNIGHT_PROMOTION_CAPTURE, pawn_idx - 9, pawn_idx));
@@ -198,7 +199,7 @@ MoveList MoveGenerator::generate_pawn_moves(const ChessBoard& c, const int side)
                     to_return.add_move(Move(CAPTURE, pawn_idx - 9, pawn_idx));
                 }
             }
-            if (GET_FILE(pawn_idx) != 7 && GET_BIT(c.get_side_occupancy((side + 1) & 1), pawn_idx - 7)) {
+            if (GET_FILE(pawn_idx) != 7 && GET_BIT(c.get_side_occupancy(enemy_side), pawn_idx - 7)) {
                 if (GET_RANK(pawn_idx) == 1) {
                     to_return.add_move(Move(ROOK_PROMOTION_CAPTURE, pawn_idx - 7, pawn_idx));
                     to_return.add_move(Move(KNIGHT_PROMOTION_CAPTURE, pawn_idx - 7, pawn_idx));
@@ -217,7 +218,7 @@ MoveList MoveGenerator::generate_pawn_moves(const ChessBoard& c, const int side)
     return to_return;
 }
 
-MoveList MoveGenerator::generate_castling_moves(const ChessBoard& c, const int side) {
+MoveList MoveGenerator::generate_castling_moves(const ChessBoard& c, const Side side) {
     MoveList to_return;
     if (c.get_kingside_castling(side)) {
         int shift_val = 56 * side;
@@ -241,27 +242,20 @@ MoveList MoveGenerator::generate_castling_moves(const ChessBoard& c, const int s
     return to_return;
 }
 
-MoveList MoveGenerator::filter_to_legal_moves(ChessBoard& c, const int side, const MoveList& move_list) {
+MoveList MoveGenerator::filter_to_legal_moves(const ChessBoard& c, const Side side, const MoveList& move_list) {
     MoveList to_return;
     MoveHistory history;
     for (size_t i = 0; i < move_list.len(); i++) {
         if (is_move_legal(c, move_list[i])) {
             to_return.add_move(move_list[i]);
         }
-        /*c.make_move(move_list[i], history);
-        if (get_checking_piece_count(c, side, bitboard_to_idx(c.get_king_occupancy(side))) == 0) {
-            bool a = is_move_legal(c, move_list[i]);
-            a = a;
-            to_return.add_move(move_list[i]);
-        }
-        c.unmake_move(history);*/
     }
     return to_return;
 }
 
 bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
     int king_idx = bitboard_to_idx(c.get_king_occupancy(c.get_side_to_move()));
-    const int enemy_side = (c.get_piece(m.get_src_square()).get_side() + 1) & 1;
+    const Side enemy_side = ENEMY_SIDE(c.get_piece(m.get_src_square()).get_side());
     if (m.get_move_flags() == EN_PASSANT_CAPTURE) {
         // with en passant knights and pawns _cannot_ capture as the previous
         // move was moving a pawn, and therefore knights/pawns were not in

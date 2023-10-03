@@ -31,7 +31,7 @@ class ChessBoard {
         // first 2 elems are kingside, second two queenside
         std::array<bool, 4> castling = {false, false, false, false};
 
-        uint_fast8_t side_to_move = 0;
+        Side side_to_move = Side(0);
 
         inline Bitboard get_pair_occupancy(int offset) const { return bitboards[offset] | bitboards[offset + 1]; };
 
@@ -45,14 +45,14 @@ class ChessBoard {
             return get_king_occupancy() | get_queen_occupancy() | get_bishop_occupancy() | get_knight_occupancy() | get_rook_occupancy() |
                    get_pawn_occupancy();
         };
-        inline Bitboard get_occupancy(const int side) const { return get_side_occupancy(side); };
+        inline Bitboard get_occupancy(const Side side) const { return get_side_occupancy(side); };
 
-        inline Bitboard get_side_occupancy(const int side) const {
-            return bitboards[KING_OFFSET + side] | bitboards[QUEEN_OFFSET + side] | bitboards[BISHOP_OFFSET + side] |
-                   bitboards[KNIGHT_OFFSET + side] | bitboards[ROOK_OFFSET + side] | bitboards[PAWN_OFFSET + side];
+        inline Bitboard get_side_occupancy(const Side side) const {
+            return bitboards[KING_OFFSET + static_cast<uint_fast8_t>(side)] | bitboards[QUEEN_OFFSET + static_cast<uint_fast8_t>(side)] | bitboards[BISHOP_OFFSET + static_cast<uint_fast8_t>(side)] |
+                   bitboards[KNIGHT_OFFSET + static_cast<uint_fast8_t>(side)] | bitboards[ROOK_OFFSET + static_cast<uint_fast8_t>(side)] | bitboards[PAWN_OFFSET + static_cast<uint_fast8_t>(side)];
         };
-        inline Bitboard get_white_occupancy() const { return get_side_occupancy(WHITE_IDX); };
-        inline Bitboard get_black_occupancy() const { return get_side_occupancy(BLACK_IDX); };
+        inline Bitboard get_white_occupancy() const { return get_side_occupancy(Side::WHITE); };
+        inline Bitboard get_black_occupancy() const { return get_side_occupancy(Side::WHITE); };
 
         inline Bitboard get_king_occupancy() const { return get_pair_occupancy(KING_OFFSET); };
         inline Bitboard get_queen_occupancy() const { return get_pair_occupancy(QUEEN_OFFSET); };
@@ -61,12 +61,12 @@ class ChessBoard {
         inline Bitboard get_rook_occupancy() const { return get_pair_occupancy(ROOK_OFFSET); };
         inline Bitboard get_pawn_occupancy() const { return get_pair_occupancy(PAWN_OFFSET); };
 
-        inline Bitboard get_king_occupancy(const int side) const { return bitboards[KING_OFFSET + side]; };
-        inline Bitboard get_queen_occupancy(const int side) const { return bitboards[QUEEN_OFFSET + side]; };
-        inline Bitboard get_bishop_occupancy(const int side) const { return bitboards[BISHOP_OFFSET + side]; };
-        inline Bitboard get_knight_occupancy(const int side) const { return bitboards[KNIGHT_OFFSET + side]; };
-        inline Bitboard get_rook_occupancy(const int side) const { return bitboards[ROOK_OFFSET + side]; };
-        inline Bitboard get_pawn_occupancy(const int side) const { return bitboards[PAWN_OFFSET + side]; };
+        inline Bitboard get_king_occupancy(const Side side) const { return bitboards[KING_OFFSET + static_cast<uint_fast8_t>(side)]; };
+        inline Bitboard get_queen_occupancy(const Side side) const { return bitboards[QUEEN_OFFSET + static_cast<uint_fast8_t>(side)]; };
+        inline Bitboard get_bishop_occupancy(const Side side) const { return bitboards[BISHOP_OFFSET + static_cast<uint_fast8_t>(side)]; };
+        inline Bitboard get_knight_occupancy(const Side side) const { return bitboards[KNIGHT_OFFSET + static_cast<uint_fast8_t>(side)]; };
+        inline Bitboard get_rook_occupancy(const Side side) const { return bitboards[ROOK_OFFSET + static_cast<uint_fast8_t>(side)]; };
+        inline Bitboard get_pawn_occupancy(const Side side) const { return bitboards[PAWN_OFFSET + static_cast<uint_fast8_t>(side)]; };
 
         /**
          * @brief Get the en passant file
@@ -81,7 +81,7 @@ class ChessBoard {
         inline void set_kingside_castling(const int side, const bool val) { castling[side] = val; };
         inline void set_queenside_castling(const int side, const bool val) { castling[2 + side] = val; };
 
-        int get_score(int side);
+        int get_score(Side side);
 
         void set_piece(uint_fast8_t piece, uint_fast8_t pos);
         Piece get_piece(const int i) const { return this->pieces[i]; };
@@ -90,15 +90,15 @@ class ChessBoard {
 
         bool set_from_fen(const char* input);
 
-        uint_fast8_t get_side_to_move() const { return this->side_to_move; };
+        Side get_side_to_move() const { return this->side_to_move; };
 
         void make_move(const Move to_make, MoveHistory& move_history);
         void unmake_move(MoveHistory& move_history);
 
-        void recompute_blockers_and_checkers() { recompute_blockers_and_checkers(0); recompute_blockers_and_checkers(1); };
-        void recompute_blockers_and_checkers(const int side);
-        inline Bitboard get_checkers(const int side) const { return checkers[side]; };
-        inline Bitboard get_pinned_pieces(const int side) const { return pinned_pieces[side]; };
+        void recompute_blockers_and_checkers() { recompute_blockers_and_checkers(Side::WHITE); recompute_blockers_and_checkers(Side::BLACK); };
+        void recompute_blockers_and_checkers(const Side side);
+        inline Bitboard get_checkers(const Side side) const { return checkers[side]; };
+        inline Bitboard get_pinned_pieces(const Side side) const { return pinned_pieces[side]; };
 
         inline ZobristKey get_zobrist_key() const { return zobrist_key; };
 };
