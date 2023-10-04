@@ -5,7 +5,7 @@
 #include "../src/chessboard.hpp"
 #include "../src/move_generator.hpp"
 
-TEST(ChessboardTests, SetFenStartPos) {
+TEST(ChessBoardTests, SetFenStartPos) {
     ChessBoard c;
     ASSERT_TRUE(c.set_from_fen("startpos"));
 
@@ -176,4 +176,31 @@ TEST(ChessBoardTests, TestEquality) {
     c.set_from_fen("startpos");
     o.set_from_fen("startpos");
     ASSERT_EQ(c, o);
+}
+
+TEST(ChessBoardTests, TestClearBoard) {
+    ChessBoard c;
+    c.set_from_fen("startpos");
+    c.clear_board();
+    for (int i = 0; i < 12; i++) {
+        ASSERT_EQ(c.get_bitboard(i), 0);
+    }
+    for (int i = 0; i < 64; i++) {
+        ASSERT_EQ(c.get_piece(i), Piece(0));
+    }
+    ASSERT_EQ(c.get_side_to_move(), Side::WHITE);
+    ASSERT_EQ(c.get_en_passant_file(), 9);
+    ASSERT_FALSE(c.get_kingside_castling(Side::WHITE));
+    ASSERT_FALSE(c.get_kingside_castling(Side::BLACK));
+    ASSERT_FALSE(c.get_queenside_castling(Side::WHITE));
+    ASSERT_FALSE(c.get_queenside_castling(Side::BLACK));
+}
+
+TEST(ChessBoardTests, TestPrintBoard) {
+    ChessBoard c;
+    c.set_from_fen("startpos");
+    testing::internal::CaptureStdout();
+    c.print_board();
+    std::string from_stdout = testing::internal::GetCapturedStdout();
+    ASSERT_STREQ("rnbqkbnr\npppppppp\n........\n........\n........\n........\nPPPPPPPP\nRNBQKBNR\n", from_stdout.c_str());
 }

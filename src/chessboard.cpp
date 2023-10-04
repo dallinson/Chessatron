@@ -355,7 +355,7 @@ bool operator==(const ChessBoard& lhs, const ChessBoard& rhs) {
     }
 
     for (int i = 0; i < 12; i++) {
-        is_equal &= (lhs.get_pawn_occupancy(Side(i)) == rhs.get_pawn_occupancy(Side(i)));
+        is_equal &= (lhs.get_bitboard(i) == rhs.get_bitboard(i));
         // this just makes it a bit nicer to use
     }
 

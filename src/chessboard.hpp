@@ -69,6 +69,8 @@ class ChessBoard {
         inline Bitboard get_rook_occupancy(const Side side) const { return bitboards[ROOK_OFFSET + static_cast<uint_fast8_t>(side)]; };
         inline Bitboard get_pawn_occupancy(const Side side) const { return bitboards[PAWN_OFFSET + static_cast<uint_fast8_t>(side)]; };
 
+        inline Bitboard get_bitboard(const int idx) const { return bitboards.at(idx); }
+
         /**
          * @brief Get the en passant file
          *
