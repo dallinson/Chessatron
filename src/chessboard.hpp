@@ -77,10 +77,10 @@ class ChessBoard {
         uint_fast8_t get_en_passant_file() const { return en_passant_file; };
         void set_en_passant_file(int file) { en_passant_file = file; };
 
-        inline bool get_queenside_castling(const Side side) const { return castling[2 + side]; };
-        inline bool get_kingside_castling(const Side side) const { return castling[side]; };
-        inline void set_kingside_castling(const Side side, const bool val) { castling[side] = val; };
-        inline void set_queenside_castling(const Side side, const bool val) { castling[2 + side] = val; };
+        inline bool get_queenside_castling(const Side side) const { return castling[2 + static_cast<int>(side)]; };
+        inline bool get_kingside_castling(const Side side) const { return castling[static_cast<int>(side)]; };
+        inline void set_kingside_castling(const Side side, const bool val) { castling[static_cast<int>(side)] = val; };
+        inline void set_queenside_castling(const Side side, const bool val) { castling[2 + static_cast<int>(side)] = val; };
 
         int get_score(Side side);
 

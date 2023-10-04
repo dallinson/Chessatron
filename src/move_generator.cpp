@@ -48,7 +48,7 @@ Bitboard MoveGenerator::get_checkers(const ChessBoard& c, const Side side, const
     to_return |= c.get_bishop_occupancy(enemy_side) & bishop_mask;
     to_return |= c.get_rook_occupancy(enemy_side) & rook_mask;
     to_return |= c.get_knight_occupancy(enemy_side) & MagicNumbers::KnightMoves[king_idx];
-    to_return |= c.get_pawn_occupancy(enemy_side) & MagicNumbers::PawnAttacks[(64 * side) + king_idx];
+    to_return |= c.get_pawn_occupancy(enemy_side) & MagicNumbers::PawnAttacks[(64 * static_cast<int>(side)) + king_idx];
 
     return to_return;
 }
@@ -221,7 +221,7 @@ MoveList MoveGenerator::generate_pawn_moves(const ChessBoard& c, const Side side
 MoveList MoveGenerator::generate_castling_moves(const ChessBoard& c, const Side side) {
     MoveList to_return;
     if (c.get_kingside_castling(side)) {
-        int shift_val = 56 * side;
+        int shift_val = 56 * static_cast<int>(side);
         if (((uint64_t) 0b10010000 ^ ((c.get_occupancy() >> shift_val) & 0xF0)) == 0) {
             // if only these spaces are occupied
             if (get_checking_piece_count(c, side, 5 + shift_val) == 0) {
@@ -230,7 +230,7 @@ MoveList MoveGenerator::generate_castling_moves(const ChessBoard& c, const Side 
         }
     }
     if (c.get_queenside_castling(side)) {
-        int shift_val = 56 * side;
+        int shift_val = 56 * static_cast<int>(side);
         if (((uint64_t) 0b00010001 ^ ((c.get_occupancy() >> shift_val) & 0x1F)) == 0) {
             // if only these spaces are occupied
             if (get_checking_piece_count(c, side, 3 + shift_val) == 0) {
@@ -263,7 +263,7 @@ bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
         // and we would have moved out of check
         Bitboard occupancy = c.get_occupancy();
         Bitboard cleared_occupancy =
-            occupancy ^ (idx_to_bitboard(m.get_src_square()) | idx_to_bitboard(m.get_dest_square() - 8 + (16 * c.get_side_to_move())));
+            occupancy ^ (idx_to_bitboard(m.get_src_square()) | idx_to_bitboard(m.get_dest_square() - 8 + (16 * static_cast<int>(c.get_side_to_move()))));
         // clear the origin and capture spaces
         // then set the destination square
         cleared_occupancy |= idx_to_bitboard(m.get_dest_square());
@@ -278,7 +278,7 @@ bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
             (generate_bishop_movemask(cleared_bitboard, target_idx) & (c.get_bishop_occupancy(enemy_side) | c.get_queen_occupancy(enemy_side))) ||
             (generate_rook_movemask(cleared_bitboard, target_idx) & (c.get_rook_occupancy(enemy_side) | c.get_queen_occupancy(enemy_side))) ||
             (c.get_knight_occupancy(enemy_side) & MagicNumbers::KnightMoves[target_idx]) ||
-            (c.get_pawn_occupancy(enemy_side) & MagicNumbers::PawnAttacks[(64 * c.get_piece(m.get_src_square()).get_side()) + target_idx]));
+            (c.get_pawn_occupancy(enemy_side) & MagicNumbers::PawnAttacks[(64 * static_cast<int>(c.get_piece(m.get_src_square()).get_side())) + target_idx]));
     } else [[likely]] {
 
         Bitboard checking_pieces = c.get_checkers(c.get_side_to_move());

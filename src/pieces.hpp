@@ -24,14 +24,14 @@ class Piece {
     public:
         Piece() : val(0){};
         Piece(uint_fast8_t val) : val(val){};
-        Piece(uint_fast8_t side, uint_fast8_t piece_val) : val(side << 3 | piece_val){};
+        Piece(Side side, uint_fast8_t piece_val) : val(static_cast<uint_fast8_t>(side) << 3 | piece_val){};
 
         void set_value(uint_fast8_t val) { this->val = val; };
         uint_fast8_t get_value() const { return this->val; };
         uint_fast8_t get_type() const { return GET_BITS(val, 2, 0); };
         Side get_side() const { return Side(GET_BIT(val, 3)); };
 
-        uint_fast8_t to_bitboard_idx() const { return (2 * (get_type() - 1)) + get_side(); };
+        uint_fast8_t to_bitboard_idx() const { return (2 * (get_type() - 1)) + static_cast<uint_fast8_t>(get_side()); };
 };
 
 inline bool operator==(const Piece& lhs, const Piece& rhs) { return lhs.get_value() == rhs.get_value(); }
