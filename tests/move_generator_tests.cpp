@@ -80,26 +80,26 @@ TEST(MoveGeneratorTests, TestPawnCaptures) {
 
 TEST(MoveGeneratorTests, TestCastling) {
     ChessBoard c;
-    c.set_kingside_castling(0, true);
+    c.set_kingside_castling(Side::WHITE, true);
     c.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQK2R w KQkq - 0 1");
     ASSERT_EQ(MoveGenerator::generate_castling_moves(c, Side::WHITE).len(), 1);
     // ASSERT_EQ(MoveGenerator::generate_castling_moves(c, Side::WHITE)[0].get_move(), 8454);
     c.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKn1R w KQkq - 0 1");
     ASSERT_EQ(MoveGenerator::generate_castling_moves(c, Side::WHITE).len(), 0);
 
-    c.set_queenside_castling(0, true);
+    c.set_queenside_castling(Side::WHITE, true);
     c.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/R3KBNR w KQkq - 0 1");
     ASSERT_EQ(MoveGenerator::generate_castling_moves(c, Side::WHITE).len(), 1);
     c.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/R1n1KBNR w KQkq - 0 1");
     ASSERT_EQ(MoveGenerator::generate_castling_moves(c, Side::WHITE).len(), 0);
 
-    c.set_kingside_castling(1, true);
+    c.set_kingside_castling(Side::BLACK, true);
     c.set_from_fen("rnbqk2r/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     ASSERT_EQ(MoveGenerator::generate_castling_moves(c, Side::BLACK).len(), 1);
     c.set_from_fen("rnbqkN1r/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     ASSERT_EQ(MoveGenerator::generate_castling_moves(c, Side::BLACK).len(), 0);
 
-    c.set_queenside_castling(0, true);
+    c.set_queenside_castling(Side::WHITE, true);
     c.set_from_fen("r3kbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     ASSERT_EQ(MoveGenerator::generate_castling_moves(c, Side::BLACK).len(), 1);
     c.set_from_fen("r1N1kbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
@@ -114,25 +114,25 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountKiwipete) {
 
     auto rook_moves = MoveGenerator::generate_rook_moves(c, Side::WHITE);
     ASSERT_EQ(rook_moves.len(), 5);
-    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, Side::WHITE, rook_moves).len(), 5);
+    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, rook_moves).len(), 5);
 
     auto bishop_moves = MoveGenerator::generate_bishop_moves(c, Side::WHITE);
-    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, Side::WHITE, bishop_moves).len(), 11);
+    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, bishop_moves).len(), 11);
 
     auto king_moves = MoveGenerator::generate_king_moves(c, Side::WHITE);
-    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, Side::WHITE, king_moves).len(), 2);
+    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, king_moves).len(), 2);
 
     auto castling_moves = MoveGenerator::generate_castling_moves(c, Side::WHITE);
-    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, Side::WHITE, castling_moves).len(), 2);
+    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, castling_moves).len(), 2);
 
     auto queen_moves = MoveGenerator::generate_queen_moves(c, Side::WHITE);
-    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, Side::WHITE, queen_moves).len(), 9);
+    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, queen_moves).len(), 9);
 
     auto knight_moves = MoveGenerator::generate_knight_moves(c, Side::WHITE);
-    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, Side::WHITE, knight_moves).len(), 11);
+    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, knight_moves).len(), 11);
 
     auto pawn_moves = MoveGenerator::generate_pawn_moves(c, Side::WHITE);
-    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, Side::WHITE, pawn_moves).len(), 8);
+    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, pawn_moves).len(), 8);
 
     ASSERT_EQ(legal_moves.len(), 48);
 }
@@ -143,25 +143,25 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountKiwipeteB2B3) {
     auto legal_moves = MoveGenerator::generate_legal_moves(c, Side::BLACK);
 
     auto rook_moves = MoveGenerator::generate_rook_moves(c, Side::BLACK);
-    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, Side::BLACK, rook_moves).len(), 9);
+    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, rook_moves).len(), 9);
 
     auto bishop_moves = MoveGenerator::generate_bishop_moves(c, Side::BLACK);
-    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, Side::BLACK, bishop_moves).len(), 8);
+    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, bishop_moves).len(), 8);
 
     auto king_moves = MoveGenerator::generate_king_moves(c, Side::BLACK);
-    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, Side::BLACK, king_moves).len(), 2);
+    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, king_moves).len(), 2);
 
     auto castling_moves = MoveGenerator::generate_castling_moves(c, Side::BLACK);
-    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, Side::BLACK, castling_moves).len(), 2);
+    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, castling_moves).len(), 2);
 
     auto queen_moves = MoveGenerator::generate_queen_moves(c, Side::BLACK);
-    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, Side::BLACK, queen_moves).len(), 4);
+    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, queen_moves).len(), 4);
 
     auto knight_moves = MoveGenerator::generate_knight_moves(c, Side::BLACK);
-    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, Side::BLACK, knight_moves).len(), 10);
+    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, knight_moves).len(), 10);
 
     auto pawn_moves = MoveGenerator::generate_pawn_moves(c, Side::BLACK);
-    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, Side::BLACK, pawn_moves).len(), 7);
+    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, pawn_moves).len(), 7);
 
     ASSERT_EQ(legal_moves.len(), 42);
 }
@@ -175,25 +175,25 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountKiwipeteE1D1C7C6) {
     auto legal_moves = MoveGenerator::generate_legal_moves(c, Side::WHITE);
 
     auto rook_moves = MoveGenerator::generate_rook_moves(c, Side::WHITE);
-    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, Side::WHITE, rook_moves).len(), 5);
+    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, rook_moves).len(), 5);
 
     auto bishop_moves = MoveGenerator::generate_bishop_moves(c, Side::WHITE);
-    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, Side::WHITE, bishop_moves).len(), 11);
+    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, bishop_moves).len(), 11);
 
     auto king_moves = MoveGenerator::generate_king_moves(c, Side::WHITE);
-    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, Side::WHITE, king_moves).len(), 2);
+    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, king_moves).len(), 2);
 
     auto castling_moves = MoveGenerator::generate_castling_moves(c, Side::WHITE);
-    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, Side::WHITE, castling_moves).len(), 0);
+    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, castling_moves).len(), 0);
 
     auto queen_moves = MoveGenerator::generate_queen_moves(c, Side::WHITE);
-    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, Side::WHITE, queen_moves).len(), 9);
+    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, queen_moves).len(), 9);
 
     auto knight_moves = MoveGenerator::generate_knight_moves(c, Side::WHITE);
-    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, Side::WHITE, knight_moves).len(), 10);
+    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, knight_moves).len(), 10);
 
     auto pawn_moves = MoveGenerator::generate_pawn_moves(c, Side::WHITE);
-    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, Side::WHITE, pawn_moves).len(), 9);
+    ASSERT_EQ(MoveGenerator::filter_to_legal_moves(c, pawn_moves).len(), 9);
 
     ASSERT_EQ(legal_moves.len(), 46);
 }
@@ -202,6 +202,6 @@ TEST(MoveGeneratorTests, TestRookMoves) {
     ChessBoard c;
     c.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
     auto rook_moves = MoveGenerator::generate_rook_moves(c, Side::WHITE);
-    auto legal_moves = MoveGenerator::filter_to_legal_moves(c, Side::WHITE, rook_moves);
+    auto legal_moves = MoveGenerator::filter_to_legal_moves(c, rook_moves);
     ASSERT_EQ(legal_moves.len(), 5);
 }

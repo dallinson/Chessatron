@@ -77,10 +77,10 @@ class ChessBoard {
         uint_fast8_t get_en_passant_file() const { return en_passant_file; };
         void set_en_passant_file(int file) { en_passant_file = file; };
 
-        inline bool get_queenside_castling(const int side) const { return castling[2 + side]; };
-        inline bool get_kingside_castling(const int side) const { return castling[side]; };
-        inline void set_kingside_castling(const int side, const bool val) { castling[side] = val; };
-        inline void set_queenside_castling(const int side, const bool val) { castling[2 + side] = val; };
+        inline bool get_queenside_castling(const Side side) const { return castling[2 + side]; };
+        inline bool get_kingside_castling(const Side side) const { return castling[side]; };
+        inline void set_kingside_castling(const Side side, const bool val) { castling[side] = val; };
+        inline void set_queenside_castling(const Side side, const bool val) { castling[2 + side] = val; };
 
         int get_score(Side side);
 
@@ -101,8 +101,8 @@ class ChessBoard {
             recompute_blockers_and_checkers(Side::BLACK);
         };
         void recompute_blockers_and_checkers(const Side side);
-        inline Bitboard get_checkers(const Side side) const { return checkers[side]; };
-        inline Bitboard get_pinned_pieces(const Side side) const { return pinned_pieces[side]; };
+        inline Bitboard get_checkers(const Side side) const { return checkers[static_cast<int>(side)]; };
+        inline Bitboard get_pinned_pieces(const Side side) const { return pinned_pieces[static_cast<int>(side)]; };
 
         inline ZobristKey get_zobrist_key() const { return zobrist_key; };
 };

@@ -140,16 +140,16 @@ bool ChessBoard::set_from_fen(const char* input) {
         RETURN_FALSE_IF_PAST_END;
         switch (input[char_idx]) {
         case 'K':
-            set_kingside_castling(WHITE_IDX, true);
+            set_kingside_castling(Side::WHITE, true);
             break;
         case 'Q':
-            set_queenside_castling(WHITE_IDX, true);
+            set_queenside_castling(Side::WHITE, true);
             break;
         case 'k':
-            set_kingside_castling(BLACK_IDX, true);
+            set_kingside_castling(Side::BLACK, true);
             break;
         case 'q':
-            set_queenside_castling(BLACK_IDX, true);
+            set_queenside_castling(Side::BLACK, true);
             break;
         case '-':
             break;
@@ -192,9 +192,9 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
     this->pieces[to_make.get_dest_square()] = moved;
     zobrist_key ^= ZobristKeys::PositionKeys[ZOBRIST_POSITION_KEY(moved, to_make.get_dest_square())];
     // get the piece we replace with ourselves and do the replacement
-    auto to_add = std::make_pair(to_make, PreviousMoveState(at_target, this->get_en_passant_file(), get_kingside_castling(WHITE_IDX),
-                                                            get_queenside_castling(WHITE_IDX), get_kingside_castling(BLACK_IDX),
-                                                            get_queenside_castling(BLACK_IDX)));
+    auto to_add = std::make_pair(to_make, PreviousMoveState(at_target, this->get_en_passant_file(), get_kingside_castling(Side::WHITE),
+                                                            get_queenside_castling(Side::WHITE), get_kingside_castling(Side::BLACK),
+                                                            get_queenside_castling(Side::BLACK)));
     move_history.push_move(to_add);
 
     CLEAR_BIT(this->bitboards[moved.to_bitboard_idx()], to_make.get_src_square());
@@ -227,7 +227,7 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
     // set where the last en passant happened, else clear it
 
     if (to_make.get_move_flags() == EN_PASSANT_CAPTURE) [[unlikely]] {
-        int enemy_side = ENEMY_SIDE(side);
+        Side enemy_side = ENEMY_SIDE(side);
         int enemy_pawn_idx = to_make.get_dest_square() - 8 + (16 * side);
         CLEAR_BIT(this->bitboards[PAWN_OFFSET + enemy_side], enemy_pawn_idx);
         this->pieces[enemy_pawn_idx] = 0;
@@ -253,17 +253,17 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
         set_queenside_castling(side, false);
     }
     if (to_make.get_src_square() == 0 || to_make.get_dest_square() == 0) {
-        set_queenside_castling(0, false);
+        set_queenside_castling(Side::WHITE, false);
     }
     if (to_make.get_src_square() == 7 || to_make.get_dest_square() == 7) {
-        set_kingside_castling(0, false);
+        set_kingside_castling(Side::WHITE, false);
     }
 
     if (to_make.get_src_square() == 56 || to_make.get_dest_square() == 56) {
-        set_queenside_castling(1, false);
+        set_queenside_castling(Side::BLACK, false);
     }
     if (to_make.get_src_square() == 63 || to_make.get_dest_square() == 63) {
-        set_kingside_castling(1, false);
+        set_kingside_castling(Side::BLACK, false);
     }
 
     side_to_move = ENEMY_SIDE(side_to_move);
@@ -316,10 +316,10 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
     }
 
     set_en_passant_file(previous_move_pair.second.get_previous_en_passant_file());
-    set_kingside_castling(0, previous_move_pair.second.get_white_kingside_castle());
-    set_queenside_castling(0, previous_move_pair.second.get_white_queenside_castle());
-    set_kingside_castling(1, previous_move_pair.second.get_black_kingside_castle());
-    set_queenside_castling(1, previous_move_pair.second.get_black_queenside_castle());
+    set_kingside_castling(Side::WHITE, previous_move_pair.second.get_white_kingside_castle());
+    set_queenside_castling(Side::WHITE, previous_move_pair.second.get_white_queenside_castle());
+    set_kingside_castling(Side::BLACK, previous_move_pair.second.get_black_kingside_castle());
+    set_queenside_castling(Side::BLACK, previous_move_pair.second.get_black_queenside_castle());
 
     side_to_move = ENEMY_SIDE(side_to_move);
     zobrist_key ^= ZobristKeys::SideToMove;
@@ -362,8 +362,9 @@ bool operator==(const ChessBoard& lhs, const ChessBoard& rhs) {
     is_equal &= (lhs.get_en_passant_file() == rhs.get_en_passant_file());
 
     for (int i = 0; i < 2; i++) {
-        is_equal &= (lhs.get_queenside_castling(i) == rhs.get_queenside_castling(i));
-        is_equal &= (lhs.get_kingside_castling(i) == rhs.get_kingside_castling(i));
+        Side s = Side(i);
+        is_equal &= (lhs.get_queenside_castling(s) == rhs.get_queenside_castling(s));
+        is_equal &= (lhs.get_kingside_castling(s) == rhs.get_kingside_castling(s));
     }
 
     return is_equal;

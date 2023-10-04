@@ -8,7 +8,7 @@
 MoveList MoveGenerator::generate_legal_moves(const ChessBoard& c, const Side side) {
     MoveList to_return = generate_pseudolegal_moves(c, side);
 
-    return filter_to_legal_moves(c, side, to_return);
+    return filter_to_legal_moves(c, to_return);
 }
 
 MoveList MoveGenerator::generate_pseudolegal_moves(const ChessBoard& c, const Side side) {
@@ -242,7 +242,7 @@ MoveList MoveGenerator::generate_castling_moves(const ChessBoard& c, const Side 
     return to_return;
 }
 
-MoveList MoveGenerator::filter_to_legal_moves(const ChessBoard& c, const Side side, const MoveList& move_list) {
+MoveList MoveGenerator::filter_to_legal_moves(const ChessBoard& c, const MoveList& move_list) {
     MoveList to_return;
     MoveHistory history;
     for (size_t i = 0; i < move_list.len(); i++) {
