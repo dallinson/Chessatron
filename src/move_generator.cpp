@@ -262,8 +262,8 @@ bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
         // position to capture-they'd have needed to be moved two moves ago,
         // and we would have moved out of check
         Bitboard occupancy = c.get_occupancy();
-        Bitboard cleared_occupancy =
-            occupancy ^ (idx_to_bitboard(m.get_src_square()) | idx_to_bitboard(m.get_dest_square() - 8 + (16 * static_cast<int>(c.get_side_to_move()))));
+        Bitboard cleared_occupancy = occupancy ^ (idx_to_bitboard(m.get_src_square()) |
+                                                  idx_to_bitboard(m.get_dest_square() - 8 + (16 * static_cast<int>(c.get_side_to_move()))));
         // clear the origin and capture spaces
         // then set the destination square
         cleared_occupancy |= idx_to_bitboard(m.get_dest_square());
@@ -278,7 +278,8 @@ bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
             (generate_bishop_movemask(cleared_bitboard, target_idx) & (c.get_bishop_occupancy(enemy_side) | c.get_queen_occupancy(enemy_side))) ||
             (generate_rook_movemask(cleared_bitboard, target_idx) & (c.get_rook_occupancy(enemy_side) | c.get_queen_occupancy(enemy_side))) ||
             (c.get_knight_occupancy(enemy_side) & MagicNumbers::KnightMoves[target_idx]) ||
-            (c.get_pawn_occupancy(enemy_side) & MagicNumbers::PawnAttacks[(64 * static_cast<int>(c.get_piece(m.get_src_square()).get_side())) + target_idx]));
+            (c.get_pawn_occupancy(enemy_side) &
+             MagicNumbers::PawnAttacks[(64 * static_cast<int>(c.get_piece(m.get_src_square()).get_side())) + target_idx]));
     } else [[likely]] {
 
         Bitboard checking_pieces = c.get_checkers(c.get_side_to_move());
