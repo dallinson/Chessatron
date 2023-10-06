@@ -53,24 +53,30 @@ class Move {
         std::string to_string() const;
 };
 
-class MoveList : public std::array<Move, MAX_TURN_MOVE_COUNT> {
+class MoveList {
     private:
         size_t idx;
+        Move data[MAX_TURN_MOVE_COUNT];
 
     public:
         MoveList() : idx(0){};
-        using std::array<Move, MAX_TURN_MOVE_COUNT>::operator[];
 
         void add_move(const Move to_add) {
-            this->data()[idx] = to_add;
+            this->data[idx] = to_add;
             idx += 1;
         };
 
         void add_moves(const MoveList& other_list) {
             size_t other_len = other_list.len();
-            memcpy(&this->data()[idx], other_list.data(), other_len * sizeof(Move));
+            memcpy(&this->data[idx], other_list.get_data_addr(), other_len * sizeof(Move));
             idx += other_len;
         };
+
+        const Move& operator[](size_t arg_idx) const {
+            return data[arg_idx];
+        }
+
+        const Move* get_data_addr() const { return reinterpret_cast<const Move*>(data); }
 
         size_t len() const { return this->idx; };
 };
@@ -93,21 +99,22 @@ class PreviousMoveState {
         bool get_black_queenside_castle() const { return GET_BIT(info, 11); };
 };
 
-class MoveHistory : public std::array<std::pair<Move, PreviousMoveState>, MAX_GAME_MOVE_COUNT> {
+class MoveHistory {
     private:
         size_t idx;
+        std::pair<Move, PreviousMoveState> data[MAX_GAME_MOVE_COUNT];
 
     public:
         MoveHistory() : idx(0){};
         size_t len() { return idx; };
 
         void push_move(std::pair<Move, PreviousMoveState> to_add) {
-            this->data()[idx] = to_add;
+            this->data[idx] = to_add;
             idx += 1;
         };
 
         std::pair<Move, PreviousMoveState> pop_move() {
             idx -= 1;
-            return this->data()[idx];
+            return this->data[idx];
         };
 };

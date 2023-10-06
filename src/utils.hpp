@@ -33,7 +33,7 @@ constexpr inline int bitboard_to_idx(Bitboard bitboard) { return std::countr_zer
 
 constexpr inline Bitboard idx_to_bitboard(int idx) { return BIT(idx); };
 
-inline int pop_min_bit(Bitboard& num) {
+constexpr inline int pop_min_bit(Bitboard& num) {
     int to_return = bitboard_to_idx(num);
     CLEAR_BIT(num, to_return);
     return to_return;

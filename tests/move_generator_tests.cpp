@@ -2,6 +2,7 @@
 
 #include "../src/chessboard.hpp"
 #include "../src/move_generator.hpp"
+#include "../src/magic_numbers.hpp"
 
 TEST(MoveGeneratorTests, TestCorrectMoveCountStartPos) {
     ChessBoard c;
