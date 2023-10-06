@@ -17,7 +17,7 @@ namespace MagicNumbers {
     extern const int RookBits[64];
     extern const int BishopBits[64];
 
-    extern const Bitboard BishopAttacks[32768];
+    extern const std::array<Bitboard, 32768> BishopAttacks;
     extern const std::array<Bitboard, 262144> RookAttacks;
 
     extern const std::array<std::array<Bitboard, 64>, 64> ConnectingSquares;

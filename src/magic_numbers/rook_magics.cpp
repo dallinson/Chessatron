@@ -36,19 +36,6 @@ constexpr int MagicNumbers::RookBits[64] = {12, 11, 11, 11, 11, 11, 11, 12, 11, 
                                             10, 11, 11, 10, 10, 10, 10, 10, 10, 11, 11, 10, 10, 10, 10, 10, 10, 11, 11, 10, 10, 10,
                                             10, 10, 10, 11, 11, 10, 10, 10, 10, 10, 10, 11, 12, 11, 11, 11, 11, 11, 11, 12};
 
-
-constexpr Bitboard generate_blockers(int index, Bitboard mask) {
-    int popcount = std::popcount(mask);
-    Bitboard to_return = 0;
-    for (int i = 0; i < popcount; i++) {
-        int idx = pop_min_bit(mask);
-        if (index & BIT(i)) {
-            to_return |= BIT(idx);
-        }
-    }
-    return to_return;
-}
-
 constexpr Bitboard generate_rook_attacks(int square, Bitboard mask) {
     Bitboard to_return = 0;
     int rank = GET_RANK(square);
@@ -92,14 +79,15 @@ consteval std::array<Bitboard, 64 * 4096> generate_rook_attack_bitboards() {
         Bitboard attack_mask = MagicNumbers::RookMasks[square];
         std::array<Bitboard, 4096> blockers = {0};
         std::array<Bitboard, 4096> attacks = {0};
-        std::array<Bitboard, 4096> transformed = {0};
         for (int i = 0; i < 4096; i++) {
             blockers[i] = 0;
             attacks[i] = 0;
-            transformed[i] = 0;
         }
+        Bitboard current_blockers = 0;
         for (int i = 0; i < (1 << std::popcount(attack_mask)); i++) {
-            blockers[i] = generate_blockers(i, attack_mask);
+            blockers[i] = current_blockers;
+            current_blockers = (current_blockers - attack_mask) & attack_mask;
+            // bit twiddling trick
             attacks[i] = generate_rook_attacks(square, blockers[i]);
         }
         for (int i = 0; i < (1 << std::popcount(attack_mask)); i++) {
