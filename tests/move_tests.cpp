@@ -22,5 +22,4 @@ TEST(MoveTests, TestPromotionToString) {
     Move queen_promotion_capture = Move(QUEEN_PROMOTION_CAPTURE, 57, 48);
     ASSERT_STREQ(queen_promotion.to_string().c_str(), "a7a8q");
     ASSERT_STREQ(queen_promotion_capture.to_string().c_str(), "a7b8q");
-
 }

@@ -65,7 +65,7 @@ constexpr Bitboard generate_bishop_attacks(int square, Bitboard mask) {
     }
 
     return to_return;
-} 
+}
 
 consteval std::array<Bitboard, 64 * 512> generate_bishop_attack_bitboards() {
     std::array<Bitboard, 64 * 512> to_return = {0};
