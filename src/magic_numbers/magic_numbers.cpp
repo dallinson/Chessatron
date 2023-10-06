@@ -69,7 +69,7 @@ consteval std::array<std::array<Bitboard, 64>, 64> compute_connecting_squares() 
 constexpr std::array<std::array<Bitboard, 64>, 64> MagicNumbers::ConnectingSquares = compute_connecting_squares();
 
 consteval std::array<std::array<Bitboard, 64>, 64> compute_aligned_squares() {
-    std::array<std::array<Bitboard, 64>, 64> to_return = {0};
+    std::array<std::array<Bitboard, 64>, 64> to_return;
     for (int first_square = 0; first_square < 64; first_square++) {
         std::array<Bitboard, 64> inner_array = {0};
         for (int second_square = 0; second_square < 64; second_square++) {
