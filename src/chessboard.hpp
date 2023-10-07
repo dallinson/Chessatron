@@ -120,6 +120,7 @@ class ChessBoard {
             recompute_blockers_and_checkers(Side::BLACK);
         };
         void recompute_blockers_and_checkers(const Side side);
+        
         inline Bitboard get_checkers(const Side side) const { return checkers[static_cast<int>(side)]; };
         inline Bitboard get_pinned_pieces(const Side side) const { return pinned_pieces[static_cast<int>(side)]; };
 
@@ -127,3 +128,7 @@ class ChessBoard {
 };
 
 bool operator==(const ChessBoard& lhs, const ChessBoard& rhs);
+
+template <> struct std::hash<ChessBoard> {
+    std::size_t operator()(const ChessBoard& c) const { return c.get_zobrist_key(); }
+};
