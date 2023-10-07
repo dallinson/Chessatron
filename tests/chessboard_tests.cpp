@@ -101,7 +101,7 @@ TEST(ChessBoardTests, SetFenExplicitStartPosShort) {
 TEST(ChessBoardTests, CheckCorrectScoreEvaluations) {
     ChessBoard c;
     c.set_from_fen("5B2/6P1/1p6/8/1N6/kP6/2K5/8 w - -");
-    ASSERT_EQ(c.get_score(Side::WHITE), 9);
+    ASSERT_EQ(c.get_score(Side::WHITE), 8);
     ASSERT_EQ(c.get_score(Side::BLACK), 1);
 }
 

@@ -6,7 +6,7 @@
 #include "magic_numbers.hpp"
 #include "utils.hpp"
 
-#define ZOBRIST_POSITION_KEY(piece, position) (((position) *64) + (piece).get_value())
+#define ZOBRIST_POSITION_KEY(piece, position) (((piece).to_bitboard_idx() * 64) + (position))
 
 namespace ZobristKeys {
     extern const std::array<ZobristKey, 64 * 12> PositionKeys;

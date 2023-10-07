@@ -8,12 +8,12 @@
 #include "utils.hpp"
 #include "zobrist_hashing.hpp"
 
-#define KING_OFFSET (2 * ((KING_VALUE) -1))
-#define QUEEN_OFFSET (2 * ((QUEEN_VALUE) -1))
-#define BISHOP_OFFSET (2 * ((BISHOP_VALUE) -1))
-#define KNIGHT_OFFSET (2 * ((KNIGHT_VALUE) -1))
-#define ROOK_OFFSET (2 * ((ROOK_VALUE) -1))
-#define PAWN_OFFSET (2 * ((PAWN_VALUE) -1))
+#define KING_OFFSET (2 * ((static_cast<int>(PieceValues::KING)) - 1))
+#define QUEEN_OFFSET (2 * ((static_cast<int>(PieceValues::QUEEN)) - 1))
+#define BISHOP_OFFSET (2 * ((static_cast<int>(PieceValues::BISHOP)) - 1))
+#define KNIGHT_OFFSET (2 * ((static_cast<int>(PieceValues::KNIGHT)) - 1))
+#define ROOK_OFFSET (2 * ((static_cast<int>(PieceValues::ROOK)) - 1))
+#define PAWN_OFFSET (2 * ((static_cast<int>(PieceValues::PAWN)) - 1))
 
 #define QUEEN_SCORE 9
 #define ROOK_SCORE 5
@@ -78,7 +78,11 @@ class ChessBoard {
          * @return A uint_fast8_t of the en passant file from 0 to 7.  If en passant is not possible, its value is 9.
          */
         uint_fast8_t get_en_passant_file() const { return en_passant_file; };
-        void set_en_passant_file(int file) { en_passant_file = file; };
+        void set_en_passant_file(int file) {
+            zobrist_key ^= ZobristKeys::EnPassantKeys[en_passant_file];
+            en_passant_file = file;
+            zobrist_key ^= ZobristKeys::EnPassantKeys[file];
+        };
 
         inline bool get_queenside_castling(const Side side) const { return castling[2 + static_cast<int>(side)]; };
         inline bool get_kingside_castling(const Side side) const { return castling[static_cast<int>(side)]; };
@@ -99,7 +103,7 @@ class ChessBoard {
 
         int get_score(Side side);
 
-        void set_piece(uint_fast8_t piece, uint_fast8_t pos);
+        void set_piece(Piece piece, uint_fast8_t pos);
         Piece get_piece(const int i) const { return this->pieces[i]; };
         void print_board() const;
         void clear_board();

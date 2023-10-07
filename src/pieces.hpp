@@ -10,28 +10,23 @@
 #define WHITE_IDX 0
 #define BLACK_IDX 1
 
-#define KING_VALUE 6
-#define QUEEN_VALUE 5
-#define BISHOP_VALUE 4
-#define KNIGHT_VALUE 3
-#define ROOK_VALUE 2
-#define PAWN_VALUE 1
+enum class PieceValues : uint_fast8_t { PAWN = 1, ROOK = 2, KNIGHT = 3, BISHOP = 4, QUEEN = 5, KING = 6 };
 
 class Piece {
     private:
-        uint_fast8_t val;
+        uint_fast8_t val = 0;
 
     public:
         Piece() : val(0){};
         Piece(uint_fast8_t val) : val(val){};
-        Piece(Side side, uint_fast8_t piece_val) : val(static_cast<uint_fast8_t>(side) << 3 | piece_val){};
+        Piece(Side side, PieceValues piece_val) : val(static_cast<uint_fast8_t>(side) << 3 | static_cast<uint_fast8_t>(piece_val)){};
 
         void set_value(uint_fast8_t val) { this->val = val; };
         uint_fast8_t get_value() const { return this->val; };
-        uint_fast8_t get_type() const { return GET_BITS(val, 2, 0); };
+        PieceValues get_type() const { return PieceValues(GET_BITS(val, 2, 0)); };
         Side get_side() const { return Side(GET_BIT(val, 3)); };
 
-        uint_fast8_t to_bitboard_idx() const { return (2 * (get_type() - 1)) + static_cast<uint_fast8_t>(get_side()); };
+        uint_fast8_t to_bitboard_idx() const { return (2 * (static_cast<int>(get_type()) - 1)) + static_cast<uint_fast8_t>(get_side()); };
 };
 
 inline bool operator==(const Piece& lhs, const Piece& rhs) { return lhs.get_value() == rhs.get_value(); }

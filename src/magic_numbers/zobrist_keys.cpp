@@ -1,6 +1,6 @@
 #include "../zobrist_hashing.hpp"
 
-// Normally these would be randomly generated at runtime with
+// Normally these would be randomly generated at runtime with a PRNG; to ensure different PRNGs don't affect it they're included precomputed
 constexpr std::array<ZobristKey, 64 * 12> ZobristKeys::PositionKeys = {
     2694892932751963130ull,  8811095521526232720ull,  6317817401586203073ull,  15906045400717519145ull, 9065498316803862148ull,
     14615410821945417663ull, 5805253573105384475ull,  9460946386745629848ull,  12123255769281983901ull, 11600796555905231097ull,
