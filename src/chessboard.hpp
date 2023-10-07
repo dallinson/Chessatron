@@ -6,6 +6,7 @@
 #include "move.hpp"
 #include "pieces.hpp"
 #include "utils.hpp"
+#include "zobrist_hashing.hpp"
 
 #define KING_OFFSET (2 * ((KING_VALUE) -1))
 #define QUEEN_OFFSET (2 * ((QUEEN_VALUE) -1))
@@ -38,7 +39,7 @@ class ChessBoard {
         std::array<Bitboard, 2> checkers = {0};
         std::array<Bitboard, 2> pinned_pieces = {0};
 
-        ZobristKey zobrist_key;
+        ZobristKey zobrist_key = 0;
 
     public:
         inline Bitboard get_occupancy() const {
@@ -81,8 +82,20 @@ class ChessBoard {
 
         inline bool get_queenside_castling(const Side side) const { return castling[2 + static_cast<int>(side)]; };
         inline bool get_kingside_castling(const Side side) const { return castling[static_cast<int>(side)]; };
-        inline void set_kingside_castling(const Side side, const bool val) { castling[static_cast<int>(side)] = val; };
-        inline void set_queenside_castling(const Side side, const bool val) { castling[2 + static_cast<int>(side)] = val; };
+        inline void set_kingside_castling(const Side side, const bool val) {
+            const int offset = static_cast<int>(side);
+            if (castling[offset] != val) {
+                zobrist_key ^= ZobristKeys::CastlingKeys[offset];
+            }
+            castling[offset] = val;
+        };
+        inline void set_queenside_castling(const Side side, const bool val) {
+            const int offset = 2 + static_cast<int>(side);
+            if (castling[offset] != val) {
+                zobrist_key ^= ZobristKeys::CastlingKeys[offset];
+            }
+            castling[offset] = val;
+        };
 
         int get_score(Side side);
 

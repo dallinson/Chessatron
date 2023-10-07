@@ -141,76 +141,76 @@ MoveList MoveGenerator::generate_pawn_moves(const ChessBoard& c, const Side side
         if (side == Side::WHITE) {
             if (!GET_BIT(c.get_occupancy(), pawn_idx + 8)) {
                 if (GET_RANK(pawn_idx) == 1 && !GET_BIT(c.get_occupancy(), pawn_idx + 16)) {
-                    to_return.add_move(Move(DOUBLE_PAWN_PUSH, pawn_idx + 16, pawn_idx));
+                    to_return.add_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, pawn_idx + 16, pawn_idx));
                 }
                 if (GET_RANK(pawn_idx) == 6) {
-                    to_return.add_move(Move(ROOK_PROMOTION, pawn_idx + 8, pawn_idx));
-                    to_return.add_move(Move(KNIGHT_PROMOTION, pawn_idx + 8, pawn_idx));
-                    to_return.add_move(Move(BISHOP_PROMOTION, pawn_idx + 8, pawn_idx));
-                    to_return.add_move(Move(QUEEN_PROMOTION, pawn_idx + 8, pawn_idx));
+                    to_return.add_move(Move(MoveFlags::ROOK_PROMOTION, pawn_idx + 8, pawn_idx));
+                    to_return.add_move(Move(MoveFlags::KNIGHT_PROMOTION, pawn_idx + 8, pawn_idx));
+                    to_return.add_move(Move(MoveFlags::BISHOP_PROMOTION, pawn_idx + 8, pawn_idx));
+                    to_return.add_move(Move(MoveFlags::QUEEN_PROMOTION, pawn_idx + 8, pawn_idx));
                 } else {
-                    to_return.add_move(Move(QUIET_MOVE, pawn_idx + 8, pawn_idx));
+                    to_return.add_move(Move(MoveFlags::QUIET_MOVE, pawn_idx + 8, pawn_idx));
                 }
             }
             if (GET_FILE(pawn_idx) != 0 && GET_BIT(c.get_side_occupancy(enemy_side), pawn_idx + 7)) {
                 if (GET_RANK(pawn_idx) == 6) {
-                    to_return.add_move(Move(ROOK_PROMOTION_CAPTURE, pawn_idx + 7, pawn_idx));
-                    to_return.add_move(Move(KNIGHT_PROMOTION_CAPTURE, pawn_idx + 7, pawn_idx));
-                    to_return.add_move(Move(BISHOP_PROMOTION_CAPTURE, pawn_idx + 7, pawn_idx));
-                    to_return.add_move(Move(QUEEN_PROMOTION_CAPTURE, pawn_idx + 7, pawn_idx));
+                    to_return.add_move(Move(MoveFlags::ROOK_PROMOTION_CAPTURE, pawn_idx + 7, pawn_idx));
+                    to_return.add_move(Move(MoveFlags::KNIGHT_PROMOTION_CAPTURE, pawn_idx + 7, pawn_idx));
+                    to_return.add_move(Move(MoveFlags::BISHOP_PROMOTION_CAPTURE, pawn_idx + 7, pawn_idx));
+                    to_return.add_move(Move(MoveFlags::QUEEN_PROMOTION_CAPTURE, pawn_idx + 7, pawn_idx));
                 } else {
-                    to_return.add_move(Move(CAPTURE, pawn_idx + 7, pawn_idx));
+                    to_return.add_move(Move(MoveFlags::CAPTURE, pawn_idx + 7, pawn_idx));
                 }
             }
             if (GET_FILE(pawn_idx) != 7 && GET_BIT(c.get_side_occupancy(enemy_side), pawn_idx + 9)) {
                 if (GET_RANK(pawn_idx) == 6) {
-                    to_return.add_move(Move(ROOK_PROMOTION_CAPTURE, pawn_idx + 9, pawn_idx));
-                    to_return.add_move(Move(KNIGHT_PROMOTION_CAPTURE, pawn_idx + 9, pawn_idx));
-                    to_return.add_move(Move(BISHOP_PROMOTION_CAPTURE, pawn_idx + 9, pawn_idx));
-                    to_return.add_move(Move(QUEEN_PROMOTION_CAPTURE, pawn_idx + 9, pawn_idx));
+                    to_return.add_move(Move(MoveFlags::ROOK_PROMOTION_CAPTURE, pawn_idx + 9, pawn_idx));
+                    to_return.add_move(Move(MoveFlags::KNIGHT_PROMOTION_CAPTURE, pawn_idx + 9, pawn_idx));
+                    to_return.add_move(Move(MoveFlags::BISHOP_PROMOTION_CAPTURE, pawn_idx + 9, pawn_idx));
+                    to_return.add_move(Move(MoveFlags::QUEEN_PROMOTION_CAPTURE, pawn_idx + 9, pawn_idx));
                 } else {
-                    to_return.add_move(Move(CAPTURE, pawn_idx + 9, pawn_idx));
+                    to_return.add_move(Move(MoveFlags::CAPTURE, pawn_idx + 9, pawn_idx));
                 }
             }
             if (GET_RANK(pawn_idx) == 4 && (std::abs(((int) c.get_en_passant_file()) - (int) GET_FILE(pawn_idx)) == 1)) {
-                to_return.add_move(Move(EN_PASSANT_CAPTURE, POSITION(5, c.get_en_passant_file()), pawn_idx));
+                to_return.add_move(Move(MoveFlags::EN_PASSANT_CAPTURE, POSITION(5, c.get_en_passant_file()), pawn_idx));
             }
         } else {
             if (!GET_BIT(c.get_occupancy(), pawn_idx - 8)) {
                 if (GET_RANK(pawn_idx) == 6 && !GET_BIT(c.get_occupancy(), pawn_idx - 16)) {
-                    to_return.add_move(Move(DOUBLE_PAWN_PUSH, pawn_idx - 16, pawn_idx));
+                    to_return.add_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, pawn_idx - 16, pawn_idx));
                 }
                 if (GET_RANK(pawn_idx) == 1) {
-                    to_return.add_move(Move(ROOK_PROMOTION, pawn_idx - 8, pawn_idx));
-                    to_return.add_move(Move(KNIGHT_PROMOTION, pawn_idx - 8, pawn_idx));
-                    to_return.add_move(Move(BISHOP_PROMOTION, pawn_idx - 8, pawn_idx));
-                    to_return.add_move(Move(QUEEN_PROMOTION, pawn_idx - 8, pawn_idx));
+                    to_return.add_move(Move(MoveFlags::ROOK_PROMOTION, pawn_idx - 8, pawn_idx));
+                    to_return.add_move(Move(MoveFlags::KNIGHT_PROMOTION, pawn_idx - 8, pawn_idx));
+                    to_return.add_move(Move(MoveFlags::BISHOP_PROMOTION, pawn_idx - 8, pawn_idx));
+                    to_return.add_move(Move(MoveFlags::QUEEN_PROMOTION, pawn_idx - 8, pawn_idx));
                 } else {
-                    to_return.add_move(Move(QUIET_MOVE, pawn_idx - 8, pawn_idx));
+                    to_return.add_move(Move(MoveFlags::QUIET_MOVE, pawn_idx - 8, pawn_idx));
                 }
             }
             if (GET_FILE(pawn_idx) != 0 && GET_BIT(c.get_side_occupancy(enemy_side), pawn_idx - 9)) {
                 if (GET_RANK(pawn_idx) == 1) {
-                    to_return.add_move(Move(ROOK_PROMOTION_CAPTURE, pawn_idx - 9, pawn_idx));
-                    to_return.add_move(Move(KNIGHT_PROMOTION_CAPTURE, pawn_idx - 9, pawn_idx));
-                    to_return.add_move(Move(BISHOP_PROMOTION_CAPTURE, pawn_idx - 9, pawn_idx));
-                    to_return.add_move(Move(QUEEN_PROMOTION_CAPTURE, pawn_idx - 9, pawn_idx));
+                    to_return.add_move(Move(MoveFlags::ROOK_PROMOTION_CAPTURE, pawn_idx - 9, pawn_idx));
+                    to_return.add_move(Move(MoveFlags::KNIGHT_PROMOTION_CAPTURE, pawn_idx - 9, pawn_idx));
+                    to_return.add_move(Move(MoveFlags::BISHOP_PROMOTION_CAPTURE, pawn_idx - 9, pawn_idx));
+                    to_return.add_move(Move(MoveFlags::QUEEN_PROMOTION_CAPTURE, pawn_idx - 9, pawn_idx));
                 } else {
-                    to_return.add_move(Move(CAPTURE, pawn_idx - 9, pawn_idx));
+                    to_return.add_move(Move(MoveFlags::CAPTURE, pawn_idx - 9, pawn_idx));
                 }
             }
             if (GET_FILE(pawn_idx) != 7 && GET_BIT(c.get_side_occupancy(enemy_side), pawn_idx - 7)) {
                 if (GET_RANK(pawn_idx) == 1) {
-                    to_return.add_move(Move(ROOK_PROMOTION_CAPTURE, pawn_idx - 7, pawn_idx));
-                    to_return.add_move(Move(KNIGHT_PROMOTION_CAPTURE, pawn_idx - 7, pawn_idx));
-                    to_return.add_move(Move(BISHOP_PROMOTION_CAPTURE, pawn_idx - 7, pawn_idx));
-                    to_return.add_move(Move(QUEEN_PROMOTION_CAPTURE, pawn_idx - 7, pawn_idx));
+                    to_return.add_move(Move(MoveFlags::ROOK_PROMOTION_CAPTURE, pawn_idx - 7, pawn_idx));
+                    to_return.add_move(Move(MoveFlags::KNIGHT_PROMOTION_CAPTURE, pawn_idx - 7, pawn_idx));
+                    to_return.add_move(Move(MoveFlags::BISHOP_PROMOTION_CAPTURE, pawn_idx - 7, pawn_idx));
+                    to_return.add_move(Move(MoveFlags::QUEEN_PROMOTION_CAPTURE, pawn_idx - 7, pawn_idx));
                 } else {
-                    to_return.add_move(Move(CAPTURE, pawn_idx - 7, pawn_idx));
+                    to_return.add_move(Move(MoveFlags::CAPTURE, pawn_idx - 7, pawn_idx));
                 }
             }
             if (GET_RANK(pawn_idx) == 3 && (std::abs(((int) c.get_en_passant_file()) - (int) GET_FILE(pawn_idx)) == 1)) {
-                to_return.add_move(Move(EN_PASSANT_CAPTURE, POSITION(2, c.get_en_passant_file()), pawn_idx));
+                to_return.add_move(Move(MoveFlags::EN_PASSANT_CAPTURE, POSITION(2, c.get_en_passant_file()), pawn_idx));
             }
         }
     }
@@ -225,7 +225,7 @@ MoveList MoveGenerator::generate_castling_moves(const ChessBoard& c, const Side 
         if (((uint64_t) 0b10010000 ^ ((c.get_occupancy() >> shift_val) & 0xF0)) == 0) {
             // if only these spaces are occupied
             if (get_checking_piece_count(c, side, 5 + shift_val) == 0) {
-                to_return.add_move(Move(KINGSIDE_CASTLE, 6 + shift_val, 4 + shift_val));
+                to_return.add_move(Move(MoveFlags::KINGSIDE_CASTLE, 6 + shift_val, 4 + shift_val));
             }
         }
     }
@@ -234,7 +234,7 @@ MoveList MoveGenerator::generate_castling_moves(const ChessBoard& c, const Side 
         if (((uint64_t) 0b00010001 ^ ((c.get_occupancy() >> shift_val) & 0x1F)) == 0) {
             // if only these spaces are occupied
             if (get_checking_piece_count(c, side, 3 + shift_val) == 0) {
-                to_return.add_move(Move(QUEENSIDE_CASTLE, 2 + shift_val, 4 + shift_val));
+                to_return.add_move(Move(MoveFlags::QUEENSIDE_CASTLE, 2 + shift_val, 4 + shift_val));
             }
         }
     }
@@ -256,7 +256,7 @@ MoveList MoveGenerator::filter_to_legal_moves(const ChessBoard& c, const MoveLis
 bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
     int king_idx = bitboard_to_idx(c.get_king_occupancy(c.get_side_to_move()));
     const Side enemy_side = ENEMY_SIDE(c.get_piece(m.get_src_square()).get_side());
-    if (m.get_move_flags() == EN_PASSANT_CAPTURE) {
+    if (m.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) {
         // with en passant knights and pawns _cannot_ capture as the previous
         // move was moving a pawn, and therefore knights/pawns were not in
         // position to capture-they'd have needed to be moved two moves ago,

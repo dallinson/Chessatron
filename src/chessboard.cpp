@@ -204,9 +204,9 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
         CLEAR_BIT(this->bitboards[at_target.to_bitboard_idx()], to_make.get_dest_square());
     }
 
-    if (to_make.get_move_flags() >= 8) {
+    if (static_cast<int>(to_make.get_move_flags()) >= 8) {
         // Any value >= 8 is a promotion
-        Piece promoted_piece = Piece(side, (to_make.get_move_flags() & 0b0011) + 2);
+        Piece promoted_piece = Piece(side, (static_cast<int>(to_make.get_move_flags()) & 0b0011) + 2);
         this->pieces[to_make.get_dest_square()] = promoted_piece;
         // promoted_piece += side;
         SET_BIT(this->bitboards[promoted_piece.to_bitboard_idx()], to_make.get_dest_square());
@@ -217,7 +217,7 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
     }
 
     this->zobrist_key ^= ZobristKeys::EnPassantKeys[en_passant_file];
-    if (to_make.get_move_flags() == DOUBLE_PAWN_PUSH) [[unlikely]] {
+    if (to_make.get_move_flags() == MoveFlags::DOUBLE_PAWN_PUSH) [[unlikely]] {
         this->en_passant_file = to_make.get_dest_file();
         this->zobrist_key ^= ZobristKeys::EnPassantKeys[en_passant_file];
     } else {
@@ -226,7 +226,7 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
     }
     // set where the last en passant happened, else clear it
 
-    if (to_make.get_move_flags() == EN_PASSANT_CAPTURE) [[unlikely]] {
+    if (to_make.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) [[unlikely]] {
         Side enemy_side = ENEMY_SIDE(side);
         int enemy_pawn_idx = to_make.get_dest_square() - 8 + (16 * static_cast<int>(side));
         CLEAR_BIT(this->bitboards[PAWN_OFFSET + static_cast<int>(enemy_side)], enemy_pawn_idx);
@@ -234,14 +234,14 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
         this->zobrist_key ^= ZobristKeys::PositionKeys[ZOBRIST_POSITION_KEY(Piece(enemy_side, PAWN_VALUE), enemy_pawn_idx)];
     }
 
-    if (to_make.get_move_flags() == KINGSIDE_CASTLE) {
+    if (to_make.get_move_flags() == MoveFlags::KINGSIDE_CASTLE) {
         // we moved the king, now move the rook
         this->pieces[to_make.get_dest_square() - 1] = this->pieces[to_make.get_dest_square() + 1];
         this->pieces[to_make.get_dest_square() + 1] = 0;
         CLEAR_BIT(this->bitboards[ROOK_OFFSET + static_cast<int>(side)], to_make.get_dest_square() + 1);
         SET_BIT(this->bitboards[ROOK_OFFSET + static_cast<int>(side)], to_make.get_dest_square() - 1);
     }
-    if (to_make.get_move_flags() == QUEENSIDE_CASTLE) {
+    if (to_make.get_move_flags() == MoveFlags::QUEENSIDE_CASTLE) {
         this->pieces[to_make.get_dest_square() + 1] = this->pieces[to_make.get_dest_square() - 2];
         this->pieces[to_make.get_dest_square() - 2] = 0;
         CLEAR_BIT(this->bitboards[ROOK_OFFSET + static_cast<int>(side)], to_make.get_dest_square() - 2);
@@ -278,7 +278,7 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
     CLEAR_BIT(this->bitboards[original.to_bitboard_idx()], previous_move_pair.first.get_dest_square());
     pieces[previous_move_pair.first.get_dest_square()] = previous_move_pair.second.get_piece();
 
-    if (previous_move_pair.first.get_move_flags() >= 8) {
+    if (static_cast<int>(previous_move_pair.first.get_move_flags()) >= 8) {
         // if it's a promotion
         Piece new_piece = Piece(original.get_side(), PAWN_VALUE);
         pieces[previous_move_pair.first.get_src_square()] = new_piece;
@@ -288,8 +288,8 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
         SET_BIT(this->bitboards[original.to_bitboard_idx()], previous_move_pair.first.get_src_square());
     }
 
-    if (previous_move_pair.first.get_move_flags() & 4) {
-        if (previous_move_pair.first.get_move_flags() != EN_PASSANT_CAPTURE) {
+    if (static_cast<int>(previous_move_pair.first.get_move_flags()) & 0b0100) {
+        if (previous_move_pair.first.get_move_flags() != MoveFlags::EN_PASSANT_CAPTURE) {
             // if it is a capture
             SET_BIT(this->bitboards[previous_move_pair.second.get_piece().to_bitboard_idx()], previous_move_pair.first.get_dest_square());
         } else {
@@ -300,14 +300,14 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
         }
     }
 
-    if (previous_move_pair.first.get_move_flags() == KINGSIDE_CASTLE) {
+    if (previous_move_pair.first.get_move_flags() == MoveFlags::KINGSIDE_CASTLE) {
         // We need to unmove the rook
         const int origin_square = previous_move_pair.first.get_dest_square();
         this->pieces[origin_square - 1] = 0;
         CLEAR_BIT(this->bitboards[ROOK_OFFSET + static_cast<int>(moved_piece_side)], origin_square - 1);
         this->pieces[origin_square + 1] = Piece(moved_piece_side, ROOK_VALUE);
         SET_BIT(this->bitboards[ROOK_OFFSET + static_cast<int>(moved_piece_side)], origin_square + 1);
-    } else if (previous_move_pair.first.get_move_flags() == QUEENSIDE_CASTLE) {
+    } else if (previous_move_pair.first.get_move_flags() == MoveFlags::QUEENSIDE_CASTLE) {
         const int origin_square = previous_move_pair.first.get_dest_square();
         this->pieces[origin_square + 1] = 0;
         CLEAR_BIT(this->bitboards[ROOK_OFFSET + static_cast<int>(moved_piece_side)], origin_square + 1);

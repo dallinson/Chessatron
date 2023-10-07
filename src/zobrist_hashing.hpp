@@ -3,7 +3,6 @@
 #include <array>
 #include <functional>
 
-#include "chessboard.hpp"
 #include "magic_numbers.hpp"
 #include "utils.hpp"
 
@@ -16,6 +15,6 @@ namespace ZobristKeys {
     extern const std::array<ZobristKey, 4> CastlingKeys;
 } // namespace ZobristKeys
 
-template <> struct std::hash<ChessBoard> {
-        std::size_t operator()(const ChessBoard& c) const { return c.get_zobrist_key(); }
-};
+/*template <> struct std::hash<ChessBoard> {
+    std::size_t operator()(const ChessBoard& c) const { return c.get_zobrist_key(); }
+};*/
