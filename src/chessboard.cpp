@@ -169,7 +169,8 @@ bool ChessBoard::set_from_fen(const char* input) {
         char_idx += 1;
     } else {
         if (input[char_idx] >= 'a' && input[char_idx] <= 'h') {
-            set_en_passant_file(input[char_idx] - 48);
+            set_en_passant_file(input[char_idx] - 97);
+            // in ascii 'a' has the value 97, so we subtract 97 to get the index of the file
             char_idx += 1;
         } else {
             return false;
