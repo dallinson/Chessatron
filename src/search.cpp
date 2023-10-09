@@ -1,11 +1,11 @@
 #include "search.hpp"
 
-#include <vector>
 #include <iostream>
+#include <vector>
 
 #include "move_generator.hpp"
 
-template<bool print_debug>
+template <bool print_debug>
 uint64_t perft(ChessBoard& c, MoveHistory m, int depth, std::vector<std::unordered_map<ChessBoard, uint64_t>>& cache_vec) {
 
     if (cache_vec[depth - 1].contains(c)) {
@@ -39,16 +39,20 @@ uint64_t perft(ChessBoard& c, MoveHistory m, int depth, std::vector<std::unorder
 
     cache_vec[depth - 1].try_emplace(c, to_return);
     return to_return;
-
 }
 
 uint64_t Perft::run_perft(ChessBoard& c, int depth, bool print_debug) {
     MoveHistory m;
     std::vector<std::unordered_map<ChessBoard, uint64_t>> cache_vec;
     cache_vec.resize(depth);
+    int nodes = 0;
     if (print_debug) {
-        return perft<true>(c, m, depth, cache_vec);
+        nodes = perft<true>(c, m, depth, cache_vec);
     } else {
-        return perft<false>(c, m, depth, cache_vec);
+        nodes = perft<false>(c, m, depth, cache_vec);
     }
+    if (print_debug) {
+        std::cout << std::endl << "Nodes searched: " << nodes << std::endl;
+    }
+    return nodes;
 }

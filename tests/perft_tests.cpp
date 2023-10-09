@@ -62,3 +62,14 @@ TEST(PerftTests, TestPosition5) {
     ASSERT_EQ(Perft::run_perft(c, 4), 2103487);
     ASSERT_EQ(Perft::run_perft(c, 5), 89941194);
 }
+
+TEST(PerftTests, TestPosition6) {
+    ChessBoard c;
+    MoveHistory m;
+    c.set_from_fen("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1R1K b kq - 1 1");
+    ASSERT_EQ(Perft::run_perft(c, 1), 46);
+    ASSERT_EQ(Perft::run_perft(c, 2), 1753);
+    ASSERT_EQ(Perft::run_perft(c, 3), 81638);
+    ASSERT_EQ(Perft::run_perft(c, 4), 3212083);
+    ASSERT_EQ(Perft::run_perft(c, 5), 149335005);
+}

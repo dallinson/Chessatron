@@ -11,6 +11,7 @@
 
 #include "magic_numbers.hpp"
 #include "pieces.hpp"
+#include "search.hpp"
 #include "utils.hpp"
 
 #include "move_generator.hpp"
@@ -53,6 +54,19 @@ int main(int argc, char** argv) {
         } else {
             auto parsed_line = split_on_whitespace(line);
             if (parsed_line.size() >= 1) {
+                if (parsed_line[0] == std::string("go")) {
+                    if (parsed_line.size() >= 3 && parsed_line[1] == std::string("perft")) {
+                        Perft::run_perft(c, std::stoi(parsed_line[2]), true);
+                    }
+                } else if (parsed_line[0] == "position") {
+                    if (parsed_line[1] == "fen") {
+                        int fen_idx = line.find("fen") + 3;
+                        while (std::isspace(line.at(fen_idx))) {
+                            fen_idx += 1;
+                        }
+                        c.set_from_fen(line.substr(fen_idx).c_str());
+                    }
+                }
             }
         }
     }
