@@ -40,12 +40,12 @@ void ChessBoard::print_board() const {
 }
 
 #define RETURN_NONE_IF_PAST_END                                                                                                                     \
-    if ((size_t) char_idx >= strlen(input)) {                                                                                                        \
+    if ((size_t) char_idx >= (input).size()) {                                                                                                        \
         return std::optional<int>();                                                                                                                                \
     }
 
-std::optional<int> ChessBoard::set_from_fen(const char* input) {
-    if (std::string(input, strlen(input)) == "startpos") {
+std::optional<int> ChessBoard::set_from_fen(const std::string input) {
+    if (input == "startpos") {
         return set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     }
     clear_board();

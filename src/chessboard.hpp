@@ -111,7 +111,7 @@ class ChessBoard {
         void print_board() const;
         void clear_board();
 
-        std::optional<int> set_from_fen(const char* input);
+        std::optional<int> set_from_fen(const std::string input);
 
         Side get_side_to_move() const { return this->side_to_move; };
 
