@@ -39,12 +39,12 @@ void ChessBoard::print_board() const {
     }
 }
 
-#define RETURN_FALSE_IF_PAST_END                                                                                                                     \
+#define RETURN_NONE_IF_PAST_END                                                                                                                     \
     if ((size_t) char_idx >= strlen(input)) {                                                                                                        \
-        return false;                                                                                                                                \
+        return std::optional<int>();                                                                                                                                \
     }
 
-bool ChessBoard::set_from_fen(const char* input) {
+std::optional<int> ChessBoard::set_from_fen(const char* input) {
     if (std::string(input, strlen(input)) == "startpos") {
         return set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     }
@@ -107,7 +107,7 @@ bool ChessBoard::set_from_fen(const char* input) {
                 continue;
 
             default:
-                return false;
+                return std::optional<int>();
             }
             Piece piece = Piece(piece_side, piece_value);
             set_piece(piece, POSITION(rank, file));
@@ -115,7 +115,7 @@ bool ChessBoard::set_from_fen(const char* input) {
             zobrist_key ^= ZobristKeys::PositionKeys[ZOBRIST_POSITION_KEY(piece, POSITION(rank, file))];
             file += 1;
             if (file > 8) {
-                return false;
+                return std::optional<int>();
             }
         }
         char_idx += 1;
@@ -123,11 +123,11 @@ bool ChessBoard::set_from_fen(const char* input) {
             // prevents array index out of range exception
             recompute_blockers_and_checkers();
         }
-        RETURN_FALSE_IF_PAST_END;
+        RETURN_NONE_IF_PAST_END;
     }
     char_idx += 1;
     recompute_blockers_and_checkers();
-    RETURN_FALSE_IF_PAST_END;
+    RETURN_NONE_IF_PAST_END;
     // set whose turn it is
     if (input[char_idx] == 'w') {
         side_to_move = Side::WHITE;
@@ -135,12 +135,12 @@ bool ChessBoard::set_from_fen(const char* input) {
         side_to_move = Side::BLACK;
         zobrist_key ^= ZobristKeys::SideToMove;
     } else {
-        return false;
+        return std::optional<int>();
     }
     char_idx += 2;
     // set castling
     while (input[char_idx] != ' ') {
-        RETURN_FALSE_IF_PAST_END;
+        RETURN_NONE_IF_PAST_END;
         switch (input[char_idx]) {
         case 'K':
             set_kingside_castling(Side::WHITE, true);
@@ -157,13 +157,13 @@ bool ChessBoard::set_from_fen(const char* input) {
         case '-':
             break;
         default:
-            return false;
+            return std::optional<int>();
         }
         char_idx += 1;
     }
     char_idx += 1;
 
-    RETURN_FALSE_IF_PAST_END;
+    RETURN_NONE_IF_PAST_END;
     if (input[char_idx] == '-') {
         set_en_passant_file(9);
         char_idx += 1;
@@ -171,13 +171,34 @@ bool ChessBoard::set_from_fen(const char* input) {
         if (input[char_idx] >= 'a' && input[char_idx] <= 'h') {
             set_en_passant_file(input[char_idx] - 97);
             // in ascii 'a' has the value 97, so we subtract 97 to get the index of the file
-            char_idx += 1;
+            char_idx += 2;
         } else {
-            return false;
+            return std::optional<int>();
         }
     }
+    char_idx += 1;
+    // this sets the en passant file
 
-    return true;
+    RETURN_NONE_IF_PAST_END;
+    std::string halfmove_string;
+    while (!std::isspace(input[char_idx])) {
+        RETURN_NONE_IF_PAST_END;
+        halfmove_string.push_back(input[char_idx]);
+        char_idx += 1;
+    }
+    halfmove_clock = std::stoi(halfmove_string);
+    char_idx += 1;
+
+    RETURN_NONE_IF_PAST_END;
+    std::string fullmove_string;
+    while (!std::isspace(input[char_idx]) && input[char_idx] != '\0') {
+        RETURN_NONE_IF_PAST_END;
+        fullmove_string.push_back(input[char_idx]);
+        char_idx += 1;
+    }
+    fullmove_counter = std::stoi(fullmove_string);
+
+    return std::optional<int>(char_idx);
 }
 
 int ChessBoard::get_score(Side side) {

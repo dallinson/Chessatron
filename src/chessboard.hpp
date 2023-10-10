@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstdint>
+#include <optional>
 
 #include "move.hpp"
 #include "pieces.hpp"
@@ -40,6 +41,8 @@ class ChessBoard {
         std::array<Bitboard, 2> pinned_pieces = {0};
 
         ZobristKey zobrist_key = 0;
+        int halfmove_clock = 0;
+        int fullmove_counter = 0;
 
     public:
         inline Bitboard get_occupancy() const {
@@ -108,7 +111,7 @@ class ChessBoard {
         void print_board() const;
         void clear_board();
 
-        bool set_from_fen(const char* input);
+        std::optional<int> set_from_fen(const char* input);
 
         Side get_side_to_move() const { return this->side_to_move; };
 
