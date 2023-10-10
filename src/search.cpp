@@ -5,8 +5,8 @@
 
 #include "move_generator.hpp"
 
-template <bool print_debug>
-uint64_t perft(ChessBoard& c, MoveHistory m, int depth, std::vector<std::unordered_map<ChessBoard, uint64_t>>& cache_vec) {
+template <bool print_debug> // this could just as easily be done as a parameter but this gives some practice with templates
+uint64_t perft(ChessBoard& c, MoveHistory& m, int depth, std::vector<std::unordered_map<ChessBoard, uint64_t>>& cache_vec) {
 
     if (cache_vec[depth - 1].contains(c)) {
         return cache_vec[depth - 1].at(c);
@@ -45,7 +45,7 @@ uint64_t Perft::run_perft(ChessBoard& c, int depth, bool print_debug) {
     MoveHistory m;
     std::vector<std::unordered_map<ChessBoard, uint64_t>> cache_vec;
     cache_vec.resize(depth);
-    int nodes = 0;
+    uint64_t nodes = 0;
     if (print_debug) {
         nodes = perft<true>(c, m, depth, cache_vec);
     } else {

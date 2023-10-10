@@ -106,7 +106,7 @@ class MoveHistory {
         MoveHistory() : idx(0){};
         size_t len() { return idx; };
 
-        void push_move(std::pair<Move, PreviousMoveState> to_add) {
+        void push_move(const std::pair<Move, PreviousMoveState>& to_add) {
             this->data[idx] = to_add;
             idx += 1;
         };
