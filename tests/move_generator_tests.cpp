@@ -54,7 +54,7 @@ TEST(MoveGeneratorTests, TestDoubleCheck) {
     c.set_from_fen("7k/8/b3r3/8/8/8/4K3/1Q6 w - - 0 1");
     auto moves = MoveGenerator::generate_legal_moves(c, Side::WHITE);
     ASSERT_EQ(moves.len(), 4);
-    auto king_moves =  MoveGenerator::generate_legal_moves(c, Side::WHITE);
+    auto king_moves = MoveGenerator::generate_legal_moves(c, Side::WHITE);
     ASSERT_EQ(king_moves.len(), moves.len());
 }
 
@@ -159,34 +159,41 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountKiwipete) {
     ChessBoard c, o;
     c.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");
     o.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");
-    auto legal_moves =  MoveGenerator::generate_legal_moves(c, Side::WHITE);
+    auto legal_moves = MoveGenerator::generate_legal_moves(c, Side::WHITE);
 
-    MoveList rook_moves; MoveGenerator::generate_rook_moves(c, Side::WHITE, rook_moves);
+    MoveList rook_moves;
+    MoveGenerator::generate_rook_moves(c, Side::WHITE, rook_moves);
     ASSERT_EQ(rook_moves.len(), 5);
     MoveGenerator::filter_to_legal_moves(c, rook_moves);
     ASSERT_EQ(rook_moves.len(), 5);
 
-    MoveList bishop_moves; MoveGenerator::generate_bishop_moves(c, Side::WHITE, bishop_moves);
+    MoveList bishop_moves;
+    MoveGenerator::generate_bishop_moves(c, Side::WHITE, bishop_moves);
     MoveGenerator::filter_to_legal_moves(c, bishop_moves);
     ASSERT_EQ(bishop_moves.len(), 11);
 
-    MoveList king_moves; MoveGenerator::generate_king_moves(c, Side::WHITE, king_moves);
+    MoveList king_moves;
+    MoveGenerator::generate_king_moves(c, Side::WHITE, king_moves);
     MoveGenerator::filter_to_legal_moves(c, king_moves);
     ASSERT_EQ(king_moves.len(), 2);
 
-    MoveList castling_moves; MoveGenerator::generate_castling_moves(c, Side::WHITE, castling_moves);
+    MoveList castling_moves;
+    MoveGenerator::generate_castling_moves(c, Side::WHITE, castling_moves);
     MoveGenerator::filter_to_legal_moves(c, castling_moves);
     ASSERT_EQ(castling_moves.len(), 2);
 
-    MoveList queen_moves; MoveGenerator::generate_queen_moves(c, Side::WHITE, queen_moves);
+    MoveList queen_moves;
+    MoveGenerator::generate_queen_moves(c, Side::WHITE, queen_moves);
     MoveGenerator::filter_to_legal_moves(c, queen_moves);
     ASSERT_EQ(queen_moves.len(), 9);
 
-    MoveList knight_moves; MoveGenerator::generate_knight_moves(c, Side::WHITE, knight_moves);
+    MoveList knight_moves;
+    MoveGenerator::generate_knight_moves(c, Side::WHITE, knight_moves);
     MoveGenerator::filter_to_legal_moves(c, knight_moves);
     ASSERT_EQ(knight_moves.len(), 11);
 
-    MoveList pawn_moves; MoveGenerator::generate_pawn_moves(c, Side::WHITE, pawn_moves);
+    MoveList pawn_moves;
+    MoveGenerator::generate_pawn_moves(c, Side::WHITE, pawn_moves);
     MoveGenerator::filter_to_legal_moves(c, pawn_moves);
     ASSERT_EQ(pawn_moves.len(), 8);
 
@@ -196,33 +203,40 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountKiwipete) {
 TEST(MoveGeneratorTests, TestCorrectMoveCountKiwipeteB2B3) {
     ChessBoard c, o;
     c.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/1PN2Q1p/P1PBBPPP/R3K2R b KQkq - 0 1");
-    auto legal_moves =  MoveGenerator::generate_legal_moves(c, Side::BLACK);
+    auto legal_moves = MoveGenerator::generate_legal_moves(c, Side::BLACK);
 
-    MoveList rook_moves; MoveGenerator::generate_rook_moves(c, Side::BLACK, rook_moves);
+    MoveList rook_moves;
+    MoveGenerator::generate_rook_moves(c, Side::BLACK, rook_moves);
     MoveGenerator::filter_to_legal_moves(c, rook_moves);
     ASSERT_EQ(rook_moves.len(), 9);
 
-    MoveList bishop_moves; MoveGenerator::generate_bishop_moves(c, Side::BLACK, bishop_moves);
+    MoveList bishop_moves;
+    MoveGenerator::generate_bishop_moves(c, Side::BLACK, bishop_moves);
     MoveGenerator::filter_to_legal_moves(c, bishop_moves);
     ASSERT_EQ(bishop_moves.len(), 8);
 
-    MoveList king_moves; MoveGenerator::generate_king_moves(c, Side::BLACK, king_moves);
+    MoveList king_moves;
+    MoveGenerator::generate_king_moves(c, Side::BLACK, king_moves);
     MoveGenerator::filter_to_legal_moves(c, king_moves);
     ASSERT_EQ(king_moves.len(), 2);
 
-    MoveList castling_moves; MoveGenerator::generate_castling_moves(c, Side::BLACK, castling_moves);
+    MoveList castling_moves;
+    MoveGenerator::generate_castling_moves(c, Side::BLACK, castling_moves);
     MoveGenerator::filter_to_legal_moves(c, castling_moves);
     ASSERT_EQ(castling_moves.len(), 2);
 
-    MoveList queen_moves; MoveGenerator::generate_queen_moves(c, Side::BLACK, queen_moves);
+    MoveList queen_moves;
+    MoveGenerator::generate_queen_moves(c, Side::BLACK, queen_moves);
     MoveGenerator::filter_to_legal_moves(c, queen_moves);
     ASSERT_EQ(queen_moves.len(), 4);
 
-    MoveList knight_moves; MoveGenerator::generate_knight_moves(c, Side::BLACK, knight_moves);
+    MoveList knight_moves;
+    MoveGenerator::generate_knight_moves(c, Side::BLACK, knight_moves);
     MoveGenerator::filter_to_legal_moves(c, knight_moves);
     ASSERT_EQ(knight_moves.len(), 10);
 
-    MoveList pawn_moves; MoveGenerator::generate_pawn_moves(c, Side::BLACK, pawn_moves);
+    MoveList pawn_moves;
+    MoveGenerator::generate_pawn_moves(c, Side::BLACK, pawn_moves);
     MoveGenerator::filter_to_legal_moves(c, pawn_moves);
     ASSERT_EQ(pawn_moves.len(), 7);
 
@@ -235,33 +249,40 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountKiwipeteE1D1C7C6) {
     c.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R2K3R b kq - 1 1");
     c.make_move(Move(2738), m);
 
-    auto legal_moves =  MoveGenerator::generate_legal_moves(c, Side::WHITE);
+    auto legal_moves = MoveGenerator::generate_legal_moves(c, Side::WHITE);
 
-    MoveList rook_moves; MoveGenerator::generate_rook_moves(c, Side::WHITE, rook_moves);
+    MoveList rook_moves;
+    MoveGenerator::generate_rook_moves(c, Side::WHITE, rook_moves);
     MoveGenerator::filter_to_legal_moves(c, rook_moves);
     ASSERT_EQ(rook_moves.len(), 5);
 
-    MoveList bishop_moves; MoveGenerator::generate_bishop_moves(c, Side::WHITE, bishop_moves);
+    MoveList bishop_moves;
+    MoveGenerator::generate_bishop_moves(c, Side::WHITE, bishop_moves);
     MoveGenerator::filter_to_legal_moves(c, bishop_moves);
     ASSERT_EQ(bishop_moves.len(), 11);
 
-    MoveList king_moves; MoveGenerator::generate_king_moves(c, Side::WHITE, king_moves);
+    MoveList king_moves;
+    MoveGenerator::generate_king_moves(c, Side::WHITE, king_moves);
     MoveGenerator::filter_to_legal_moves(c, king_moves);
     ASSERT_EQ(king_moves.len(), 2);
 
-    MoveList castling_moves; MoveGenerator::generate_castling_moves(c, Side::WHITE, castling_moves);
+    MoveList castling_moves;
+    MoveGenerator::generate_castling_moves(c, Side::WHITE, castling_moves);
     MoveGenerator::filter_to_legal_moves(c, castling_moves);
     ASSERT_EQ(castling_moves.len(), 0);
 
-    MoveList queen_moves; MoveGenerator::generate_queen_moves(c, Side::WHITE, queen_moves);
+    MoveList queen_moves;
+    MoveGenerator::generate_queen_moves(c, Side::WHITE, queen_moves);
     MoveGenerator::filter_to_legal_moves(c, queen_moves);
     ASSERT_EQ(queen_moves.len(), 9);
 
-    MoveList knight_moves; MoveGenerator::generate_knight_moves(c, Side::WHITE, knight_moves);
+    MoveList knight_moves;
+    MoveGenerator::generate_knight_moves(c, Side::WHITE, knight_moves);
     MoveGenerator::filter_to_legal_moves(c, knight_moves);
     ASSERT_EQ(knight_moves.len(), 10);
 
-    MoveList pawn_moves; MoveGenerator::generate_pawn_moves(c, Side::WHITE, pawn_moves);
+    MoveList pawn_moves;
+    MoveGenerator::generate_pawn_moves(c, Side::WHITE, pawn_moves);
     MoveGenerator::filter_to_legal_moves(c, pawn_moves);
     ASSERT_EQ(pawn_moves.len(), 9);
 

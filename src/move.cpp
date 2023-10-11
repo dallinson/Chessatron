@@ -31,3 +31,5 @@ std::string Move::to_string() const {
 
     return to_return;
 }
+
+bool operator==(const Move& lhs, const Move& rhs) { return lhs.get_move() == rhs.get_move(); }

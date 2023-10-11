@@ -9,12 +9,12 @@
 #include "utils.hpp"
 #include "zobrist_hashing.hpp"
 
-#define KING_OFFSET (2 * ((static_cast<int>(PieceValues::KING)) - 1))
-#define QUEEN_OFFSET (2 * ((static_cast<int>(PieceValues::QUEEN)) - 1))
-#define BISHOP_OFFSET (2 * ((static_cast<int>(PieceValues::BISHOP)) - 1))
-#define KNIGHT_OFFSET (2 * ((static_cast<int>(PieceValues::KNIGHT)) - 1))
-#define ROOK_OFFSET (2 * ((static_cast<int>(PieceValues::ROOK)) - 1))
-#define PAWN_OFFSET (2 * ((static_cast<int>(PieceValues::PAWN)) - 1))
+#define KING_OFFSET (2 * ((static_cast<int>(PieceTypes::KING)) - 1))
+#define QUEEN_OFFSET (2 * ((static_cast<int>(PieceTypes::QUEEN)) - 1))
+#define BISHOP_OFFSET (2 * ((static_cast<int>(PieceTypes::BISHOP)) - 1))
+#define KNIGHT_OFFSET (2 * ((static_cast<int>(PieceTypes::KNIGHT)) - 1))
+#define ROOK_OFFSET (2 * ((static_cast<int>(PieceTypes::ROOK)) - 1))
+#define PAWN_OFFSET (2 * ((static_cast<int>(PieceTypes::PAWN)) - 1))
 
 #define QUEEN_SCORE 9
 #define ROOK_SCORE 5
@@ -128,6 +128,8 @@ class ChessBoard {
         inline Bitboard get_pinned_pieces(const Side side) const { return pinned_pieces[static_cast<int>(side)]; };
 
         inline ZobristKey get_zobrist_key() const { return zobrist_key; };
+
+        std::optional<Move> generate_move_from_string(const std::string& m) const;
 };
 
 bool operator==(const ChessBoard& lhs, const ChessBoard& rhs);

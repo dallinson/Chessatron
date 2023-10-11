@@ -31,7 +31,7 @@ enum class MoveFlags : uint_fast8_t {
 
 class Move {
     private:
-        uint_fast16_t move;
+        uint_fast16_t move = 0;
 
     public:
         Move() : move(0){};
@@ -52,6 +52,8 @@ class Move {
 
         std::string to_string() const;
 };
+
+bool operator==(const Move& lhs, const Move& rhs);
 
 class MoveList {
     private:

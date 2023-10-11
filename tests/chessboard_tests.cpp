@@ -204,3 +204,40 @@ TEST(ChessBoardTests, TestPrintBoard) {
     std::string from_stdout = testing::internal::GetCapturedStdout();
     ASSERT_STREQ("rnbqkbnr\npppppppp\n........\n........\n........\n........\nPPPPPPPP\nRNBQKBNR\n", from_stdout.c_str());
 }
+
+TEST(ChessBoardTests, TestPromotionsFromString) {
+    ChessBoard c;
+    c.set_from_fen("1r6/P7/5k2/8/5K2/8/8/8 w - - 0 1");
+    ASSERT_EQ(c.generate_move_from_string("a7a8r").value(), Move(MoveFlags::ROOK_PROMOTION, 56, 48));
+    ASSERT_EQ(c.generate_move_from_string("a7a8n").value(), Move(MoveFlags::KNIGHT_PROMOTION, 56, 48));
+    ASSERT_EQ(c.generate_move_from_string("a7a8b").value(), Move(MoveFlags::BISHOP_PROMOTION, 56, 48));
+    ASSERT_EQ(c.generate_move_from_string("a7a8q").value(), Move(MoveFlags::QUEEN_PROMOTION, 56, 48));
+
+    ASSERT_EQ(c.generate_move_from_string("a7b8r").value(), Move(MoveFlags::ROOK_PROMOTION_CAPTURE, 57, 48));
+    ASSERT_EQ(c.generate_move_from_string("a7b8n").value(), Move(MoveFlags::KNIGHT_PROMOTION_CAPTURE, 57, 48));
+    ASSERT_EQ(c.generate_move_from_string("a7b8b").value(), Move(MoveFlags::BISHOP_PROMOTION_CAPTURE, 57, 48));
+    ASSERT_EQ(c.generate_move_from_string("a7b8q").value(), Move(MoveFlags::QUEEN_PROMOTION_CAPTURE, 57, 48));
+}
+
+TEST(ChessBoardTests, TestInvalidMoveString) {
+    ChessBoard c;
+    c.set_from_fen("startpos");
+    ASSERT_FALSE(c.generate_move_from_string("dfjkgsjkfdj").has_value());
+    ASSERT_FALSE(c.generate_move_from_string("a7a8c").has_value());
+}
+
+TEST(ChessBoardTests, TestEnPassantFromString) {
+    ChessBoard c;
+    c.set_from_fen("rnbqkbnr/ppp1pppp/8/8/3pP3/8/PPPP1PPP/RNBQKBNR w KQkq e3 0 1");
+    ASSERT_EQ(c.generate_move_from_string("d4e3"), Move(MoveFlags::EN_PASSANT_CAPTURE, 20, 27));
+    ASSERT_EQ(c.generate_move_from_string("c2c4"), Move(MoveFlags::DOUBLE_PAWN_PUSH, 26, 10));
+}
+
+TEST(ChessBoardTests, TestCastlingFromString) {
+    ChessBoard c;
+    c.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/R3K2R w KQkq - 0 1");
+    ASSERT_EQ(c.generate_move_from_string("e1c1"), Move(MoveFlags::QUEENSIDE_CASTLE, 2, 4));
+    ASSERT_EQ(c.generate_move_from_string("e1g1"), Move(MoveFlags::KINGSIDE_CASTLE, 6, 4));
+    ASSERT_EQ(c.generate_move_from_string("e1f1"), Move(MoveFlags::QUIET_MOVE, 5, 4));
+    // not a castling move but included just to cover this branch
+}

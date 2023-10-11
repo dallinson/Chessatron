@@ -258,7 +258,7 @@ bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
                   (c.get_bishop_occupancy(enemy_side) | c.get_queen_occupancy(enemy_side))) ||
                  (MoveGenerator::generate_rook_movemask(cleared_occupancy, king_idx) &
                   (c.get_rook_occupancy(enemy_side) | c.get_queen_occupancy(enemy_side))));
-    } else if (c.get_piece(m.get_src_square()).get_type() == PieceValues::KING) {
+    } else if (c.get_piece(m.get_src_square()).get_type() == PieceTypes::KING) {
         Bitboard cleared_bitboard = c.get_occupancy() ^ idx_to_bitboard(m.get_src_square());
         int target_idx = m.get_dest_square();
         return !(
