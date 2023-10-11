@@ -56,3 +56,8 @@ uint64_t Perft::run_perft(ChessBoard& c, int depth, bool print_debug) {
     }
     return nodes;
 }
+
+Move Search::select_random_move(const ChessBoard& c) {
+    auto moves = MoveGenerator::generate_legal_moves(c, c.get_side_to_move());
+    return moves[rand() % moves.len()];
+}

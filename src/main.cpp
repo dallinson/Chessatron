@@ -72,6 +72,7 @@ int main(int argc, char** argv) {
 #endif
     (void) argc;
     (void) argv;
+    srand(time(NULL));
 
     ChessBoard c;
     MoveHistory m;
@@ -83,12 +84,16 @@ int main(int argc, char** argv) {
         } else if (line == "ucinewgame") {
             c = ChessBoard();
             m = MoveHistory();
+        } else if (line == "quit") {
+            break;
         } else {
             auto parsed_line = split_on_whitespace(line);
             if (parsed_line.size() >= 1) {
                 if (parsed_line[0] == std::string("go")) {
                     if (parsed_line.size() >= 3 && parsed_line[1] == std::string("perft")) {
                         Perft::run_perft(c, std::stoi(parsed_line[2]), true);
+                    } else {
+                        printf("bestmove %s\n", Search::select_random_move(c).to_string().c_str());
                     }
                 } else if (parsed_line[0] == "position") {
                     process_position_command(line, c);
