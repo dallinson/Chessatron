@@ -7,7 +7,7 @@
 
 TEST(ChessBoardTests, SetFenStartPos) {
     ChessBoard c;
-    ASSERT_TRUE(c.set_from_fen("startpos"));
+    ASSERT_TRUE(c.set_from_fen("startpos").has_value());
 
     ASSERT_EQ(c.get_occupancy(), (uint64_t) 0xFFFF00000000FFFF);
     ASSERT_EQ(c.get_pawn_occupancy(), (uint64_t) 0x00FF00000000FF00);

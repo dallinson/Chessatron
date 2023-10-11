@@ -33,6 +33,38 @@ std::vector<std::string> split_on_whitespace(const std::string& data) {
     return to_return;
 }
 
+void process_position_command(const std::string& line, ChessBoard& c) {
+    auto parsed_line = split_on_whitespace(line);
+    int fen_idx;
+    if (parsed_line[1] == "fen") {
+        fen_idx = line.find("fen") + 3;
+        while (std::isspace(line.at(fen_idx))) {
+            fen_idx += 1;
+        }
+    } else if (parsed_line[1] == "startpos") {
+        fen_idx = line.find("startpos");
+    } else {
+        return; // not a valid position
+    }
+    auto sub_line = line.substr(fen_idx);
+    auto idx = c.set_from_fen(sub_line);
+    if (idx.has_value()) {
+        auto moves = sub_line.substr(idx.value());
+        // moves is the substring starting at the end of the FEN string
+        if (moves.find("moves") != std::string::npos) {
+            // if there _are_ moves to add
+            MoveHistory setup;
+            auto split_moves = split_on_whitespace(moves.substr(moves.find(moves) + 5));
+            for (auto& move : split_moves) {
+                auto parsed_move = c.generate_move_from_string(move);
+                if (parsed_move.has_value()) {
+                    c.make_move(parsed_move.value(), setup);
+                }
+            }
+        }
+    }
+}
+
 int main(int argc, char** argv) {
 #ifdef IS_TESTING
     testing::InitGoogleTest(&argc, argv);
@@ -59,13 +91,7 @@ int main(int argc, char** argv) {
                         Perft::run_perft(c, std::stoi(parsed_line[2]), true);
                     }
                 } else if (parsed_line[0] == "position") {
-                    if (parsed_line[1] == "fen") {
-                        int fen_idx = line.find("fen") + 3;
-                        while (std::isspace(line.at(fen_idx))) {
-                            fen_idx += 1;
-                        }
-                        c.set_from_fen(line.substr(fen_idx).c_str());
-                    }
+                    process_position_command(line, c);
                 }
             }
         }

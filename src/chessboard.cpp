@@ -45,8 +45,11 @@ void ChessBoard::print_board() const {
     }
 
 std::optional<int> ChessBoard::set_from_fen(const std::string input) {
-    if (input == "startpos") {
-        return set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    if (input.find("startpos") == 0) {
+        // this accounts for any additional moves after the startpos
+        set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        return std::optional<int>(8);
+        // this ensures we won't read past the end when looking for moves
     }
     clear_board();
     int rank = 7;
