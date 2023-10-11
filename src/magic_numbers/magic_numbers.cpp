@@ -104,70 +104,27 @@ consteval std::array<std::array<Bitboard, 64>, 64> compute_aligned_squares() {
 
 constexpr std::array<std::array<Bitboard, 64>, 64> MagicNumbers::AlignedSquares = compute_aligned_squares();
 
-constexpr Bitboard MagicNumbers::KingMoves[64] = {0x302ULL,
-                                                  0x705ULL,
-                                                  0xe0aULL,
-                                                  0x1c14ULL,
-                                                  0x3828ULL,
-                                                  0x7050ULL,
-                                                  0xe0a0ULL,
-                                                  0xc040ULL,
-                                                  0x30200ULL,
-                                                  0x70507ULL,
-                                                  0xe0a0eULL,
-                                                  0x1c141cULL,
-                                                  0x382838ULL,
-                                                  0x705070ULL,
-                                                  0xe0a0e0ULL,
-                                                  0xc040c0ULL,
-                                                  0x3020300ULL,
-                                                  0x7050700ULL,
-                                                  0xe0a0e00ULL,
-                                                  0x1c141c00ULL,
-                                                  0x38283800ULL,
-                                                  0x70507000ULL,
-                                                  0xe0a0e000ULL,
-                                                  0xc040c000ULL,
-                                                  0x302030000ULL,
-                                                  0x705070000ULL,
-                                                  0xe0a0e0000ULL,
-                                                  0x1c141c0000ULL,
-                                                  0x3828380000ULL,
-                                                  0x7050700000ULL,
-                                                  0xe0a0e00000ULL,
-                                                  0xc040c00000ULL,
-                                                  0x30203000000ULL,
-                                                  0x70507000000ULL,
-                                                  0xe0a0e000000ULL,
-                                                  0x1c141c000000ULL,
-                                                  0x382838000000ULL,
-                                                  0x705070000000ULL,
-                                                  0xe0a0e0000000ULL,
-                                                  0xc040c0000000ULL,
-                                                  0x3020300000000ULL,
-                                                  0x7050700000000ULL,
-                                                  0xe0a0e00000000ULL,
-                                                  0x1c141c00000000ULL,
-                                                  0x38283800000000ULL,
-                                                  0x70507000000000ULL,
-                                                  0xe0a0e000000000ULL,
-                                                  0xc040c000000000ULL,
-                                                  0x302030000000000ULL,
-                                                  0x705070000000000ULL,
-                                                  0xe0a0e0000000000ULL,
-                                                  0x1c141c0000000000ULL,
-                                                  0x3828380000000000ULL,
-                                                  0x7050700000000000ULL,
-                                                  0xe0a0e00000000000ULL,
-                                                  0xc040c00000000000ULL,
-                                                  0x203000000000000ULL,
-                                                  0x507000000000000ULL,
-                                                  0xa0e000000000000ULL,
-                                                  0x141c000000000000ULL,
-                                                  0x2838000000000000ULL,
-                                                  0x5070000000000000ULL,
-                                                  0xa0e0000000000000ULL,
-                                                  0x40c0000000000000ULL};
+consteval std::array<Bitboard, 64> generate_king_moves() {
+    std::array<Bitboard, 64> to_return;
+    for (int rk = 0; rk < 8; rk++) {
+        for (int fl = 0; fl < 8; fl++) {
+            Bitboard b = 0;
+            for (int r = -1; r <= 1; r++) {
+                for (int f = -1; f <= 1; f++) {
+                    int r_rk = rk + r;
+                    int f_fl = fl + f;
+                    if (!((r == 0 && f == 0) || r_rk < 0 || f_fl < 0 || r_rk >= 8 || f_fl >= 8)) {
+                        b |= idx_to_bitboard(POSITION(r_rk, f_fl));
+                    }
+                }
+            }
+            to_return[POSITION(rk, fl)] = b;
+        }
+    }
+    return to_return;
+}
+
+constexpr std::array<Bitboard, 64> MagicNumbers::KingMoves = generate_king_moves();
 
 constexpr Bitboard MagicNumbers::KnightMoves[64] = {
     0x20400UL,

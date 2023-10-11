@@ -19,7 +19,6 @@ TEST(ParsingTests, TestSetString) {
 TEST(ParsingTests, TestMakeMove) {
     ChessBoard c, o;
     process_position_command("position startpos moves e2e4 d7d5", c);
-    c.print_board();
     o.set_from_fen("rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 1");
     ASSERT_EQ(c, o);
 }

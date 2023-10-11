@@ -297,3 +297,21 @@ TEST(MoveGeneratorTests, TestRookMoves) {
     auto legal_moves = MoveGenerator::filter_to_legal_moves(c, rook_moves);
     ASSERT_EQ(legal_moves.len(), 5);
 }
+
+TEST(MoveGeneratorTests, TestWhiteBishopKing) {
+    ChessBoard c;
+    c.set_from_fen("1B6/8/2r5/1knK4/8/8/8/8 w - - 16 166");
+    MoveList king_moves;
+    MoveGenerator::generate_king_moves(c, Side::WHITE, king_moves);
+    auto legal_moves = MoveGenerator::filter_to_legal_moves(c, king_moves);
+    ASSERT_EQ(legal_moves.len(), 2);
+}
+
+TEST(MoveGeneratorTests, TestMoveKingNearKing) {
+    ChessBoard c;
+    c.set_from_fen("5n2/8/P4P1B/1p6/1p1P2P1/1k6/8/K7 b - - 0 72");
+    MoveList king_moves;
+    MoveGenerator::generate_king_moves(c, Side::BLACK, king_moves);
+    auto legal_moves = MoveGenerator::filter_to_legal_moves(c, king_moves);
+    ASSERT_EQ(legal_moves.len(), 5);
+}

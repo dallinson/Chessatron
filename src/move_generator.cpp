@@ -266,7 +266,8 @@ bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
             (generate_rook_movemask(cleared_bitboard, target_idx) & (c.get_rook_occupancy(enemy_side) | c.get_queen_occupancy(enemy_side))) ||
             (c.get_knight_occupancy(enemy_side) & MagicNumbers::KnightMoves[target_idx]) ||
             (c.get_pawn_occupancy(enemy_side) &
-             MagicNumbers::PawnAttacks[(64 * static_cast<int>(c.get_piece(m.get_src_square()).get_side())) + target_idx]));
+             MagicNumbers::PawnAttacks[(64 * static_cast<int>(c.get_piece(m.get_src_square()).get_side())) + target_idx]) ||
+            (c.get_king_occupancy(enemy_side) & MagicNumbers::KingMoves[target_idx]));
     } else [[likely]] {
 
         Bitboard checking_pieces = c.get_checkers(c.get_side_to_move());

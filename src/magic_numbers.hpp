@@ -23,7 +23,7 @@ namespace MagicNumbers {
     extern const std::array<std::array<Bitboard, 64>, 64> ConnectingSquares;
     extern const std::array<std::array<Bitboard, 64>, 64> AlignedSquares;
 
-    extern const Bitboard KingMoves[64];
+    extern const std::array<Bitboard, 64> KingMoves;
     extern const Bitboard KnightMoves[64];
     extern const Bitboard PawnAttacks[128];
 } // namespace MagicNumbers
