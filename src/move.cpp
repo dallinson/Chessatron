@@ -3,6 +3,10 @@
 #include <string>
 
 std::string Move::to_string() const {
+    if (this->get_src_square() == 0 && this->get_dest_square() == 0) {
+        // if this is a null move
+        return "0000";
+    }
     std::string to_return;
     to_return.push_back(this->get_src_file() + 97);
     to_return.push_back(this->get_src_rank() + 49);

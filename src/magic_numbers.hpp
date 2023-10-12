@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstdint>
+#include <limits>
 
 #include "utils.hpp"
 
@@ -26,4 +27,7 @@ namespace MagicNumbers {
     extern const std::array<Bitboard, 64> KingMoves;
     extern const Bitboard KnightMoves[64];
     extern const Bitboard PawnAttacks[128];
+
+    const int32_t NegativeInfinity = -std::numeric_limits<int32_t>::max();
+    // int32_t so a known constant size and max as in a 32-bit int abs(highest value) is 1 lower than abs(lowest_value)
 } // namespace MagicNumbers

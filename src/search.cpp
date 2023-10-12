@@ -63,12 +63,14 @@ Move Search::select_random_move(const ChessBoard& c) {
     return moves[rand() % moves.len()];
 }
 
-int negamax_step(ChessBoard& c, MoveHistory& m, int depth) {
-    if (depth <= 0) {
+int32_t negamax_step(ChessBoard& c, MoveHistory& m, int depth) {
+    auto moves = MoveGenerator::generate_legal_moves(c, c.get_side_to_move());
+    if (moves.len() == 0) {
+        return MagicNumbers::NegativeInfinity; // we're checkmated, avoid this!
+    } else if (depth <= 0) {
         return c.get_score(c.get_side_to_move()) - c.get_score(ENEMY_SIDE(c.get_side_to_move()));
     }
-    auto moves = MoveGenerator::generate_legal_moves(c, c.get_side_to_move());
-    int best_score = std::numeric_limits<int>::lowest();
+    int32_t best_score = MagicNumbers::NegativeInfinity;
     for (size_t i = 0; i < moves.len(); i++) {
         const auto& move = moves[i];
         c.make_move(move, m);
@@ -82,11 +84,11 @@ int negamax_step(ChessBoard& c, MoveHistory& m, int depth) {
 Move Search::run_negamax(ChessBoard& c, MoveHistory& m, int depth) {
     auto moves = MoveGenerator::generate_legal_moves(c, c.get_side_to_move());
     Move best_move;
-    int best_score = std::numeric_limits<int>::lowest();
+    int best_score = MagicNumbers::NegativeInfinity;
     for (size_t i = 0; i < moves.len(); i++) {
         const auto& move = moves[i];
         c.make_move(move, m);
-        int score = -negamax_step(c, m, depth - 1);
+        int32_t score = -negamax_step(c, m, depth - 1);
         if (score > best_score) {
             best_move = move;
             best_score = score;
