@@ -9,4 +9,5 @@ namespace Perft {
 
 namespace Search {
     Move select_random_move(const ChessBoard& c);
+    Move run_negamax(ChessBoard& c, MoveHistory& m, int depth = 4);
 }

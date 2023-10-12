@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <vector>
+#include <limits>
 
 #include "move_generator.hpp"
 
@@ -60,4 +61,37 @@ uint64_t Perft::run_perft(ChessBoard& c, int depth, bool print_debug) {
 Move Search::select_random_move(const ChessBoard& c) {
     auto moves = MoveGenerator::generate_legal_moves(c, c.get_side_to_move());
     return moves[rand() % moves.len()];
+}
+
+int negamax_step(ChessBoard& c, MoveHistory& m, int depth) {
+    if (depth <= 0) {
+        return c.get_score(c.get_side_to_move()) - c.get_score(ENEMY_SIDE(c.get_side_to_move()));
+    }
+    auto moves = MoveGenerator::generate_legal_moves(c, c.get_side_to_move());
+    int best_score = std::numeric_limits<int>::lowest();
+    for (size_t i = 0; i < moves.len(); i++) {
+        const auto& move = moves[i];
+        c.make_move(move, m);
+        best_score = std::max(-negamax_step(c, m, depth - 1), best_score);
+        
+        c.unmake_move(m);
+    }
+    return best_score;
+}
+
+Move Search::run_negamax(ChessBoard& c, MoveHistory& m, int depth) {
+    auto moves = MoveGenerator::generate_legal_moves(c, c.get_side_to_move());
+    Move best_move;
+    int best_score = std::numeric_limits<int>::lowest();
+    for (size_t i = 0; i < moves.len(); i++) {
+        const auto& move = moves[i];
+        c.make_move(move, m);
+        int score = -negamax_step(c, m, depth - 1);
+        if (score > best_score) {
+            best_move = move;
+            best_score = score;
+        }
+        c.unmake_move(m);
+    }
+    return best_move;
 }

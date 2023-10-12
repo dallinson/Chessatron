@@ -93,7 +93,7 @@ int main(int argc, char** argv) {
                     if (parsed_line.size() >= 3 && parsed_line[1] == std::string("perft")) {
                         Perft::run_perft(c, std::stoi(parsed_line[2]), true);
                     } else {
-                        printf("bestmove %s\n", Search::select_random_move(c).to_string().c_str());
+                        printf("bestmove %s\n", Search::run_negamax(c, m).to_string().c_str());
                     }
                 } else if (parsed_line[0] == "position") {
                     process_position_command(line, c);
