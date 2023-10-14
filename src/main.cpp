@@ -65,6 +65,37 @@ void process_position_command(const std::string& line, ChessBoard& c) {
     }
 }
 
+void process_go_command(const std::vector<std::string>& line, SearchHandler& s) {
+    int wtime = 0, btime = 0, winc = 0, binc = 0, movetime = 0;
+    for (size_t i = 0; i < line.size(); i++) {
+        auto& this_elem = line[i];
+        if (this_elem == "infinite") {
+            s.search(0);
+            return;
+        } else if (i != (line.size() - 1)) {
+            if (this_elem == "wtime") {
+                wtime = std::stoi(line[i + 1]);
+            } else if (this_elem == "btime") {
+                btime = std::stoi(line[i + 1]);
+            } else if (this_elem == "winc") {
+                winc = std::stoi(line[i + 1]);
+            } else if (this_elem == "binc") {
+                binc = std::stoi(line[i + 1]);
+            } else if (this_elem == "movetime") {
+                movetime = std::stoi(line[i + 1]);
+            } else if (this_elem == "perft") {
+                s.run_perft(std::stoi(line[i + 1]));
+                return;
+            }
+        }
+    }
+    if (movetime != 0) {
+        s.search(movetime);
+        return;
+    }
+    s.search(wtime + btime + winc + binc);
+}
+
 int main(int argc, char** argv) {
 #ifdef IS_TESTING
     testing::InitGoogleTest(&argc, argv);
@@ -91,11 +122,7 @@ int main(int argc, char** argv) {
             auto parsed_line = split_on_whitespace(line);
             if (parsed_line.size() >= 1) {
                 if (parsed_line[0] == std::string("go")) {
-                    if (parsed_line.size() >= 3 && parsed_line[1] == std::string("perft")) {
-                        s.run_perft(std::stoi(parsed_line[2]));
-                    } else {
-                        s.search(100);
-                    }
+                    process_go_command(parsed_line, s);
                 } else if (parsed_line[0] == "position") {
                     ChessBoard c;
                     process_position_command(line, c);

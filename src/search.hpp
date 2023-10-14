@@ -24,7 +24,7 @@ class SearchHandler {
         std::binary_semaphore semaphore{0};
         ChessBoard c;
         MoveHistory m;
-        std::atomic<bool> isSearching, searchCancelled, shuttingDown, should_perft = false;
+        std::atomic<bool> in_search, search_cancelled, shutting_down, should_perft = false;
         std::atomic<int> current_search_id = 0;
         std::future<void> cancelFuture;
         int perft_depth = 0;
@@ -37,20 +37,17 @@ class SearchHandler {
     public:
         SearchHandler();
 
-        bool is_searching() { return this->isSearching; };
+        bool is_searching() { return this->in_search; };
         int get_current_search_id() { return this->current_search_id; };
 
-        void set_board(const ChessBoard& c) {
-            this->c = c;
-        };
-        
+        void set_board(const ChessBoard& c) { this->c = c; };
         void reset();
 
-        void search(int ms = 100);
+        void search(int ms);
 
         void run_perft(int depth);
 
-        void EndSearch() { searchCancelled = true; }
+        void EndSearch() { search_cancelled = true; }
 
         void shutdown();
 };

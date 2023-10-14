@@ -76,7 +76,7 @@ int32_t SearchHandler::negamax_step(ChessBoard& c, MoveHistory& m, int depth) {
         c.make_move(move, m);
         best_score = std::max(-negamax_step(c, m, depth - 1), best_score);
         c.unmake_move(m);
-        if (searchCancelled) {
+        if (search_cancelled) {
             break;
         }
     }
@@ -96,7 +96,7 @@ Move SearchHandler::run_negamax(ChessBoard& c, MoveHistory& m, int depth) {
             best_score = score;
         }
         c.unmake_move(m);
-        if (searchCancelled) {
+        if (search_cancelled) {
             // checking here ensures we always find one move
             break;
         }

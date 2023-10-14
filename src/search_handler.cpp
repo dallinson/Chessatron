@@ -7,11 +7,11 @@ void SearchHandler::search_thread_function() {
     while (true) {
         semaphore.acquire();
         this_search_id = current_search_id;
-        if (this->shuttingDown) {
+        if (this->shutting_down) {
             return;
         }
-        searchCancelled = false;
-        isSearching = true;
+        search_cancelled = false;
+        in_search = true;
         if (should_perft) {
             Perft::run_perft(c, perft_depth, true);
             should_perft = false;
@@ -28,12 +28,14 @@ void SearchHandler::search_thread_function() {
             }
             // We've had issues with stdout not being flushed in the past
         }
-        isSearching = false;
+        in_search = false;
     }
 }
 
 void SearchHandler::shutdown() {
-    this->shuttingDown = true;
+    this->shutting_down = true;
+    this->search_cancelled = true;
+    // If we're in a search, quit searching ASAP
     semaphore.release();
     this->searchThread.join();
 }
@@ -42,26 +44,28 @@ SearchHandler::SearchHandler() { this->searchThread = std::thread(&SearchHandler
 
 void SearchHandler::search(int ms) {
     current_search_id += 1;
-    searchCancelled = true;
+    search_cancelled = true;
     // cancel a search if performing one
     semaphore.release();
     // We then wake up the search thread
     int id_to_cancel = current_search_id;
-    cancelFuture = std::async(std::launch::async, [ms, this, id_to_cancel]() {
-        std::this_thread::sleep_for(std::chrono::milliseconds{ms});
-        if (this->get_current_search_id() == id_to_cancel) {
-            // only cancel the current searcg
-            this->EndSearch();
-        }
-    });
+    if (ms > 0) {
+        cancelFuture = std::async(std::launch::async, [ms, this, id_to_cancel]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds{ms});
+            if (this->get_current_search_id() == id_to_cancel) {
+                // only cancel the current searcg
+                this->EndSearch();
+            }
+        });
+    }
 }
 
 void SearchHandler::run_perft(int depth) {
-    searchCancelled = true;
+    search_cancelled = true;
     // cancel any existing search
     perft_depth = depth;
     should_perft = true;
-    isSearching = true;
+    in_search = true;
     semaphore.release();
 }
 
