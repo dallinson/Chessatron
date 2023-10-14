@@ -73,30 +73,33 @@ int main(int argc, char** argv) {
     (void) argc;
     (void) argv;
     srand(time(NULL));
+    SearchHandler s;
 
-    ChessBoard c;
-    MoveHistory m;
     for (std::string line; std::getline(std::cin, line);) {
         if (line == "uci") {
             std::cout << "uciok\n";
         } else if (line == "isready") {
             std::cout << "readyok\n";
         } else if (line == "ucinewgame") {
-            c = ChessBoard();
-            m = MoveHistory();
+            s.reset();
         } else if (line == "quit") {
+            s.shutdown();
             break;
+        } else if (line == "stop") {
+            s.EndSearch();
         } else {
             auto parsed_line = split_on_whitespace(line);
             if (parsed_line.size() >= 1) {
                 if (parsed_line[0] == std::string("go")) {
                     if (parsed_line.size() >= 3 && parsed_line[1] == std::string("perft")) {
-                        Perft::run_perft(c, std::stoi(parsed_line[2]), true);
+                        s.run_perft(std::stoi(parsed_line[2]));
                     } else {
-                        printf("bestmove %s\n", Search::run_negamax(c, m).to_string().c_str());
+                        s.search(100);
                     }
                 } else if (parsed_line[0] == "position") {
+                    ChessBoard c;
                     process_position_command(line, c);
+                    s.set_board(c);
                 }
             }
         }

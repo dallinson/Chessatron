@@ -1,8 +1,8 @@
 #include "search.hpp"
 
 #include <iostream>
-#include <vector>
 #include <limits>
+#include <vector>
 
 #include "move_generator.hpp"
 
@@ -63,7 +63,7 @@ Move Search::select_random_move(const ChessBoard& c) {
     return moves[rand() % moves.len()];
 }
 
-int32_t negamax_step(ChessBoard& c, MoveHistory& m, int depth) {
+int32_t SearchHandler::negamax_step(ChessBoard& c, MoveHistory& m, int depth) {
     auto moves = MoveGenerator::generate_legal_moves(c, c.get_side_to_move());
     if (moves.len() == 0) {
         return MagicNumbers::NegativeInfinity; // we're checkmated, avoid this!
@@ -75,13 +75,15 @@ int32_t negamax_step(ChessBoard& c, MoveHistory& m, int depth) {
         const auto& move = moves[i];
         c.make_move(move, m);
         best_score = std::max(-negamax_step(c, m, depth - 1), best_score);
-        
         c.unmake_move(m);
+        if (searchCancelled) {
+            break;
+        }
     }
     return best_score;
 }
 
-Move Search::run_negamax(ChessBoard& c, MoveHistory& m, int depth) {
+Move SearchHandler::run_negamax(ChessBoard& c, MoveHistory& m, int depth) {
     auto moves = MoveGenerator::generate_legal_moves(c, c.get_side_to_move());
     Move best_move;
     int best_score = MagicNumbers::NegativeInfinity;
@@ -94,6 +96,10 @@ Move Search::run_negamax(ChessBoard& c, MoveHistory& m, int depth) {
             best_score = score;
         }
         c.unmake_move(m);
+        if (searchCancelled) {
+            // checking here ensures we always find one move
+            break;
+        }
     }
     return best_move;
 }

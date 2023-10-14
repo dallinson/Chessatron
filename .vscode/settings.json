@@ -86,6 +86,7 @@
         "xlocale": "cpp",
         "xlocbuf": "cpp",
         "xlocinfo": "cpp",
-        "xtree": "cpp"
+        "xtree": "cpp",
+        "future": "cpp"
     }
 }

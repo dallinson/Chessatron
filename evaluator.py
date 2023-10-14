@@ -4,6 +4,7 @@ import argparse
 import multiprocessing
 import tqdm
 from typing import Tuple
+import logging
 
 def evaluate_board(args: Tuple[str, str, int]):
     first_engine = chess.engine.SimpleEngine.popen_uci(args[0])
@@ -12,11 +13,11 @@ def evaluate_board(args: Tuple[str, str, int]):
     board.set_fen(board.starting_fen)
 
     while not board.is_game_over():
-        result = first_engine.play(board, limit = chess.engine.Limit(time=0.1))
+        result = first_engine.play(board, limit = chess.engine.Limit(time=1))
         board.push(result.move or chess.Move.from_uci("0000"))
         if board.is_game_over():
             break
-        result = second_engine.play(board, limit = chess.engine.Limit(time=0.1))
+        result = second_engine.play(board, limit = chess.engine.Limit(time=1))
         board.push(result.move or chess.Move.from_uci("0000"))
 
     first_engine.quit()

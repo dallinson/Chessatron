@@ -50,6 +50,8 @@ class Move {
 
         MoveFlags get_move_flags() const { return (MoveFlags) GET_BITS(move, 15, 12); };
 
+        bool is_null_move() const { return move == 0; };
+
         std::string to_string() const;
 };
 
