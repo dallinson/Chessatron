@@ -205,9 +205,9 @@ std::optional<int> ChessBoard::set_from_fen(const std::string input) {
 }
 
 int ChessBoard::get_score(Side side) {
-    return (std::popcount(get_pawn_occupancy(side)) * PAWN_SCORE) + (std::popcount(get_rook_occupancy(side)) * ROOK_SCORE) +
+    return (((std::popcount(get_pawn_occupancy(side)) * PAWN_SCORE) + (std::popcount(get_rook_occupancy(side)) * ROOK_SCORE) +
            (std::popcount(get_knight_occupancy(side)) * KNIGHT_SCORE) + (std::popcount(get_bishop_occupancy(side)) * BISHOP_SCORE) +
-           (std::popcount(get_queen_occupancy(side)) * QUEEN_SCORE);
+           (std::popcount(get_queen_occupancy(side)) * QUEEN_SCORE)) * 10) + MoveGenerator::generate_legal_moves(*this, side).len();
 }
 
 void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {

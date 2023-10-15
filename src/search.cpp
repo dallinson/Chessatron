@@ -64,15 +64,17 @@ Move Search::select_random_move(const ChessBoard& c) {
 }
 
 int32_t SearchHandler::negamax_step(int32_t alpha, int32_t beta, int depth) {
-    auto moves = MoveGenerator::generate_legal_moves(c, c.get_side_to_move());
-    //moves.reverse();
-    if (moves.len() == 0) {
-        return MagicNumbers::NegativeInfinity; // we're checkmated, avoid this!
-    } else if (depth <= 0) {
+    auto moves = MoveGenerator::generate_pseudolegal_moves(c, c.get_side_to_move());
+    if (depth <= 0) {
         return c.get_score(c.get_side_to_move()) - c.get_score(ENEMY_SIDE(c.get_side_to_move()));
     }
+    bool had_move = false;
     for (size_t i = 0; i < moves.len(); i++) {
         const auto& move = moves[i];
+        if (!MoveGenerator::is_move_legal(c, move)) {
+            continue;
+        }
+        had_move = true;
         c.make_move(move, m);
         auto score = -negamax_step(-beta, -alpha, depth - 1);
         c.unmake_move(m);
@@ -84,7 +86,7 @@ int32_t SearchHandler::negamax_step(int32_t alpha, int32_t beta, int depth) {
             break;
         }
     }
-    return alpha;
+    return had_move ? alpha : MagicNumbers::NegativeInfinity;
 }
 
 Move SearchHandler::run_negamax(int depth) {
