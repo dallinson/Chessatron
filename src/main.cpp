@@ -103,7 +103,8 @@ void process_go_command(const std::vector<std::string>& line, SearchHandler& s) 
     // next we determine how to use our allocated time using the formula
     // 59.3 + (72830 - 2330 k)/(2644 + k (10 + k)), where k is the number of halfmoves
     // so far.  This formula is taken from 59.3 + (72830 - 2330 k)/(2644 + k (10 + k)).
-    float remaining_halfmoves = 59.3 + (static_cast<float>(72830 - (2330 * halfmoves_so_far)) / static_cast<float>(2644 + (halfmoves_so_far * (10 + halfmoves_so_far))));
+    float remaining_halfmoves =
+        59.3 + (static_cast<float>(72830 - (2330 * halfmoves_so_far)) / static_cast<float>(2644 + (halfmoves_so_far * (10 + halfmoves_so_far))));
 
     s.search((remaining_time / static_cast<int>(remaining_halfmoves)) + increment);
 }

@@ -81,7 +81,7 @@ int32_t SearchHandler::negamax_step(int32_t alpha, int32_t beta, int depth) {
         if (score >= beta) {
             return beta;
         }
-        alpha = std::max(score, alpha);        
+        alpha = std::max(score, alpha);
         if (search_cancelled) {
             break;
         }
