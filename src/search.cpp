@@ -64,10 +64,10 @@ Move Search::select_random_move(const ChessBoard& c) {
 }
 
 int32_t SearchHandler::negamax_step(int32_t alpha, int32_t beta, int depth) {
-    auto moves = MoveGenerator::generate_pseudolegal_moves(c, c.get_side_to_move());
     if (depth <= 0) {
         return c.get_score(c.get_side_to_move()) - c.get_score(ENEMY_SIDE(c.get_side_to_move()));
     }
+    auto moves = MoveGenerator::generate_pseudolegal_moves(c, c.get_side_to_move());
     bool had_move = false;
     for (size_t i = 0; i < moves.len(); i++) {
         const auto& move = moves[i];
@@ -89,9 +89,37 @@ int32_t SearchHandler::negamax_step(int32_t alpha, int32_t beta, int depth) {
     return had_move ? alpha : MagicNumbers::NegativeInfinity;
 }
 
+int32_t SearchHandler::quiescent_search(int32_t alpha, int32_t beta) {
+    auto moves = MoveGenerator::generate_pseudolegal_moves(c, c.get_side_to_move());
+    bool had_move = false;
+    for (size_t i = 0; i < moves.len(); i++) {
+        const auto& move = moves[i];
+        if (!(move.is_capture() && MoveGenerator::is_move_legal(c, move))) {
+            // In a quiescent search we're only interested in (legal) captures
+            continue;
+        }
+        had_move = true;
+        c.make_move(move, m);
+        auto score = -quiescent_search(-beta, -alpha);
+        c.unmake_move(m);
+        if (score >= beta) {
+            return beta;
+        }
+        alpha = std::max(score, alpha);
+        if (search_cancelled) {
+            break;
+        }
+    }
+    if (!had_move) {
+        return c.evaluate();
+    } else {
+        return alpha;
+    }
+}
+
 Move SearchHandler::run_negamax(int depth) {
     auto moves = MoveGenerator::generate_pseudolegal_moves(c, c.get_side_to_move());
-    Move best_move;
+    Move best_move = 0;
     int best_score = MagicNumbers::NegativeInfinity;
     int32_t alpha = MagicNumbers::NegativeInfinity;
     int32_t beta = MagicNumbers::PositiveInfinity;
