@@ -63,38 +63,47 @@ Move Search::select_random_move(const ChessBoard& c) {
     return moves[rand() % moves.len()];
 }
 
-int32_t SearchHandler::negamax_step(ChessBoard& c, MoveHistory& m, int depth) {
+int32_t SearchHandler::negamax_step(ChessBoard& c, MoveHistory& m, int32_t alpha, int32_t beta, int depth) {
     auto moves = MoveGenerator::generate_legal_moves(c, c.get_side_to_move());
+    //moves.reverse();
     if (moves.len() == 0) {
         return MagicNumbers::NegativeInfinity; // we're checkmated, avoid this!
     } else if (depth <= 0) {
         return c.get_score(c.get_side_to_move()) - c.get_score(ENEMY_SIDE(c.get_side_to_move()));
     }
-    int32_t best_score = MagicNumbers::NegativeInfinity;
+    alpha = MagicNumbers::NegativeInfinity;
     for (size_t i = 0; i < moves.len(); i++) {
         const auto& move = moves[i];
         c.make_move(move, m);
-        best_score = std::max(-negamax_step(c, m, depth - 1), best_score);
+        auto score = -negamax_step(c, m, -beta, -alpha, depth - 1);
         c.unmake_move(m);
+        if (score >= beta) {
+            return beta;
+        }
+        alpha = std::max(score, alpha);        
         if (search_cancelled) {
             break;
         }
     }
-    return best_score;
+    return alpha;
 }
 
 Move SearchHandler::run_negamax(ChessBoard& c, MoveHistory& m, int depth) {
     auto moves = MoveGenerator::generate_legal_moves(c, c.get_side_to_move());
     Move best_move;
     int best_score = MagicNumbers::NegativeInfinity;
+    int32_t alpha = MagicNumbers::NegativeInfinity;
+    int32_t beta = MagicNumbers::PositiveInfinity;
     for (size_t i = 0; i < moves.len(); i++) {
         const auto& move = moves[i];
         c.make_move(move, m);
-        int32_t score = -negamax_step(c, m, depth - 1);
+        int32_t score = -negamax_step(c, m, -beta, -alpha, depth - 1);
+        // the next step gets negative infinity as the first arg and positive infinity as the second
         if (score > best_score) {
             best_move = move;
             best_score = score;
         }
+        alpha = std::max(alpha, score);
         c.unmake_move(m);
         if (search_cancelled) {
             // checking here ensures we always find one move

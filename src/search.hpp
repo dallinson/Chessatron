@@ -31,7 +31,7 @@ class SearchHandler {
         Move bestMove;
 
         void search_thread_function();
-        int32_t negamax_step(ChessBoard& c, MoveHistory& m, int depth);
+        int32_t negamax_step(ChessBoard& c, MoveHistory& m, int32_t alpha, int32_t beta, int depth);
         Move run_negamax(ChessBoard& c, MoveHistory& m, int depth = 4);
 
     public:
