@@ -71,7 +71,6 @@ int32_t SearchHandler::negamax_step(ChessBoard& c, MoveHistory& m, int32_t alpha
     } else if (depth <= 0) {
         return c.get_score(c.get_side_to_move()) - c.get_score(ENEMY_SIDE(c.get_side_to_move()));
     }
-    alpha = MagicNumbers::NegativeInfinity;
     for (size_t i = 0; i < moves.len(); i++) {
         const auto& move = moves[i];
         c.make_move(move, m);
@@ -89,13 +88,16 @@ int32_t SearchHandler::negamax_step(ChessBoard& c, MoveHistory& m, int32_t alpha
 }
 
 Move SearchHandler::run_negamax(ChessBoard& c, MoveHistory& m, int depth) {
-    auto moves = MoveGenerator::generate_legal_moves(c, c.get_side_to_move());
+    auto moves = MoveGenerator::generate_pseudolegal_moves(c, c.get_side_to_move());
     Move best_move;
     int best_score = MagicNumbers::NegativeInfinity;
     int32_t alpha = MagicNumbers::NegativeInfinity;
     int32_t beta = MagicNumbers::PositiveInfinity;
     for (size_t i = 0; i < moves.len(); i++) {
         const auto& move = moves[i];
+        if (!MoveGenerator::is_move_legal(c, move)) {
+            continue;
+        }
         c.make_move(move, m);
         int32_t score = -negamax_step(c, m, -beta, -alpha, depth - 1);
         // the next step gets negative infinity as the first arg and positive infinity as the second
