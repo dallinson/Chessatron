@@ -301,6 +301,7 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
         set_kingside_castling(Side::BLACK, false);
     }
 
+    fullmove_counter += static_cast<int>(side_to_move);
     side_to_move = ENEMY_SIDE(side_to_move);
     zobrist_key ^= ZobristKeys::SideToMove;
     recompute_blockers_and_checkers(side_to_move);
@@ -368,6 +369,7 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
     set_queenside_castling(Side::BLACK, previous_move_pair.second.get_black_queenside_castle());
 
     side_to_move = ENEMY_SIDE(side_to_move);
+    fullmove_counter -= static_cast<int>(side_to_move);
     zobrist_key ^= ZobristKeys::SideToMove;
     recompute_blockers_and_checkers(side_to_move);
 }

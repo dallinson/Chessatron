@@ -39,6 +39,7 @@ class SearchHandler {
 
         bool is_searching() { return this->in_search; };
         int get_current_search_id() { return this->current_search_id; };
+        const ChessBoard& get_board() { return this->c; };
 
         void set_board(const ChessBoard& c) { this->c = c; };
         void reset();

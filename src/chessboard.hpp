@@ -118,6 +118,8 @@ class ChessBoard {
         void make_move(const Move to_make, MoveHistory& move_history);
         void unmake_move(MoveHistory& move_history);
 
+        int get_fullmove_counter() const { return this->fullmove_counter; };
+
         void recompute_blockers_and_checkers() {
             recompute_blockers_and_checkers(Side::WHITE);
             recompute_blockers_and_checkers(Side::BLACK);

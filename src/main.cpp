@@ -67,6 +67,7 @@ void process_position_command(const std::string& line, ChessBoard& c) {
 
 void process_go_command(const std::vector<std::string>& line, SearchHandler& s) {
     int wtime = 0, btime = 0, winc = 0, binc = 0, movetime = 0;
+    int movestogo = 1;
     for (size_t i = 0; i < line.size(); i++) {
         auto& this_elem = line[i];
         if (this_elem == "infinite") {
@@ -86,6 +87,8 @@ void process_go_command(const std::vector<std::string>& line, SearchHandler& s) 
             } else if (this_elem == "perft") {
                 s.run_perft(std::stoi(line[i + 1]));
                 return;
+            } else if (this_elem == "movestogo") {
+                movestogo = std::stoi(line[i + 1]);
             }
         }
     }
@@ -93,7 +96,16 @@ void process_go_command(const std::vector<std::string>& line, SearchHandler& s) 
         s.search(movetime);
         return;
     }
-    s.search(wtime + btime + winc + binc);
+    auto current_side = s.get_board().get_side_to_move();
+    auto halfmoves_so_far = (2 * s.get_board().get_fullmove_counter()) + static_cast<int>(current_side);
+    auto remaining_time = (current_side == Side::WHITE) ? wtime : btime;
+    auto increment = ((current_side == Side::WHITE) ? winc : binc) / movestogo;
+    // next we determine how to use our allocated time using the formula
+    // 59.3 + (72830 - 2330 k)/(2644 + k (10 + k)), where k is the number of halfmoves
+    // so far.  This formula is taken from 59.3 + (72830 - 2330 k)/(2644 + k (10 + k)).
+    float remaining_halfmoves = 59.3 + (static_cast<float>(72830 - (2330 * halfmoves_so_far)) / static_cast<float>(2644 + (halfmoves_so_far * (10 + halfmoves_so_far))));
+
+    s.search((remaining_time / static_cast<int>(remaining_halfmoves)) + increment);
 }
 
 int main(int argc, char** argv) {
