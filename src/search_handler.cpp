@@ -16,7 +16,7 @@ void SearchHandler::search_thread_function() {
             Perft::run_perft(c, perft_depth, true);
             should_perft = false;
         } else {
-            auto move = run_negamax(c, m, 6);
+            auto move = run_negamax(6);
             if (move.is_null_move()) {
                 // Unlikely, but possible!
                 move = Search::select_random_move(c);

@@ -63,7 +63,7 @@ Move Search::select_random_move(const ChessBoard& c) {
     return moves[rand() % moves.len()];
 }
 
-int32_t SearchHandler::negamax_step(ChessBoard& c, MoveHistory& m, int32_t alpha, int32_t beta, int depth) {
+int32_t SearchHandler::negamax_step(int32_t alpha, int32_t beta, int depth) {
     auto moves = MoveGenerator::generate_legal_moves(c, c.get_side_to_move());
     //moves.reverse();
     if (moves.len() == 0) {
@@ -74,7 +74,7 @@ int32_t SearchHandler::negamax_step(ChessBoard& c, MoveHistory& m, int32_t alpha
     for (size_t i = 0; i < moves.len(); i++) {
         const auto& move = moves[i];
         c.make_move(move, m);
-        auto score = -negamax_step(c, m, -beta, -alpha, depth - 1);
+        auto score = -negamax_step(-beta, -alpha, depth - 1);
         c.unmake_move(m);
         if (score >= beta) {
             return beta;
@@ -87,7 +87,7 @@ int32_t SearchHandler::negamax_step(ChessBoard& c, MoveHistory& m, int32_t alpha
     return alpha;
 }
 
-Move SearchHandler::run_negamax(ChessBoard& c, MoveHistory& m, int depth) {
+Move SearchHandler::run_negamax(int depth) {
     auto moves = MoveGenerator::generate_pseudolegal_moves(c, c.get_side_to_move());
     Move best_move;
     int best_score = MagicNumbers::NegativeInfinity;
@@ -99,7 +99,7 @@ Move SearchHandler::run_negamax(ChessBoard& c, MoveHistory& m, int depth) {
             continue;
         }
         c.make_move(move, m);
-        int32_t score = -negamax_step(c, m, -beta, -alpha, depth - 1);
+        int32_t score = -negamax_step(-beta, -alpha, depth - 1);
         // the next step gets negative infinity as the first arg and positive infinity as the second
         if (score > best_score) {
             best_move = move;
