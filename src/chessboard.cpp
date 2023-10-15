@@ -328,7 +328,7 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
         SET_BIT(this->bitboards[original.to_bitboard_idx()], previous_move_pair.first.get_src_square());
     }
 
-    if (static_cast<int>(previous_move_pair.first.get_move_flags()) & 0b0100) {
+    if (previous_move_pair.first.is_capture()) {
         if (previous_move_pair.first.get_move_flags() != MoveFlags::EN_PASSANT_CAPTURE) {
             // if it is a capture
             SET_BIT(this->bitboards[previous_move_pair.second.get_piece().to_bitboard_idx()], previous_move_pair.first.get_dest_square());

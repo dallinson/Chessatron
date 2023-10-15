@@ -116,3 +116,15 @@ Move SearchHandler::run_negamax(int depth) {
     }
     return best_move;
 }
+
+Move SearchHandler::run_iterative_deepening_search() {
+    Move best_move = 0;
+    for (int i = 1; i < perft_depth && !search_cancelled; i++) {
+        auto result = run_negamax(i);
+        printf("info depth %d bestmove %s\n", i, result.to_string().c_str());
+        if (!search_cancelled) {
+            best_move = result;
+        }
+    }
+    return best_move;
+}

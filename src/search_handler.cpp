@@ -16,7 +16,7 @@ void SearchHandler::search_thread_function() {
             Perft::run_perft(c, perft_depth, true);
             should_perft = false;
         } else {
-            auto move = run_negamax(6);
+            auto move = run_iterative_deepening_search();
             if (move.is_null_move()) {
                 // Unlikely, but possible!
                 move = Search::select_random_move(c);
@@ -42,9 +42,10 @@ void SearchHandler::shutdown() {
 
 SearchHandler::SearchHandler() { this->searchThread = std::thread(&SearchHandler::search_thread_function, this); }
 
-void SearchHandler::search(int ms) {
+void SearchHandler::search(int ms, int32_t max_depth) {
     current_search_id += 1;
     search_cancelled = true;
+    perft_depth = max_depth;
     // cancel a search if performing one
     semaphore.release();
     // We then wake up the search thread

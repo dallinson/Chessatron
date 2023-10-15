@@ -33,6 +33,7 @@ class SearchHandler {
         void search_thread_function();
         int32_t negamax_step(int32_t alpha, int32_t beta, int depth);
         Move run_negamax(int depth = 4);
+        Move run_iterative_deepening_search();
 
     public:
         SearchHandler();
@@ -44,7 +45,7 @@ class SearchHandler {
         void set_board(const ChessBoard& c) { this->c = c; };
         void reset();
 
-        void search(int ms);
+        void search(int ms, int32_t max_depth = MagicNumbers::PositiveInfinity);
 
         void run_perft(int depth);
 
