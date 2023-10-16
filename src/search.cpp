@@ -63,9 +63,13 @@ Move Search::select_random_move(const ChessBoard& c) {
     return moves[rand() % moves.len()];
 }
 
-int32_t SearchHandler::negamax_step(int32_t alpha, int32_t beta, int depth) {
+int32_t SearchHandler::negamax_step(int32_t alpha, int32_t beta, int depth, std::unordered_map<ChessBoard, std::pair<int, int32_t>>& transpositions) {
+    if (transpositions.contains(c) && transpositions[c].first >= depth) {
+        return transpositions[c].second;
+    }
     if (depth <= 0) {
-        return c.get_score(c.get_side_to_move()) - c.get_score(ENEMY_SIDE(c.get_side_to_move()));
+        return quiescent_search(alpha, beta);
+        //return c.evaluate();
     }
     auto moves = MoveGenerator::generate_pseudolegal_moves(c, c.get_side_to_move());
     bool had_move = false;
@@ -76,7 +80,7 @@ int32_t SearchHandler::negamax_step(int32_t alpha, int32_t beta, int depth) {
         }
         had_move = true;
         c.make_move(move, m);
-        auto score = -negamax_step(-beta, -alpha, depth - 1);
+        auto score = -negamax_step(-beta, -alpha, depth - 1, transpositions);
         c.unmake_move(m);
         if (score >= beta) {
             return beta;
@@ -86,7 +90,11 @@ int32_t SearchHandler::negamax_step(int32_t alpha, int32_t beta, int depth) {
             break;
         }
     }
-    return had_move ? alpha : MagicNumbers::NegativeInfinity;
+    auto this_result = had_move ? alpha : MagicNumbers::NegativeInfinity;
+    if (!transpositions.contains(c) || transpositions[c].first < depth) {
+        transpositions[c] = std::make_pair(depth, this_result);
+    }
+    return this_result;
 }
 
 int32_t SearchHandler::quiescent_search(int32_t alpha, int32_t beta) {
@@ -117,7 +125,7 @@ int32_t SearchHandler::quiescent_search(int32_t alpha, int32_t beta) {
     }
 }
 
-Move SearchHandler::run_negamax(int depth) {
+Move SearchHandler::run_negamax(int depth, std::unordered_map<ChessBoard, std::pair<int, int32_t>>& transpositions) {
     auto moves = MoveGenerator::generate_pseudolegal_moves(c, c.get_side_to_move());
     Move best_move = 0;
     int best_score = MagicNumbers::NegativeInfinity;
@@ -129,7 +137,7 @@ Move SearchHandler::run_negamax(int depth) {
             continue;
         }
         c.make_move(move, m);
-        int32_t score = -negamax_step(-beta, -alpha, depth - 1);
+        int32_t score = -negamax_step(-beta, -alpha, depth - 1, transpositions);
         // the next step gets negative infinity as the first arg and positive infinity as the second
         if (score > best_score) {
             best_move = move;
@@ -147,8 +155,9 @@ Move SearchHandler::run_negamax(int depth) {
 
 Move SearchHandler::run_iterative_deepening_search() {
     Move best_move = 0;
+    std::unordered_map<ChessBoard, std::pair<int, int32_t>> transpositions;
     for (int i = 1; i < perft_depth && !search_cancelled; i++) {
-        auto result = run_negamax(i);
+        auto result = run_negamax(i, transpositions);
         if (!search_cancelled) {
             printf("info depth %d bestmove %s\n", i, result.to_string().c_str());
             best_move = result;
