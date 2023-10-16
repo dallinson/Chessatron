@@ -32,7 +32,7 @@ class SearchHandler {
 
         void search_thread_function();
         int32_t negamax_step(int32_t alpha, int32_t beta, int depth, std::unordered_map<ChessBoard, std::pair<int, int32_t>>& transpositions);
-        int32_t quiescent_search(int32_t alpha, int32_t beta);
+        int32_t quiescent_search(int32_t alpha, int32_t beta, std::unordered_map<ChessBoard, std::pair<int, int32_t>>& transpositions);
         Move run_negamax(int depth, std::unordered_map<ChessBoard, std::pair<int, int32_t>>& transpositions);
         Move run_iterative_deepening_search();
 

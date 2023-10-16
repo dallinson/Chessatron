@@ -68,7 +68,7 @@ int32_t SearchHandler::negamax_step(int32_t alpha, int32_t beta, int depth, std:
         return transpositions[c].second;
     }
     if (depth <= 0) {
-        return quiescent_search(alpha, beta);
+        return quiescent_search(alpha, beta, transpositions);
         //return c.evaluate();
     }
     auto moves = MoveGenerator::generate_pseudolegal_moves(c, c.get_side_to_move());
@@ -97,7 +97,10 @@ int32_t SearchHandler::negamax_step(int32_t alpha, int32_t beta, int depth, std:
     return this_result;
 }
 
-int32_t SearchHandler::quiescent_search(int32_t alpha, int32_t beta) {
+int32_t SearchHandler::quiescent_search(int32_t alpha, int32_t beta, std::unordered_map<ChessBoard, std::pair<int, int32_t>>& transpositions) {
+    if (transpositions.contains(c)) {
+        return transpositions[c].second;
+    }
     auto moves = MoveGenerator::generate_pseudolegal_moves(c, c.get_side_to_move());
     bool had_move = false;
     for (size_t i = 0; i < moves.len(); i++) {
@@ -108,7 +111,7 @@ int32_t SearchHandler::quiescent_search(int32_t alpha, int32_t beta) {
         }
         had_move = true;
         c.make_move(move, m);
-        auto score = -quiescent_search(-beta, -alpha);
+        auto score = -quiescent_search(-beta, -alpha, transpositions);
         c.unmake_move(m);
         if (score >= beta) {
             return beta;
@@ -118,11 +121,12 @@ int32_t SearchHandler::quiescent_search(int32_t alpha, int32_t beta) {
             break;
         }
     }
-    if (!had_move) {
-        return c.evaluate();
-    } else {
-        return alpha;
+
+    auto result = had_move ? alpha : c.evaluate();
+    if (!transpositions.contains(c)) {
+        transpositions[c] = std::pair(0, result);
     }
+    return result;
 }
 
 Move SearchHandler::run_negamax(int depth, std::unordered_map<ChessBoard, std::pair<int, int32_t>>& transpositions) {
