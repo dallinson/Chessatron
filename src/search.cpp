@@ -64,59 +64,66 @@ Move Search::select_random_move(const ChessBoard& c) {
     return moves[rand() % moves.len()];
 }
 
-int32_t SearchHandler::negamax_step(int32_t alpha, int32_t beta, int depth, std::unordered_map<ChessBoard, std::pair<int, int32_t>>& transpositions, uint64_t& node_count) {
-    if (depth >= 2 && transpositions.contains(c) && transpositions[c].first >= depth) {
-        return transpositions[c].second;
-    }
+int32_t SearchHandler::negamax_step(int32_t alpha, int32_t beta, int depth, std::unordered_map<ChessBoard, Move>& transpositions, uint64_t& node_count) {
     if (depth <= 0) {
         return quiescent_search(alpha, beta, transpositions, node_count);
         //return c.evaluate();
     }
     auto moves = MoveGenerator::generate_pseudolegal_moves(c, c.get_side_to_move());
-    bool had_move = false;
-    for (size_t i = 0; i < moves.len(); i++) {
-        const auto& move = moves[i];
-        if (!MoveGenerator::is_move_legal(c, move)) {
-            continue;
-        }
-        had_move = true;
-        c.make_move(move, m);
-        auto score = -negamax_step(-beta, -alpha, depth - 1, transpositions, node_count);
+    Move best_move = 0;
+    Move best_move_from_previous_search = 0;
+    int32_t best_score = MagicNumbers::NegativeInfinity;
+    if (transpositions.contains(c)) {
+        best_move_from_previous_search = transpositions[c];
+        // The first move we evaluate will _always_ be the best move
+        c.make_move(best_move_from_previous_search, m);
+        best_score = -negamax_step(-beta, -alpha, depth - 1, transpositions, node_count);
+        alpha = std::max(best_score, alpha);
         c.unmake_move(m);
         node_count += 1;
-        if (score >= beta) {
-            return beta;
-        }
-        alpha = std::max(score, alpha);
-        if (search_cancelled) {
-            break;
+    }
+    best_move = best_move_from_previous_search;
+    if (best_score < beta) {
+        for (size_t i = 0; i < moves.len(); i++) {
+            const auto& move = moves[i];
+            if (!MoveGenerator::is_move_legal(c, move) || move == best_move_from_previous_search) {
+                // don't evaluate legal moves or the previous best move
+                continue;
+            }
+            c.make_move(move, m);
+            auto score = -negamax_step(-beta, -alpha, depth - 1, transpositions, node_count);
+            c.unmake_move(m);
+            node_count += 1;
+            if (score >= beta) {
+                return beta;
+            }
+            if (score > best_score) {
+                best_score = score;
+                best_move = move;
+            }
+            alpha = std::max(score, alpha);
+            if (search_cancelled) {
+                break;
+            }
         }
     }
-    auto this_result = had_move ? alpha : MagicNumbers::NegativeInfinity;
-    if (depth >= 2 && (!transpositions.contains(c) || transpositions[c].first < depth)) {
-        transpositions[c] = std::make_pair(depth, this_result);
-    }
-    return this_result;
+    transpositions[c] = best_move;
+    return alpha;
 }
 
-int32_t SearchHandler::quiescent_search(int32_t alpha, int32_t beta, std::unordered_map<ChessBoard, std::pair<int, int32_t>>& transpositions, uint64_t& node_count) {
-    if (transpositions.contains(c)) {
-        return transpositions[c].second;
-    }
+int32_t SearchHandler::quiescent_search(int32_t alpha, int32_t beta, std::unordered_map<ChessBoard, Move>& transpositions, uint64_t& node_count) {
     int32_t stand_pat = c.evaluate();
     if (stand_pat >= beta) {
         return beta;
     }
     alpha = std::max(stand_pat, alpha);
     auto moves = MoveGenerator::generate_pseudolegal_moves(c, c.get_side_to_move());
-    bool had_move = false;
     for (size_t i = 0; i < moves.len(); i++) {
         const auto& move = moves[i];
         if (!(move.is_capture() && MoveGenerator::is_move_legal(c, move))) {
             // In a quiescent search we're only interested in (legal) captures
             continue;
         }
-        had_move = true;
         c.make_move(move, m);
         auto score = -quiescent_search(-beta, -alpha, transpositions, node_count);
         c.unmake_move(m);
@@ -129,14 +136,12 @@ int32_t SearchHandler::quiescent_search(int32_t alpha, int32_t beta, std::unorde
             break;
         }
     }
-
-    auto result = had_move ? alpha : c.evaluate();
-    return result;
+    return alpha;
 }
 
 Move SearchHandler::run_iterative_deepening_search() {
     Move best_move_so_far = 0;
-    std::unordered_map<ChessBoard, std::pair<int, int32_t>> transpositions;
+    std::unordered_map<ChessBoard, Move> transpositions;
     const auto moves = MoveGenerator::generate_legal_moves(c, c.get_side_to_move());
     // We generate legal moves only as it saves us having to continually rerun legality checks
     for (int depth = 1; depth < perft_depth && !search_cancelled; depth++) {
