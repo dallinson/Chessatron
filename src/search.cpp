@@ -64,7 +64,7 @@ Move Search::select_random_move(const ChessBoard& c) {
 }
 
 int32_t SearchHandler::negamax_step(int32_t alpha, int32_t beta, int depth, std::unordered_map<ChessBoard, std::pair<int, int32_t>>& transpositions) {
-    if (transpositions.contains(c) && transpositions[c].first >= depth) {
+    if (depth >= 2 && transpositions.contains(c) && transpositions[c].first >= depth) {
         return transpositions[c].second;
     }
     if (depth <= 0) {
