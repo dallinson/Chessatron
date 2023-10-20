@@ -122,11 +122,12 @@ int32_t SearchHandler::quiescent_search(int32_t alpha, int32_t beta, std::unorde
     }
     alpha = std::max(stand_pat, alpha);
     auto moves = MoveGenerator::generate_pseudolegal_moves(c, c.get_side_to_move());
-    MoveOrdering::reorder_captures(moves);
-    for (size_t i = 0; i < moves.len(); i++) {
+    auto capture_count = MoveOrdering::reorder_captures(moves);
+    for (size_t i = 0; i < capture_count; i++) {
         const auto& move = moves[i];
-        if (!(move.is_capture() && MoveGenerator::is_move_legal(c, move))) {
+        if (!MoveGenerator::is_move_legal(c, move)) {
             // In a quiescent search we're only interested in (legal) captures
+            // Move reordering ensures that captures are positioned first
             continue;
         }
         c.make_move(move, m);

@@ -54,3 +54,15 @@ class SearchHandler {
 
         void shutdown();
 };
+
+class TranspositionTableEntry {
+    private:
+        int depth;
+        Move pv_move;
+
+    public:
+        TranspositionTableEntry(int depth, Move pv_move) : depth(depth), pv_move(pv_move) {};
+
+        int get_depth() { return this->depth; };
+        Move get_pv_move() { return this->pv_move; };
+};

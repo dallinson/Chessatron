@@ -3,5 +3,5 @@
 #include "move.hpp"
 
 namespace MoveOrdering {
-    void reorder_captures(MoveList& move_list);
+    size_t reorder_captures(MoveList& move_list);
 }
