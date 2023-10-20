@@ -18,6 +18,27 @@ namespace Search {
     Move select_random_move(const ChessBoard& c);
 } // namespace Search
 
+class TranspositionTableEntry {
+    private:
+        int depth;
+        Move pv_move;
+
+    public:
+        TranspositionTableEntry() : depth(0), pv_move(0) {};
+        TranspositionTableEntry(int depth, Move pv_move) : depth(depth), pv_move(pv_move) {};
+
+        int get_depth() { return this->depth; };
+        Move get_pv_move() { return this->pv_move; };
+};
+
+class TranspositionTable {
+    private:
+        std::unordered_map<ChessBoard, TranspositionTableEntry> table;
+    public:
+        bool contains(const ChessBoard& key) const { return table.contains(key); };
+        TranspositionTableEntry& operator[](const ChessBoard& key) { return table[key]; };
+};
+
 class SearchHandler {
     private:
         std::thread searchThread;
@@ -31,9 +52,9 @@ class SearchHandler {
         Move bestMove;
 
         void search_thread_function();
-        int32_t negamax_step(int32_t alpha, int32_t beta, int depth, std::unordered_map<ChessBoard, Move>& transpositions, uint64_t& node_count);
-        int32_t quiescent_search(int32_t alpha, int32_t beta, std::unordered_map<ChessBoard, Move>& transpositions, uint64_t& node_count);
-        Move run_negamax(int depth, std::unordered_map<ChessBoard, std::pair<int, int32_t>>& transpositions);
+        int32_t negamax_step(int32_t alpha, int32_t beta, int depth, TranspositionTable& transpositions, uint64_t& node_count);
+        int32_t quiescent_search(int32_t alpha, int32_t beta, TranspositionTable& transpositions, uint64_t& node_count);
+        Move run_negamax(int depth, TranspositionTable& transpositions);
         Move run_iterative_deepening_search();
 
     public:
@@ -53,16 +74,4 @@ class SearchHandler {
         void EndSearch() { search_cancelled = true; }
 
         void shutdown();
-};
-
-class TranspositionTableEntry {
-    private:
-        int depth;
-        Move pv_move;
-
-    public:
-        TranspositionTableEntry(int depth, Move pv_move) : depth(depth), pv_move(pv_move) {};
-
-        int get_depth() { return this->depth; };
-        Move get_pv_move() { return this->pv_move; };
 };

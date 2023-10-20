@@ -65,7 +65,7 @@ Move Search::select_random_move(const ChessBoard& c) {
     return moves[rand() % moves.len()];
 }
 
-int32_t SearchHandler::negamax_step(int32_t alpha, int32_t beta, int depth, std::unordered_map<ChessBoard, Move>& transpositions, uint64_t& node_count) {
+int32_t SearchHandler::negamax_step(int32_t alpha, int32_t beta, int depth, TranspositionTable& transpositions, uint64_t& node_count) {
     if (depth <= 0) {
         return quiescent_search(alpha, beta, transpositions, node_count);
         //return c.evaluate();
@@ -76,7 +76,7 @@ int32_t SearchHandler::negamax_step(int32_t alpha, int32_t beta, int depth, std:
     Move best_move_from_previous_search = 0;
     int32_t best_score = MagicNumbers::NegativeInfinity;
     if (transpositions.contains(c)) {
-        best_move_from_previous_search = transpositions[c];
+        best_move_from_previous_search = transpositions[c].get_pv_move();
         // The first move we evaluate will _always_ be the best move
         if (MoveGenerator::is_move_legal(c, best_move_from_previous_search)) {
             c.make_move(best_move_from_previous_search, m);
@@ -111,11 +111,11 @@ int32_t SearchHandler::negamax_step(int32_t alpha, int32_t beta, int depth, std:
             }
         }
     }
-    transpositions[c] = best_move;
+    transpositions[c] = TranspositionTableEntry(depth, best_move);
     return alpha;
 }
 
-int32_t SearchHandler::quiescent_search(int32_t alpha, int32_t beta, std::unordered_map<ChessBoard, Move>& transpositions, uint64_t& node_count) {
+int32_t SearchHandler::quiescent_search(int32_t alpha, int32_t beta, TranspositionTable& transpositions, uint64_t& node_count) {
     int32_t stand_pat = c.evaluate();
     if (stand_pat >= beta) {
         return beta;
@@ -147,7 +147,7 @@ int32_t SearchHandler::quiescent_search(int32_t alpha, int32_t beta, std::unorde
 
 Move SearchHandler::run_iterative_deepening_search() {
     Move best_move_so_far = 0;
-    std::unordered_map<ChessBoard, Move> transpositions;
+    TranspositionTable transpositions;
     auto moves = MoveGenerator::generate_legal_moves(c, c.get_side_to_move());
     MoveOrdering::reorder_captures(moves);
     // We generate legal moves only as it saves us having to continually rerun legality checks
