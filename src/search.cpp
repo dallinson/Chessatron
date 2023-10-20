@@ -78,11 +78,13 @@ int32_t SearchHandler::negamax_step(int32_t alpha, int32_t beta, int depth, std:
     if (transpositions.contains(c)) {
         best_move_from_previous_search = transpositions[c];
         // The first move we evaluate will _always_ be the best move
-        c.make_move(best_move_from_previous_search, m);
-        best_score = -negamax_step(-beta, -alpha, depth - 1, transpositions, node_count);
-        alpha = std::max(best_score, alpha);
-        c.unmake_move(m);
-        node_count += 1;
+        if (MoveGenerator::is_move_legal(c, best_move_from_previous_search)) {
+            c.make_move(best_move_from_previous_search, m);
+            best_score = -negamax_step(-beta, -alpha, depth - 1, transpositions, node_count);
+            alpha = std::max(best_score, alpha);
+            c.unmake_move(m);
+            node_count += 1;
+        }
     }
     best_move = best_move_from_previous_search;
     if (best_score < beta) {
