@@ -315,3 +315,17 @@ TEST(MoveGeneratorTests, TestMoveKingNearKing) {
     auto legal_moves = MoveGenerator::filter_to_legal_moves(c, king_moves);
     ASSERT_EQ(legal_moves.len(), 5);
 }
+
+TEST(MoveGeneratorTests, TestCorrectCaptureCount) {
+    ChessBoard c;
+    c.set_from_fen("6kr/pp2r2p/n1p1PB1Q/2q5/2B4P/2N3p1/PPP3P1/7K w - - 1 0");
+    // Taken from https://wtharvey.com/m8n4.txt, Serafino Dubois vs Augustus Mongredien, London, 1862
+    auto moves = MoveGenerator::generate_legal_moves(c, c.get_side_to_move());
+    int captures = 0;
+    for (size_t i = 0; i < moves.len(); i++) {
+        if (moves[i].is_capture()) {
+            captures += 1;
+        }
+    }
+    ASSERT_EQ(captures, 4);
+}

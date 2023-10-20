@@ -77,6 +77,7 @@ class MoveList {
             idx += other_len;
         };
 
+        Move& operator[](size_t arg_idx) { return data[arg_idx]; }
         const Move& operator[](size_t arg_idx) const { return data[arg_idx]; }
 
         const Move* get_data_addr() const { return reinterpret_cast<const Move*>(data); }

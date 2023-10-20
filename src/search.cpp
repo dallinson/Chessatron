@@ -6,6 +6,7 @@
 #include <cinttypes>
 
 #include "move_generator.hpp"
+#include "move_ordering.hpp"
 
 template <bool print_debug> // this could just as easily be done as a parameter but this gives some practice with templates
 uint64_t perft(ChessBoard& c, MoveHistory& m, int depth, std::vector<std::unordered_map<ChessBoard, uint64_t>>& cache_vec) {
@@ -70,6 +71,7 @@ int32_t SearchHandler::negamax_step(int32_t alpha, int32_t beta, int depth, std:
         //return c.evaluate();
     }
     auto moves = MoveGenerator::generate_pseudolegal_moves(c, c.get_side_to_move());
+    MoveOrdering::reorder_captures(moves);
     Move best_move = 0;
     Move best_move_from_previous_search = 0;
     int32_t best_score = MagicNumbers::NegativeInfinity;
@@ -118,6 +120,7 @@ int32_t SearchHandler::quiescent_search(int32_t alpha, int32_t beta, std::unorde
     }
     alpha = std::max(stand_pat, alpha);
     auto moves = MoveGenerator::generate_pseudolegal_moves(c, c.get_side_to_move());
+    MoveOrdering::reorder_captures(moves);
     for (size_t i = 0; i < moves.len(); i++) {
         const auto& move = moves[i];
         if (!(move.is_capture() && MoveGenerator::is_move_legal(c, move))) {
@@ -142,7 +145,8 @@ int32_t SearchHandler::quiescent_search(int32_t alpha, int32_t beta, std::unorde
 Move SearchHandler::run_iterative_deepening_search() {
     Move best_move_so_far = 0;
     std::unordered_map<ChessBoard, Move> transpositions;
-    const auto moves = MoveGenerator::generate_legal_moves(c, c.get_side_to_move());
+    auto moves = MoveGenerator::generate_legal_moves(c, c.get_side_to_move());
+    MoveOrdering::reorder_captures(moves);
     // We generate legal moves only as it saves us having to continually rerun legality checks
     for (int depth = 1; depth < perft_depth && !search_cancelled; depth++) {
         int best_score_this_depth = MagicNumbers::NegativeInfinity;
