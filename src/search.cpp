@@ -70,6 +70,18 @@ int32_t SearchHandler::negamax_step(int32_t alpha, int32_t beta, int depth, Tran
         return quiescent_search(alpha, beta, transpositions, node_count);
         // return c.evaluate();
     }
+
+    if (c.get_checkers(c.get_side_to_move()) == 0) {
+        // Try null move pruning if we aren't in check
+        c.make_move(0, m);
+        // First we make the null move
+        auto null_score = -negamax_step(-beta, -alpha, depth - 1 - 2, transpositions, node_count);
+        c.unmake_move(m);
+        if (null_score >= beta) {
+            return beta;
+        }
+    }
+
     auto moves = MoveGenerator::generate_pseudolegal_moves(c, c.get_side_to_move());
     MoveOrdering::reorder_captures(moves);
     Move best_move = 0;
