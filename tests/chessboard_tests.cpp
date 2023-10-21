@@ -242,3 +242,44 @@ TEST(ChessBoardTests, TestCastlingFromString) {
     ASSERT_EQ(c.generate_move_from_string("e1f1"), Move(MoveFlags::QUIET_MOVE, 5, 4));
     // not a castling move but included just to cover this branch
 }
+
+TEST(ChessBoardTests, TestMakeNullMove) {
+    ChessBoard c, o;
+    MoveHistory m;
+    c.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    o.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 2");
+    c.make_move(0, m);
+    ASSERT_EQ(c, o);
+
+    c.set_from_fen("rnbqkbnr/ppp1pppp/8/8/3pP3/8/PPPP1PPP/RNBQKBNR w KQkq e3 0 1");
+    o.set_from_fen("rnbqkbnr/ppp1pppp/8/8/3pP3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2");
+    c.make_move(0, m);
+    ASSERT_EQ(c, o);
+
+    c.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/1NBQKBNR w Kkq - 0 1");
+    o.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/1NBQKBNR b Kkq - 0 2");
+    c.make_move(0, m);
+    ASSERT_EQ(c, o);
+}
+
+TEST(ChessBoardTests, TestUnmakeNullMove) {
+    ChessBoard c, o;
+    MoveHistory m;
+    c.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    o.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    c.make_move(0, m);
+    c.unmake_move(m);
+    ASSERT_EQ(c, o);
+
+    c.set_from_fen("rnbqkbnr/ppp1pppp/8/8/3pP3/8/PPPP1PPP/RNBQKBNR w KQkq e3 0 1");
+    o.set_from_fen("rnbqkbnr/ppp1pppp/8/8/3pP3/8/PPPP1PPP/RNBQKBNR w KQkq e3 0 1");
+    c.make_move(0, m);
+    c.unmake_move(m);
+    ASSERT_EQ(c, o);
+
+    c.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/1NBQKBNR w Kkq - 0 1");
+    o.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/1NBQKBNR w Kkq - 0 1");
+    c.make_move(0, m);
+    c.unmake_move(m);
+    ASSERT_EQ(c, o);
+}

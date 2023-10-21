@@ -24,8 +24,8 @@ class TranspositionTableEntry {
         Move pv_move;
 
     public:
-        TranspositionTableEntry() : depth(0), pv_move(0) {};
-        TranspositionTableEntry(int depth, Move pv_move) : depth(depth), pv_move(pv_move) {};
+        TranspositionTableEntry() : depth(0), pv_move(0){};
+        TranspositionTableEntry(int depth, Move pv_move) : depth(depth), pv_move(pv_move){};
 
         int get_depth() { return this->depth; };
         Move get_pv_move() { return this->pv_move; };
@@ -34,6 +34,7 @@ class TranspositionTableEntry {
 class TranspositionTable {
     private:
         std::unordered_map<ChessBoard, TranspositionTableEntry> table;
+
     public:
         bool contains(const ChessBoard& key) const { return table.contains(key); };
         TranspositionTableEntry& operator[](const ChessBoard& key) { return table[key]; };

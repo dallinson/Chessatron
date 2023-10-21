@@ -1,9 +1,9 @@
 #include "search.hpp"
 
+#include <cinttypes>
 #include <iostream>
 #include <limits>
 #include <vector>
-#include <cinttypes>
 
 #include "move_generator.hpp"
 #include "move_ordering.hpp"
@@ -68,7 +68,7 @@ Move Search::select_random_move(const ChessBoard& c) {
 int32_t SearchHandler::negamax_step(int32_t alpha, int32_t beta, int depth, TranspositionTable& transpositions, uint64_t& node_count) {
     if (depth <= 0) {
         return quiescent_search(alpha, beta, transpositions, node_count);
-        //return c.evaluate();
+        // return c.evaluate();
     }
     auto moves = MoveGenerator::generate_pseudolegal_moves(c, c.get_side_to_move());
     MoveOrdering::reorder_captures(moves);
