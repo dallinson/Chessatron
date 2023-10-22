@@ -1,7 +1,6 @@
 #include "utils.hpp"
 
 #include <cstdio>
-#include <immintrin.h>
 
 #include "magic_numbers.hpp"
 

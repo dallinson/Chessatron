@@ -1,7 +1,6 @@
 #include "move_generator.hpp"
 
 #include <bit>
-#include <immintrin.h>
 
 #include "magic_numbers.hpp"
 

@@ -2,7 +2,6 @@
 
 #include <bit>
 #include <cstdint>
-#include <immintrin.h>
 
 typedef uint64_t Bitboard;
 typedef size_t ZobristKey;
