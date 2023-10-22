@@ -205,12 +205,16 @@ std::optional<int> ChessBoard::set_from_fen(const std::string input) {
 }
 
 int ChessBoard::get_score(Side side) {
+    auto legal_move_count = MoveGenerator::generate_legal_moves(*this, side).len();
+    if (legal_move_count == 0) {
+        return MagicNumbers::NegativeInfinity;
+        // we don't want to be checkmated
+    }
     return ((((std::popcount(get_pawn_occupancy(side)) * PAWN_SCORE) + (std::popcount(get_rook_occupancy(side)) * ROOK_SCORE) +
               (std::popcount(get_knight_occupancy(side)) * KNIGHT_SCORE) + (std::popcount(get_bishop_occupancy(side)) * BISHOP_SCORE) +
               (std::popcount(get_queen_occupancy(side)) * QUEEN_SCORE)) *
              10) +
-            MoveGenerator::generate_legal_moves(*this, side).len());
-    // We multiply by 10 to get the score in centipawns
+            legal_move_count);
 }
 
 void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
