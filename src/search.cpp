@@ -214,7 +214,8 @@ Move SearchHandler::run_iterative_deepening_search() {
                 }
                 // No need to check any other moves if we can guarantee a mate
             } else {
-                printf("cp %d\n", best_score_this_depth);
+                printf("cp %d\n", best_score_this_depth * 10);
+                // Internally, the score is calculated in decipawns so we multiply to centipawns here
             }
             best_move_so_far = best_move_this_depth;
         }

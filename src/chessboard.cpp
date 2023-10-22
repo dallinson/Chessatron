@@ -209,8 +209,7 @@ int ChessBoard::get_score(Side side) {
               (std::popcount(get_knight_occupancy(side)) * KNIGHT_SCORE) + (std::popcount(get_bishop_occupancy(side)) * BISHOP_SCORE) +
               (std::popcount(get_queen_occupancy(side)) * QUEEN_SCORE)) *
              10) +
-            MoveGenerator::generate_legal_moves(*this, side).len()) *
-           10;
+            MoveGenerator::generate_legal_moves(*this, side).len());
     // We multiply by 10 to get the score in centipawns
 }
 

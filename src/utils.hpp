@@ -38,9 +38,3 @@ constexpr inline int pop_min_bit(Bitboard& num) {
     CLEAR_BIT(num, to_return);
     return to_return;
 };
-
-namespace SlidingPieceUtils {
-    Bitboard get_bishop_attacks(int idx, Bitboard occupancy);
-    Bitboard get_rook_attacks(int idx, Bitboard occupancy);
-    Bitboard get_queen_attacks(int idx, Bitboard occupancy);
-} // namespace SlidingPieceUtils
