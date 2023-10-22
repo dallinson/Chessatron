@@ -21,7 +21,7 @@ uint64_t perft(ChessBoard& c, MoveHistory& m, int depth, std::vector<std::unorde
     moves = MoveGenerator::generate_legal_moves(c, c.get_side_to_move());
 
     if (depth == 1) {
-        if (print_debug) [[unlikely]] {
+        if (print_debug) {
             for (size_t i = 0; i < moves.len(); i++) {
                 printf("%s: 1\n", moves[i].to_string().c_str());
             }
