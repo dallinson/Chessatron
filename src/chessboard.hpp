@@ -132,6 +132,17 @@ class ChessBoard {
         inline Bitboard get_pinned_pieces(const Side side) const { return pinned_pieces[static_cast<int>(side)]; };
 
         inline ZobristKey get_zobrist_key() const { return zobrist_key; };
+        ZobristKey get_polyglot_zobrist_key() const {
+            auto default_key = this->zobrist_key;
+            if (en_passant_file != 9) {
+                const Side enemy_side = ENEMY_SIDE(side_to_move);
+                const size_t offset = en_passant_file + 8 * static_cast<int>(enemy_side);
+                if ((get_pawn_occupancy(side_to_move) & ZobristKeys::EnPassantCheckBitboards[offset]) == 0) {
+                    default_key ^= ZobristKeys::EnPassantKeys[en_passant_file];
+                }
+            }
+            return default_key;
+        }
 
         std::optional<Move> generate_move_from_string(const std::string& m) const;
 };

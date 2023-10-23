@@ -27,6 +27,9 @@ void ChessBoard::clear_board() {
     for (int i = 0; i < 4; i++) {
         castling[i] = false;
     }
+
+    zobrist_key = ZobristKeys::SideToMove;
+    // Only the white side to move key should be set
 }
 
 void ChessBoard::print_board() const {
@@ -137,6 +140,7 @@ std::optional<int> ChessBoard::set_from_fen(const std::string input) {
     } else if (input[char_idx] == 'b') {
         side_to_move = Side::BLACK;
         zobrist_key ^= ZobristKeys::SideToMove;
+        // Clearing the board sets this key, so this ensures the zobrist key is correct
     } else {
         return std::optional<int>();
     }

@@ -13,4 +13,5 @@ namespace ZobristKeys {
     extern const ZobristKey SideToMove;
     extern const std::array<ZobristKey, 10> EnPassantKeys;
     extern const std::array<ZobristKey, 4> CastlingKeys;
+    extern const std::array<Bitboard, 16> EnPassantCheckBitboards;
 } // namespace ZobristKeys
