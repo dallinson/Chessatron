@@ -61,7 +61,7 @@ bool operator==(const Move& lhs, const Move& rhs);
 class MoveList {
     private:
         size_t idx;
-        Move data[MAX_TURN_MOVE_COUNT];
+        std::array<Move, MAX_TURN_MOVE_COUNT> data;
 
     public:
         MoveList() : idx(0){};
@@ -80,7 +80,7 @@ class MoveList {
         Move& operator[](size_t arg_idx) { return data[arg_idx]; }
         const Move& operator[](size_t arg_idx) const { return data[arg_idx]; }
 
-        const Move* get_data_addr() const { return reinterpret_cast<const Move*>(data); }
+        const Move* get_data_addr() const { return data.data(); }
 
         size_t len() const { return this->idx; };
 };

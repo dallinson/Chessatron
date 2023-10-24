@@ -83,7 +83,7 @@ int32_t SearchHandler::negamax_step(int32_t alpha, int32_t beta, int depth, Tran
     }
 
     auto moves = MoveGenerator::generate_pseudolegal_moves(c, c.get_side_to_move());
-    MoveOrdering::reorder_captures(moves);
+    MoveOrdering::reorder_captures(moves, c);
     Move best_move = 0;
     Move best_move_from_previous_search = 0;
     int32_t best_score = MagicNumbers::NegativeInfinity;
@@ -134,7 +134,7 @@ int32_t SearchHandler::quiescent_search(int32_t alpha, int32_t beta, Transpositi
     }
     alpha = std::max(stand_pat, alpha);
     auto moves = MoveGenerator::generate_pseudolegal_moves(c, c.get_side_to_move());
-    auto capture_count = MoveOrdering::reorder_captures(moves);
+    auto capture_count = MoveOrdering::reorder_captures(moves, c);
     for (size_t i = 0; i < capture_count; i++) {
         const auto& move = moves[i];
         if (!MoveGenerator::is_move_legal(c, move)) {
@@ -167,7 +167,7 @@ Move SearchHandler::run_iterative_deepening_search() {
         // If only one move is legal in this position we don't need to search; we can just return the one legal move
         // in order to save some time
     }
-    MoveOrdering::reorder_captures(moves);
+    MoveOrdering::reorder_captures(moves, c);
     for (int depth = 1; depth <= perft_depth && !search_cancelled; depth++) {
         int best_score_this_depth = MagicNumbers::NegativeInfinity;
         Move best_move_this_depth;
