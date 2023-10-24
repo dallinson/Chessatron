@@ -159,7 +159,7 @@ int32_t SearchHandler::quiescent_search(int32_t alpha, int32_t beta, Transpositi
 
 Move SearchHandler::run_iterative_deepening_search() {
     Move best_move_so_far = 0;
-    TranspositionTable transpositions;
+    //TranspositionTable transpositions;
     auto moves = MoveGenerator::generate_legal_moves(c, c.get_side_to_move());
     // We generate legal moves only as it saves us having to continually rerun legality checks
     if (moves.len() == 1) {
@@ -178,7 +178,7 @@ Move SearchHandler::run_iterative_deepening_search() {
         uint64_t node_count = 0;
         if (!best_move_so_far.is_null_move()) {
             c.make_move(best_move_so_far, m);
-            score = -negamax_step(-beta, -alpha, depth - 1, transpositions, node_count);
+            score = -negamax_step(-beta, -alpha, depth - 1, table, node_count);
             c.unmake_move(m);
             node_count += 1;
             alpha = std::max(score, alpha);
@@ -194,7 +194,7 @@ Move SearchHandler::run_iterative_deepening_search() {
                     continue;
                 }
                 c.make_move(moves[i], m);
-                score = -negamax_step(-beta, -alpha, depth - 1, transpositions, node_count);
+                score = -negamax_step(-beta, -alpha, depth - 1, table, node_count);
                 c.unmake_move(m);
                 node_count += 1;
                 alpha = std::max(score, alpha);

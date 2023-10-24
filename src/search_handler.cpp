@@ -73,4 +73,5 @@ void SearchHandler::run_perft(int depth) {
 void SearchHandler::reset() {
     this->EndSearch();
     c = ChessBoard();
+    table = TranspositionTable();
 }

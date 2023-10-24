@@ -47,6 +47,7 @@ class SearchHandler {
         ChessBoard c;
         MoveHistory m;
         std::atomic<bool> in_search, search_cancelled, shutting_down, should_perft = false;
+        TranspositionTable table;
         std::atomic<int> current_search_id = 0;
         std::future<void> cancelFuture;
         int perft_depth = 0;
