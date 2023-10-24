@@ -161,9 +161,14 @@ Move SearchHandler::run_iterative_deepening_search() {
     Move best_move_so_far = 0;
     TranspositionTable transpositions;
     auto moves = MoveGenerator::generate_legal_moves(c, c.get_side_to_move());
-    MoveOrdering::reorder_captures(moves);
     // We generate legal moves only as it saves us having to continually rerun legality checks
-    for (int depth = 1; depth < perft_depth && !search_cancelled; depth++) {
+    if (moves.len() == 1) {
+        return moves[0];
+        // If only one move is legal in this position we don't need to search; we can just return the one legal move
+        // in order to save some time
+    }
+    MoveOrdering::reorder_captures(moves);
+    for (int depth = 1; depth <= perft_depth && !search_cancelled; depth++) {
         int best_score_this_depth = MagicNumbers::NegativeInfinity;
         Move best_move_this_depth;
         // We need to init for the depth=1 iteration where no PV-move exists

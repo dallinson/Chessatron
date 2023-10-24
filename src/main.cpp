@@ -68,6 +68,7 @@ void process_position_command(const std::string& line, ChessBoard& c) {
 void process_go_command(const std::vector<std::string>& line, SearchHandler& s) {
     int wtime = 0, btime = 0, winc = 0, binc = 0, movetime = 0;
     int movestogo = 1;
+    int depth = MagicNumbers::PositiveInfinity;
     for (size_t i = 0; i < line.size(); i++) {
         auto& this_elem = line[i];
         if (this_elem == "infinite") {
@@ -89,11 +90,13 @@ void process_go_command(const std::vector<std::string>& line, SearchHandler& s) 
                 return;
             } else if (this_elem == "movestogo") {
                 movestogo = std::stoi(line[i + 1]);
+            } else if (this_elem == "depth") {
+                depth = std::stoi(line[i + 1]);
             }
         }
     }
     if (movetime != 0) {
-        s.search(movetime);
+        s.search(movetime, depth);
         return;
     }
     auto current_side = s.get_board().get_side_to_move();
@@ -106,7 +109,7 @@ void process_go_command(const std::vector<std::string>& line, SearchHandler& s) 
     float remaining_halfmoves =
         59.3 + (static_cast<float>(72830 - (2330 * halfmoves_so_far)) / static_cast<float>(2644 + (halfmoves_so_far * (10 + halfmoves_so_far))));
 
-    s.search((remaining_time / static_cast<int>(remaining_halfmoves)) + increment);
+    s.search((remaining_time / static_cast<int>(remaining_halfmoves)) + increment, depth);
 }
 
 int main(int argc, char** argv) {
