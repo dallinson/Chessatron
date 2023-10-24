@@ -159,7 +159,7 @@ int32_t SearchHandler::quiescent_search(int32_t alpha, int32_t beta, Transpositi
 
 Move SearchHandler::run_iterative_deepening_search() {
     Move best_move_so_far = 0;
-    //TranspositionTable transpositions;
+    // TranspositionTable transpositions;
     auto moves = MoveGenerator::generate_legal_moves(c, c.get_side_to_move());
     // We generate legal moves only as it saves us having to continually rerun legality checks
     if (moves.len() == 1) {
@@ -209,7 +209,12 @@ Move SearchHandler::run_iterative_deepening_search() {
         }
 
         if (!search_cancelled) {
-            printf("info depth %d bestmove %s nodes %" PRIu64 " ", depth, best_move_this_depth.to_string().c_str(), node_count);
+            auto nps = static_cast<uint64_t>(
+                node_count /
+                (static_cast<float>(
+                     std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - search_start_point).count()) /
+                 1000000));
+            printf("info depth %d bestmove %s nodes %" PRIu64 " nps %" PRIu64 " ", depth, best_move_this_depth.to_string().c_str(), node_count, nps);
             if (std::abs(best_score_this_depth) == MagicNumbers::PositiveInfinity) {
                 // If this is a checkmate
                 printf("mate %d\n", ((best_score_this_depth / std::abs(best_score_this_depth)) * depth) / 2);

@@ -46,6 +46,7 @@ void SearchHandler::search(int ms, int32_t max_depth) {
     current_search_id += 1;
     search_cancelled = true;
     perft_depth = max_depth;
+    search_start_point = std::chrono::steady_clock::now();
     // cancel a search if performing one
     semaphore.release();
     // We then wake up the search thread

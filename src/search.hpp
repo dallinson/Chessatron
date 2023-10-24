@@ -52,6 +52,7 @@ class SearchHandler {
         std::future<void> cancelFuture;
         int perft_depth = 0;
         Move bestMove;
+        std::chrono::steady_clock::time_point search_start_point;
 
         void search_thread_function();
         int32_t negamax_step(int32_t alpha, int32_t beta, int depth, TranspositionTable& transpositions, uint64_t& node_count);
