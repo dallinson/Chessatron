@@ -73,7 +73,7 @@ int32_t SearchHandler::negamax_step(int32_t alpha, int32_t beta, int depth, Tran
 
     if (c.get_checkers(c.get_side_to_move()) == 0) {
         // Try null move pruning if we aren't in check
-        c.make_move(0, m);
+        c.make_move(Move::NULL_MOVE, m);
         // First we make the null move
         auto null_score = -negamax_step(-beta, -alpha, depth - 1 - 2, transpositions, node_count);
         c.unmake_move(m);
@@ -84,8 +84,8 @@ int32_t SearchHandler::negamax_step(int32_t alpha, int32_t beta, int depth, Tran
 
     auto moves = MoveGenerator::generate_pseudolegal_moves(c, c.get_side_to_move());
     MoveOrdering::reorder_captures(moves, c);
-    Move best_move = 0;
-    Move best_move_from_previous_search = 0;
+    Move best_move = Move::NULL_MOVE;
+    Move best_move_from_previous_search = Move::NULL_MOVE;
     int32_t best_score = MagicNumbers::NegativeInfinity;
     if (transpositions.contains(c)) {
         best_move_from_previous_search = transpositions[c].get_pv_move();

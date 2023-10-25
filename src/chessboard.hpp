@@ -121,6 +121,7 @@ class ChessBoard {
         void unmake_move(MoveHistory& move_history);
 
         int get_fullmove_counter() const { return this->fullmove_counter; };
+        int get_halfmove_clock() const { return this->halfmove_clock; };
 
         void recompute_blockers_and_checkers() {
             recompute_blockers_and_checkers(Side::WHITE);

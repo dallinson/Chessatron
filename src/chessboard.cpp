@@ -227,8 +227,9 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
     Piece at_target = this->pieces[to_make.get_dest_square()];
     auto to_add = std::make_pair(to_make, PreviousMoveState(at_target, this->get_en_passant_file(), get_kingside_castling(Side::WHITE),
                                                             get_queenside_castling(Side::WHITE), get_kingside_castling(Side::BLACK),
-                                                            get_queenside_castling(Side::BLACK)));
+                                                            get_queenside_castling(Side::BLACK), halfmove_clock));
     move_history.push_move(to_add);
+    halfmove_clock += 1;
     this->en_passant_file = 9;
     if (!to_make.is_null_move()) [[likely]] {
         const Side side = moved.get_side();
@@ -236,7 +237,9 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
         zobrist_key ^= ZobristKeys::PositionKeys[ZOBRIST_POSITION_KEY(moved, to_make.get_src_square())];
         // get the piece we're moving and clear the origin square
 
-        // get the piece we replace with ourselves and do the replacement
+        if (to_make.is_capture() || moved.get_type() == PieceTypes::PAWN) {
+            halfmove_clock = 0;
+        }
 
         CLEAR_BIT(this->bitboards[moved.to_bitboard_idx()], to_make.get_src_square());
         if (at_target.get_value()) {
@@ -320,6 +323,7 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
 
 void ChessBoard::unmake_move(MoveHistory& move_history) {
     const std::pair<Move, PreviousMoveState> previous_move_pair = move_history.pop_move();
+    halfmove_clock = previous_move_pair.second.get_halfmove_clock();
     Piece original = pieces[previous_move_pair.first.get_dest_square()];
     const Side moved_piece_side = original.get_side();
     if (!previous_move_pair.first.is_null_move()) {

@@ -283,3 +283,59 @@ TEST(ChessBoardTests, TestUnmakeNullMove) {
     c.unmake_move(m);
     ASSERT_EQ(c, o);
 }
+
+TEST(ChessBoardTests, TestHalfmoveClock) {
+    ChessBoard c;
+    c.set_from_fen("startpos");
+    ASSERT_EQ(c.get_halfmove_clock(), 0);
+
+    MoveHistory m;
+    c.make_move(Move::NULL_MOVE, m);
+    ASSERT_EQ(c.get_halfmove_clock(), 1);
+    c.unmake_move(m);
+    ASSERT_EQ(c.get_halfmove_clock(), 0);
+
+    c.make_move(Move::NULL_MOVE, m);
+    c.make_move(Move::NULL_MOVE, m);
+    c.make_move(Move::NULL_MOVE, m);
+    ASSERT_EQ(c.get_halfmove_clock(), 3);
+    c.make_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, 35, 51), m);
+    ASSERT_EQ(c.get_halfmove_clock(), 0);
+    c.unmake_move(m);
+    ASSERT_EQ(c.get_halfmove_clock(), 3);
+    c.make_move(Move(MoveFlags::QUIET_MOVE, 43, 51), m);
+    ASSERT_EQ(c.get_halfmove_clock(), 0);
+    c.unmake_move(m);
+    ASSERT_EQ(c.get_halfmove_clock(), 3);
+    // Both pawn moves reset it
+
+    c.set_from_fen("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1R1K b kq - 24 48");
+    ASSERT_EQ(c.get_halfmove_clock(), 24);
+    c.make_move(Move(MoveFlags::BISHOP_PROMOTION_CAPTURE, 0, 9), m);
+    ASSERT_EQ(c.get_halfmove_clock(), 0);
+    c.unmake_move(m);
+    ASSERT_EQ(c.get_halfmove_clock(), 24);
+    c.make_move(Move(MoveFlags::BISHOP_PROMOTION, 1, 9), m);
+    ASSERT_EQ(c.get_halfmove_clock(), 0);
+    c.unmake_move(m);
+    ASSERT_EQ(c.get_halfmove_clock(), 24);
+    // Test promotions reset clock
+
+    c.set_from_fen("8/4k3/8/6K1/2p5/8/1P6/8 w - - 24 48");
+    ASSERT_EQ(c.get_halfmove_clock(), 24);
+    c.make_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, 25, 9), m);
+    c.make_move(Move(MoveFlags::EN_PASSANT_CAPTURE, 17, 26), m);
+    ASSERT_EQ(c.get_halfmove_clock(), 0);
+    c.unmake_move(m);
+    c.unmake_move(m);
+    ASSERT_EQ(c.get_halfmove_clock(), 24);
+    // en passant captures are correctly handled
+
+    c.set_from_fen("2r5/6k1/8/6K1/8/8/2Q5/8 w - - 12 24");
+    ASSERT_EQ(c.get_halfmove_clock(), 12);
+    c.make_move(Move(MoveFlags::CAPTURE, 58, 10), m);
+    ASSERT_EQ(c.get_halfmove_clock(), 0);
+    c.unmake_move(m);
+    ASSERT_EQ(c.get_halfmove_clock(), 12);
+    // and tests normal captures reset it
+}
