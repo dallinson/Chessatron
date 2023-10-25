@@ -2,6 +2,8 @@
 
 #include <string>
 
+const Move Move::NULL_MOVE(0);
+
 std::string Move::to_string() const {
     if (this->get_src_square() == 0 && this->get_dest_square() == 0) {
         // if this is a null move

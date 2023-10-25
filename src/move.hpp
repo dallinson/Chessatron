@@ -57,8 +57,6 @@ class Move {
         std::string to_string() const;
 };
 
-inline const Move Move::NULL_MOVE(0);
-
 bool operator==(const Move& lhs, const Move& rhs);
 
 class MoveList {
@@ -95,7 +93,8 @@ class PreviousMoveState {
     public:
         PreviousMoveState() : info(0){};
         PreviousMoveState(const Piece target_piece, const uint_fast8_t previous_en_passant_state, const bool white_kingside_castle,
-                          const bool white_queenside_castle, const bool black_kingside_castle, const bool black_queenside_castle, const uint8_t halfmove_clock)
+                          const bool white_queenside_castle, const bool black_kingside_castle, const bool black_queenside_castle,
+                          const uint8_t halfmove_clock)
             : info(target_piece.get_value() | previous_en_passant_state << 4 | white_kingside_castle << 8 | white_queenside_castle << 9 |
                    black_kingside_castle << 10 | black_queenside_castle << 11 | halfmove_clock << 12){};
         Piece get_piece() const { return GET_BITS(info, 3, 0); };

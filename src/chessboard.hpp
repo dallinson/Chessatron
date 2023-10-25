@@ -105,9 +105,6 @@ class ChessBoard {
             castling[offset] = val;
         };
 
-        int get_score(Side side);
-        int evaluate() { return get_score(get_side_to_move()) - get_score(ENEMY_SIDE(get_side_to_move())); };
-
         void set_piece(Piece piece, uint_fast8_t pos);
         Piece get_piece(const int i) const { return this->pieces[i]; };
         void print_board() const;

@@ -3,6 +3,7 @@
 #include <cstdint>
 
 #include "../src/chessboard.hpp"
+#include "../src/evaluation.hpp"
 #include "../src/move_generator.hpp"
 
 TEST(ChessBoardTests, SetFenStartPos) {
@@ -100,10 +101,10 @@ TEST(ChessBoardTests, SetFenExplicitStartPosShort) {
 
 TEST(ChessBoardTests, CheckCorrectScoreEvaluations) {
     ChessBoard c;
-    c.set_from_fen("5B2/6P1/1p6/8/1N6/kP6/2K5/8 w - -");
-    ASSERT_EQ(c.get_score(Side::WHITE), 98);
-    ASSERT_EQ(c.get_score(Side::BLACK), 11);
-    ASSERT_EQ(c.evaluate(), 87);
+    c.set_from_fen("5B/6P1/1p6/8/1N6/kP6/2K5/8 w - -");
+    ASSERT_EQ(Evaluation::evaluate_board(c, Side::WHITE), 1030);
+    ASSERT_EQ(Evaluation::evaluate_board(c, Side::BLACK), 110);
+    ASSERT_EQ(Evaluation::evaluate_board(c), 920);
 }
 
 TEST(ChessBoardTests, TestMakeUnmakeMove) {

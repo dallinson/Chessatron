@@ -9,6 +9,7 @@
 #include <thread>
 
 #include "chessboard.hpp"
+#include "evaluation.hpp"
 
 namespace Perft {
     uint64_t run_perft(ChessBoard& c, int depth, bool print_debug = false);
@@ -55,8 +56,8 @@ class SearchHandler {
         std::chrono::steady_clock::time_point search_start_point;
 
         void search_thread_function();
-        int32_t negamax_step(int32_t alpha, int32_t beta, int depth, TranspositionTable& transpositions, uint64_t& node_count);
-        int32_t quiescent_search(int32_t alpha, int32_t beta, TranspositionTable& transpositions, uint64_t& node_count);
+        Score negamax_step(Score alpha, Score beta, int depth, TranspositionTable& transpositions, uint64_t& node_count);
+        Score quiescent_search(Score alpha, Score beta, TranspositionTable& transpositions, uint64_t& node_count);
         Move run_negamax(int depth, TranspositionTable& transpositions);
         Move run_iterative_deepening_search();
 

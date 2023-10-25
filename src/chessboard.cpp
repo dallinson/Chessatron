@@ -208,19 +208,6 @@ std::optional<int> ChessBoard::set_from_fen(const std::string input) {
     return std::optional<int>(char_idx);
 }
 
-int ChessBoard::get_score(Side side) {
-    auto legal_move_count = MoveGenerator::generate_legal_moves(*this, side).len();
-    if (legal_move_count == 0) {
-        return MagicNumbers::NegativeInfinity;
-        // we don't want to be checkmated
-    }
-    return ((((std::popcount(get_pawn_occupancy(side)) * PAWN_SCORE) + (std::popcount(get_rook_occupancy(side)) * ROOK_SCORE) +
-              (std::popcount(get_knight_occupancy(side)) * KNIGHT_SCORE) + (std::popcount(get_bishop_occupancy(side)) * BISHOP_SCORE) +
-              (std::popcount(get_queen_occupancy(side)) * QUEEN_SCORE)) *
-             10) +
-            legal_move_count);
-}
-
 void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
     Piece moved = this->pieces[to_make.get_src_square()];
     this->zobrist_key ^= ZobristKeys::EnPassantKeys[en_passant_file];

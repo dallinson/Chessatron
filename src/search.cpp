@@ -65,7 +65,7 @@ Move Search::select_random_move(const ChessBoard& c) {
     return moves[rand() % moves.len()];
 }
 
-int32_t SearchHandler::negamax_step(int32_t alpha, int32_t beta, int depth, TranspositionTable& transpositions, uint64_t& node_count) {
+Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, TranspositionTable& transpositions, uint64_t& node_count) {
     if (depth <= 0) {
         return quiescent_search(alpha, beta, transpositions, node_count);
         // return c.evaluate();
@@ -86,7 +86,7 @@ int32_t SearchHandler::negamax_step(int32_t alpha, int32_t beta, int depth, Tran
     MoveOrdering::reorder_captures(moves, c);
     Move best_move = Move::NULL_MOVE;
     Move best_move_from_previous_search = Move::NULL_MOVE;
-    int32_t best_score = MagicNumbers::NegativeInfinity;
+    Score best_score = MagicNumbers::NegativeInfinity;
     if (transpositions.contains(c)) {
         best_move_from_previous_search = transpositions[c].get_pv_move();
         // The first move we evaluate will _always_ be the best move
@@ -127,8 +127,8 @@ int32_t SearchHandler::negamax_step(int32_t alpha, int32_t beta, int depth, Tran
     return alpha;
 }
 
-int32_t SearchHandler::quiescent_search(int32_t alpha, int32_t beta, TranspositionTable& transpositions, uint64_t& node_count) {
-    int32_t stand_pat = c.evaluate();
+Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTable& transpositions, uint64_t& node_count) {
+    Score stand_pat = Evaluation::evaluate_board(c);
     if (stand_pat >= beta) {
         return beta;
     }
@@ -172,9 +172,9 @@ Move SearchHandler::run_iterative_deepening_search() {
         int best_score_this_depth = MagicNumbers::NegativeInfinity;
         Move best_move_this_depth;
         // We need to init for the depth=1 iteration where no PV-move exists
-        int32_t alpha = MagicNumbers::NegativeInfinity;
-        int32_t beta = MagicNumbers::PositiveInfinity;
-        int32_t score = MagicNumbers::NegativeInfinity;
+        Score alpha = MagicNumbers::NegativeInfinity;
+        Score beta = MagicNumbers::PositiveInfinity;
+        Score score = MagicNumbers::NegativeInfinity;
         uint64_t node_count = 0;
         if (!best_move_so_far.is_null_move()) {
             c.make_move(best_move_so_far, m);
@@ -224,8 +224,7 @@ Move SearchHandler::run_iterative_deepening_search() {
                 }
                 // No need to check any other moves if we can guarantee a mate
             } else {
-                printf("cp %d\n", best_score_this_depth * 10);
-                // Internally, the score is calculated in decipawns so we multiply to centipawns here
+                printf("cp %d\n", best_score_this_depth);
             }
             best_move_so_far = best_move_this_depth;
         }
