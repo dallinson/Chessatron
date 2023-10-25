@@ -90,7 +90,7 @@ int32_t SearchHandler::negamax_step(int32_t alpha, int32_t beta, int depth, Tran
     if (transpositions.contains(c)) {
         best_move_from_previous_search = transpositions[c].get_pv_move();
         // The first move we evaluate will _always_ be the best move
-        if (MoveGenerator::is_move_legal(c, best_move_from_previous_search)) {
+        if (MoveGenerator::is_move_legal(c, best_move_from_previous_search) && best_move_from_previous_search != 0) {
             c.make_move(best_move_from_previous_search, m);
             best_score = -negamax_step(-beta, -alpha, depth - 1, transpositions, node_count);
             alpha = std::max(best_score, alpha);
