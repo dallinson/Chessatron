@@ -230,7 +230,6 @@ void MoveGenerator::generate_castling_moves(const ChessBoard& c, const Side side
 
 MoveList MoveGenerator::filter_to_legal_moves(const ChessBoard& c, const MoveList& move_list) {
     MoveList to_return;
-    MoveHistory history;
     for (size_t i = 0; i < move_list.len(); i++) {
         if (is_move_legal(c, move_list[i])) {
             to_return.add_move(move_list[i]);
