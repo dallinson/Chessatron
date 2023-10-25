@@ -7,6 +7,7 @@
 
 typedef int32_t Score;
 #define MOBILITY_WEIGHT 10
+// the number of centipawns each possible move is worth
 
 namespace Evaluation {
     extern const std::array<Score, 6> PieceScores;

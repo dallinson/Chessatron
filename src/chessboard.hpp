@@ -16,13 +16,6 @@
 #define ROOK_OFFSET (2 * ((static_cast<int>(PieceTypes::ROOK)) - 1))
 #define PAWN_OFFSET (2 * ((static_cast<int>(PieceTypes::PAWN)) - 1))
 
-#define KING_SCORE 200
-#define QUEEN_SCORE 9
-#define ROOK_SCORE 5
-#define BISHOP_SCORE 3
-#define KNIGHT_SCORE 3
-#define PAWN_SCORE 1
-
 class ChessBoard {
     private:
         std::array<Bitboard, 12> bitboards = {0};
