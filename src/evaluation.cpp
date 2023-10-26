@@ -39,17 +39,17 @@ Score Evaluation::evaluate_board(const ChessBoard& c) {
 /**
  * @brief Determines if the board c is in an endgame as determined by the
  * Simplified Evaluation Function
- * 
+ *
  * @param c The board to test for endgame
  * @return true if the board is in endgame
- * @return false 
+ * @return false
  */
 bool Evaluation::is_endgame(const ChessBoard& c) {
     if (c.get_queen_occupancy() == 0) {
         // If neither side has a queen the board is in endgame
         return true;
     }
-    for (Side side : { Side::WHITE, Side::BLACK }) {
+    for (Side side : {Side::WHITE, Side::BLACK}) {
         if (c.get_queen_occupancy(side) != 0) {
             // If this side has a queen
             const Bitboard minor_pieces = c.get_bishop_occupancy(side) | c.get_knight_occupancy(side);
@@ -69,4 +69,40 @@ bool Evaluation::is_endgame(const ChessBoard& c) {
         }
     }
     return true;
+}
+
+template <PieceTypes piece> Score adjust_positional_value(const ChessBoard& c, const Side side) {
+    Bitboard occupancy;
+   // std::array<Score, 64> position_scores;
+    switch (piece) {
+    case PieceTypes::PAWN:
+        occupancy = c.get_pawn_occupancy(side);
+        break;
+    case PieceTypes::KNIGHT:
+        occupancy = c.get_knight_occupancy(side);
+        break;
+    case PieceTypes::BISHOP:
+        occupancy = c.get_bishop_occupancy(side);
+        break;
+    case PieceTypes::ROOK:
+        occupancy = c.get_rook_occupancy(side);
+        break;
+    case PieceTypes::QUEEN:
+        occupancy = c.get_queen_occupancy(side);
+        break;
+    case PieceTypes::KING:
+        occupancy = c.get_king_occupancy(side);
+        break;
+    }
+    Score to_return = 0;
+    while (occupancy) {
+   //     int piece_idx = pop_min_bit(occupancy);
+    }
+    return to_return;
+}
+
+Score adjust_positional_value(const ChessBoard& c, const Side side) {
+    return adjust_positional_value<PieceTypes::PAWN>(c, side) + adjust_positional_value<PieceTypes::KNIGHT>(c, side) +
+           adjust_positional_value<PieceTypes::BISHOP>(c, side) + adjust_positional_value<PieceTypes::ROOK>(c, side) +
+           adjust_positional_value<PieceTypes::QUEEN>(c, side) + adjust_positional_value<PieceTypes::KING>(c, side);
 }
