@@ -170,7 +170,7 @@ Move SearchHandler::run_iterative_deepening_search() {
     MoveOrdering::reorder_captures(moves, c);
     for (int depth = 1; depth <= perft_depth && !search_cancelled; depth++) {
         int best_score_this_depth = MagicNumbers::NegativeInfinity;
-        Move best_move_this_depth;
+        Move best_move_this_depth = Move::NULL_MOVE;
         // We need to init for the depth=1 iteration where no PV-move exists
         Score alpha = MagicNumbers::NegativeInfinity;
         Score beta = MagicNumbers::PositiveInfinity;

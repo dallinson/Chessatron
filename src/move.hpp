@@ -31,10 +31,10 @@ enum class MoveFlags : uint_fast8_t {
 
 class Move {
     private:
-        uint_fast16_t move = 0;
+        uint_fast16_t move;
 
     public:
-        Move() : move(0){};
+        Move() {};
         Move(uint_fast16_t v) : move(v){};
         Move(MoveFlags flags, uint_fast8_t dest, uint_fast8_t src) : move((((uint_fast16_t) flags) << 12) | (((uint_fast16_t) dest) << 6) | src){};
         static const Move NULL_MOVE;
@@ -62,10 +62,10 @@ bool operator==(const Move& lhs, const Move& rhs);
 class MoveList {
     private:
         size_t idx;
-        std::array<Move, MAX_TURN_MOVE_COUNT> data;
+        Move data[MAX_TURN_MOVE_COUNT];
 
     public:
-        MoveList() : idx(0){};
+        MoveList() : idx(0) {};
 
         void add_move(const Move to_add) {
             this->data[idx] = to_add;
@@ -81,7 +81,7 @@ class MoveList {
         Move& operator[](size_t arg_idx) { return data[arg_idx]; }
         const Move& operator[](size_t arg_idx) const { return data[arg_idx]; }
 
-        const Move* get_data_addr() const { return data.data(); }
+        const Move* get_data_addr() const { return data; }
 
         size_t len() const { return this->idx; };
 };
@@ -91,7 +91,7 @@ class PreviousMoveState {
         uint_fast32_t info;
 
     public:
-        PreviousMoveState() : info(0){};
+        PreviousMoveState() : info(0) {};
         PreviousMoveState(const Piece target_piece, const uint_fast8_t previous_en_passant_state, const bool white_kingside_castle,
                           const bool white_queenside_castle, const bool black_kingside_castle, const bool black_queenside_castle,
                           const uint8_t halfmove_clock)
@@ -107,13 +107,14 @@ class PreviousMoveState {
         uint8_t get_halfmove_clock() const { return GET_BITS(info, 18, 12); };
 };
 
+
 class MoveHistory {
     private:
         size_t idx;
         std::pair<Move, PreviousMoveState> data[MAX_GAME_MOVE_COUNT];
 
     public:
-        MoveHistory() : idx(0){};
+        MoveHistory() : idx(0) {};
         size_t len() { return idx; };
 
         void push_move(const std::pair<Move, PreviousMoveState>& to_add) {
