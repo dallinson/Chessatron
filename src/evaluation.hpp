@@ -27,6 +27,6 @@ namespace Evaluation {
     Score evaluate_board(const ChessBoard& c, const Side side);
     bool is_endgame(const ChessBoard& c);
 
-    template <PieceTypes piece> Score adjust_positional_value_for_piece(const ChessBoard& c, const Side s);
+    template <PieceTypes piece> Score adjust_positional_value(const ChessBoard& c, const Side s);
     Score adjust_positional_value(const ChessBoard& c, const Side s);
 } // namespace Evaluation
