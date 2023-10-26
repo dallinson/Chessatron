@@ -21,7 +21,8 @@ Score Evaluation::evaluate_board(const ChessBoard& c, const Side side) {
              (std::popcount(c.get_knight_occupancy(side)) * get_piece_score(PieceTypes::KNIGHT)) +
              (std::popcount(c.get_bishop_occupancy(side)) * get_piece_score(PieceTypes::BISHOP)) +
              (std::popcount(c.get_queen_occupancy(side)) * get_piece_score(PieceTypes::QUEEN))) +
-            (legal_move_count * MOBILITY_WEIGHT));
+            (legal_move_count * MOBILITY_WEIGHT)) +
+           adjust_positional_value(c, side);
 }
 
 Score Evaluation::evaluate_board(const ChessBoard& c) {
@@ -71,9 +72,8 @@ bool Evaluation::is_endgame(const ChessBoard& c) {
     return true;
 }
 
-template <PieceTypes piece> Score adjust_positional_value(const ChessBoard& c, const Side side) {
+template <PieceTypes piece> Score Evaluation::adjust_positional_value(const ChessBoard& c, const Side side) {
     Bitboard occupancy;
-   // std::array<Score, 64> position_scores;
     switch (piece) {
     case PieceTypes::PAWN:
         occupancy = c.get_pawn_occupancy(side);
@@ -95,13 +95,52 @@ template <PieceTypes piece> Score adjust_positional_value(const ChessBoard& c, c
         break;
     }
     Score to_return = 0;
-    while (occupancy) {
-   //     int piece_idx = pop_min_bit(occupancy);
+    if (piece == PieceTypes::KING) {
+        int king_idx = std::countr_zero(c.get_king_occupancy(side));
+        // Only one king exists
+        if (side == Side::WHITE) {
+            int king_file = king_idx & 0x07;
+            int king_rank = (king_idx >> 3) & 0x07;
+            king_rank = 7 - king_rank;
+            // with the way the values are organised in the table we need to do this
+            king_idx = king_rank << 3 | king_file;
+        }
+        to_return += Evaluation::is_endgame(c) ? PieceSquareTables::KingMidgameScores[king_idx] : PieceSquareTables::KingEndgameScores[king_idx];
+    } else {
+        while (occupancy) {
+            int piece_idx = pop_min_bit(occupancy);
+            if (side == Side::WHITE) {
+                int piece_file = piece_idx & 0x07;
+                int piece_rank = (piece_idx >> 3) & 0x07;
+                piece_rank = 7 - piece_rank;
+                // with the way the values are organised in the table we need to do this
+                piece_idx = piece_rank << 3 | piece_file;
+            }
+            switch (piece) {
+            case PieceTypes::PAWN:
+                to_return += PieceSquareTables::PawnScores[piece_idx];
+                break;
+            case PieceTypes::KNIGHT:
+                to_return += PieceSquareTables::KnightScores[piece_idx];
+                break;
+            case PieceTypes::BISHOP:
+                to_return += PieceSquareTables::BishopScores[piece_idx];
+                break;
+            case PieceTypes::ROOK:
+                to_return += PieceSquareTables::RookScores[piece_idx];
+                break;
+            case PieceTypes::QUEEN:
+                to_return += PieceSquareTables::QueenScores[piece_idx];
+                break;
+            default:
+                break;
+            }
+        }
     }
     return to_return;
 }
 
-Score adjust_positional_value(const ChessBoard& c, const Side side) {
+Score Evaluation::adjust_positional_value(const ChessBoard& c, const Side side) {
     return adjust_positional_value<PieceTypes::PAWN>(c, side) + adjust_positional_value<PieceTypes::KNIGHT>(c, side) +
            adjust_positional_value<PieceTypes::BISHOP>(c, side) + adjust_positional_value<PieceTypes::ROOK>(c, side) +
            adjust_positional_value<PieceTypes::QUEEN>(c, side) + adjust_positional_value<PieceTypes::KING>(c, side);
