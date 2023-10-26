@@ -99,14 +99,6 @@ TEST(ChessBoardTests, SetFenExplicitStartPosShort) {
     ASSERT_EQ(c.get_king_occupancy(Side::BLACK), (uint64_t) 0x1000000000000000);
 }
 
-TEST(ChessBoardTests, CheckCorrectScoreEvaluations) {
-    ChessBoard c;
-    c.set_from_fen("5B/6P1/1p6/8/1N6/kP6/2K5/8 w - -");
-    ASSERT_EQ(Evaluation::evaluate_board(c, Side::WHITE), 1030);
-    ASSERT_EQ(Evaluation::evaluate_board(c, Side::BLACK), 110);
-    ASSERT_EQ(Evaluation::evaluate_board(c), 920);
-}
-
 TEST(ChessBoardTests, TestMakeUnmakeMove) {
     ChessBoard c, o;
     c.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");

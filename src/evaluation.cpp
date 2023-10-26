@@ -35,3 +35,38 @@ Score Evaluation::evaluate_board(const ChessBoard& c) {
     }
     return side_to_move_score - enemy_side_score;
 }
+
+/**
+ * @brief Determines if the board c is in an endgame as determined by the
+ * Simplified Evaluation Function
+ * 
+ * @param c The board to test for endgame
+ * @return true if the board is in endgame
+ * @return false 
+ */
+bool Evaluation::is_endgame(const ChessBoard& c) {
+    if (c.get_queen_occupancy() == 0) {
+        // If neither side has a queen the board is in endgame
+        return true;
+    }
+    for (Side side : { Side::WHITE, Side::BLACK }) {
+        if (c.get_queen_occupancy(side) != 0) {
+            // If this side has a queen
+            const Bitboard minor_pieces = c.get_bishop_occupancy(side) | c.get_knight_occupancy(side);
+            if (std::popcount(minor_pieces) <= 1) {
+                // If the side with the queen has at most 1 minor piece
+                const Bitboard king_queen_occupancy = c.get_king_occupancy(side) | c.get_queen_occupancy(side);
+                const Bitboard without_monarch_occupancy = c.get_occupancy(side) ^ king_queen_occupancy;
+                if (without_monarch_occupancy != minor_pieces) {
+                    return false;
+                    // The side with a queen can have at most one minor piece and no other pieces
+                    // It always has a king and must have a queen so we ensure that the pieces that _aren't_
+                    // king/queen are equivalent to the minor pieces
+                }
+            } else {
+                return false;
+            }
+        }
+    }
+    return true;
+}

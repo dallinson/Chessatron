@@ -14,4 +14,5 @@ namespace Evaluation {
     constexpr Score get_piece_score(PieceTypes p) { return PieceScores[static_cast<int>(p) - 1]; };
     Score evaluate_board(const ChessBoard& c);
     Score evaluate_board(const ChessBoard& c, const Side side);
+    bool is_endgame(const ChessBoard& c);
 } // namespace Evaluation

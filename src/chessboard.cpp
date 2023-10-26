@@ -465,8 +465,7 @@ bool operator==(const ChessBoard& lhs, const ChessBoard& rhs) {
 
     is_equal &= (lhs.get_en_passant_file() == rhs.get_en_passant_file());
 
-    for (int i = 0; i < 2; i++) {
-        Side s = Side(i);
+    for (Side s : { Side::WHITE, Side::BLACK }) {
         is_equal &= (lhs.get_queenside_castling(s) == rhs.get_queenside_castling(s));
         is_equal &= (lhs.get_kingside_castling(s) == rhs.get_kingside_castling(s));
     }
