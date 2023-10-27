@@ -12,7 +12,10 @@ MoveList MoveGenerator::generate_legal_moves(const ChessBoard& c, const Side sid
 
 MoveList MoveGenerator::generate_pseudolegal_moves(const ChessBoard& c, const Side side) {
     MoveList to_return;
-    MoveGenerator::generate_king_moves(c, side, to_return);
+    const Bitboard side_occupancy = c.get_side_occupancy(side);
+    const Bitboard enemy_side_occupancy = c.get_side_occupancy(ENEMY_SIDE(side));
+
+    MoveGenerator::generate_king_moves(side_occupancy, enemy_side_occupancy, bitboard_to_idx(c.get_king_occupancy(side)), to_return);
 
     int checking_piece_count = MoveGenerator::get_checking_piece_count(c, side, bitboard_to_idx(c.get_king_occupancy(side)));
 
@@ -23,11 +26,36 @@ MoveList MoveGenerator::generate_pseudolegal_moves(const ChessBoard& c, const Si
     if (checking_piece_count == 0) {
         MoveGenerator::generate_castling_moves(c, side, to_return);
     }
-    MoveGenerator::generate_queen_moves(c, side, to_return);
-    MoveGenerator::generate_bishop_moves(c, side, to_return);
-    MoveGenerator::generate_knight_moves(c, side, to_return);
-    MoveGenerator::generate_rook_moves(c, side, to_return);
-    MoveGenerator::generate_pawn_moves(c, side, to_return);
+
+    const Bitboard total_occupancy = side_occupancy | enemy_side_occupancy;
+    Bitboard pieces_to_eval = side_occupancy ^ c.get_king_occupancy(side);
+    while (pieces_to_eval) {
+        int piece_idx = pop_min_bit(pieces_to_eval);
+        PieceTypes piece_type_at_position = c.get_piece(piece_idx).get_type();
+        Bitboard valid_moves;
+        switch (piece_type_at_position) {
+            case PieceTypes::PAWN:
+                generate_pawn_moves(piece_idx, total_occupancy, enemy_side_occupancy, c.get_en_passant_file(), side, to_return);
+                // continue as we don't want to do bitboard-based move generation
+                continue;
+            case PieceTypes::QUEEN:
+                valid_moves = generate_queen_movemask(total_occupancy, piece_idx);
+                break;
+            case PieceTypes::BISHOP:
+                valid_moves = generate_bishop_movemask(total_occupancy, piece_idx);
+                break;
+            case PieceTypes::ROOK:
+                valid_moves = generate_rook_movemask(total_occupancy, piece_idx);
+                break;
+            case PieceTypes::KNIGHT:
+                valid_moves = MagicNumbers::KnightMoves[piece_idx];
+                break;
+            default:
+            case PieceTypes::KING:
+                continue;
+        }
+        filter_to_pseudolegal_moves(side_occupancy, enemy_side_occupancy, valid_moves, piece_idx, to_return);
+    }
 
     return to_return;
 }
@@ -53,21 +81,20 @@ Bitboard MoveGenerator::get_checkers(const ChessBoard& c, const Side side, const
     return to_return;
 }
 
-void MoveGenerator::generate_king_moves(const ChessBoard& c, const Side side, MoveList& move_list) {
-    int king_idx = bitboard_to_idx(c.get_king_occupancy(side));
+void MoveGenerator::generate_king_moves(const Bitboard friendlies, const Bitboard enemies, const int king_idx, MoveList& move_list) {
     Bitboard king_moves = MagicNumbers::KingMoves[king_idx];
-    filter_to_pseudolegal_moves(c, side, king_moves, king_idx, move_list);
+    filter_to_pseudolegal_moves(friendlies, enemies, king_moves, king_idx, move_list);
 }
 
-void MoveGenerator::filter_to_pseudolegal_moves(const ChessBoard& c, const Side side, const Bitboard potential_moves, const int idx,
+void MoveGenerator::filter_to_pseudolegal_moves(const Bitboard friendlies, const Bitboard enemies, const Bitboard potential_moves, const int idx,
                                                 MoveList& move_list) {
-    Bitboard valid_moves = potential_moves & ~c.get_side_occupancy(side);
+    Bitboard valid_moves = potential_moves & ~friendlies;
     // only move onto spaces unoccupied by friendlies
     int src_idx = idx & 0x3F;
     while (valid_moves) {
         int move_idx = pop_min_bit(valid_moves);
         uint_fast16_t flags = 0;
-        flags |= ((GET_BIT(c.get_side_occupancy(ENEMY_SIDE(side)), move_idx)) << 2);
+        flags |= ((GET_BIT(enemies, move_idx)) << 2);
 
         move_list.add_move(Move((MoveFlags) flags, move_idx & 0x3F, src_idx));
     }
@@ -87,7 +114,7 @@ Bitboard MoveGenerator::generate_queen_movemask(const Bitboard b, const int idx)
     return MoveGenerator::generate_bishop_movemask(b, idx) | MoveGenerator::generate_rook_movemask(b, idx);
 }
 
-void MoveGenerator::generate_queen_moves(const ChessBoard& c, const Side side, MoveList& move_list) {
+/*void MoveGenerator::generate_queen_moves(const ChessBoard& c, const Side side, MoveList& move_list) {
     Bitboard queen_mask = c.get_queen_occupancy(side);
     const Bitboard total_occupancy = c.get_occupancy();
     while (queen_mask) {
@@ -124,89 +151,82 @@ void MoveGenerator::generate_rook_moves(const ChessBoard& c, const Side side, Mo
         Bitboard rook_moves = MoveGenerator::generate_rook_movemask(total_occupancy, rook_idx);
         filter_to_pseudolegal_moves(c, side, rook_moves, rook_idx, move_list);
     }
-}
+}*/
 
-void MoveGenerator::generate_pawn_moves(const ChessBoard& c, const Side side, MoveList& move_list) {
-    Bitboard pawn_mask = c.get_pawn_occupancy(side);
-    const Side enemy_side = ENEMY_SIDE(side);
-    const Bitboard enemy_occupancy = c.get_occupancy(enemy_side);
-    const Bitboard total_occupancy = enemy_occupancy | c.get_occupancy(side);
-    while (pawn_mask) {
-        int pawn_idx = pop_min_bit(pawn_mask);
-        if (side == Side::WHITE) {
-            if (!GET_BIT(total_occupancy, pawn_idx + 8)) {
-                if (GET_RANK(pawn_idx) == 1 && !GET_BIT(total_occupancy, pawn_idx + 16)) {
-                    move_list.add_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, pawn_idx + 16, pawn_idx));
-                }
-                if (GET_RANK(pawn_idx) == 6) {
-                    move_list.add_move(Move(MoveFlags::ROOK_PROMOTION, pawn_idx + 8, pawn_idx));
-                    move_list.add_move(Move(MoveFlags::KNIGHT_PROMOTION, pawn_idx + 8, pawn_idx));
-                    move_list.add_move(Move(MoveFlags::BISHOP_PROMOTION, pawn_idx + 8, pawn_idx));
-                    move_list.add_move(Move(MoveFlags::QUEEN_PROMOTION, pawn_idx + 8, pawn_idx));
-                } else {
-                    move_list.add_move(Move(MoveFlags::QUIET_MOVE, pawn_idx + 8, pawn_idx));
-                }
+void MoveGenerator::generate_pawn_moves(const int pawn_idx, const Bitboard total_occupancy, const Bitboard enemy_occupancy, const int en_passant_file, const Side side, MoveList& move_list) {
+    if (side == Side::WHITE) {
+        if (!GET_BIT(total_occupancy, pawn_idx + 8)) {
+            if (GET_RANK(pawn_idx) == 1 && !GET_BIT(total_occupancy, pawn_idx + 16)) {
+                move_list.add_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, pawn_idx + 16, pawn_idx));
             }
-            if (GET_FILE(pawn_idx) != 0 && GET_BIT(enemy_occupancy, pawn_idx + 7)) {
-                if (GET_RANK(pawn_idx) == 6) {
-                    move_list.add_move(Move(MoveFlags::ROOK_PROMOTION_CAPTURE, pawn_idx + 7, pawn_idx));
-                    move_list.add_move(Move(MoveFlags::KNIGHT_PROMOTION_CAPTURE, pawn_idx + 7, pawn_idx));
-                    move_list.add_move(Move(MoveFlags::BISHOP_PROMOTION_CAPTURE, pawn_idx + 7, pawn_idx));
-                    move_list.add_move(Move(MoveFlags::QUEEN_PROMOTION_CAPTURE, pawn_idx + 7, pawn_idx));
-                } else {
-                    move_list.add_move(Move(MoveFlags::CAPTURE, pawn_idx + 7, pawn_idx));
-                }
+            if (GET_RANK(pawn_idx) == 6) {
+                move_list.add_move(Move(MoveFlags::ROOK_PROMOTION, pawn_idx + 8, pawn_idx));
+                move_list.add_move(Move(MoveFlags::KNIGHT_PROMOTION, pawn_idx + 8, pawn_idx));
+                move_list.add_move(Move(MoveFlags::BISHOP_PROMOTION, pawn_idx + 8, pawn_idx));
+                move_list.add_move(Move(MoveFlags::QUEEN_PROMOTION, pawn_idx + 8, pawn_idx));
+            } else {
+                move_list.add_move(Move(MoveFlags::QUIET_MOVE, pawn_idx + 8, pawn_idx));
             }
-            if (GET_FILE(pawn_idx) != 7 && GET_BIT(enemy_occupancy, pawn_idx + 9)) {
-                if (GET_RANK(pawn_idx) == 6) {
-                    move_list.add_move(Move(MoveFlags::ROOK_PROMOTION_CAPTURE, pawn_idx + 9, pawn_idx));
-                    move_list.add_move(Move(MoveFlags::KNIGHT_PROMOTION_CAPTURE, pawn_idx + 9, pawn_idx));
-                    move_list.add_move(Move(MoveFlags::BISHOP_PROMOTION_CAPTURE, pawn_idx + 9, pawn_idx));
-                    move_list.add_move(Move(MoveFlags::QUEEN_PROMOTION_CAPTURE, pawn_idx + 9, pawn_idx));
-                } else {
-                    move_list.add_move(Move(MoveFlags::CAPTURE, pawn_idx + 9, pawn_idx));
-                }
+        }
+        if (GET_FILE(pawn_idx) != 0 && GET_BIT(enemy_occupancy, pawn_idx + 7)) {
+            if (GET_RANK(pawn_idx) == 6) {
+                move_list.add_move(Move(MoveFlags::ROOK_PROMOTION_CAPTURE, pawn_idx + 7, pawn_idx));
+                move_list.add_move(Move(MoveFlags::KNIGHT_PROMOTION_CAPTURE, pawn_idx + 7, pawn_idx));
+                move_list.add_move(Move(MoveFlags::BISHOP_PROMOTION_CAPTURE, pawn_idx + 7, pawn_idx));
+                move_list.add_move(Move(MoveFlags::QUEEN_PROMOTION_CAPTURE, pawn_idx + 7, pawn_idx));
+            } else {
+                move_list.add_move(Move(MoveFlags::CAPTURE, pawn_idx + 7, pawn_idx));
             }
-            if (GET_RANK(pawn_idx) == 4 && (std::abs(((int) c.get_en_passant_file()) - (int) GET_FILE(pawn_idx)) == 1)) {
-                move_list.add_move(Move(MoveFlags::EN_PASSANT_CAPTURE, POSITION(5, c.get_en_passant_file()), pawn_idx));
+        }
+        if (GET_FILE(pawn_idx) != 7 && GET_BIT(enemy_occupancy, pawn_idx + 9)) {
+            if (GET_RANK(pawn_idx) == 6) {
+                move_list.add_move(Move(MoveFlags::ROOK_PROMOTION_CAPTURE, pawn_idx + 9, pawn_idx));
+                move_list.add_move(Move(MoveFlags::KNIGHT_PROMOTION_CAPTURE, pawn_idx + 9, pawn_idx));
+                move_list.add_move(Move(MoveFlags::BISHOP_PROMOTION_CAPTURE, pawn_idx + 9, pawn_idx));
+                move_list.add_move(Move(MoveFlags::QUEEN_PROMOTION_CAPTURE, pawn_idx + 9, pawn_idx));
+            } else {
+                move_list.add_move(Move(MoveFlags::CAPTURE, pawn_idx + 9, pawn_idx));
             }
-        } else {
-            if (!GET_BIT(total_occupancy, pawn_idx - 8)) {
-                if (GET_RANK(pawn_idx) == 6 && !GET_BIT(total_occupancy, pawn_idx - 16)) {
-                    move_list.add_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, pawn_idx - 16, pawn_idx));
-                }
-                if (GET_RANK(pawn_idx) == 1) {
-                    move_list.add_move(Move(MoveFlags::ROOK_PROMOTION, pawn_idx - 8, pawn_idx));
-                    move_list.add_move(Move(MoveFlags::KNIGHT_PROMOTION, pawn_idx - 8, pawn_idx));
-                    move_list.add_move(Move(MoveFlags::BISHOP_PROMOTION, pawn_idx - 8, pawn_idx));
-                    move_list.add_move(Move(MoveFlags::QUEEN_PROMOTION, pawn_idx - 8, pawn_idx));
-                } else {
-                    move_list.add_move(Move(MoveFlags::QUIET_MOVE, pawn_idx - 8, pawn_idx));
-                }
+        }
+        if (GET_RANK(pawn_idx) == 4 && (std::abs(en_passant_file - (int) GET_FILE(pawn_idx)) == 1)) {
+            move_list.add_move(Move(MoveFlags::EN_PASSANT_CAPTURE, POSITION(5, en_passant_file), pawn_idx));
+        }
+    } else {
+        if (!GET_BIT(total_occupancy, pawn_idx - 8)) {
+            if (GET_RANK(pawn_idx) == 6 && !GET_BIT(total_occupancy, pawn_idx - 16)) {
+                move_list.add_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, pawn_idx - 16, pawn_idx));
             }
-            if (GET_FILE(pawn_idx) != 0 && GET_BIT(enemy_occupancy, pawn_idx - 9)) {
-                if (GET_RANK(pawn_idx) == 1) {
-                    move_list.add_move(Move(MoveFlags::ROOK_PROMOTION_CAPTURE, pawn_idx - 9, pawn_idx));
-                    move_list.add_move(Move(MoveFlags::KNIGHT_PROMOTION_CAPTURE, pawn_idx - 9, pawn_idx));
-                    move_list.add_move(Move(MoveFlags::BISHOP_PROMOTION_CAPTURE, pawn_idx - 9, pawn_idx));
-                    move_list.add_move(Move(MoveFlags::QUEEN_PROMOTION_CAPTURE, pawn_idx - 9, pawn_idx));
-                } else {
-                    move_list.add_move(Move(MoveFlags::CAPTURE, pawn_idx - 9, pawn_idx));
-                }
+            if (GET_RANK(pawn_idx) == 1) {
+                move_list.add_move(Move(MoveFlags::ROOK_PROMOTION, pawn_idx - 8, pawn_idx));
+                move_list.add_move(Move(MoveFlags::KNIGHT_PROMOTION, pawn_idx - 8, pawn_idx));
+                move_list.add_move(Move(MoveFlags::BISHOP_PROMOTION, pawn_idx - 8, pawn_idx));
+                move_list.add_move(Move(MoveFlags::QUEEN_PROMOTION, pawn_idx - 8, pawn_idx));
+            } else {
+                move_list.add_move(Move(MoveFlags::QUIET_MOVE, pawn_idx - 8, pawn_idx));
             }
-            if (GET_FILE(pawn_idx) != 7 && GET_BIT(enemy_occupancy, pawn_idx - 7)) {
-                if (GET_RANK(pawn_idx) == 1) {
-                    move_list.add_move(Move(MoveFlags::ROOK_PROMOTION_CAPTURE, pawn_idx - 7, pawn_idx));
-                    move_list.add_move(Move(MoveFlags::KNIGHT_PROMOTION_CAPTURE, pawn_idx - 7, pawn_idx));
-                    move_list.add_move(Move(MoveFlags::BISHOP_PROMOTION_CAPTURE, pawn_idx - 7, pawn_idx));
-                    move_list.add_move(Move(MoveFlags::QUEEN_PROMOTION_CAPTURE, pawn_idx - 7, pawn_idx));
-                } else {
-                    move_list.add_move(Move(MoveFlags::CAPTURE, pawn_idx - 7, pawn_idx));
-                }
+        }
+        if (GET_FILE(pawn_idx) != 0 && GET_BIT(enemy_occupancy, pawn_idx - 9)) {
+            if (GET_RANK(pawn_idx) == 1) {
+                move_list.add_move(Move(MoveFlags::ROOK_PROMOTION_CAPTURE, pawn_idx - 9, pawn_idx));
+                move_list.add_move(Move(MoveFlags::KNIGHT_PROMOTION_CAPTURE, pawn_idx - 9, pawn_idx));
+                move_list.add_move(Move(MoveFlags::BISHOP_PROMOTION_CAPTURE, pawn_idx - 9, pawn_idx));
+                move_list.add_move(Move(MoveFlags::QUEEN_PROMOTION_CAPTURE, pawn_idx - 9, pawn_idx));
+            } else {
+                move_list.add_move(Move(MoveFlags::CAPTURE, pawn_idx - 9, pawn_idx));
             }
-            if (GET_RANK(pawn_idx) == 3 && (std::abs(((int) c.get_en_passant_file()) - (int) GET_FILE(pawn_idx)) == 1)) {
-                move_list.add_move(Move(MoveFlags::EN_PASSANT_CAPTURE, POSITION(2, c.get_en_passant_file()), pawn_idx));
+        }
+        if (GET_FILE(pawn_idx) != 7 && GET_BIT(enemy_occupancy, pawn_idx - 7)) {
+            if (GET_RANK(pawn_idx) == 1) {
+                move_list.add_move(Move(MoveFlags::ROOK_PROMOTION_CAPTURE, pawn_idx - 7, pawn_idx));
+                move_list.add_move(Move(MoveFlags::KNIGHT_PROMOTION_CAPTURE, pawn_idx - 7, pawn_idx));
+                move_list.add_move(Move(MoveFlags::BISHOP_PROMOTION_CAPTURE, pawn_idx - 7, pawn_idx));
+                move_list.add_move(Move(MoveFlags::QUEEN_PROMOTION_CAPTURE, pawn_idx - 7, pawn_idx));
+            } else {
+                move_list.add_move(Move(MoveFlags::CAPTURE, pawn_idx - 7, pawn_idx));
             }
+        }
+        if (GET_RANK(pawn_idx) == 3 && (std::abs(en_passant_file - (int) GET_FILE(pawn_idx)) == 1)) {
+            move_list.add_move(Move(MoveFlags::EN_PASSANT_CAPTURE, POSITION(2, en_passant_file), pawn_idx));
         }
     }
 }

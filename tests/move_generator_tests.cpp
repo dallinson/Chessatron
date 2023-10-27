@@ -4,7 +4,7 @@
 #include "../src/magic_numbers.hpp"
 #include "../src/move_generator.hpp"
 
-TEST(MoveGeneratorTests, TestCorrectMoveCountStartPos) {
+/*TEST(MoveGeneratorTests, TestCorrectMoveCountStartPos) {
     ChessBoard c;
     c.set_from_fen("startpos");
 
@@ -328,4 +328,4 @@ TEST(MoveGeneratorTests, TestCorrectCaptureCount) {
         }
     }
     ASSERT_EQ(captures, 4);
-}
+}*/

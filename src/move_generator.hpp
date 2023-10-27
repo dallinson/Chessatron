@@ -15,15 +15,16 @@ namespace MoveGenerator {
     Bitboard generate_rook_movemask(const Bitboard b, const int idx);
     Bitboard generate_queen_movemask(const Bitboard b, const int idx);
 
-    void generate_king_moves(const ChessBoard& c, const Side side, MoveList& move_list);
+    void generate_king_moves(const Bitboard friendlies, const Bitboard enemies, const int king_idx, MoveList& move_list);
     void generate_queen_moves(const ChessBoard& c, const Side side, MoveList& move_list);
     void generate_bishop_moves(const ChessBoard& c, const Side side, MoveList& move_list);
     void generate_knight_moves(const ChessBoard& c, const Side side, MoveList& move_list);
     void generate_rook_moves(const ChessBoard& c, const Side side, MoveList& move_list);
-    void generate_pawn_moves(const ChessBoard& c, const Side side, MoveList& move_list);
+    void generate_pawn_moves(const int pawn_idx, const Bitboard total_occupancy, const Bitboard enemy_occupancy, const int en_passant_file, const Side side, MoveList& move_list);
     void generate_castling_moves(const ChessBoard& c, const Side side, MoveList& move_list);
 
-    void filter_to_pseudolegal_moves(const ChessBoard& c, const Side side, const Bitboard potential_moves, const int idx, MoveList& move_list);
+    void filter_to_pseudolegal_moves(const Bitboard friendlies, const Bitboard enemies, const Bitboard potential_moves, const int idx,
+                                                MoveList& move_list);
     MoveList filter_to_legal_moves(const ChessBoard& c, const MoveList& move_list);
 
     MoveList generate_pseudolegal_moves(const ChessBoard& c, const Side side);
