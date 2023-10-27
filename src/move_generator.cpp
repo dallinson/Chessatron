@@ -89,19 +89,20 @@ Bitboard MoveGenerator::generate_queen_movemask(const Bitboard b, const int idx)
 
 void MoveGenerator::generate_queen_moves(const ChessBoard& c, const Side side, MoveList& move_list) {
     Bitboard queen_mask = c.get_queen_occupancy(side);
-    MoveList to_return;
+    const Bitboard total_occupancy = c.get_occupancy();
     while (queen_mask) {
         int queen_idx = pop_min_bit(queen_mask);
-        Bitboard queen_moves = MoveGenerator::generate_queen_movemask(c.get_occupancy(), queen_idx);
+        Bitboard queen_moves = MoveGenerator::generate_queen_movemask(total_occupancy, queen_idx);
         filter_to_pseudolegal_moves(c, side, queen_moves, queen_idx, move_list);
     }
 }
 
 void MoveGenerator::generate_bishop_moves(const ChessBoard& c, const Side side, MoveList& move_list) {
     Bitboard bishop_mask = c.get_bishop_occupancy(side);
+    const Bitboard total_occupancy = c.get_occupancy();
     while (bishop_mask) {
         int bishop_idx = pop_min_bit(bishop_mask);
-        Bitboard bishop_moves = MoveGenerator::generate_bishop_movemask(c.get_occupancy(), bishop_idx);
+        Bitboard bishop_moves = MoveGenerator::generate_bishop_movemask(total_occupancy, bishop_idx);
         filter_to_pseudolegal_moves(c, side, bishop_moves, bishop_idx, move_list);
     }
 }
@@ -117,9 +118,10 @@ void MoveGenerator::generate_knight_moves(const ChessBoard& c, const Side side, 
 
 void MoveGenerator::generate_rook_moves(const ChessBoard& c, const Side side, MoveList& move_list) {
     Bitboard rook_mask = c.get_rook_occupancy(side);
+    const Bitboard total_occupancy = c.get_occupancy();
     while (rook_mask) {
         int rook_idx = pop_min_bit(rook_mask);
-        Bitboard rook_moves = MoveGenerator::generate_rook_movemask(c.get_occupancy(), rook_idx);
+        Bitboard rook_moves = MoveGenerator::generate_rook_movemask(total_occupancy, rook_idx);
         filter_to_pseudolegal_moves(c, side, rook_moves, rook_idx, move_list);
     }
 }
@@ -127,11 +129,13 @@ void MoveGenerator::generate_rook_moves(const ChessBoard& c, const Side side, Mo
 void MoveGenerator::generate_pawn_moves(const ChessBoard& c, const Side side, MoveList& move_list) {
     Bitboard pawn_mask = c.get_pawn_occupancy(side);
     const Side enemy_side = ENEMY_SIDE(side);
+    const Bitboard enemy_occupancy = c.get_occupancy(enemy_side);
+    const Bitboard total_occupancy = enemy_occupancy | c.get_occupancy(side);
     while (pawn_mask) {
         int pawn_idx = pop_min_bit(pawn_mask);
         if (side == Side::WHITE) {
-            if (!GET_BIT(c.get_occupancy(), pawn_idx + 8)) {
-                if (GET_RANK(pawn_idx) == 1 && !GET_BIT(c.get_occupancy(), pawn_idx + 16)) {
+            if (!GET_BIT(total_occupancy, pawn_idx + 8)) {
+                if (GET_RANK(pawn_idx) == 1 && !GET_BIT(total_occupancy, pawn_idx + 16)) {
                     move_list.add_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, pawn_idx + 16, pawn_idx));
                 }
                 if (GET_RANK(pawn_idx) == 6) {
@@ -143,7 +147,7 @@ void MoveGenerator::generate_pawn_moves(const ChessBoard& c, const Side side, Mo
                     move_list.add_move(Move(MoveFlags::QUIET_MOVE, pawn_idx + 8, pawn_idx));
                 }
             }
-            if (GET_FILE(pawn_idx) != 0 && GET_BIT(c.get_side_occupancy(enemy_side), pawn_idx + 7)) {
+            if (GET_FILE(pawn_idx) != 0 && GET_BIT(enemy_occupancy, pawn_idx + 7)) {
                 if (GET_RANK(pawn_idx) == 6) {
                     move_list.add_move(Move(MoveFlags::ROOK_PROMOTION_CAPTURE, pawn_idx + 7, pawn_idx));
                     move_list.add_move(Move(MoveFlags::KNIGHT_PROMOTION_CAPTURE, pawn_idx + 7, pawn_idx));
@@ -153,7 +157,7 @@ void MoveGenerator::generate_pawn_moves(const ChessBoard& c, const Side side, Mo
                     move_list.add_move(Move(MoveFlags::CAPTURE, pawn_idx + 7, pawn_idx));
                 }
             }
-            if (GET_FILE(pawn_idx) != 7 && GET_BIT(c.get_side_occupancy(enemy_side), pawn_idx + 9)) {
+            if (GET_FILE(pawn_idx) != 7 && GET_BIT(enemy_occupancy, pawn_idx + 9)) {
                 if (GET_RANK(pawn_idx) == 6) {
                     move_list.add_move(Move(MoveFlags::ROOK_PROMOTION_CAPTURE, pawn_idx + 9, pawn_idx));
                     move_list.add_move(Move(MoveFlags::KNIGHT_PROMOTION_CAPTURE, pawn_idx + 9, pawn_idx));
@@ -167,8 +171,8 @@ void MoveGenerator::generate_pawn_moves(const ChessBoard& c, const Side side, Mo
                 move_list.add_move(Move(MoveFlags::EN_PASSANT_CAPTURE, POSITION(5, c.get_en_passant_file()), pawn_idx));
             }
         } else {
-            if (!GET_BIT(c.get_occupancy(), pawn_idx - 8)) {
-                if (GET_RANK(pawn_idx) == 6 && !GET_BIT(c.get_occupancy(), pawn_idx - 16)) {
+            if (!GET_BIT(total_occupancy, pawn_idx - 8)) {
+                if (GET_RANK(pawn_idx) == 6 && !GET_BIT(total_occupancy, pawn_idx - 16)) {
                     move_list.add_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, pawn_idx - 16, pawn_idx));
                 }
                 if (GET_RANK(pawn_idx) == 1) {
@@ -180,7 +184,7 @@ void MoveGenerator::generate_pawn_moves(const ChessBoard& c, const Side side, Mo
                     move_list.add_move(Move(MoveFlags::QUIET_MOVE, pawn_idx - 8, pawn_idx));
                 }
             }
-            if (GET_FILE(pawn_idx) != 0 && GET_BIT(c.get_side_occupancy(enemy_side), pawn_idx - 9)) {
+            if (GET_FILE(pawn_idx) != 0 && GET_BIT(enemy_occupancy, pawn_idx - 9)) {
                 if (GET_RANK(pawn_idx) == 1) {
                     move_list.add_move(Move(MoveFlags::ROOK_PROMOTION_CAPTURE, pawn_idx - 9, pawn_idx));
                     move_list.add_move(Move(MoveFlags::KNIGHT_PROMOTION_CAPTURE, pawn_idx - 9, pawn_idx));
@@ -190,7 +194,7 @@ void MoveGenerator::generate_pawn_moves(const ChessBoard& c, const Side side, Mo
                     move_list.add_move(Move(MoveFlags::CAPTURE, pawn_idx - 9, pawn_idx));
                 }
             }
-            if (GET_FILE(pawn_idx) != 7 && GET_BIT(c.get_side_occupancy(enemy_side), pawn_idx - 7)) {
+            if (GET_FILE(pawn_idx) != 7 && GET_BIT(enemy_occupancy, pawn_idx - 7)) {
                 if (GET_RANK(pawn_idx) == 1) {
                     move_list.add_move(Move(MoveFlags::ROOK_PROMOTION_CAPTURE, pawn_idx - 7, pawn_idx));
                     move_list.add_move(Move(MoveFlags::KNIGHT_PROMOTION_CAPTURE, pawn_idx - 7, pawn_idx));
