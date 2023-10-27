@@ -15,10 +15,9 @@
  *
  * @return consteval
  */
-consteval std::array<std::array<Bitboard, 64>, 64> compute_connecting_squares() {
-    std::array<std::array<Bitboard, 64>, 64> to_return;
+consteval std::array<Bitboard, 64 * 64> compute_connecting_squares() {
+    std::array<Bitboard, 64 * 64> to_return;
     for (int first_square = 0; first_square < 64; first_square++) {
-        std::array<Bitboard, 64> inner_array;
         for (int second_square = 0; second_square < 64; second_square++) {
             Bitboard b = idx_to_bitboard(second_square);
             int rank_diff = GET_RANK(first_square) - GET_RANK(second_square);
@@ -59,19 +58,17 @@ consteval std::array<std::array<Bitboard, 64>, 64> compute_connecting_squares() 
                     }
                 }
             }
-            inner_array[second_square] = b;
+            to_return[(64 * first_square) + second_square] = b;
         }
-        to_return[first_square] = inner_array;
     }
     return to_return;
 }
 
-constexpr std::array<std::array<Bitboard, 64>, 64> MagicNumbers::ConnectingSquares = compute_connecting_squares();
+constexpr std::array<Bitboard, 64 * 64> MagicNumbers::ConnectingSquares = compute_connecting_squares();
 
-consteval std::array<std::array<Bitboard, 64>, 64> compute_aligned_squares() {
-    std::array<std::array<Bitboard, 64>, 64> to_return;
+consteval std::array<Bitboard, 64 * 64> compute_aligned_squares() {
+    std::array<Bitboard, 64 * 64> to_return;
     for (int first_square = 0; first_square < 64; first_square++) {
-        std::array<Bitboard, 64> inner_array = {0};
         for (int second_square = 0; second_square < 64; second_square++) {
             Bitboard b = 0;
             int rank_diff = GET_RANK(first_square) - GET_RANK(second_square);
@@ -95,14 +92,13 @@ consteval std::array<std::array<Bitboard, 64>, 64> compute_aligned_squares() {
                     }
                 }
             }
-            inner_array[second_square] = b;
+            to_return[(64 * first_square) + second_square] = b;
         }
-        to_return[first_square] = inner_array;
     }
     return to_return;
 }
 
-constexpr std::array<std::array<Bitboard, 64>, 64> MagicNumbers::AlignedSquares = compute_aligned_squares();
+constexpr std::array<Bitboard, 64 * 64> MagicNumbers::AlignedSquares = compute_aligned_squares();
 
 consteval std::array<Bitboard, 64> generate_king_moves() {
     std::array<Bitboard, 64> to_return;

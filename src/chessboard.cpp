@@ -393,7 +393,7 @@ void ChessBoard::recompute_blockers_and_checkers(const Side side) {
     // don't evaluate ones where we already check the king
 
     while (potential_checks) {
-        const Bitboard line_to_king = MagicNumbers::ConnectingSquares[king_idx][pop_min_bit(potential_checks)];
+        const Bitboard line_to_king = MagicNumbers::ConnectingSquares[(64 * king_idx) + pop_min_bit(potential_checks)];
         if (std::popcount(line_to_king & check_blockers) <= 1) {
             pinned_pieces[static_cast<int>(side)] |= line_to_king & check_blockers;
         }

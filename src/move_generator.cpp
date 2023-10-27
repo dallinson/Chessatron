@@ -295,13 +295,13 @@ bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
         Bitboard checking_pieces = c.get_checkers(c.get_side_to_move());
         if (checking_pieces) {
             // if there's a piece checking our king - we know at most one piece can be checking as double checks are king moves only
-            if (!(MagicNumbers::ConnectingSquares[king_idx][bitboard_to_idx(checking_pieces)] & idx_to_bitboard(m.get_dest_square()))) {
+            if (!(MagicNumbers::ConnectingSquares[(64 * king_idx) + bitboard_to_idx(checking_pieces)] & idx_to_bitboard(m.get_dest_square()))) {
                 return false;
             }
         }
 
         if (idx_to_bitboard(m.get_src_square()) & c.get_pinned_pieces(c.get_side_to_move())) {
-            return MagicNumbers::AlignedSquares[king_idx][m.get_src_square()] & idx_to_bitboard(m.get_dest_square());
+            return MagicNumbers::AlignedSquares[(64 * king_idx) + m.get_src_square()] & idx_to_bitboard(m.get_dest_square());
         }
     }
 
