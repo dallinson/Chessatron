@@ -20,7 +20,7 @@ namespace MoveGenerator {
     void generate_bishop_moves(const ChessBoard& c, const Side side, MoveList& move_list);
     void generate_knight_moves(const ChessBoard& c, const Side side, MoveList& move_list);
     void generate_rook_moves(const ChessBoard& c, const Side side, MoveList& move_list);
-    void generate_pawn_moves(const int pawn_idx, const Bitboard total_occupancy, const Bitboard enemy_occupancy, const int en_passant_file, const Side side, MoveList& move_list);
+    void generate_pawn_moves(const ChessBoard& c, const Side side, MoveList& move_list);
     void generate_castling_moves(const ChessBoard& c, const Side side, MoveList& move_list);
 
     void filter_to_pseudolegal_moves(const Bitboard friendlies, const Bitboard enemies, const Bitboard potential_moves, const int idx,
