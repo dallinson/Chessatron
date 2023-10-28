@@ -101,6 +101,9 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
     best_move = best_move_from_previous_search;
     if (best_score < beta) {
         for (size_t i = 0; i < moves.len(); i++) {
+            if (search_cancelled) {
+                break;
+            }
             const auto& move = moves[i];
             if (!MoveGenerator::is_move_legal(c, move) || move == best_move_from_previous_search) {
                 // don't evaluate legal moves or the previous best move
@@ -118,9 +121,6 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
                 best_move = move;
             }
             alpha = std::max(score, alpha);
-            if (search_cancelled) {
-                break;
-            }
         }
     }
     transpositions[c] = TranspositionTableEntry(depth, best_move);
@@ -136,6 +136,9 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
     auto moves = MoveGenerator::generate_pseudolegal_moves(c, c.get_side_to_move());
     auto capture_count = MoveOrdering::reorder_captures(moves, c);
     for (size_t i = 0; i < capture_count; i++) {
+        if (search_cancelled) {
+            break;
+        }
         const auto& move = moves[i];
         if (!MoveGenerator::is_move_legal(c, move)) {
             // In a quiescent search we're only interested in (legal) captures
@@ -150,9 +153,6 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
             return beta;
         }
         alpha = std::max(score, alpha);
-        if (search_cancelled) {
-            break;
-        }
     }
     return alpha;
 }
