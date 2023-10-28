@@ -24,7 +24,7 @@ namespace MoveGenerator {
     void generate_castling_moves(const ChessBoard& c, const Side side, MoveList& move_list);
 
     void filter_to_pseudolegal_moves(const Bitboard friendlies, const Bitboard enemies, const Bitboard potential_moves, const int idx,
-                                                MoveList& move_list);
+                                     MoveList& move_list);
     MoveList filter_to_legal_moves(const ChessBoard& c, const MoveList& move_list);
 
     MoveList generate_pseudolegal_moves(const ChessBoard& c, const Side side);

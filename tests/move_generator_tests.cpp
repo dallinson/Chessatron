@@ -4,7 +4,7 @@
 #include "../src/magic_numbers.hpp"
 #include "../src/move_generator.hpp"
 
-/*TEST(MoveGeneratorTests, TestCorrectMoveCountStartPos) {
+TEST(MoveGeneratorTests, TestCorrectMoveCountStartPos) {
     ChessBoard c;
     c.set_from_fen("startpos");
 
@@ -173,7 +173,7 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountKiwipete) {
     ASSERT_EQ(bishop_moves.len(), 11);
 
     MoveList king_moves;
-    MoveGenerator::generate_king_moves(c, Side::WHITE, king_moves);
+    MoveGenerator::generate_king_moves(c.get_occupancy(Side::WHITE), c.get_occupancy(Side::BLACK), bitboard_to_idx(c.get_king_occupancy(Side::WHITE)), king_moves);
     MoveGenerator::filter_to_legal_moves(c, king_moves);
     ASSERT_EQ(king_moves.len(), 2);
 
@@ -216,7 +216,7 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountKiwipeteB2B3) {
     ASSERT_EQ(bishop_moves.len(), 8);
 
     MoveList king_moves;
-    MoveGenerator::generate_king_moves(c, Side::BLACK, king_moves);
+    MoveGenerator::generate_king_moves(c.get_occupancy(Side::BLACK), c.get_occupancy(Side::WHITE), bitboard_to_idx(c.get_king_occupancy(Side::BLACK)), king_moves);
     MoveGenerator::filter_to_legal_moves(c, king_moves);
     ASSERT_EQ(king_moves.len(), 2);
 
@@ -262,7 +262,7 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountKiwipeteE1D1C7C6) {
     ASSERT_EQ(bishop_moves.len(), 11);
 
     MoveList king_moves;
-    MoveGenerator::generate_king_moves(c, Side::WHITE, king_moves);
+    MoveGenerator::generate_king_moves(c.get_occupancy(Side::WHITE), c.get_occupancy(Side::BLACK), bitboard_to_idx(c.get_king_occupancy(Side::WHITE)), king_moves);
     MoveGenerator::filter_to_legal_moves(c, king_moves);
     ASSERT_EQ(king_moves.len(), 2);
 
@@ -302,7 +302,7 @@ TEST(MoveGeneratorTests, TestWhiteBishopKing) {
     ChessBoard c;
     c.set_from_fen("1B6/8/2r5/1knK4/8/8/8/8 w - - 16 166");
     MoveList king_moves;
-    MoveGenerator::generate_king_moves(c, Side::WHITE, king_moves);
+    MoveGenerator::generate_king_moves(c.get_occupancy(Side::WHITE), c.get_occupancy(Side::BLACK), bitboard_to_idx(c.get_king_occupancy(Side::WHITE)), king_moves);
     auto legal_moves = MoveGenerator::filter_to_legal_moves(c, king_moves);
     ASSERT_EQ(legal_moves.len(), 2);
 }
@@ -311,7 +311,7 @@ TEST(MoveGeneratorTests, TestMoveKingNearKing) {
     ChessBoard c;
     c.set_from_fen("5n2/8/P4P1B/1p6/1p1P2P1/1k6/8/K7 b - - 0 72");
     MoveList king_moves;
-    MoveGenerator::generate_king_moves(c, Side::BLACK, king_moves);
+    MoveGenerator::generate_king_moves(c.get_occupancy(Side::BLACK), c.get_occupancy(Side::WHITE), bitboard_to_idx(c.get_king_occupancy(Side::BLACK)), king_moves);
     auto legal_moves = MoveGenerator::filter_to_legal_moves(c, king_moves);
     ASSERT_EQ(legal_moves.len(), 5);
 }
@@ -328,4 +328,4 @@ TEST(MoveGeneratorTests, TestCorrectCaptureCount) {
         }
     }
     ASSERT_EQ(captures, 4);
-}*/
+}

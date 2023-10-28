@@ -34,7 +34,7 @@ class Move {
         uint_fast16_t move;
 
     public:
-        Move() {};
+        Move(){};
         Move(uint_fast16_t v) : move(v){};
         Move(MoveFlags flags, uint_fast8_t dest, uint_fast8_t src) : move((((uint_fast16_t) flags) << 12) | (((uint_fast16_t) dest) << 6) | src){};
         static const Move NULL_MOVE;
@@ -65,7 +65,7 @@ class MoveList {
         Move data[MAX_TURN_MOVE_COUNT];
 
     public:
-        MoveList() : idx(0) {};
+        MoveList() : idx(0){};
 
         void add_move(const Move to_add) {
             this->data[idx] = to_add;
@@ -86,43 +86,57 @@ class MoveList {
         size_t len() const { return this->idx; };
 };
 
-class PreviousMoveState {
+class MoveHistoryEntry {
     private:
-        uint_fast32_t info;
+        ZobristKey z;
+        // 8 bytes
+        Move m;
+        // 2 bytes
+        Piece p;
+        // 1 byte
+        char castling;
+        // 1 byte
+        uint8_t previous_en_passant;
+        // 1 byte
+        uint8_t previous_halfmove_clock;
+        // 1 byte
+        uint16_t padding;
+        // pad to 16 bytes; 64 bytes (cache line size) is easily divisible by 16
 
     public:
-        PreviousMoveState() : info(0) {};
-        PreviousMoveState(const Piece target_piece, const uint_fast8_t previous_en_passant_state, const bool white_kingside_castle,
-                          const bool white_queenside_castle, const bool black_kingside_castle, const bool black_queenside_castle,
-                          const uint8_t halfmove_clock)
-            : info(target_piece.get_value() | previous_en_passant_state << 4 | white_kingside_castle << 8 | white_queenside_castle << 9 |
-                   black_kingside_castle << 10 | black_queenside_castle << 11 | halfmove_clock << 12){};
-        Piece get_piece() const { return GET_BITS(info, 3, 0); };
-        uint_fast8_t get_previous_en_passant_file() const { return GET_BITS(info, 7, 4); };
-        bool get_white_kingside_castle() const { return GET_BIT(info, 8); };
-        bool get_white_queenside_castle() const { return GET_BIT(info, 9); };
-        bool get_black_kingside_castle() const { return GET_BIT(info, 10); };
-        bool get_black_queenside_castle() const { return GET_BIT(info, 11); };
+        MoveHistoryEntry(){};
+        MoveHistoryEntry(const ZobristKey key, const Move move, const Piece target_piece, const uint8_t en_passant, uint8_t previous_halfmove_clock,
+                         const bool white_kingside_castle, const bool black_kingside_castle, const bool white_queenside_castle,
+                         const bool black_queenside_castle)
+            : z(key), m(move), p(target_piece),
+              castling(white_kingside_castle << 3 | black_kingside_castle << 2 | white_queenside_castle << 1 | black_queenside_castle),
+              previous_en_passant(en_passant), previous_halfmove_clock(previous_halfmove_clock){};
+        Piece get_piece() const { return p; };
+        Move get_move() const { return m; };
+        uint_fast8_t get_previous_en_passant_file() const { return previous_en_passant; };
+        bool get_white_kingside_castle() const { return GET_BIT(castling, 3); };
+        bool get_white_queenside_castle() const { return GET_BIT(castling, 1); };
+        bool get_black_kingside_castle() const { return GET_BIT(castling, 2); };
+        bool get_black_queenside_castle() const { return GET_BIT(castling, 0); };
 
-        uint8_t get_halfmove_clock() const { return GET_BITS(info, 18, 12); };
+        uint8_t get_halfmove_clock() const { return previous_halfmove_clock; };
 };
-
 
 class MoveHistory {
     private:
         size_t idx;
-        std::pair<Move, PreviousMoveState> data[MAX_GAME_MOVE_COUNT];
+        MoveHistoryEntry data[MAX_GAME_MOVE_COUNT];
 
     public:
-        MoveHistory() : idx(0) {};
+        MoveHistory() : idx(0){};
         size_t len() { return idx; };
 
-        void push_move(const std::pair<Move, PreviousMoveState>& to_add) {
+        void push_move(const MoveHistoryEntry& to_add) {
             this->data[idx] = to_add;
             idx += 1;
         };
 
-        std::pair<Move, PreviousMoveState> pop_move() {
+        MoveHistoryEntry pop_move() {
             idx -= 1;
             return this->data[idx];
         };
