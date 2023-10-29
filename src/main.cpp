@@ -33,7 +33,7 @@ std::vector<std::string> split_on_whitespace(const std::string& data) {
     return to_return;
 }
 
-void process_position_command(const std::string& line, ChessBoard& c) {
+void process_position_command(const std::string& line, ChessBoard& c, MoveHistory& m) {
     auto parsed_line = split_on_whitespace(line);
     int fen_idx;
     if (parsed_line[1] == "fen") {
@@ -48,17 +48,17 @@ void process_position_command(const std::string& line, ChessBoard& c) {
     }
     auto sub_line = line.substr(fen_idx);
     auto idx = c.set_from_fen(sub_line);
+    m = MoveHistory();
     if (idx.has_value()) {
         auto moves = sub_line.substr(idx.value());
         // moves is the substring starting at the end of the FEN string
         if (moves.find("moves") != std::string::npos) {
             // if there _are_ moves to add
-            MoveHistory setup;
             auto split_moves = split_on_whitespace(moves.substr(moves.find(moves) + 5));
             for (auto& move : split_moves) {
                 auto parsed_move = c.generate_move_from_string(move);
                 if (parsed_move.has_value()) {
-                    c.make_move(parsed_move.value(), setup);
+                    c.make_move(parsed_move.value(), m);
                 }
             }
         }
@@ -140,9 +140,7 @@ int main(int argc, char** argv) {
                 if (parsed_line[0] == std::string("go")) {
                     process_go_command(parsed_line, s);
                 } else if (parsed_line[0] == "position") {
-                    ChessBoard c;
-                    process_position_command(line, c);
-                    s.set_board(c);
+                    process_position_command(line, s.get_board(), s.get_history());
                 }
             }
         }

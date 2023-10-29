@@ -128,7 +128,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
 }
 
 Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTable& transpositions, uint64_t& node_count) {
-    Score stand_pat = Evaluation::evaluate_board(c);
+    Score stand_pat = Evaluation::evaluate_board(c, m);
     if (stand_pat >= beta) {
         return beta;
     }

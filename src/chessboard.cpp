@@ -8,7 +8,7 @@
 #include "move_generator.hpp"
 #include "zobrist_hashing.hpp"
 
-void ChessBoard::set_piece(Piece piece, uint_fast8_t pos) {
+void ChessBoard::set_piece(Piece piece, uint8_t pos) {
     pieces[pos] = piece;
     SET_BIT(bitboards[piece.to_bitboard_idx()], pos);
 }
@@ -34,8 +34,8 @@ void ChessBoard::clear_board() {
 
 void ChessBoard::print_board() const {
     static const char* piece_str = ".PRNBQK..prnbqk.";
-    for (int_fast8_t rank = 7; rank >= 0; rank--) {
-        for (uint_fast8_t file = 0; file < 8; file++) {
+    for (int rank = 7; rank >= 0; rank--) {
+        for (int file = 0; file < 8; file++) {
             printf("%c", piece_str[pieces[(rank * 8) + file].get_value()]);
         }
         printf("\n");

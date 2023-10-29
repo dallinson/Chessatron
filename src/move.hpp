@@ -31,23 +31,23 @@ enum class MoveFlags : uint_fast8_t {
 
 class Move {
     private:
-        uint_fast16_t move;
+        uint16_t move;
 
     public:
         Move(){};
-        Move(uint_fast16_t v) : move(v){};
-        Move(MoveFlags flags, uint_fast8_t dest, uint_fast8_t src) : move((((uint_fast16_t) flags) << 12) | (((uint_fast16_t) dest) << 6) | src){};
+        Move(uint16_t v) : move(v){};
+        Move(MoveFlags flags, uint_fast8_t dest, uint_fast8_t src) : move((((uint16_t) flags) << 12) | (((uint16_t) dest) << 6) | src){};
         static const Move NULL_MOVE;
 
-        uint_fast16_t get_move() const { return move; };
-        uint_fast8_t get_src_square() const { return GET_BITS(move, 5, 0); };
-        uint_fast8_t get_dest_square() const { return GET_BITS(move, 11, 6); };
+        uint16_t get_move() const { return move; };
+        uint8_t get_src_square() const { return GET_BITS(move, 5, 0); };
+        uint8_t get_dest_square() const { return GET_BITS(move, 11, 6); };
 
-        uint_fast8_t get_src_rank() const { return GET_BITS(move, 5, 3); };
-        uint_fast8_t get_src_file() const { return GET_BITS(move, 2, 0); };
+        uint8_t get_src_rank() const { return GET_BITS(move, 5, 3); };
+        uint8_t get_src_file() const { return GET_BITS(move, 2, 0); };
 
-        uint_fast8_t get_dest_rank() const { return GET_BITS(move, 11, 9); };
-        uint_fast8_t get_dest_file() const { return GET_BITS(move, 8, 6); };
+        uint8_t get_dest_rank() const { return GET_BITS(move, 11, 9); };
+        uint8_t get_dest_file() const { return GET_BITS(move, 8, 6); };
 
         MoveFlags get_move_flags() const { return (MoveFlags) GET_BITS(move, 15, 12); };
 
@@ -120,6 +120,8 @@ class MoveHistoryEntry {
         bool get_black_queenside_castle() const { return GET_BIT(castling, 0); };
 
         uint8_t get_halfmove_clock() const { return previous_halfmove_clock; };
+
+        ZobristKey get_zobrist_key() const { return z; };
 };
 
 class MoveHistory {
@@ -129,7 +131,7 @@ class MoveHistory {
 
     public:
         MoveHistory() : idx(0){};
-        size_t len() { return idx; };
+        size_t len() const { return idx; };
 
         void push_move(const MoveHistoryEntry& to_add) {
             this->data[idx] = to_add;
@@ -140,4 +142,8 @@ class MoveHistory {
             idx -= 1;
             return this->data[idx];
         };
+
+        const MoveHistoryEntry& operator[](size_t idx) const {
+            return data[idx];
+        }
 };

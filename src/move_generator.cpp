@@ -68,7 +68,7 @@ void MoveGenerator::filter_to_pseudolegal_moves(const Bitboard friendlies, const
     int src_idx = idx & 0x3F;
     while (valid_moves) {
         int move_idx = pop_min_bit(valid_moves);
-        uint_fast16_t flags = 0;
+        uint16_t flags = 0;
         flags |= ((GET_BIT(enemies, move_idx)) << 2);
 
         move_list.add_move(Move((MoveFlags) flags, move_idx & 0x3F, src_idx));

@@ -22,7 +22,7 @@ class ChessBoard {
 
         std::array<Piece, 64> pieces = {0};
 
-        uint_fast8_t en_passant_file = 9;
+        uint8_t en_passant_file = 9;
 
         // first 2 elems are kingside, second two queenside
         std::array<bool, 4> castling = {false, false, false, false};
@@ -46,9 +46,9 @@ class ChessBoard {
         inline Bitboard get_occupancy(const Side side) const { return get_side_occupancy(side); };
 
         inline Bitboard get_side_occupancy(const Side side) const {
-            return bitboards[KING_OFFSET + static_cast<uint_fast8_t>(side)] | bitboards[QUEEN_OFFSET + static_cast<uint_fast8_t>(side)] |
-                   bitboards[BISHOP_OFFSET + static_cast<uint_fast8_t>(side)] | bitboards[KNIGHT_OFFSET + static_cast<uint_fast8_t>(side)] |
-                   bitboards[ROOK_OFFSET + static_cast<uint_fast8_t>(side)] | bitboards[PAWN_OFFSET + static_cast<uint_fast8_t>(side)];
+            return bitboards[KING_OFFSET + static_cast<uint8_t>(side)] | bitboards[QUEEN_OFFSET + static_cast<uint8_t>(side)] |
+                   bitboards[BISHOP_OFFSET + static_cast<uint8_t>(side)] | bitboards[KNIGHT_OFFSET + static_cast<uint8_t>(side)] |
+                   bitboards[ROOK_OFFSET + static_cast<uint8_t>(side)] | bitboards[PAWN_OFFSET + static_cast<uint8_t>(side)];
         };
         inline Bitboard get_white_occupancy() const { return get_side_occupancy(Side::WHITE); };
         inline Bitboard get_black_occupancy() const { return get_side_occupancy(Side::WHITE); };
@@ -60,21 +60,21 @@ class ChessBoard {
         inline Bitboard get_rook_occupancy() const { return get_pair_occupancy(ROOK_OFFSET); };
         inline Bitboard get_pawn_occupancy() const { return get_pair_occupancy(PAWN_OFFSET); };
 
-        inline Bitboard get_king_occupancy(const Side side) const { return bitboards[KING_OFFSET + static_cast<uint_fast8_t>(side)]; };
-        inline Bitboard get_queen_occupancy(const Side side) const { return bitboards[QUEEN_OFFSET + static_cast<uint_fast8_t>(side)]; };
-        inline Bitboard get_bishop_occupancy(const Side side) const { return bitboards[BISHOP_OFFSET + static_cast<uint_fast8_t>(side)]; };
-        inline Bitboard get_knight_occupancy(const Side side) const { return bitboards[KNIGHT_OFFSET + static_cast<uint_fast8_t>(side)]; };
-        inline Bitboard get_rook_occupancy(const Side side) const { return bitboards[ROOK_OFFSET + static_cast<uint_fast8_t>(side)]; };
-        inline Bitboard get_pawn_occupancy(const Side side) const { return bitboards[PAWN_OFFSET + static_cast<uint_fast8_t>(side)]; };
+        inline Bitboard get_king_occupancy(const Side side) const { return bitboards[KING_OFFSET + static_cast<uint8_t>(side)]; };
+        inline Bitboard get_queen_occupancy(const Side side) const { return bitboards[QUEEN_OFFSET + static_cast<uint8_t>(side)]; };
+        inline Bitboard get_bishop_occupancy(const Side side) const { return bitboards[BISHOP_OFFSET + static_cast<uint8_t>(side)]; };
+        inline Bitboard get_knight_occupancy(const Side side) const { return bitboards[KNIGHT_OFFSET + static_cast<uint8_t>(side)]; };
+        inline Bitboard get_rook_occupancy(const Side side) const { return bitboards[ROOK_OFFSET + static_cast<uint8_t>(side)]; };
+        inline Bitboard get_pawn_occupancy(const Side side) const { return bitboards[PAWN_OFFSET + static_cast<uint8_t>(side)]; };
 
         inline Bitboard get_bitboard(const int idx) const { return bitboards.at(idx); }
 
         /**
          * @brief Get the en passant file
          *
-         * @return A uint_fast8_t of the en passant file from 0 to 7.  If en passant is not possible, its value is 9.
+         * @return A uint8_t of the en passant file from 0 to 7.  If en passant is not possible, its value is 9.
          */
-        uint_fast8_t get_en_passant_file() const { return en_passant_file; };
+        uint8_t get_en_passant_file() const { return en_passant_file; };
         void set_en_passant_file(int file) {
             zobrist_key ^= ZobristKeys::EnPassantKeys[en_passant_file];
             en_passant_file = file;
@@ -98,7 +98,7 @@ class ChessBoard {
             castling[offset] = val;
         };
 
-        void set_piece(Piece piece, uint_fast8_t pos);
+        void set_piece(Piece piece, uint8_t pos);
         Piece get_piece(const int i) const { return this->pieces[i]; };
         void print_board() const;
         void clear_board();

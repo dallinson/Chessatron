@@ -21,11 +21,10 @@ Score Evaluation::evaluate_board(const ChessBoard& c, const Side side) {
              (std::popcount(c.get_knight_occupancy(side)) * get_piece_score(PieceTypes::KNIGHT)) +
              (std::popcount(c.get_bishop_occupancy(side)) * get_piece_score(PieceTypes::BISHOP)) +
              (std::popcount(c.get_queen_occupancy(side)) * get_piece_score(PieceTypes::QUEEN))) +
-            (legal_move_count * MOBILITY_WEIGHT)) +
-           adjust_positional_value(c, side);
+            (legal_move_count * MOBILITY_WEIGHT)) + adjust_positional_value(c, side);
 }
 
-Score Evaluation::evaluate_board(const ChessBoard& c) {
+Score Evaluation::evaluate_board(const ChessBoard& c, const MoveHistory& m) {
     const Score side_to_move_score = evaluate_board(c, c.get_side_to_move());
     if (side_to_move_score == MagicNumbers::NegativeInfinity) {
         return MagicNumbers::NegativeInfinity;
@@ -34,6 +33,11 @@ Score Evaluation::evaluate_board(const ChessBoard& c) {
     if (enemy_side_score == MagicNumbers::NegativeInfinity) {
         return MagicNumbers::PositiveInfinity;
     }
+
+    if (c.get_halfmove_clock() >= 100 || is_threefold_repetition(m, c.get_halfmove_clock())) {
+        return 0;
+    }
+
     return side_to_move_score - enemy_side_score;
 }
 
@@ -70,6 +74,33 @@ bool Evaluation::is_endgame(const ChessBoard& c) {
         }
     }
     return true;
+}
+
+bool Evaluation::is_threefold_repetition(const MoveHistory& m, const int halfmove_clock) {
+    static uint8_t halfmove_repetitions[65536] = {0};
+    const int mh_len = m.len() - 1;
+    int evaluated_moves = 0;
+    bool to_return = false;
+    for (int i = 0; i < halfmove_clock; i++) {
+        uint16_t repetition_index = m[mh_len - i].get_zobrist_key() & 0xFFFF;
+        halfmove_repetitions[repetition_index] += 1;
+        evaluated_moves += 1;
+        if (halfmove_repetitions[repetition_index] >= 3) {
+            to_return = true;
+            break;
+        }
+        if (m[mh_len - i].get_move().get_move_flags() == MoveFlags::KINGSIDE_CASTLE ||m[mh_len - i].get_move().get_move_flags() == MoveFlags::QUEENSIDE_CASTLE) {
+            // if it was a castling move
+            break;
+        }
+    }
+
+    for (int i = 0; i < evaluated_moves; i++) {
+        uint16_t repetition_index = m[mh_len - i].get_zobrist_key() & 0xFFFF;
+        halfmove_repetitions[repetition_index] = 0;
+    }
+
+    return to_return;
 }
 
 template <PieceTypes piece> Score Evaluation::adjust_positional_value(const ChessBoard& c, const Side side) {

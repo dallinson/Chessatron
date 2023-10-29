@@ -7,7 +7,7 @@
 typedef uint64_t Bitboard;
 typedef size_t ZobristKey;
 
-enum class Side : uint_fast8_t {
+enum class Side : uint8_t {
     WHITE = 0,
     BLACK = 1,
 };
