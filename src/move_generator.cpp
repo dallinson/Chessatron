@@ -297,3 +297,44 @@ bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
 
     return true;
 }
+
+bool MoveGenerator::is_move_pseudolegal(const ChessBoard& c, const Move to_test) {
+    auto src_idx = to_test.get_src_square();
+    auto moved_piece = c.get_piece(src_idx);
+    if (moved_piece.get_value() == 0) {
+        return false;
+    } 
+    auto move_side = moved_piece.get_side();
+    auto piece_type = moved_piece.get_type();
+    if (move_side != c.get_side_to_move()) {
+        return false;
+    }
+    MoveList moves;
+    switch (piece_type) {
+        case PieceTypes::PAWN:
+            generate_pawn_moves(c, move_side, moves);
+            break;
+        case PieceTypes::KNIGHT:
+            generate_knight_moves(c, move_side, moves);
+            break;
+        case PieceTypes::BISHOP:
+            generate_bishop_moves(c, move_side, moves);
+            break;
+        case PieceTypes::ROOK:
+            generate_rook_moves(c, move_side, moves);
+            break;
+        case PieceTypes::QUEEN:
+            generate_queen_moves(c, move_side, moves);
+            break;
+        case PieceTypes::KING:
+            generate_king_moves(c.get_side_occupancy(move_side), c.get_side_occupancy(ENEMY_SIDE(move_side)), src_idx,  moves);
+            break;
+    }
+
+    for (size_t i = 0; i < moves.len(); i++) {
+        if (moves[i] == to_test) {
+            return true;
+        }
+    }
+    return false;
+}

@@ -30,4 +30,5 @@ namespace MoveGenerator {
     MoveList generate_pseudolegal_moves(const ChessBoard& c, const Side side);
 
     bool is_move_legal(const ChessBoard& c, const Move m);
+    bool is_move_pseudolegal(const ChessBoard& c, const Move to_test);
 } // namespace MoveGenerator

@@ -9,11 +9,7 @@
 #include "move_ordering.hpp"
 
 template <bool print_debug> // this could just as easily be done as a parameter but this gives some practice with templates
-uint64_t perft(ChessBoard& c, MoveHistory& m, int depth, std::vector<std::unordered_map<ChessBoard, uint64_t>>& cache_vec) {
-
-    if (cache_vec[depth - 1].contains(c)) {
-        return cache_vec[depth - 1].at(c);
-    }
+uint64_t perft(ChessBoard& c, MoveHistory& m, int depth) {
 
     MoveList moves;
     uint64_t to_return = 0;
@@ -32,27 +28,23 @@ uint64_t perft(ChessBoard& c, MoveHistory& m, int depth, std::vector<std::unorde
     for (size_t i = 0; i < moves.len(); i++) {
         uint64_t val;
         c.make_move(moves[i], m);
-        val = perft<false>(c, m, depth - 1, cache_vec);
+        val = perft<false>(c, m, depth - 1);
         if (print_debug) {
             std::cout << moves[i].to_string() << ": " << val << std::endl;
         }
         to_return += val;
         c.unmake_move(m);
     }
-
-    cache_vec[depth - 1].try_emplace(c, to_return);
     return to_return;
 }
 
 uint64_t Perft::run_perft(ChessBoard& c, int depth, bool print_debug) {
     MoveHistory m;
-    std::vector<std::unordered_map<ChessBoard, uint64_t>> cache_vec;
-    cache_vec.resize(depth);
     uint64_t nodes = 0;
     if (print_debug) {
-        nodes = perft<true>(c, m, depth, cache_vec);
+        nodes = perft<true>(c, m, depth);
     } else {
-        nodes = perft<false>(c, m, depth, cache_vec);
+        nodes = perft<false>(c, m, depth);
     }
     if (print_debug) {
         std::cout << std::endl << "Nodes searched: " << nodes << std::endl;
@@ -87,10 +79,10 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
     Move best_move = Move::NULL_MOVE;
     Move best_move_from_previous_search = Move::NULL_MOVE;
     Score best_score = MagicNumbers::NegativeInfinity;
-    if (transpositions.contains(c)) {
+    if (transpositions[c].get_pv_move() != Move::NULL_MOVE) {
         best_move_from_previous_search = transpositions[c].get_pv_move();
         // The first move we evaluate will _always_ be the best move
-        if (MoveGenerator::is_move_legal(c, best_move_from_previous_search) && best_move_from_previous_search != 0) {
+        if (best_move_from_previous_search != Move::NULL_MOVE && MoveGenerator::is_move_legal(c, best_move_from_previous_search) && MoveGenerator::is_move_pseudolegal(c, best_move_from_previous_search)) {
             c.make_move(best_move_from_previous_search, m);
             best_score = -negamax_step(-beta, -alpha, depth - 1, transpositions, node_count);
             alpha = std::max(best_score, alpha);
@@ -123,7 +115,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
             alpha = std::max(score, alpha);
         }
     }
-    transpositions[c] = TranspositionTableEntry(depth, best_move);
+    transpositions[c] = TranspositionTableEntry(best_move);
     return alpha;
 }
 

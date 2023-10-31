@@ -21,24 +21,35 @@ namespace Search {
 
 class TranspositionTableEntry {
     private:
-        int depth;
         Move pv_move;
 
     public:
-        TranspositionTableEntry() : depth(0), pv_move(0){};
-        TranspositionTableEntry(int depth, Move pv_move) : depth(depth), pv_move(pv_move){};
+        TranspositionTableEntry() : pv_move(Move::NULL_MOVE){};
+        TranspositionTableEntry(Move pv_move) : pv_move(pv_move){};
 
-        int get_depth() { return this->depth; };
         Move get_pv_move() { return this->pv_move; };
 };
 
 class TranspositionTable {
     private:
-        std::unordered_map<ChessBoard, TranspositionTableEntry> table;
+        TranspositionTableEntry* table;
 
     public:
-        bool contains(const ChessBoard& key) const { return table.contains(key); };
-        TranspositionTableEntry& operator[](const ChessBoard& key) { return table[key]; };
+        TranspositionTable() { 
+            table = (TranspositionTableEntry*) calloc((16 * 1024 * 1024) / sizeof(TranspositionTableEntry), sizeof(TranspositionTableEntry)); 
+        };
+        TranspositionTable& operator=(const TranspositionTable& other) {
+            if (this != &other) {
+                if (table != nullptr) {
+                    free(table);
+                }
+                table = (TranspositionTableEntry*) calloc((16 * 1024 * 1024) / sizeof(TranspositionTableEntry), sizeof(TranspositionTableEntry));
+                std::copy(other.table, other.table + ((16 * 1024 * 1024) / sizeof(TranspositionTableEntry)), table);
+            }
+            return *this;
+        }
+        ~TranspositionTable() { free(table); };
+        TranspositionTableEntry& operator[](const ChessBoard& key) { return table[key.get_zobrist_key() >> (64 - 22)]; };
 };
 
 class SearchHandler {

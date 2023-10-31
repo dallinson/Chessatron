@@ -139,7 +139,3 @@ class ChessBoard {
 };
 
 bool operator==(const ChessBoard& lhs, const ChessBoard& rhs);
-
-template <> struct std::hash<ChessBoard> {
-        std::size_t operator()(const ChessBoard& c) const { return c.get_zobrist_key(); }
-};
