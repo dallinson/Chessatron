@@ -108,7 +108,8 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
     if (transpositions[c].get_pv_move() != Move::NULL_MOVE) {
         best_move_from_previous_search = transpositions[c].get_pv_move();
         // The first move we evaluate will _always_ be the best move
-        if (best_move_from_previous_search != Move::NULL_MOVE && MoveGenerator::is_move_legal(c, best_move_from_previous_search) && MoveGenerator::is_move_pseudolegal(c, best_move_from_previous_search)) {
+        if (best_move_from_previous_search != Move::NULL_MOVE && MoveGenerator::is_move_legal(c, best_move_from_previous_search) &&
+            MoveGenerator::is_move_pseudolegal(c, best_move_from_previous_search)) {
             c.make_move(best_move_from_previous_search, m);
             best_score = -negamax_step(-beta, -alpha, depth - 1, transpositions, node_count);
             alpha = std::max(best_score, alpha);

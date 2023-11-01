@@ -59,6 +59,9 @@ class ChessBoard {
         inline Bitboard get_knight_occupancy() const { return get_pair_occupancy(KNIGHT_OFFSET); };
         inline Bitboard get_rook_occupancy() const { return get_pair_occupancy(ROOK_OFFSET); };
         inline Bitboard get_pawn_occupancy() const { return get_pair_occupancy(PAWN_OFFSET); };
+        template <PieceTypes piece_type> inline Bitboard get_piece_occupancy() const {
+            return get_pair_occupancy((2 * ((static_cast<int>(piece_type)) - 1)));
+        };
 
         inline Bitboard get_king_occupancy(const Side side) const { return bitboards[KING_OFFSET + static_cast<uint8_t>(side)]; };
         inline Bitboard get_queen_occupancy(const Side side) const { return bitboards[QUEEN_OFFSET + static_cast<uint8_t>(side)]; };
@@ -66,6 +69,9 @@ class ChessBoard {
         inline Bitboard get_knight_occupancy(const Side side) const { return bitboards[KNIGHT_OFFSET + static_cast<uint8_t>(side)]; };
         inline Bitboard get_rook_occupancy(const Side side) const { return bitboards[ROOK_OFFSET + static_cast<uint8_t>(side)]; };
         inline Bitboard get_pawn_occupancy(const Side side) const { return bitboards[PAWN_OFFSET + static_cast<uint8_t>(side)]; };
+        template <PieceTypes piece_type> inline Bitboard get_piece_occupancy(const Side side) const {
+            return bitboards[(2 * ((static_cast<int>(piece_type)) - 1)) + static_cast<uint8_t>(side)];
+        };
 
         inline Bitboard get_bitboard(const int idx) const { return bitboards.at(idx); }
 

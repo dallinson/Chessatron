@@ -37,8 +37,8 @@ class TranspositionTable {
         TranspositionTableEntry* table;
 
     public:
-        TranspositionTable() { 
-            table = (TranspositionTableEntry*) calloc((16 * 1024 * 1024) / sizeof(TranspositionTableEntry), sizeof(TranspositionTableEntry)); 
+        TranspositionTable() {
+            table = (TranspositionTableEntry*) calloc((16 * 1024 * 1024) / sizeof(TranspositionTableEntry), sizeof(TranspositionTableEntry));
         };
         TranspositionTable& operator=(const TranspositionTable& other) {
             if (this != &other) {
@@ -80,7 +80,7 @@ class SearchHandler {
         bool is_searching() { return this->in_search; };
         int get_current_search_id() { return this->current_search_id; };
         ChessBoard& get_board() { return this->c; };
-        MoveHistory& get_history() { return this-> m; };
+        MoveHistory& get_history() { return this->m; };
 
         void set_board(const ChessBoard& c) { this->c = c; };
         void reset();

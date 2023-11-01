@@ -14,7 +14,7 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountStartPos) {
     MoveGenerator::generate_pawn_moves(c, Side::WHITE, m);
     ASSERT_EQ(m.len(), 16);
     m = MoveList();
-    MoveGenerator::generate_knight_moves(c, Side::WHITE, m);
+    MoveGenerator::generate_moves<PieceTypes::KNIGHT>(c, Side::WHITE, m);
     ASSERT_EQ(m.len(), 4);
 
     lst = MoveGenerator::generate_legal_moves(c, Side::BLACK);
@@ -24,7 +24,7 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountStartPos) {
     ASSERT_EQ(m.len(), 16);
     m = MoveList();
     m = MoveList();
-    MoveGenerator::generate_knight_moves(c, Side::BLACK, m);
+    MoveGenerator::generate_moves<PieceTypes::KNIGHT>(c, Side::BLACK, m);
     ASSERT_EQ(m.len(), 4);
 }
 
@@ -32,7 +32,7 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountMaxMoves) {
     ChessBoard c;
     c.set_from_fen("R6R/3Q4/1Q4Q1/4Q3/2Q4Q/Q4Q2/pp1Q4/kBNN1KB1 ");
     MoveList rook_moves;
-    MoveGenerator::generate_rook_moves(c, Side::WHITE, rook_moves);
+    MoveGenerator::generate_moves<PieceTypes::ROOK>(c, Side::WHITE, rook_moves);
     ASSERT_EQ(rook_moves.len(), 19);
 
     auto lst = MoveGenerator::generate_legal_moves(c, Side::WHITE);
@@ -162,18 +162,18 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountKiwipete) {
     auto legal_moves = MoveGenerator::generate_legal_moves(c, Side::WHITE);
 
     MoveList rook_moves;
-    MoveGenerator::generate_rook_moves(c, Side::WHITE, rook_moves);
+    MoveGenerator::generate_moves<PieceTypes::ROOK>(c, Side::WHITE, rook_moves);
     ASSERT_EQ(rook_moves.len(), 5);
     MoveGenerator::filter_to_legal_moves(c, rook_moves);
     ASSERT_EQ(rook_moves.len(), 5);
 
     MoveList bishop_moves;
-    MoveGenerator::generate_bishop_moves(c, Side::WHITE, bishop_moves);
+    MoveGenerator::generate_moves<PieceTypes::BISHOP>(c, Side::WHITE, bishop_moves);
     MoveGenerator::filter_to_legal_moves(c, bishop_moves);
     ASSERT_EQ(bishop_moves.len(), 11);
 
     MoveList king_moves;
-    MoveGenerator::generate_king_moves(c.get_occupancy(Side::WHITE), c.get_occupancy(Side::BLACK), bitboard_to_idx(c.get_king_occupancy(Side::WHITE)), king_moves);
+    MoveGenerator::generate_moves<PieceTypes::KING>(c, Side::WHITE, king_moves);
     MoveGenerator::filter_to_legal_moves(c, king_moves);
     ASSERT_EQ(king_moves.len(), 2);
 
@@ -183,12 +183,12 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountKiwipete) {
     ASSERT_EQ(castling_moves.len(), 2);
 
     MoveList queen_moves;
-    MoveGenerator::generate_queen_moves(c, Side::WHITE, queen_moves);
+    MoveGenerator::generate_moves<PieceTypes::QUEEN>(c, Side::WHITE, queen_moves);
     MoveGenerator::filter_to_legal_moves(c, queen_moves);
     ASSERT_EQ(queen_moves.len(), 9);
 
     MoveList knight_moves;
-    MoveGenerator::generate_knight_moves(c, Side::WHITE, knight_moves);
+    MoveGenerator::generate_moves<PieceTypes::KNIGHT>(c, Side::WHITE, knight_moves);
     MoveGenerator::filter_to_legal_moves(c, knight_moves);
     ASSERT_EQ(knight_moves.len(), 11);
 
@@ -206,17 +206,17 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountKiwipeteB2B3) {
     auto legal_moves = MoveGenerator::generate_legal_moves(c, Side::BLACK);
 
     MoveList rook_moves;
-    MoveGenerator::generate_rook_moves(c, Side::BLACK, rook_moves);
+    MoveGenerator::generate_moves<PieceTypes::ROOK>(c, Side::BLACK, rook_moves);
     MoveGenerator::filter_to_legal_moves(c, rook_moves);
     ASSERT_EQ(rook_moves.len(), 9);
 
     MoveList bishop_moves;
-    MoveGenerator::generate_bishop_moves(c, Side::BLACK, bishop_moves);
+    MoveGenerator::generate_moves<PieceTypes::BISHOP>(c, Side::BLACK, bishop_moves);
     MoveGenerator::filter_to_legal_moves(c, bishop_moves);
     ASSERT_EQ(bishop_moves.len(), 8);
 
     MoveList king_moves;
-    MoveGenerator::generate_king_moves(c.get_occupancy(Side::BLACK), c.get_occupancy(Side::WHITE), bitboard_to_idx(c.get_king_occupancy(Side::BLACK)), king_moves);
+    MoveGenerator::generate_moves<PieceTypes::KING>(c, Side::BLACK, king_moves);
     MoveGenerator::filter_to_legal_moves(c, king_moves);
     ASSERT_EQ(king_moves.len(), 2);
 
@@ -226,12 +226,12 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountKiwipeteB2B3) {
     ASSERT_EQ(castling_moves.len(), 2);
 
     MoveList queen_moves;
-    MoveGenerator::generate_queen_moves(c, Side::BLACK, queen_moves);
+    MoveGenerator::generate_moves<PieceTypes::QUEEN>(c, Side::BLACK, queen_moves);
     MoveGenerator::filter_to_legal_moves(c, queen_moves);
     ASSERT_EQ(queen_moves.len(), 4);
 
     MoveList knight_moves;
-    MoveGenerator::generate_knight_moves(c, Side::BLACK, knight_moves);
+    MoveGenerator::generate_moves<PieceTypes::KNIGHT>(c, Side::BLACK, knight_moves);
     MoveGenerator::filter_to_legal_moves(c, knight_moves);
     ASSERT_EQ(knight_moves.len(), 10);
 
@@ -252,17 +252,17 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountKiwipeteE1D1C7C6) {
     auto legal_moves = MoveGenerator::generate_legal_moves(c, Side::WHITE);
 
     MoveList rook_moves;
-    MoveGenerator::generate_rook_moves(c, Side::WHITE, rook_moves);
+    MoveGenerator::generate_moves<PieceTypes::ROOK>(c, Side::WHITE, rook_moves);
     MoveGenerator::filter_to_legal_moves(c, rook_moves);
     ASSERT_EQ(rook_moves.len(), 5);
 
     MoveList bishop_moves;
-    MoveGenerator::generate_bishop_moves(c, Side::WHITE, bishop_moves);
+    MoveGenerator::generate_moves<PieceTypes::BISHOP>(c, Side::WHITE, bishop_moves);
     MoveGenerator::filter_to_legal_moves(c, bishop_moves);
     ASSERT_EQ(bishop_moves.len(), 11);
 
     MoveList king_moves;
-    MoveGenerator::generate_king_moves(c.get_occupancy(Side::WHITE), c.get_occupancy(Side::BLACK), bitboard_to_idx(c.get_king_occupancy(Side::WHITE)), king_moves);
+    MoveGenerator::generate_moves<PieceTypes::KING>(c, Side::WHITE, king_moves);
     MoveGenerator::filter_to_legal_moves(c, king_moves);
     ASSERT_EQ(king_moves.len(), 2);
 
@@ -272,12 +272,12 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountKiwipeteE1D1C7C6) {
     ASSERT_EQ(castling_moves.len(), 0);
 
     MoveList queen_moves;
-    MoveGenerator::generate_queen_moves(c, Side::WHITE, queen_moves);
+    MoveGenerator::generate_moves<PieceTypes::QUEEN>(c, Side::WHITE, queen_moves);
     MoveGenerator::filter_to_legal_moves(c, queen_moves);
     ASSERT_EQ(queen_moves.len(), 9);
 
     MoveList knight_moves;
-    MoveGenerator::generate_knight_moves(c, Side::WHITE, knight_moves);
+    MoveGenerator::generate_moves<PieceTypes::KNIGHT>(c, Side::WHITE, knight_moves);
     MoveGenerator::filter_to_legal_moves(c, knight_moves);
     ASSERT_EQ(knight_moves.len(), 10);
 
@@ -293,7 +293,7 @@ TEST(MoveGeneratorTests, TestRookMoves) {
     ChessBoard c;
     c.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
     MoveList rook_moves;
-    MoveGenerator::generate_rook_moves(c, Side::WHITE, rook_moves);
+    MoveGenerator::generate_moves<PieceTypes::ROOK>(c, Side::WHITE, rook_moves);
     auto legal_moves = MoveGenerator::filter_to_legal_moves(c, rook_moves);
     ASSERT_EQ(legal_moves.len(), 5);
 }
@@ -302,7 +302,7 @@ TEST(MoveGeneratorTests, TestWhiteBishopKing) {
     ChessBoard c;
     c.set_from_fen("1B6/8/2r5/1knK4/8/8/8/8 w - - 16 166");
     MoveList king_moves;
-    MoveGenerator::generate_king_moves(c.get_occupancy(Side::WHITE), c.get_occupancy(Side::BLACK), bitboard_to_idx(c.get_king_occupancy(Side::WHITE)), king_moves);
+    MoveGenerator::generate_moves<PieceTypes::KING>(c, Side::WHITE, king_moves);
     auto legal_moves = MoveGenerator::filter_to_legal_moves(c, king_moves);
     ASSERT_EQ(legal_moves.len(), 2);
 }
@@ -311,7 +311,7 @@ TEST(MoveGeneratorTests, TestMoveKingNearKing) {
     ChessBoard c;
     c.set_from_fen("5n2/8/P4P1B/1p6/1p1P2P1/1k6/8/K7 b - - 0 72");
     MoveList king_moves;
-    MoveGenerator::generate_king_moves(c.get_occupancy(Side::BLACK), c.get_occupancy(Side::WHITE), bitboard_to_idx(c.get_king_occupancy(Side::BLACK)), king_moves);
+    MoveGenerator::generate_moves<PieceTypes::KING>(c, Side::BLACK, king_moves);
     auto legal_moves = MoveGenerator::filter_to_legal_moves(c, king_moves);
     ASSERT_EQ(legal_moves.len(), 5);
 }

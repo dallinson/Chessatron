@@ -13,7 +13,8 @@ Score Evaluation::evaluate_board(const ChessBoard& c, const Side side) {
              (std::popcount(c.get_knight_occupancy(side)) * get_piece_score(PieceTypes::KNIGHT)) +
              (std::popcount(c.get_bishop_occupancy(side)) * get_piece_score(PieceTypes::BISHOP)) +
              (std::popcount(c.get_queen_occupancy(side)) * get_piece_score(PieceTypes::QUEEN))) +
-            (legal_move_count * MOBILITY_WEIGHT)) + adjust_positional_value(c, side);
+            (legal_move_count * MOBILITY_WEIGHT)) +
+           adjust_positional_value(c, side);
 }
 
 Score Evaluation::evaluate_board(const ChessBoard& c) {
@@ -63,7 +64,6 @@ bool Evaluation::is_endgame(const ChessBoard& c) {
     }
     return true;
 }
-
 
 template <PieceTypes piece> Score Evaluation::adjust_positional_value(const ChessBoard& c, const Side side) {
     Bitboard occupancy;

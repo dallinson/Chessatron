@@ -12,7 +12,7 @@
 #define MAX_GAME_MOVE_COUNT 5899
 // the maximum possible number of moves, currently 218 on position R6R/3Q4/1Q4Q1/4Q3/2Q4Q/Q4Q2/pp1Q4/kBNN1KB1
 
-enum class MoveFlags : uint_fast8_t {
+enum class MoveFlags : uint8_t {
     QUIET_MOVE = 0,
     DOUBLE_PAWN_PUSH = 1,
     KINGSIDE_CASTLE = 2,
@@ -144,7 +144,5 @@ class MoveHistory {
             return this->data[idx];
         };
 
-        const MoveHistoryEntry& operator[](size_t idx) const {
-            return data[idx];
-        }
+        const MoveHistoryEntry& operator[](size_t idx) const { return data[idx]; }
 };

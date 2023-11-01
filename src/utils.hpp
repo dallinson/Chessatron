@@ -38,3 +38,5 @@ constexpr inline int pop_min_bit(Bitboard& num) {
     CLEAR_BIT(num, to_return);
     return to_return;
 };
+
+bool is_aligned(int sq_1, int sq_2, int sq_3);

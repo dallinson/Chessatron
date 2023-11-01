@@ -16,3 +16,5 @@ void print_bitboard(Bitboard to_print) {
         printf("\n");
     }
 }
+
+bool is_aligned(int sq_1, int sq_2, int sq_3) { return (MagicNumbers::AlignedSquares[(64 * sq_1) + sq_2] & idx_to_bitboard(sq_3)) != 0; }
