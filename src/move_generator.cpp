@@ -7,7 +7,8 @@
 MoveList MoveGenerator::generate_legal_moves(const ChessBoard& c, const Side side) {
     MoveList to_return = generate_pseudolegal_moves(c, side);
 
-    return filter_to_legal_moves(c, to_return);
+    //return filter_to_legal_moves(c, to_return);
+    return to_return;
 }
 
 MoveList MoveGenerator::generate_pseudolegal_moves(const ChessBoard& c, const Side side) {
@@ -117,7 +118,8 @@ template <PieceTypes piece_type> void MoveGenerator::generate_moves(const ChessB
             if (checking_idx != 64) {
                 // no checking pieces implies the checking idx is 64
                 potential_moves &= MagicNumbers::ConnectingSquares[(64 * king_idx) + checking_idx];
-            } else if ((idx_to_bitboard(piece_idx) & c.get_pinned_pieces(side)) != 0) {
+            } 
+            if ((idx_to_bitboard(piece_idx) & c.get_pinned_pieces(side)) != 0) {
                 // if we are pinned
                 potential_moves &= MagicNumbers::AlignedSquares[(64 * king_idx) + piece_idx];
             }
@@ -228,9 +230,11 @@ void MoveGenerator::generate_pawn_moves(const ChessBoard& c, const Side side, Mo
         if (GET_RANK(pawn_idx) == ep_rank && std::abs(c.get_en_passant_file() - static_cast<int>(GET_FILE(pawn_idx))) == 1) {
             // if a pseudolegal en passant is possible
             const auto ep_target_square = POSITION(((int) GET_RANK(pawn_idx)) + (ahead_offset / 8), c.get_en_passant_file());
-            if ((GET_BIT(c.get_pinned_pieces(side), pawn_idx) == 0 || is_aligned(king_idx, pawn_idx, ep_target_square)) &&
-                // and we're not pinned/are moving in the capture direction
-                (checking_idx == 64 || checking_idx == (ep_target_square - ahead_offset))) {
+            const Bitboard cleared_bitboard = total_occupancy ^ idx_to_bitboard(pawn_idx) ^ idx_to_bitboard(ep_target_square) ^ idx_to_bitboard(ep_target_square  - ahead_offset);
+            const Bitboard threatening_bishops = generate_bishop_movemask(cleared_bitboard, king_idx) & (c.get_bishop_occupancy(enemy_side) | c.get_queen_occupancy(enemy_side));
+            const Bitboard threatening_rooks = generate_rook_movemask(cleared_bitboard, king_idx) & (c.get_rook_occupancy(enemy_side) | c.get_queen_occupancy(enemy_side));
+
+            if (threatening_bishops == 0 && threatening_rooks == 0) {
                 move_list.add_move(Move(MoveFlags::EN_PASSANT_CAPTURE, ep_target_square, pawn_idx));
             }
         }
@@ -242,7 +246,7 @@ void MoveGenerator::generate_castling_moves(const ChessBoard& c, const Side side
         int shift_val = 56 * static_cast<int>(side);
         if (((uint64_t) 0b10010000 ^ ((c.get_occupancy() >> shift_val) & 0xF0)) == 0) {
             // if only these spaces are occupied
-            if (get_checking_piece_count(c, side, 5 + shift_val) == 0) {
+            if (get_checking_piece_count(c, side, 5 + shift_val) == 0 && get_checking_piece_count(c, side, 6 + shift_val) == 0) {
                 move_list.add_move(Move(MoveFlags::KINGSIDE_CASTLE, 6 + shift_val, 4 + shift_val));
             }
         }
@@ -251,7 +255,7 @@ void MoveGenerator::generate_castling_moves(const ChessBoard& c, const Side side
         int shift_val = 56 * static_cast<int>(side);
         if (((uint64_t) 0b00010001 ^ ((c.get_occupancy() >> shift_val) & 0x1F)) == 0) {
             // if only these spaces are occupied
-            if (get_checking_piece_count(c, side, 3 + shift_val) == 0) {
+            if (get_checking_piece_count(c, side, 3 + shift_val) == 0 && get_checking_piece_count(c, side, 2 + shift_val) == 0) {
                 move_list.add_move(Move(MoveFlags::QUEENSIDE_CASTLE, 2 + shift_val, 4 + shift_val));
             }
         }
