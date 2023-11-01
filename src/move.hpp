@@ -53,6 +53,7 @@ class Move {
 
         bool is_null_move() const { return move == 0; };
         bool is_capture() const { return (static_cast<int>(get_move_flags()) & 0x04) != 0; };
+        bool is_castling_move() const { return get_move_flags() == MoveFlags::QUEENSIDE_CASTLE || get_move_flags() == MoveFlags::KINGSIDE_CASTLE; };
 
         std::string to_string() const;
 };

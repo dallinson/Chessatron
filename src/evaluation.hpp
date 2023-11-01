@@ -24,10 +24,9 @@ namespace Evaluation {
     extern const std::array<Score, 6> PieceScores;
     constexpr Score get_piece_score(PieceTypes p) { return PieceScores[static_cast<int>(p) - 1]; };
 
-    Score evaluate_board(const ChessBoard& c, const MoveHistory& m);
+    Score evaluate_board(const ChessBoard& c);
     Score evaluate_board(const ChessBoard& c, const Side side);
 
-    bool is_threefold_repetition(const MoveHistory& m, const int halfmove_clock);
     bool is_endgame(const ChessBoard& c);
 
     template <PieceTypes piece> Score adjust_positional_value(const ChessBoard& c, const Side s);

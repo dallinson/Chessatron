@@ -17,6 +17,8 @@ namespace Perft {
 
 namespace Search {
     Move select_random_move(const ChessBoard& c);
+    bool is_threefold_repetition(const MoveHistory& m, const int halfmove_clock, const ZobristKey z);
+    bool is_draw(const ChessBoard& c, const MoveHistory& m);
 } // namespace Search
 
 class TranspositionTableEntry {

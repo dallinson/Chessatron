@@ -57,7 +57,33 @@ Move Search::select_random_move(const ChessBoard& c) {
     return moves[rand() % moves.len()];
 }
 
+bool Search::is_threefold_repetition(const MoveHistory& m, const int halfmove_clock, const ZobristKey z) {
+    int counter = 1;
+    const int mh_len = m.len();
+    for (int i = mh_len - 1; i > mh_len - halfmove_clock; i--) {
+        if (m[i].get_zobrist_key() == z) {
+            counter += 1;
+            if (counter >= 3) {
+                return true;
+            }
+        }
+        if (m[i].get_move().is_castling_move()) {
+            break;
+        }
+    }
+    return false;
+}
+
+bool Search::is_draw(const ChessBoard& c, const MoveHistory& m) {
+    return c.get_halfmove_clock() >= 100 || is_threefold_repetition(m, c.get_halfmove_clock(), c.get_zobrist_key());
+}
+
 Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, TranspositionTable& transpositions, uint64_t& node_count) {
+
+    if (Search::is_draw(c, m)) {
+        return 0;
+    }
+
     if (depth <= 0) {
         return quiescent_search(alpha, beta, transpositions, node_count);
         // return c.evaluate();
@@ -91,6 +117,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         }
     }
     best_move = best_move_from_previous_search;
+    bool evaled_move = false;
     if (best_score < beta) {
         for (size_t i = 0; i < moves.len(); i++) {
             if (search_cancelled) {
@@ -101,6 +128,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
                 // don't evaluate legal moves or the previous best move
                 continue;
             }
+            evaled_move = true;
             c.make_move(move, m);
             auto score = -negamax_step(-beta, -alpha, depth - 1, transpositions, node_count);
             c.unmake_move(m);
@@ -114,13 +142,24 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
             }
             alpha = std::max(score, alpha);
         }
+        if (!evaled_move) {
+            if (c.get_checkers(c.get_side_to_move()) != 0) {
+                // if in check
+                return MagicNumbers::NegativeInfinity;
+            } else {
+                return 0;
+            }
+        }
     }
     transpositions[c] = TranspositionTableEntry(best_move);
     return alpha;
 }
 
 Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTable& transpositions, uint64_t& node_count) {
-    Score stand_pat = Evaluation::evaluate_board(c, m);
+    if (Search::is_draw(c, m)) {
+        return 0;
+    }
+    Score stand_pat = Evaluation::evaluate_board(c);
     if (stand_pat >= beta) {
         return beta;
     }
