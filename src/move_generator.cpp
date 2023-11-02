@@ -7,7 +7,7 @@
 MoveList MoveGenerator::generate_legal_moves(const ChessBoard& c, const Side side) {
     MoveList to_return = generate_pseudolegal_moves(c, side);
 
-    //return filter_to_legal_moves(c, to_return);
+    // return filter_to_legal_moves(c, to_return);
     return to_return;
 }
 
@@ -118,7 +118,7 @@ template <PieceTypes piece_type> void MoveGenerator::generate_moves(const ChessB
             if (checking_idx != 64) {
                 // no checking pieces implies the checking idx is 64
                 potential_moves &= MagicNumbers::ConnectingSquares[(64 * king_idx) + checking_idx];
-            } 
+            }
             if ((idx_to_bitboard(piece_idx) & c.get_pinned_pieces(side)) != 0) {
                 // if we are pinned
                 potential_moves &= MagicNumbers::AlignedSquares[(64 * king_idx) + piece_idx];
@@ -174,6 +174,12 @@ void MoveGenerator::generate_pawn_moves(const ChessBoard& c, const Side side, Mo
         if (GET_BIT(total_occupancy, pawn_idx + ahead_offset) == 0 &&
             (GET_BIT(c.get_pinned_pieces(side), pawn_idx) == 0 || GET_FILE(pawn_idx) == GET_FILE(king_idx))) {
             // if not pinned, or the pawn motion is aligned with the king
+            if ((GET_RANK(pawn_idx) == start_rank && GET_BIT(total_occupancy, pawn_idx + ahead_offset + ahead_offset) == 0) &&
+                (checking_idx == 64 ||
+                 (idx_to_bitboard(pawn_idx + ahead_offset + ahead_offset) & MagicNumbers::ConnectingSquares[(64 * king_idx) + checking_idx]) != 0)) {
+                move_list.add_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, pawn_idx + ahead_offset + ahead_offset, pawn_idx));
+            }
+
             if (checking_idx == 64 ||
                 (idx_to_bitboard(pawn_idx + ahead_offset) & MagicNumbers::ConnectingSquares[(64 * king_idx) + checking_idx]) != 0) {
                 // if not in check or can block
@@ -186,11 +192,6 @@ void MoveGenerator::generate_pawn_moves(const ChessBoard& c, const Side side, Mo
                 } else {
                     move_list.add_move(Move(MoveFlags::QUIET_MOVE, pawn_idx + ahead_offset, pawn_idx));
                 }
-            }
-            if ((GET_RANK(pawn_idx) == start_rank && GET_BIT(total_occupancy, pawn_idx + ahead_offset + ahead_offset) == 0) &&
-                (checking_idx == 64 ||
-                 (idx_to_bitboard(pawn_idx + ahead_offset + ahead_offset) & MagicNumbers::ConnectingSquares[(64 * king_idx) + checking_idx]) != 0)) {
-                move_list.add_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, pawn_idx + ahead_offset + ahead_offset, pawn_idx));
             }
         }
         // This handles advancing
@@ -230,9 +231,12 @@ void MoveGenerator::generate_pawn_moves(const ChessBoard& c, const Side side, Mo
         if (GET_RANK(pawn_idx) == ep_rank && std::abs(c.get_en_passant_file() - static_cast<int>(GET_FILE(pawn_idx))) == 1) {
             // if a pseudolegal en passant is possible
             const auto ep_target_square = POSITION(((int) GET_RANK(pawn_idx)) + (ahead_offset / 8), c.get_en_passant_file());
-            const Bitboard cleared_bitboard = total_occupancy ^ idx_to_bitboard(pawn_idx) ^ idx_to_bitboard(ep_target_square) ^ idx_to_bitboard(ep_target_square  - ahead_offset);
-            const Bitboard threatening_bishops = generate_bishop_movemask(cleared_bitboard, king_idx) & (c.get_bishop_occupancy(enemy_side) | c.get_queen_occupancy(enemy_side));
-            const Bitboard threatening_rooks = generate_rook_movemask(cleared_bitboard, king_idx) & (c.get_rook_occupancy(enemy_side) | c.get_queen_occupancy(enemy_side));
+            const Bitboard cleared_bitboard =
+                total_occupancy ^ idx_to_bitboard(pawn_idx) ^ idx_to_bitboard(ep_target_square) ^ idx_to_bitboard(ep_target_square - ahead_offset);
+            const Bitboard threatening_bishops =
+                generate_bishop_movemask(cleared_bitboard, king_idx) & (c.get_bishop_occupancy(enemy_side) | c.get_queen_occupancy(enemy_side));
+            const Bitboard threatening_rooks =
+                generate_rook_movemask(cleared_bitboard, king_idx) & (c.get_rook_occupancy(enemy_side) | c.get_queen_occupancy(enemy_side));
 
             if (threatening_bishops == 0 && threatening_rooks == 0) {
                 move_list.add_move(Move(MoveFlags::EN_PASSANT_CAPTURE, ep_target_square, pawn_idx));
