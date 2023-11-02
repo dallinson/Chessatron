@@ -25,10 +25,7 @@ size_t MoveOrdering::reorder_captures(MoveList& move_list, const ChessBoard& c, 
     return captures;
 }
 
-bool MoveOrdering::reorder_pv_move(MoveList& move_list, const ChessBoard& board, const Move pv_move) {
-    if (pv_move == Move::NULL_MOVE || !MoveGenerator::is_move_legal(board, pv_move) || !MoveGenerator::is_move_pseudolegal(board, pv_move)) {
-        return false;
-    }
+bool MoveOrdering::reorder_pv_move(MoveList& move_list, const Move pv_move) {
     for (size_t i = 0; i < move_list.len(); i++) {
         if (move_list[i] == pv_move) {
             std::swap(move_list[0], move_list[i]);

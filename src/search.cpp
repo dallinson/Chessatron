@@ -101,7 +101,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
     }
 
     auto moves = MoveGenerator::generate_pseudolegal_moves(c, c.get_side_to_move());
-    bool found_pv_move = MoveOrdering::reorder_pv_move(moves, c, table[c].get_pv_move());
+    bool found_pv_move = MoveOrdering::reorder_pv_move(moves, table[c].get_pv_move());
     MoveOrdering::reorder_captures(moves, c, static_cast<size_t>(found_pv_move));
     Move best_move = Move::NULL_MOVE;
     Score best_score = MagicNumbers::NegativeInfinity;
@@ -193,7 +193,7 @@ Move SearchHandler::run_iterative_deepening_search() {
         Score score = MagicNumbers::NegativeInfinity;
         uint64_t node_count = 0;
 
-        const bool found_pv_move = MoveOrdering::reorder_pv_move(moves, c, best_move_so_far);
+        const bool found_pv_move = MoveOrdering::reorder_pv_move(moves, best_move_so_far);
         MoveOrdering::reorder_captures(moves, c, static_cast<size_t>(found_pv_move));
 
         for (size_t i = 0; i < moves.len(); i++) {
