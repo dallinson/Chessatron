@@ -101,54 +101,40 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
     }
 
     auto moves = MoveGenerator::generate_pseudolegal_moves(c, c.get_side_to_move());
-    MoveOrdering::reorder_captures(moves, c);
+    bool found_pv_move = MoveOrdering::reorder_pv_move(moves, c, table[c].get_pv_move());
+    MoveOrdering::reorder_captures(moves, c, static_cast<size_t>(found_pv_move));
     Move best_move = Move::NULL_MOVE;
-    Move best_move_from_previous_search = Move::NULL_MOVE;
     Score best_score = MagicNumbers::NegativeInfinity;
-    if (transpositions[c].get_pv_move() != Move::NULL_MOVE) {
-        best_move_from_previous_search = transpositions[c].get_pv_move();
-        // The first move we evaluate will _always_ be the best move
-        if (best_move_from_previous_search != Move::NULL_MOVE && MoveGenerator::is_move_legal(c, best_move_from_previous_search) && MoveGenerator::is_move_pseudolegal(c, best_move_from_previous_search)) {
-            c.make_move(best_move_from_previous_search, m);
-            best_score = -negamax_step(-beta, -alpha, depth - 1, transpositions, node_count);
-            alpha = std::max(best_score, alpha);
-            c.unmake_move(m);
-            node_count += 1;
-        }
-    }
-    best_move = best_move_from_previous_search;
     bool evaled_move = false;
-    if (best_score < beta) {
-        for (size_t i = 0; i < moves.len(); i++) {
-            if (search_cancelled) {
-                break;
-            }
-            const auto& move = moves[i];
-            if (!MoveGenerator::is_move_legal(c, move) || move == best_move_from_previous_search) {
-                // don't evaluate legal moves or the previous best move
-                continue;
-            }
-            evaled_move = true;
-            c.make_move(move, m);
-            auto score = -negamax_step(-beta, -alpha, depth - 1, transpositions, node_count);
-            c.unmake_move(m);
-            node_count += 1;
-            if (score >= beta) {
-                return beta;
-            }
-            if (score > best_score) {
-                best_score = score;
-                best_move = move;
-            }
-            alpha = std::max(score, alpha);
+    for (size_t i = 0; i < moves.len(); i++) {
+        if (search_cancelled) {
+            break;
         }
-        if (!evaled_move) {
-            if (c.get_checkers(c.get_side_to_move()) != 0) {
-                // if in check
-                return MagicNumbers::NegativeInfinity;
-            } else {
-                return 0;
-            }
+        const auto& move = moves[i];
+        if (!MoveGenerator::is_move_legal(c, move)) {
+            // don't evaluate legal moves or the previous best move
+            continue;
+        }
+        evaled_move = true;
+        c.make_move(move, m);
+        auto score = -negamax_step(-beta, -alpha, depth - 1, transpositions, node_count);
+        c.unmake_move(m);
+        node_count += 1;
+        if (score >= beta) {
+            return beta;
+        }
+        if (score > best_score) {
+            best_score = score;
+            best_move = move;
+        }
+        alpha = std::max(score, alpha);
+    }
+    if (!evaled_move) {
+        if (c.get_checkers(c.get_side_to_move()) != 0) {
+            // if in check
+            return MagicNumbers::NegativeInfinity;
+        } else {
+            return 0;
         }
     }
     transpositions[c] = TranspositionTableEntry(best_move);
@@ -165,7 +151,7 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
     }
     alpha = std::max(stand_pat, alpha);
     auto moves = MoveGenerator::generate_pseudolegal_moves(c, c.get_side_to_move());
-    auto capture_count = MoveOrdering::reorder_captures(moves, c);
+    auto capture_count = MoveOrdering::reorder_captures(moves, c, 0);
     for (size_t i = 0; i < capture_count; i++) {
         if (search_cancelled) {
             break;
@@ -198,7 +184,6 @@ Move SearchHandler::run_iterative_deepening_search() {
         // If only one move is legal in this position we don't need to search; we can just return the one legal move
         // in order to save some time
     }
-    MoveOrdering::reorder_captures(moves, c);
     for (int depth = 1; depth <= perft_depth && !search_cancelled; depth++) {
         int best_score_this_depth = MagicNumbers::NegativeInfinity;
         Move best_move_this_depth = Move::NULL_MOVE;
@@ -207,35 +192,22 @@ Move SearchHandler::run_iterative_deepening_search() {
         Score beta = MagicNumbers::PositiveInfinity;
         Score score = MagicNumbers::NegativeInfinity;
         uint64_t node_count = 0;
-        if (!best_move_so_far.is_null_move()) {
-            c.make_move(best_move_so_far, m);
+
+        const bool found_pv_move = MoveOrdering::reorder_pv_move(moves, c, best_move_so_far);
+        MoveOrdering::reorder_captures(moves, c, static_cast<size_t>(found_pv_move));
+
+        for (size_t i = 0; i < moves.len(); i++) {
+            c.make_move(moves[i], m);
             score = -negamax_step(-beta, -alpha, depth - 1, table, node_count);
             c.unmake_move(m);
             node_count += 1;
             alpha = std::max(score, alpha);
-            best_score_this_depth = score;
-            best_move_this_depth = best_move_so_far;
-        }
-
-        if (score < beta) {
-            // If score >= beta then we beta-prune every other move!
-            for (size_t i = 0; i < moves.len(); i++) {
-                if (moves[i] == best_move_so_far) {
-                    // If it has already been examined
-                    continue;
-                }
-                c.make_move(moves[i], m);
-                score = -negamax_step(-beta, -alpha, depth - 1, table, node_count);
-                c.unmake_move(m);
-                node_count += 1;
-                alpha = std::max(score, alpha);
-                if (score > best_score_this_depth) {
-                    best_score_this_depth = score;
-                    best_move_this_depth = moves[i];
-                }
-                if (score >= beta) {
-                    break;
-                }
+            if (score > best_score_this_depth) {
+                best_score_this_depth = score;
+                best_move_this_depth = moves[i];
+            }
+            if (score >= beta) {
+                break;
             }
         }
 
