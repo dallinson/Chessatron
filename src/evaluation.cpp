@@ -7,7 +7,7 @@
 constexpr std::array<int32_t, 6> Evaluation::PieceScores = {100, 500, 320, 330, 900, 20000};
 
 Score Evaluation::evaluate_board(const ChessBoard& c, const Side side) {
-    auto legal_move_count = MoveGenerator::generate_legal_moves(c, side).len();
+    auto legal_move_count = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, side).len();
     return (((std::popcount(c.get_pawn_occupancy(side)) * get_piece_score(PieceTypes::PAWN)) +
              (std::popcount(c.get_rook_occupancy(side)) * get_piece_score(PieceTypes::ROOK)) +
              (std::popcount(c.get_knight_occupancy(side)) * get_piece_score(PieceTypes::KNIGHT)) +

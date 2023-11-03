@@ -14,7 +14,7 @@ uint64_t perft(ChessBoard& c, MoveHistory& m, int depth) {
     MoveList moves;
     uint64_t to_return = 0;
 
-    moves = MoveGenerator::generate_legal_moves(c, c.get_side_to_move());
+    moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, c.get_side_to_move());
 
     if (depth == 1) {
         if (print_debug) {
@@ -53,7 +53,7 @@ uint64_t Perft::run_perft(ChessBoard& c, int depth, bool print_debug) {
 }
 
 Move Search::select_random_move(const ChessBoard& c) {
-    auto moves = MoveGenerator::generate_legal_moves(c, c.get_side_to_move());
+    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, c.get_side_to_move());
     return moves[rand() % moves.len()];
 }
 
@@ -101,7 +101,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         }
     }
 
-    auto moves = MoveGenerator::generate_pseudolegal_moves(c, c.get_side_to_move());
+    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, c.get_side_to_move());
     bool found_pv_move = MoveOrdering::reorder_pv_move(moves, table[c].get_pv_move());
     MoveOrdering::reorder_captures(moves, c, static_cast<size_t>(found_pv_move));
     Move best_move = Move::NULL_MOVE;
@@ -151,7 +151,7 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
         return beta;
     }
     alpha = std::max(stand_pat, alpha);
-    auto moves = MoveGenerator::generate_pseudolegal_moves(c, c.get_side_to_move());
+    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::CAPTURES>(c, c.get_side_to_move());
     auto capture_count = MoveOrdering::reorder_captures(moves, c, 0);
     for (size_t i = 0; i < capture_count; i++) {
         if (search_cancelled) {
@@ -177,7 +177,7 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
 Move SearchHandler::run_iterative_deepening_search() {
     Move best_move_so_far = 0;
     // TranspositionTable transpositions;
-    auto moves = MoveGenerator::generate_legal_moves(c, c.get_side_to_move());
+    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, c.get_side_to_move());
     // We generate legal moves only as it saves us having to continually rerun legality checks
     if (moves.len() == 1) {
         return moves[0];

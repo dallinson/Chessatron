@@ -104,7 +104,7 @@ TEST(ChessBoardTests, TestMakeUnmakeMove) {
     c.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");
     o.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");
 
-    auto BishopMoves = MoveGenerator::generate_pseudolegal_moves(c, Side::WHITE);
+    auto BishopMoves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE);
     MoveHistory h;
     for (size_t j = 0; j < BishopMoves.len(); j++) {
         Move m = BishopMoves[j];
