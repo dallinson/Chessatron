@@ -17,11 +17,12 @@ Score Evaluation::evaluate_board(const ChessBoard& c, const Side side) {
            adjust_positional_value(c, side);
 }
 
-Score Evaluation::evaluate_board(const ChessBoard& c) {
+Score Evaluation::evaluate_board(ChessBoard& c) {
     const Score side_to_move_score = evaluate_board(c, c.get_side_to_move());
     if (side_to_move_score == MagicNumbers::NegativeInfinity) {
         return MagicNumbers::NegativeInfinity;
     }
+    c.recompute_blockers_and_checkers(ENEMY_SIDE(c.get_side_to_move()));
     const Score enemy_side_score = evaluate_board(c, ENEMY_SIDE(c.get_side_to_move()));
     if (enemy_side_score == MagicNumbers::NegativeInfinity) {
         return MagicNumbers::PositiveInfinity;
