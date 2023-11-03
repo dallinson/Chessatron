@@ -79,6 +79,7 @@ bool Search::is_draw(const ChessBoard& c, const MoveHistory& m) {
 }
 
 Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, TranspositionTable& transpositions, uint64_t& node_count) {
+    node_count += 1;
 
     if (Search::is_draw(c, m)) {
         return 0;
@@ -119,7 +120,6 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         c.make_move(move, m);
         auto score = -negamax_step(-beta, -alpha, depth - 1, transpositions, node_count);
         c.unmake_move(m);
-        node_count += 1;
         if (score >= beta) {
             return beta;
         }
@@ -142,6 +142,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
 }
 
 Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTable& transpositions, uint64_t& node_count) {
+    node_count += 1;
     if (Search::is_draw(c, m)) {
         return 0;
     }
@@ -165,7 +166,6 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
         c.make_move(move, m);
         auto score = -quiescent_search(-beta, -alpha, transpositions, node_count);
         c.unmake_move(m);
-        node_count += 1;
         if (score >= beta) {
             return beta;
         }
@@ -191,7 +191,7 @@ Move SearchHandler::run_iterative_deepening_search() {
         Score alpha = MagicNumbers::NegativeInfinity;
         Score beta = MagicNumbers::PositiveInfinity;
         Score score = MagicNumbers::NegativeInfinity;
-        uint64_t node_count = 0;
+        uint64_t node_count = 1;
 
         const bool found_pv_move = MoveOrdering::reorder_pv_move(moves, best_move_so_far);
         MoveOrdering::reorder_captures(moves, c, static_cast<size_t>(found_pv_move));
@@ -200,7 +200,6 @@ Move SearchHandler::run_iterative_deepening_search() {
             c.make_move(moves[i], m);
             score = -negamax_step(-beta, -alpha, depth - 1, table, node_count);
             c.unmake_move(m);
-            node_count += 1;
             alpha = std::max(score, alpha);
             if (score > best_score_this_depth) {
                 best_score_this_depth = score;
