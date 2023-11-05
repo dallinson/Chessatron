@@ -6,11 +6,7 @@
 #include "move.hpp"
 #include "utils.hpp"
 
-enum class MoveGenType {
-    ALL_LEGAL,
-    CAPTURES,
-    NON_CAPTURES
-};
+enum class MoveGenType { ALL_LEGAL, CAPTURES, NON_CAPTURES };
 
 namespace MoveGenerator {
     template <MoveGenType gen_type> MoveList generate_legal_moves(const ChessBoard& c, const Side side);
@@ -34,8 +30,7 @@ namespace MoveGenerator {
 
 } // namespace MoveGenerator
 
-template <MoveGenType gen_type>
-MoveList MoveGenerator::generate_legal_moves(const ChessBoard& c, const Side side) {
+template <MoveGenType gen_type> MoveList MoveGenerator::generate_legal_moves(const ChessBoard& c, const Side side) {
     MoveList to_return;
 
     MoveGenerator::generate_moves<PieceTypes::KING, gen_type>(c, side, to_return);
@@ -115,8 +110,7 @@ template <PieceTypes piece_type, MoveGenType gen_type> void MoveGenerator::gener
     }
 }
 
-template <MoveGenType gen_type>
-void MoveGenerator::generate_pawn_moves(const ChessBoard& c, const Side side, MoveList& move_list) {
+template <MoveGenType gen_type> void MoveGenerator::generate_pawn_moves(const ChessBoard& c, const Side side, MoveList& move_list) {
     Bitboard pawn_mask = c.get_pawn_occupancy(side);
     const Side enemy_side = ENEMY_SIDE(side);
     const Bitboard enemy_occupancy = c.get_occupancy(enemy_side);
@@ -135,75 +129,78 @@ void MoveGenerator::generate_pawn_moves(const ChessBoard& c, const Side side, Mo
     const auto ep_rank = side == Side::WHITE ? 4u : 3u;
     while (pawn_mask) {
         int pawn_idx = pop_min_bit(pawn_mask);
-        if (GET_BIT(total_occupancy, pawn_idx + ahead_offset) == 0 &&
-            (GET_BIT(c.get_pinned_pieces(side), pawn_idx) == 0 || GET_FILE(pawn_idx) == GET_FILE(king_idx))) {
-            // if not pinned, or the pawn motion is aligned with the king
-            if ((GET_RANK(pawn_idx) == start_rank && GET_BIT(total_occupancy, pawn_idx + ahead_offset + ahead_offset) == 0) &&
-                (checking_idx == 64 ||
-                 (idx_to_bitboard(pawn_idx + ahead_offset + ahead_offset) & MagicNumbers::ConnectingSquares[(64 * king_idx) + checking_idx]) != 0)) {
-                move_list.add_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, pawn_idx + ahead_offset + ahead_offset, pawn_idx));
-            }
+        if constexpr (gen_type != MoveGenType::CAPTURES) {
+            if (GET_BIT(total_occupancy, pawn_idx + ahead_offset) == 0 &&
+                (GET_BIT(c.get_pinned_pieces(side), pawn_idx) == 0 || GET_FILE(pawn_idx) == GET_FILE(king_idx))) {
+                // if not pinned, or the pawn motion is aligned with the king
+                if ((GET_RANK(pawn_idx) == start_rank && GET_BIT(total_occupancy, pawn_idx + ahead_offset + ahead_offset) == 0) &&
+                    (checking_idx == 64 || (idx_to_bitboard(pawn_idx + ahead_offset + ahead_offset) &
+                                            MagicNumbers::ConnectingSquares[(64 * king_idx) + checking_idx]) != 0)) {
+                    move_list.add_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, pawn_idx + ahead_offset + ahead_offset, pawn_idx));
+                }
 
-            if (checking_idx == 64 ||
-                (idx_to_bitboard(pawn_idx + ahead_offset) & MagicNumbers::ConnectingSquares[(64 * king_idx) + checking_idx]) != 0) {
-                // if not in check or can block
+                if (checking_idx == 64 ||
+                    (idx_to_bitboard(pawn_idx + ahead_offset) & MagicNumbers::ConnectingSquares[(64 * king_idx) + checking_idx]) != 0) {
+                    // if not in check or can block
 
-                if (GET_RANK(pawn_idx) == penultimate_rank) {
-                    move_list.add_move(Move(MoveFlags::ROOK_PROMOTION, pawn_idx + ahead_offset, pawn_idx));
-                    move_list.add_move(Move(MoveFlags::KNIGHT_PROMOTION, pawn_idx + ahead_offset, pawn_idx));
-                    move_list.add_move(Move(MoveFlags::BISHOP_PROMOTION, pawn_idx + ahead_offset, pawn_idx));
-                    move_list.add_move(Move(MoveFlags::QUEEN_PROMOTION, pawn_idx + ahead_offset, pawn_idx));
-                } else {
-                    move_list.add_move(Move(MoveFlags::QUIET_MOVE, pawn_idx + ahead_offset, pawn_idx));
+                    if (GET_RANK(pawn_idx) == penultimate_rank) {
+                        move_list.add_move(Move(MoveFlags::ROOK_PROMOTION, pawn_idx + ahead_offset, pawn_idx));
+                        move_list.add_move(Move(MoveFlags::KNIGHT_PROMOTION, pawn_idx + ahead_offset, pawn_idx));
+                        move_list.add_move(Move(MoveFlags::BISHOP_PROMOTION, pawn_idx + ahead_offset, pawn_idx));
+                        move_list.add_move(Move(MoveFlags::QUEEN_PROMOTION, pawn_idx + ahead_offset, pawn_idx));
+                    } else {
+                        move_list.add_move(Move(MoveFlags::QUIET_MOVE, pawn_idx + ahead_offset, pawn_idx));
+                    }
                 }
             }
-        }
-        // This handles advancing
-
-        if ((GET_FILE(pawn_idx) != left_wall && GET_BIT(enemy_occupancy, pawn_idx + capture_front_left)) &&
-            // if there is a piece we _can_ capture
-            (GET_BIT(c.get_pinned_pieces(side), pawn_idx) == 0 || is_aligned(king_idx, pawn_idx, pawn_idx + capture_front_left)) &&
-            // and we're not pinned/are moving in the capture direction
-            (checking_idx == 64 || checking_idx == pawn_idx + capture_front_left)) {
-            // or we want are capturing the checking piece
-            if (GET_RANK(pawn_idx) != penultimate_rank) {
-                move_list.add_move(Move(MoveFlags::CAPTURE, pawn_idx + capture_front_left, pawn_idx));
-            } else {
-                move_list.add_move(Move(MoveFlags::ROOK_PROMOTION_CAPTURE, pawn_idx + capture_front_left, pawn_idx));
-                move_list.add_move(Move(MoveFlags::KNIGHT_PROMOTION_CAPTURE, pawn_idx + capture_front_left, pawn_idx));
-                move_list.add_move(Move(MoveFlags::BISHOP_PROMOTION_CAPTURE, pawn_idx + capture_front_left, pawn_idx));
-                move_list.add_move(Move(MoveFlags::QUEEN_PROMOTION_CAPTURE, pawn_idx + capture_front_left, pawn_idx));
+            // This handles advancing
+        } 
+        if constexpr (gen_type != MoveGenType::NON_CAPTURES) {
+            if ((GET_FILE(pawn_idx) != left_wall && GET_BIT(enemy_occupancy, pawn_idx + capture_front_left)) &&
+                // if there is a piece we _can_ capture
+                (GET_BIT(c.get_pinned_pieces(side), pawn_idx) == 0 || is_aligned(king_idx, pawn_idx, pawn_idx + capture_front_left)) &&
+                // and we're not pinned/are moving in the capture direction
+                (checking_idx == 64 || checking_idx == pawn_idx + capture_front_left)) {
+                // or we want are capturing the checking piece
+                if (GET_RANK(pawn_idx) != penultimate_rank) {
+                    move_list.add_move(Move(MoveFlags::CAPTURE, pawn_idx + capture_front_left, pawn_idx));
+                } else {
+                    move_list.add_move(Move(MoveFlags::ROOK_PROMOTION_CAPTURE, pawn_idx + capture_front_left, pawn_idx));
+                    move_list.add_move(Move(MoveFlags::KNIGHT_PROMOTION_CAPTURE, pawn_idx + capture_front_left, pawn_idx));
+                    move_list.add_move(Move(MoveFlags::BISHOP_PROMOTION_CAPTURE, pawn_idx + capture_front_left, pawn_idx));
+                    move_list.add_move(Move(MoveFlags::QUEEN_PROMOTION_CAPTURE, pawn_idx + capture_front_left, pawn_idx));
+                }
             }
-        }
 
-        if ((GET_FILE(pawn_idx) != right_wall && GET_BIT(enemy_occupancy, pawn_idx + capture_front_right)) &&
-            // if there is a piece we _can_ capture
-            (GET_BIT(c.get_pinned_pieces(side), pawn_idx) == 0 || is_aligned(king_idx, pawn_idx, pawn_idx + capture_front_right)) &&
-            // and we're not pinned/are moving in the capture direction
-            (checking_idx == 64 || checking_idx == pawn_idx + capture_front_right)) {
-            // or we want are capturing the checking piece
-            if (GET_RANK(pawn_idx) != penultimate_rank) {
-                move_list.add_move(Move(MoveFlags::CAPTURE, pawn_idx + capture_front_right, pawn_idx));
-            } else {
-                move_list.add_move(Move(MoveFlags::ROOK_PROMOTION_CAPTURE, pawn_idx + capture_front_right, pawn_idx));
-                move_list.add_move(Move(MoveFlags::KNIGHT_PROMOTION_CAPTURE, pawn_idx + capture_front_right, pawn_idx));
-                move_list.add_move(Move(MoveFlags::BISHOP_PROMOTION_CAPTURE, pawn_idx + capture_front_right, pawn_idx));
-                move_list.add_move(Move(MoveFlags::QUEEN_PROMOTION_CAPTURE, pawn_idx + capture_front_right, pawn_idx));
+            if ((GET_FILE(pawn_idx) != right_wall && GET_BIT(enemy_occupancy, pawn_idx + capture_front_right)) &&
+                // if there is a piece we _can_ capture
+                (GET_BIT(c.get_pinned_pieces(side), pawn_idx) == 0 || is_aligned(king_idx, pawn_idx, pawn_idx + capture_front_right)) &&
+                // and we're not pinned/are moving in the capture direction
+                (checking_idx == 64 || checking_idx == pawn_idx + capture_front_right)) {
+                // or we want are capturing the checking piece
+                if (GET_RANK(pawn_idx) != penultimate_rank) {
+                    move_list.add_move(Move(MoveFlags::CAPTURE, pawn_idx + capture_front_right, pawn_idx));
+                } else {
+                    move_list.add_move(Move(MoveFlags::ROOK_PROMOTION_CAPTURE, pawn_idx + capture_front_right, pawn_idx));
+                    move_list.add_move(Move(MoveFlags::KNIGHT_PROMOTION_CAPTURE, pawn_idx + capture_front_right, pawn_idx));
+                    move_list.add_move(Move(MoveFlags::BISHOP_PROMOTION_CAPTURE, pawn_idx + capture_front_right, pawn_idx));
+                    move_list.add_move(Move(MoveFlags::QUEEN_PROMOTION_CAPTURE, pawn_idx + capture_front_right, pawn_idx));
+                }
             }
-        }
 
-        if (GET_RANK(pawn_idx) == ep_rank && std::abs(c.get_en_passant_file() - static_cast<int>(GET_FILE(pawn_idx))) == 1) {
-            // if a pseudolegal en passant is possible
-            const auto ep_target_square = POSITION(((int) GET_RANK(pawn_idx)) + (ahead_offset / 8), c.get_en_passant_file());
-            const Bitboard cleared_bitboard =
-                total_occupancy ^ idx_to_bitboard(pawn_idx) ^ idx_to_bitboard(ep_target_square) ^ idx_to_bitboard(ep_target_square - ahead_offset);
-            const Bitboard threatening_bishops =
-                generate_bishop_movemask(cleared_bitboard, king_idx) & (c.get_bishop_occupancy(enemy_side) | c.get_queen_occupancy(enemy_side));
-            const Bitboard threatening_rooks =
-                generate_rook_movemask(cleared_bitboard, king_idx) & (c.get_rook_occupancy(enemy_side) | c.get_queen_occupancy(enemy_side));
+            if (GET_RANK(pawn_idx) == ep_rank && std::abs(c.get_en_passant_file() - static_cast<int>(GET_FILE(pawn_idx))) == 1) {
+                // if a pseudolegal en passant is possible
+                const auto ep_target_square = POSITION(((int) GET_RANK(pawn_idx)) + (ahead_offset / 8), c.get_en_passant_file());
+                const Bitboard cleared_bitboard = total_occupancy ^ idx_to_bitboard(pawn_idx) ^ idx_to_bitboard(ep_target_square) ^
+                                                  idx_to_bitboard(ep_target_square - ahead_offset);
+                const Bitboard threatening_bishops =
+                    generate_bishop_movemask(cleared_bitboard, king_idx) & (c.get_bishop_occupancy(enemy_side) | c.get_queen_occupancy(enemy_side));
+                const Bitboard threatening_rooks =
+                    generate_rook_movemask(cleared_bitboard, king_idx) & (c.get_rook_occupancy(enemy_side) | c.get_queen_occupancy(enemy_side));
 
-            if (threatening_bishops == 0 && threatening_rooks == 0) {
-                move_list.add_move(Move(MoveFlags::EN_PASSANT_CAPTURE, ep_target_square, pawn_idx));
+                if (threatening_bishops == 0 && threatening_rooks == 0) {
+                    move_list.add_move(Move(MoveFlags::EN_PASSANT_CAPTURE, ep_target_square, pawn_idx));
+                }
             }
         }
     }

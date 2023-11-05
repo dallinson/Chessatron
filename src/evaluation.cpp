@@ -7,26 +7,20 @@
 constexpr std::array<int32_t, 6> Evaluation::PieceScores = {100, 500, 320, 330, 900, 20000};
 
 Score Evaluation::evaluate_board(const ChessBoard& c, const Side side) {
-    auto legal_move_count = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, side).len();
+    auto slider_moves = std::popcount(Evaluation::calculate_sliding_mobility(c, side));
     return (((std::popcount(c.get_pawn_occupancy(side)) * get_piece_score(PieceTypes::PAWN)) +
              (std::popcount(c.get_rook_occupancy(side)) * get_piece_score(PieceTypes::ROOK)) +
              (std::popcount(c.get_knight_occupancy(side)) * get_piece_score(PieceTypes::KNIGHT)) +
              (std::popcount(c.get_bishop_occupancy(side)) * get_piece_score(PieceTypes::BISHOP)) +
              (std::popcount(c.get_queen_occupancy(side)) * get_piece_score(PieceTypes::QUEEN))) +
-            (legal_move_count * MOBILITY_WEIGHT)) +
+            (slider_moves * MOBILITY_WEIGHT)) +
            adjust_positional_value(c, side);
 }
 
 Score Evaluation::evaluate_board(ChessBoard& c) {
     const Score side_to_move_score = evaluate_board(c, c.get_side_to_move());
-    if (side_to_move_score == MagicNumbers::NegativeInfinity) {
-        return MagicNumbers::NegativeInfinity;
-    }
     c.recompute_blockers_and_checkers(ENEMY_SIDE(c.get_side_to_move()));
     const Score enemy_side_score = evaluate_board(c, ENEMY_SIDE(c.get_side_to_move()));
-    if (enemy_side_score == MagicNumbers::NegativeInfinity) {
-        return MagicNumbers::PositiveInfinity;
-    }
 
     return side_to_move_score - enemy_side_score;
 }
@@ -138,4 +132,42 @@ Score Evaluation::adjust_positional_value(const ChessBoard& c, const Side side) 
     return adjust_positional_value<PieceTypes::PAWN>(c, side) + adjust_positional_value<PieceTypes::KNIGHT>(c, side) +
            adjust_positional_value<PieceTypes::BISHOP>(c, side) + adjust_positional_value<PieceTypes::ROOK>(c, side) +
            adjust_positional_value<PieceTypes::QUEEN>(c, side) + adjust_positional_value<PieceTypes::KING>(c, side);
+}
+
+Bitboard Evaluation::calculate_sliding_mobility(const ChessBoard& c, const Side side) {
+    const auto king_idx = bitboard_to_idx(c.get_king_occupancy(side));
+    const auto checkers = c.get_checkers(side);
+    if (std::popcount(checkers) >= 2) {
+        return 0;
+    }
+    const auto checking_idx = bitboard_to_idx(checkers);
+    Bitboard to_return = 0;
+
+    Bitboard sliders = c.get_queen_occupancy(side) | c.get_king_occupancy(side) | c.get_bishop_occupancy(side);
+    const Bitboard friendly_occupancy = sliders | c.get_king_occupancy(side) | c.get_knight_occupancy(side) | c.get_pawn_occupancy(side);
+    const Bitboard total_occupancy = friendly_occupancy | c.get_occupancy(ENEMY_SIDE(side));
+
+    while (sliders) {
+        const auto piece_idx = pop_min_bit(sliders);
+        Bitboard valid_moves = 0;
+        const auto piece_type = c.get_piece(piece_idx).get_type();
+        if (piece_type == PieceTypes::BISHOP || piece_type == PieceTypes::QUEEN) {
+            valid_moves |= MoveGenerator::generate_bishop_movemask(total_occupancy, piece_idx);
+        }
+        if (piece_type == PieceTypes::ROOK || piece_type == PieceTypes::QUEEN) {
+            valid_moves |= MoveGenerator::generate_rook_movemask(total_occupancy, piece_idx);
+        }
+        if (checking_idx != 64) {
+            // no checking pieces implies the checking idx is 64
+            valid_moves &= MagicNumbers::ConnectingSquares[(64 * king_idx) + checking_idx];
+        }
+        if ((idx_to_bitboard(piece_idx) & c.get_pinned_pieces(side)) != 0) {
+            // if we are pinned
+            valid_moves &= MagicNumbers::AlignedSquares[(64 * king_idx) + piece_idx];
+        }
+        to_return |= valid_moves;
+    }
+    to_return &= ~friendly_occupancy;
+    // clear friendlies
+    return to_return;
 }

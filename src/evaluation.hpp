@@ -31,4 +31,5 @@ namespace Evaluation {
 
     template <PieceTypes piece> Score adjust_positional_value(const ChessBoard& c, const Side s);
     Score adjust_positional_value(const ChessBoard& c, const Side s);
+    Bitboard calculate_sliding_mobility(const ChessBoard& c, const Side side);
 } // namespace Evaluation

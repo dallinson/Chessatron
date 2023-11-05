@@ -102,11 +102,19 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
     }
 
     auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, c.get_side_to_move());
+    if (moves.len() == 0) {
+        if (c.get_checkers(c.get_side_to_move()) != 0) {
+            // if in check
+            return MagicNumbers::NegativeInfinity;
+        } else {
+            return 0;
+        }
+    }
+    // mate detection
     bool found_pv_move = MoveOrdering::reorder_pv_move(moves, table[c].get_pv_move());
     MoveOrdering::reorder_captures(moves, c, static_cast<size_t>(found_pv_move));
     Move best_move = Move::NULL_MOVE;
     Score best_score = MagicNumbers::NegativeInfinity;
-    bool evaled_move = false;
     for (size_t i = 0; i < moves.len(); i++) {
         if (search_cancelled) {
             break;
@@ -116,7 +124,6 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
             // don't evaluate legal moves or the previous best move
             continue;
         }
-        evaled_move = true;
         c.make_move(move, m);
         auto score = -negamax_step(-beta, -alpha, depth - 1, transpositions, node_count);
         c.unmake_move(m);
@@ -128,14 +135,6 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
             best_move = move;
         }
         alpha = std::max(score, alpha);
-    }
-    if (!evaled_move) {
-        if (c.get_checkers(c.get_side_to_move()) != 0) {
-            // if in check
-            return MagicNumbers::NegativeInfinity;
-        } else {
-            return 0;
-        }
     }
     transpositions[c] = TranspositionTableEntry(best_move);
     return alpha;
@@ -152,6 +151,14 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
     }
     alpha = std::max(stand_pat, alpha);
     auto moves = MoveGenerator::generate_legal_moves<MoveGenType::CAPTURES>(c, c.get_side_to_move());
+    if (moves.len() == 0 && MoveGenerator::generate_legal_moves<MoveGenType::NON_CAPTURES>(c, c.get_side_to_move()).len() == 0) {
+        if (c.get_checkers(c.get_side_to_move()) != 0) {
+            // if in check
+            return MagicNumbers::NegativeInfinity;
+        } else {
+            return 0;
+        }
+    }
     auto capture_count = MoveOrdering::reorder_captures(moves, c, 0);
     for (size_t i = 0; i < capture_count; i++) {
         if (search_cancelled) {
