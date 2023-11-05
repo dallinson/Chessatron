@@ -80,7 +80,8 @@ void MoveGenerator::generate_castling_moves(const ChessBoard& c, const Side side
 
 bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
     int king_idx = bitboard_to_idx(c.get_king_occupancy(c.get_side_to_move()));
-    const Side enemy_side = ENEMY_SIDE(c.get_piece(m.get_src_square()).get_side());
+    const auto move_side = c.get_piece(m.get_src_square()).get_side();
+    const Side enemy_side = ENEMY_SIDE(move_side);
     if (m.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) {
         // with en passant knights and pawns _cannot_ capture as the previous
         // move was moving a pawn, and therefore knights/pawns were not in
@@ -99,13 +100,13 @@ bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
     } else if (c.get_piece(m.get_src_square()).get_type() == PieceTypes::KING) {
         Bitboard cleared_bitboard = c.get_occupancy() ^ idx_to_bitboard(m.get_src_square());
         int target_idx = m.get_dest_square();
-        return !(
-            (generate_bishop_movemask(cleared_bitboard, target_idx) & (c.get_bishop_occupancy(enemy_side) | c.get_queen_occupancy(enemy_side))) ||
-            (generate_rook_movemask(cleared_bitboard, target_idx) & (c.get_rook_occupancy(enemy_side) | c.get_queen_occupancy(enemy_side))) ||
-            (c.get_knight_occupancy(enemy_side) & MagicNumbers::KnightMoves[target_idx]) ||
-            (c.get_pawn_occupancy(enemy_side) &
-             MagicNumbers::PawnAttacks[(64 * static_cast<int>(c.get_piece(m.get_src_square()).get_side())) + target_idx]) ||
-            (c.get_king_occupancy(enemy_side) & MagicNumbers::KingMoves[target_idx]));
+        const auto potential_diagonal_sliders = (c.get_bishop_occupancy(enemy_side) | c.get_queen_occupancy(enemy_side));
+        const auto potential_orthogonal_sliders = (c.get_rook_occupancy(enemy_side) | c.get_queen_occupancy(enemy_side));
+        return !((generate_bishop_movemask(cleared_bitboard, target_idx) & potential_diagonal_sliders) ||
+                 (generate_rook_movemask(cleared_bitboard, target_idx) & potential_orthogonal_sliders) ||
+                 (c.get_knight_occupancy(enemy_side) & MagicNumbers::KnightMoves[target_idx]) ||
+                 (c.get_pawn_occupancy(enemy_side) & MagicNumbers::PawnAttacks[(64 * static_cast<int>(move_side)) + target_idx]) ||
+                 (c.get_king_occupancy(enemy_side) & MagicNumbers::KingMoves[target_idx]));
     } else [[likely]] {
 
         Bitboard checking_pieces = c.get_checkers(c.get_side_to_move());

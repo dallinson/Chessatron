@@ -112,7 +112,8 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
     }
     // mate detection
     bool found_pv_move = MoveOrdering::reorder_pv_move(moves, table[c].get_pv_move());
-    MoveOrdering::reorder_captures(moves, c, static_cast<size_t>(found_pv_move));
+    const auto capture_count = MoveOrdering::reorder_captures_first(moves, static_cast<size_t>(found_pv_move)) - static_cast<size_t>(found_pv_move);
+    MoveOrdering::sort_captures_mvv_lva(moves, c, static_cast<size_t>(found_pv_move), capture_count);
     Move best_move = Move::NULL_MOVE;
     Score best_score = MagicNumbers::NegativeInfinity;
     for (size_t i = 0; i < moves.len(); i++) {
@@ -159,7 +160,8 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
             return 0;
         }
     }
-    auto capture_count = MoveOrdering::reorder_captures(moves, c, 0);
+    auto capture_count = moves.len();
+    MoveOrdering::sort_captures_mvv_lva(moves, c, 0, capture_count);
     for (size_t i = 0; i < capture_count; i++) {
         if (search_cancelled) {
             break;
@@ -201,7 +203,8 @@ Move SearchHandler::run_iterative_deepening_search() {
         uint64_t node_count = 1;
 
         const bool found_pv_move = MoveOrdering::reorder_pv_move(moves, best_move_so_far);
-        MoveOrdering::reorder_captures(moves, c, static_cast<size_t>(found_pv_move));
+        const auto capture_count = MoveOrdering::reorder_captures_first(moves, static_cast<size_t>(found_pv_move)) - static_cast<size_t>(found_pv_move);
+        MoveOrdering::sort_captures_mvv_lva(moves, c, static_cast<size_t>(found_pv_move), capture_count);
 
         for (size_t i = 0; i < moves.len(); i++) {
             c.make_move(moves[i], m);

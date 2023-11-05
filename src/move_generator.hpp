@@ -88,11 +88,11 @@ template <PieceTypes piece_type, MoveGenType gen_type> void MoveGenerator::gener
             const auto target_idx = pop_min_bit(potential_moves);
             if constexpr (piece_type == PieceTypes::KING) {
                 const Bitboard cleared_bitboard = total_occupancy ^ idx_to_bitboard(king_idx);
+                const auto potential_diagonal_sliders = (c.get_bishop_occupancy(enemy_side) | c.get_queen_occupancy(enemy_side));
+                const auto potential_orthogonal_sliders = (c.get_rook_occupancy(enemy_side) | c.get_queen_occupancy(enemy_side));
                 const bool is_dest_checked =
-                    ((generate_bishop_movemask(cleared_bitboard, target_idx) &
-                      (c.get_bishop_occupancy(enemy_side) | c.get_queen_occupancy(enemy_side))) ||
-                     (generate_rook_movemask(cleared_bitboard, target_idx) &
-                      (c.get_rook_occupancy(enemy_side) | c.get_queen_occupancy(enemy_side))) ||
+                    ((generate_bishop_movemask(cleared_bitboard, target_idx) & potential_diagonal_sliders) ||
+                     (generate_rook_movemask(cleared_bitboard, target_idx) & potential_orthogonal_sliders) ||
                      (c.get_knight_occupancy(enemy_side) & MagicNumbers::KnightMoves[target_idx]) ||
                      (c.get_pawn_occupancy(enemy_side) & MagicNumbers::PawnAttacks[(64 * static_cast<int>(side)) + target_idx]) ||
                      (c.get_king_occupancy(enemy_side) & MagicNumbers::KingMoves[target_idx]));
@@ -154,7 +154,7 @@ template <MoveGenType gen_type> void MoveGenerator::generate_pawn_moves(const Ch
                 }
             }
             // This handles advancing
-        } 
+        }
         if constexpr (gen_type != MoveGenType::NON_CAPTURES) {
             if ((GET_FILE(pawn_idx) != left_wall && GET_BIT(enemy_occupancy, pawn_idx + capture_front_left)) &&
                 // if there is a piece we _can_ capture
