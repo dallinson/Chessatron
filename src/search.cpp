@@ -60,7 +60,7 @@ Move Search::select_random_move(const ChessBoard& c) {
 bool Search::is_threefold_repetition(const MoveHistory& m, const int halfmove_clock, const ZobristKey z) {
     int counter = 1;
     const int mh_len = m.len();
-    for (int i = mh_len - 1; i > mh_len - halfmove_clock; i--) {
+    for (int i = mh_len - 1; i > 0 && i > mh_len - halfmove_clock; i--) {
         if (m[i].get_zobrist_key() == z) {
             counter += 1;
             if (counter >= 3) {
@@ -79,7 +79,6 @@ bool Search::is_draw(const ChessBoard& c, const MoveHistory& m) {
 }
 
 Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, TranspositionTable& transpositions, uint64_t& node_count) {
-    node_count += 1;
 
     if (Search::is_draw(c, m)) {
         return 0;
@@ -121,11 +120,8 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
             break;
         }
         const auto& move = moves[i];
-        if (!MoveGenerator::is_move_legal(c, move)) {
-            // don't evaluate legal moves or the previous best move
-            continue;
-        }
         c.make_move(move, m);
+        node_count += 1;
         auto score = -negamax_step(-beta, -alpha, depth - 1, transpositions, node_count);
         c.unmake_move(m);
         if (score >= beta) {
@@ -142,7 +138,6 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
 }
 
 Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTable& transpositions, uint64_t& node_count) {
-    node_count += 1;
     if (Search::is_draw(c, m)) {
         return 0;
     }
@@ -167,12 +162,8 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
             break;
         }
         const auto& move = moves[i];
-        if (!MoveGenerator::is_move_legal(c, move)) {
-            // In a quiescent search we're only interested in (legal) captures
-            // Move reordering ensures that captures are positioned first
-            continue;
-        }
         c.make_move(move, m);
+        node_count += 1;
         auto score = -quiescent_search(-beta, -alpha, transpositions, node_count);
         c.unmake_move(m);
         if (score >= beta) {
@@ -184,6 +175,8 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
 }
 
 Move SearchHandler::run_iterative_deepening_search() {
+    uint64_t node_count = 0;
+    const auto search_start_point = std::chrono::steady_clock::now();
     Move best_move_so_far = 0;
     // TranspositionTable transpositions;
     auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, c.get_side_to_move());
@@ -200,7 +193,6 @@ Move SearchHandler::run_iterative_deepening_search() {
         Score alpha = MagicNumbers::NegativeInfinity;
         Score beta = MagicNumbers::PositiveInfinity;
         Score score = MagicNumbers::NegativeInfinity;
-        uint64_t node_count = 1;
 
         const bool found_pv_move = MoveOrdering::reorder_pv_move(moves, best_move_so_far);
         const auto capture_count = MoveOrdering::reorder_captures_first(moves, static_cast<size_t>(found_pv_move)) - static_cast<size_t>(found_pv_move);
@@ -208,6 +200,7 @@ Move SearchHandler::run_iterative_deepening_search() {
 
         for (size_t i = 0; i < moves.len(); i++) {
             c.make_move(moves[i], m);
+            node_count += 1;
             score = -negamax_step(-beta, -alpha, depth - 1, table, node_count);
             c.unmake_move(m);
             alpha = std::max(score, alpha);

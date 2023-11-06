@@ -21,6 +21,7 @@ Bitboard MoveGenerator::get_checkers(const ChessBoard& c, const Side side, const
     to_return |= c.get_rook_occupancy(enemy_side) & rook_mask;
     to_return |= c.get_knight_occupancy(enemy_side) & MagicNumbers::KnightMoves[king_idx];
     to_return |= c.get_pawn_occupancy(enemy_side) & MagicNumbers::PawnAttacks[(64 * static_cast<int>(side)) + king_idx];
+    to_return |= c.get_king_occupancy(enemy_side) & MagicNumbers::KingMoves[king_idx];
 
     return to_return;
 }

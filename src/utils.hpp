@@ -5,7 +5,7 @@
 #include <cstdint>
 
 typedef uint64_t Bitboard;
-typedef size_t ZobristKey;
+typedef uint64_t ZobristKey;
 
 enum class Side : uint8_t {
     WHITE = 0,

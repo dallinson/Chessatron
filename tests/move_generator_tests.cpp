@@ -305,3 +305,11 @@ TEST(MoveGeneratorTests, TestCorrectCaptureCount) {
     }
     ASSERT_EQ(captures, 4);
 }
+
+TEST(MoveGeneratorTests, TestThreatenedCastle) {
+    ChessBoard c;
+    c.set_from_fen("3r4/8/2r4p/p2n2p1/6P1/3p3P/P2B2k1/3RK2R w K - 1 39");
+    MoveList moves;
+    MoveGenerator::generate_castling_moves(c, c.get_side_to_move(), moves);
+    ASSERT_EQ(moves.len(), 0);
+}

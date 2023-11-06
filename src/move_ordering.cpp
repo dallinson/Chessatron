@@ -19,10 +19,10 @@ size_t MoveOrdering::reorder_captures_first(MoveList& move_list, size_t start_po
 
 void MoveOrdering::sort_captures_mvv_lva(MoveList& move_list, const ChessBoard& c, const size_t capture_start, const size_t capture_count) {
     std::sort(&move_list[capture_start], &move_list[capture_start + capture_count], [c](const Move a, const Move b) {
-        int a_target = Evaluation::get_piece_score(c.get_piece(a.get_dest_square()).get_type());
-        int b_target = Evaluation::get_piece_score(c.get_piece(b.get_dest_square()).get_type());
-        if (a_target != b_target) {
-            return a_target > b_target;
+        const auto a_target_type = a.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE ? PieceTypes::PAWN : c.get_piece(a.get_dest_square()).get_type();
+        const auto b_target_type = b.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE ? PieceTypes::PAWN : c.get_piece(b.get_dest_square()).get_type();
+        if (a_target_type != b_target_type) {
+            return Evaluation::get_piece_score(a_target_type) > Evaluation::get_piece_score(b_target_type);
             // you're meant to use operator<; we use operator> in order to sort the victims in descending order
         }
         int a_src = Evaluation::get_piece_score(c.get_piece(a.get_src_square()).get_type());
