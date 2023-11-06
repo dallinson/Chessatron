@@ -195,7 +195,8 @@ Move SearchHandler::run_iterative_deepening_search() {
         Score score = MagicNumbers::NegativeInfinity;
 
         const bool found_pv_move = MoveOrdering::reorder_pv_move(moves, best_move_so_far);
-        const auto capture_count = MoveOrdering::reorder_captures_first(moves, static_cast<size_t>(found_pv_move)) - static_cast<size_t>(found_pv_move);
+        const auto capture_count =
+            MoveOrdering::reorder_captures_first(moves, static_cast<size_t>(found_pv_move)) - static_cast<size_t>(found_pv_move);
         MoveOrdering::sort_captures_mvv_lva(moves, c, static_cast<size_t>(found_pv_move), capture_count);
 
         for (size_t i = 0; i < moves.len(); i++) {
@@ -213,12 +214,10 @@ Move SearchHandler::run_iterative_deepening_search() {
             }
         }
 
+        const auto time_so_far = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - search_start_point).count();
+
         if (!search_cancelled) {
-            auto nps = static_cast<uint64_t>(
-                node_count /
-                (static_cast<float>(
-                     std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - search_start_point).count()) /
-                 1000000));
+            auto nps = static_cast<uint64_t>(node_count / (static_cast<float>(time_so_far) / 1000));
             printf("info depth %d bestmove %s nodes %" PRIu64 " nps %" PRIu64 " ", depth, best_move_this_depth.to_string().c_str(), node_count, nps);
             if (std::abs(best_score_this_depth) == MagicNumbers::PositiveInfinity) {
                 // If this is a checkmate
@@ -233,6 +232,11 @@ Move SearchHandler::run_iterative_deepening_search() {
             }
             best_move_so_far = best_move_this_depth;
         }
+
+        if (time_so_far > ((search_time_ms * 6) / 10)) {
+            break;
+        }
+
     }
     return best_move_so_far;
 }

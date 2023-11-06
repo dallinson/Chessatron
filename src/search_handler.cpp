@@ -47,6 +47,7 @@ void SearchHandler::search(int ms, int32_t max_depth) {
     search_cancelled = true;
     perft_depth = max_depth;
     // cancel a search if performing one
+    search_time_ms = ms > 0 ? ms : MagicNumbers::PositiveInfinity;
     semaphore.release();
     // We then wake up the search thread
     int id_to_cancel = current_search_id;

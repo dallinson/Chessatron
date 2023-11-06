@@ -65,6 +65,7 @@ class SearchHandler {
         std::atomic<int> current_search_id = 0;
         std::future<void> cancelFuture;
         int perft_depth = 0;
+        uint32_t search_time_ms;
         Move bestMove;
 
         void search_thread_function();
