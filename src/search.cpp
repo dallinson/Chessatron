@@ -236,7 +236,6 @@ Move SearchHandler::run_iterative_deepening_search() {
         if (time_so_far > ((search_time_ms * 6) / 10)) {
             break;
         }
-
     }
     return best_move_so_far;
 }

@@ -2,7 +2,6 @@
 
 #include "../src/evaluation.hpp"
 
-
 TEST(EvaluationTests, CheckCorrectScoreEvaluations) {
     ChessBoard c;
     MoveHistory m;
@@ -27,5 +26,4 @@ TEST(EvaluationTests, TestEndgame) {
     ASSERT_TRUE(Evaluation::is_endgame(c));
     c.set_from_fen("8/1k6/8/8/6K1/8/1q1p4/8 w - - 0 1");
     ASSERT_FALSE(Evaluation::is_endgame(c));
-
 }

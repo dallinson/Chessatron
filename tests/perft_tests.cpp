@@ -83,5 +83,4 @@ TEST(PerftTests, TestCastlingPosition) {
     ASSERT_EQ(Perft::run_perft(c, 3), 17239);
     ASSERT_EQ(Perft::run_perft(c, 4), 591483);
     ASSERT_EQ(Perft::run_perft(c, 5), 13795582);
-
 }
