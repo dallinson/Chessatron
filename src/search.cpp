@@ -233,7 +233,7 @@ Move SearchHandler::run_iterative_deepening_search() {
             best_move_so_far = best_move_this_depth;
         }
 
-        if (time_so_far > ((search_time_ms * 6) / 10)) {
+        if (time_so_far > ((search_time_ms * 3) / 10)) {
             break;
         }
     }

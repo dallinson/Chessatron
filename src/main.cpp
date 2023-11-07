@@ -100,16 +100,17 @@ void process_go_command(const std::vector<std::string>& line, SearchHandler& s) 
         return;
     }
     auto current_side = s.get_board().get_side_to_move();
-    auto halfmoves_so_far = (2 * s.get_board().get_fullmove_counter()) + static_cast<int>(current_side);
+   // auto halfmoves_so_far = (2 * s.get_board().get_fullmove_counter()) + static_cast<int>(current_side);
     auto remaining_time = (current_side == Side::WHITE) ? wtime : btime;
     auto increment = ((current_side == Side::WHITE) ? winc : binc) / movestogo;
     // next we determine how to use our allocated time using the formula
     // 59.3 + (72830 - 2330 k)/(2644 + k (10 + k)), where k is the number of halfmoves
     // so far.  This formula is taken from https://chess.stackexchange.com/questions/2506/what-is-the-average-length-of-a-game-of-chess.
-    float remaining_halfmoves =
-        59.3 + (static_cast<float>(72830 - (2330 * halfmoves_so_far)) / static_cast<float>(2644 + (halfmoves_so_far * (10 + halfmoves_so_far))));
+    //float remaining_halfmoves =
+    //    59.3 + (static_cast<float>(72830 - (2330 * halfmoves_so_far)) / static_cast<float>(2644 + (halfmoves_so_far * (10 + halfmoves_so_far))));
 
-    s.search((remaining_time / static_cast<int>(remaining_halfmoves)) + increment, depth);
+    //s.search((remaining_time / static_cast<int>(remaining_halfmoves)) + increment, depth);
+    s.search(remaining_time / 20 + increment / 2, depth);
 }
 
 int main(int argc, char** argv) {
