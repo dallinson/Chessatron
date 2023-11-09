@@ -58,8 +58,8 @@ class SearchHandler {
     private:
         std::thread searchThread;
         std::binary_semaphore semaphore{0};
-        ChessBoard c;
-        MoveHistory m;
+        ChessBoard board;
+        MoveHistory history;
         std::atomic<bool> in_search, search_cancelled, shutting_down, should_perft = false;
         TranspositionTable table;
         std::atomic<int> current_search_id = 0;
@@ -79,10 +79,10 @@ class SearchHandler {
 
         bool is_searching() { return this->in_search; };
         int get_current_search_id() { return this->current_search_id; };
-        ChessBoard& get_board() { return this->c; };
-        MoveHistory& get_history() { return this->m; };
+        ChessBoard& get_board() { return this->board; };
+        MoveHistory& get_history() { return this->history; };
 
-        void set_board(const ChessBoard& c) { this->c = c; };
+        void set_board(const ChessBoard& c) { this->board = c; };
         void reset();
 
         void search(int ms, int32_t max_depth = MagicNumbers::PositiveInfinity);

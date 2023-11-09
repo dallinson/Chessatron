@@ -13,13 +13,13 @@ void SearchHandler::search_thread_function() {
         search_cancelled = false;
         in_search = true;
         if (should_perft) {
-            Perft::run_perft(c, perft_depth, true);
+            Perft::run_perft(board, perft_depth, true);
             should_perft = false;
         } else {
             auto move = run_iterative_deepening_search();
             if (move.is_null_move()) {
                 // Unlikely, but possible!
-                move = Search::select_random_move(c);
+                move = Search::select_random_move(board);
                 // Just choose a random move
             }
             if (this_search_id == current_search_id) {
@@ -73,6 +73,6 @@ void SearchHandler::run_perft(int depth) {
 
 void SearchHandler::reset() {
     this->EndSearch();
-    c = ChessBoard();
+    board = ChessBoard();
     table = TranspositionTable();
 }

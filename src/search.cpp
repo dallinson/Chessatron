@@ -17,7 +17,7 @@ uint64_t perft(ChessBoard& c, MoveHistory& m, int depth) {
     moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, c.get_side_to_move());
 
     if (depth == 1) {
-        if (print_debug) {
+        if constexpr (print_debug) {
             for (size_t i = 0; i < moves.len(); i++) {
                 printf("%s: 1\n", moves[i].to_string().c_str());
             }
@@ -29,7 +29,7 @@ uint64_t perft(ChessBoard& c, MoveHistory& m, int depth) {
         uint64_t val;
         c.make_move(moves[i], m);
         val = perft<false>(c, m, depth - 1);
-        if (print_debug) {
+        if constexpr (print_debug) {
             std::cout << moves[i].to_string() << ": " << val << std::endl;
         }
         to_return += val;
@@ -80,7 +80,7 @@ bool Search::is_draw(const ChessBoard& c, const MoveHistory& m) {
 
 Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, TranspositionTable& transpositions, uint64_t& node_count) {
 
-    if (Search::is_draw(c, m)) {
+    if (Search::is_draw(board, history)) {
         return 0;
     }
 
@@ -89,20 +89,20 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         // return c.evaluate();
     }
 
-    if (c.get_checkers(c.get_side_to_move()) == 0) {
+    if (board.get_checkers(board.get_side_to_move()) == 0) {
         // Try null move pruning if we aren't in check
-        c.make_move(Move::NULL_MOVE, m);
+        board.make_move(Move::NULL_MOVE, history);
         // First we make the null move
         auto null_score = -negamax_step(-beta, -alpha, depth - 1 - 2, transpositions, node_count);
-        c.unmake_move(m);
+        board.unmake_move(history);
         if (null_score >= beta) {
             return beta;
         }
     }
 
-    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, c.get_side_to_move());
+    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(board, board.get_side_to_move());
     if (moves.len() == 0) {
-        if (c.get_checkers(c.get_side_to_move()) != 0) {
+        if (board.get_checkers(board.get_side_to_move()) != 0) {
             // if in check
             return MagicNumbers::NegativeInfinity;
         } else {
@@ -110,9 +110,9 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         }
     }
     // mate detection
-    bool found_pv_move = MoveOrdering::reorder_pv_move(moves, table[c].get_pv_move());
+    bool found_pv_move = MoveOrdering::reorder_pv_move(moves, table[board].get_pv_move());
     const auto capture_count = MoveOrdering::reorder_captures_first(moves, static_cast<size_t>(found_pv_move)) - static_cast<size_t>(found_pv_move);
-    MoveOrdering::sort_captures_mvv_lva(moves, c, static_cast<size_t>(found_pv_move), capture_count);
+    MoveOrdering::sort_captures_mvv_lva(moves, board, static_cast<size_t>(found_pv_move), capture_count);
     Move best_move = Move::NULL_MOVE;
     Score best_score = MagicNumbers::NegativeInfinity;
     for (size_t i = 0; i < moves.len(); i++) {
@@ -120,10 +120,10 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
             break;
         }
         const auto& move = moves[i];
-        c.make_move(move, m);
+        board.make_move(move, history);
         node_count += 1;
         auto score = -negamax_step(-beta, -alpha, depth - 1, transpositions, node_count);
-        c.unmake_move(m);
+        board.unmake_move(history);
         if (score >= beta) {
             return beta;
         }
@@ -133,22 +133,22 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         }
         alpha = std::max(score, alpha);
     }
-    transpositions[c] = TranspositionTableEntry(best_move);
+    transpositions[board] = TranspositionTableEntry(best_move);
     return alpha;
 }
 
 Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTable& transpositions, uint64_t& node_count) {
-    if (Search::is_draw(c, m)) {
+    if (Search::is_draw(board, history)) {
         return 0;
     }
-    Score stand_pat = Evaluation::evaluate_board(c);
+    Score stand_pat = Evaluation::evaluate_board(board);
     if (stand_pat >= beta) {
         return beta;
     }
     alpha = std::max(stand_pat, alpha);
-    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::CAPTURES>(c, c.get_side_to_move());
-    if (moves.len() == 0 && MoveGenerator::generate_legal_moves<MoveGenType::NON_CAPTURES>(c, c.get_side_to_move()).len() == 0) {
-        if (c.get_checkers(c.get_side_to_move()) != 0) {
+    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::CAPTURES>(board, board.get_side_to_move());
+    if (moves.len() == 0 && MoveGenerator::generate_legal_moves<MoveGenType::NON_CAPTURES>(board, board.get_side_to_move()).len() == 0) {
+        if (board.get_checkers(board.get_side_to_move()) != 0) {
             // if in check
             return MagicNumbers::NegativeInfinity;
         } else {
@@ -156,16 +156,16 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
         }
     }
     auto capture_count = moves.len();
-    MoveOrdering::sort_captures_mvv_lva(moves, c, 0, capture_count);
+    MoveOrdering::sort_captures_mvv_lva(moves, board, 0, capture_count);
     for (size_t i = 0; i < capture_count; i++) {
         if (search_cancelled) {
             break;
         }
         const auto& move = moves[i];
-        c.make_move(move, m);
+        board.make_move(move, history);
         node_count += 1;
         auto score = -quiescent_search(-beta, -alpha, transpositions, node_count);
-        c.unmake_move(m);
+        board.unmake_move(history);
         if (score >= beta) {
             return beta;
         }
@@ -179,7 +179,7 @@ Move SearchHandler::run_iterative_deepening_search() {
     const auto search_start_point = std::chrono::steady_clock::now();
     Move best_move_so_far = 0;
     // TranspositionTable transpositions;
-    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, c.get_side_to_move());
+    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(board, board.get_side_to_move());
     // We generate legal moves only as it saves us having to continually rerun legality checks
     if (moves.len() == 1) {
         return moves[0];
@@ -196,14 +196,14 @@ Move SearchHandler::run_iterative_deepening_search() {
 
         const bool found_pv_move = MoveOrdering::reorder_pv_move(moves, best_move_so_far);
         const auto capture_count =
-            MoveOrdering::reorder_captures_first(moves, static_cast<size_t>(found_pv_move)) - static_cast<size_t>(found_pv_move);
-        MoveOrdering::sort_captures_mvv_lva(moves, c, static_cast<size_t>(found_pv_move), capture_count);
+        MoveOrdering::reorder_captures_first(moves, static_cast<size_t>(found_pv_move)) - static_cast<size_t>(found_pv_move);
+        MoveOrdering::sort_captures_mvv_lva(moves, board, static_cast<size_t>(found_pv_move), capture_count);
 
         for (size_t i = 0; i < moves.len(); i++) {
-            c.make_move(moves[i], m);
+            board.make_move(moves[i], history);
             node_count += 1;
             score = -negamax_step(-beta, -alpha, depth - 1, table, node_count);
-            c.unmake_move(m);
+            board.unmake_move(history);
             alpha = std::max(score, alpha);
             if (score > best_score_this_depth) {
                 best_score_this_depth = score;
@@ -217,7 +217,7 @@ Move SearchHandler::run_iterative_deepening_search() {
         const auto time_so_far = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - search_start_point).count();
 
         if (!search_cancelled) {
-            auto nps = static_cast<uint64_t>(node_count / (static_cast<float>(time_so_far) / 1000));
+            const auto nps = static_cast<uint64_t>(node_count / (static_cast<float>(time_so_far) / 1000));
             printf("info depth %d bestmove %s nodes %" PRIu64 " nps %" PRIu64 " ", depth, best_move_this_depth.to_string().c_str(), node_count, nps);
             if (std::abs(best_score_this_depth) == MagicNumbers::PositiveInfinity) {
                 // If this is a checkmate
