@@ -41,9 +41,12 @@ class ChessBoard {
         inline Bitboard get_occupancy(const Side side) const { return get_side_occupancy(side); };
 
         inline Bitboard get_side_occupancy(const Side side) const {
-            return bitboards[bitboard_offset<PieceTypes::KING> + static_cast<uint8_t>(side)] | bitboards[bitboard_offset<PieceTypes::QUEEN> + static_cast<uint8_t>(side)] |
-                   bitboards[bitboard_offset<PieceTypes::BISHOP> + static_cast<uint8_t>(side)] | bitboards[bitboard_offset<PieceTypes::KNIGHT> + static_cast<uint8_t>(side)] |
-                   bitboards[bitboard_offset<PieceTypes::ROOK> + static_cast<uint8_t>(side)] | bitboards[bitboard_offset<PieceTypes::PAWN> + static_cast<uint8_t>(side)];
+            return bitboards[bitboard_offset<PieceTypes::KING> + static_cast<uint8_t>(side)] |
+                   bitboards[bitboard_offset<PieceTypes::QUEEN> + static_cast<uint8_t>(side)] |
+                   bitboards[bitboard_offset<PieceTypes::BISHOP> + static_cast<uint8_t>(side)] |
+                   bitboards[bitboard_offset<PieceTypes::KNIGHT> + static_cast<uint8_t>(side)] |
+                   bitboards[bitboard_offset<PieceTypes::ROOK> + static_cast<uint8_t>(side)] |
+                   bitboards[bitboard_offset<PieceTypes::PAWN> + static_cast<uint8_t>(side)];
         };
         inline Bitboard get_white_occupancy() const { return get_side_occupancy(Side::WHITE); };
         inline Bitboard get_black_occupancy() const { return get_side_occupancy(Side::WHITE); };
@@ -54,16 +57,26 @@ class ChessBoard {
         inline Bitboard get_knight_occupancy() const { return get_pair_occupancy(bitboard_offset<PieceTypes::KNIGHT>); };
         inline Bitboard get_rook_occupancy() const { return get_pair_occupancy(bitboard_offset<PieceTypes::ROOK>); };
         inline Bitboard get_pawn_occupancy() const { return get_pair_occupancy(bitboard_offset<PieceTypes::PAWN>); };
-        template <PieceTypes piece_type> inline Bitboard get_piece_occupancy() const {
-            return get_pair_occupancy(bitboard_offset<piece_type>());
-        };
+        template <PieceTypes piece_type> inline Bitboard get_piece_occupancy() const { return get_pair_occupancy(bitboard_offset<piece_type>()); };
 
-        inline Bitboard get_king_occupancy(const Side side) const { return bitboards[bitboard_offset<PieceTypes::KING> + static_cast<uint8_t>(side)]; };
-        inline Bitboard get_queen_occupancy(const Side side) const { return bitboards[bitboard_offset<PieceTypes::QUEEN> + static_cast<uint8_t>(side)]; };
-        inline Bitboard get_bishop_occupancy(const Side side) const { return bitboards[bitboard_offset<PieceTypes::BISHOP> + static_cast<uint8_t>(side)]; };
-        inline Bitboard get_knight_occupancy(const Side side) const { return bitboards[bitboard_offset<PieceTypes::KNIGHT> + static_cast<uint8_t>(side)]; };
-        inline Bitboard get_rook_occupancy(const Side side) const { return bitboards[bitboard_offset<PieceTypes::ROOK> + static_cast<uint8_t>(side)]; };
-        inline Bitboard get_pawn_occupancy(const Side side) const { return bitboards[bitboard_offset<PieceTypes::PAWN> + static_cast<uint8_t>(side)]; };
+        inline Bitboard get_king_occupancy(const Side side) const {
+            return bitboards[bitboard_offset<PieceTypes::KING> + static_cast<uint8_t>(side)];
+        };
+        inline Bitboard get_queen_occupancy(const Side side) const {
+            return bitboards[bitboard_offset<PieceTypes::QUEEN> + static_cast<uint8_t>(side)];
+        };
+        inline Bitboard get_bishop_occupancy(const Side side) const {
+            return bitboards[bitboard_offset<PieceTypes::BISHOP> + static_cast<uint8_t>(side)];
+        };
+        inline Bitboard get_knight_occupancy(const Side side) const {
+            return bitboards[bitboard_offset<PieceTypes::KNIGHT> + static_cast<uint8_t>(side)];
+        };
+        inline Bitboard get_rook_occupancy(const Side side) const {
+            return bitboards[bitboard_offset<PieceTypes::ROOK> + static_cast<uint8_t>(side)];
+        };
+        inline Bitboard get_pawn_occupancy(const Side side) const {
+            return bitboards[bitboard_offset<PieceTypes::PAWN> + static_cast<uint8_t>(side)];
+        };
         template <PieceTypes piece_type> inline Bitboard get_piece_occupancy(const Side side) const {
             return bitboards[(2 * ((static_cast<int>(piece_type)) - 1)) + static_cast<uint8_t>(side)];
         };

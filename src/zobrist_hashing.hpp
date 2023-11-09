@@ -4,8 +4,8 @@
 #include <functional>
 
 #include "magic_numbers.hpp"
-#include "utils.hpp"
 #include "pieces.hpp"
+#include "utils.hpp"
 
 constexpr inline ZobristKey calculate_zobrist_key(Piece piece, uint8_t pos) { return (piece.to_bitboard_idx() * 64) + pos; };
 
