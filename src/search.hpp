@@ -69,8 +69,8 @@ class SearchHandler {
         Move bestMove;
 
         void search_thread_function();
-        Score negamax_step(Score alpha, Score beta, int depth, TranspositionTable& transpositions, uint64_t& node_count);
-        Score quiescent_search(Score alpha, Score beta, TranspositionTable& transpositions, uint64_t& node_count);
+        template <bool pv_node> Score negamax_step(Score alpha, Score beta, int depth, TranspositionTable& transpositions, uint64_t& node_count);
+        template <bool pv_node> Score quiescent_search(Score alpha, Score beta, TranspositionTable& transpositions, uint64_t& node_count);
         Move run_negamax(int depth, TranspositionTable& transpositions);
         Move run_iterative_deepening_search();
 

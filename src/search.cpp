@@ -78,6 +78,7 @@ bool Search::is_draw(const ChessBoard& c, const MoveHistory& m) {
     return c.get_halfmove_clock() >= 100 || is_threefold_repetition(m, c.get_halfmove_clock(), c.get_zobrist_key());
 }
 
+template <bool pv_node>
 Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, TranspositionTable& transpositions, uint64_t& node_count) {
 
     if (Search::is_draw(board, history)) {
@@ -85,7 +86,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
     }
 
     if (depth <= 0) {
-        return quiescent_search(alpha, beta, transpositions, node_count);
+        return quiescent_search<pv_node>(alpha, beta, transpositions, node_count);
         // return c.evaluate();
     }
 
@@ -93,7 +94,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         // Try null move pruning if we aren't in check
         board.make_move(Move::NULL_MOVE, history);
         // First we make the null move
-        auto null_score = -negamax_step(-beta, -alpha, depth - 1 - 2, transpositions, node_count);
+        auto null_score = -negamax_step<pv_node>(-beta, -alpha, depth - 1 - 2, transpositions, node_count);
         board.unmake_move(history);
         if (null_score >= beta) {
             return beta;
@@ -115,6 +116,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
     MoveOrdering::sort_captures_mvv_lva(moves, board, static_cast<size_t>(found_pv_move), capture_count);
     Move best_move = Move::NULL_MOVE;
     Score best_score = MagicNumbers::NegativeInfinity;
+    int evaluated_moves = 0;
     for (size_t i = 0; i < moves.len(); i++) {
         if (search_cancelled) {
             break;
@@ -122,8 +124,21 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         const auto& move = moves[i];
         board.make_move(move, history);
         node_count += 1;
-        auto score = -negamax_step(-beta, -alpha, depth - 1, transpositions, node_count);
+        Score score;
+        if constexpr (pv_node) {
+            if (evaluated_moves == 0) {
+                score = -negamax_step<true>(-beta, -alpha, depth - 1, transpositions, node_count);
+            } else {
+                score = -negamax_step<false>(-alpha - 1, -alpha, depth - 1, transpositions, node_count);
+                if (score > alpha) {
+                    score = -negamax_step<true>(-beta, -alpha, depth - 1, transpositions, node_count);
+                }
+            }
+        } else {
+            score = -negamax_step<false>(-alpha - 1, -alpha, depth - 1, transpositions, node_count);
+        }
         board.unmake_move(history);
+        evaluated_moves += 1;
         if (score >= beta) {
             return beta;
         }
@@ -137,6 +152,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
     return alpha;
 }
 
+template <bool pv_node>
 Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTable& transpositions, uint64_t& node_count) {
     if (Search::is_draw(board, history)) {
         return 0;
@@ -157,6 +173,7 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
     }
     auto capture_count = moves.len();
     MoveOrdering::sort_captures_mvv_lva(moves, board, 0, capture_count);
+    int evaluated_moves = 0;
     for (size_t i = 0; i < capture_count; i++) {
         if (search_cancelled) {
             break;
@@ -164,8 +181,22 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
         const auto& move = moves[i];
         board.make_move(move, history);
         node_count += 1;
-        auto score = -quiescent_search(-beta, -alpha, transpositions, node_count);
+        Score score;
+        if constexpr (pv_node) {
+            if (evaluated_moves == 0) {
+                score = -quiescent_search<true>(-beta, -alpha, transpositions, node_count);
+            } else {
+                score = -quiescent_search<false>(-alpha - 1, -alpha, transpositions, node_count);
+                if (score > alpha) {
+                    score = -quiescent_search<true>(-beta, -alpha, transpositions, node_count);
+                }
+            }
+        } else {
+            score = -quiescent_search<false>(-alpha - 1, -alpha, transpositions, node_count);
+        }
+        
         board.unmake_move(history);
+        evaluated_moves += 1;
         if (score >= beta) {
             return beta;
         }
@@ -199,11 +230,20 @@ Move SearchHandler::run_iterative_deepening_search() {
         MoveOrdering::reorder_captures_first(moves, static_cast<size_t>(found_pv_move)) - static_cast<size_t>(found_pv_move);
         MoveOrdering::sort_captures_mvv_lva(moves, board, static_cast<size_t>(found_pv_move), capture_count);
 
+        int evaluated_moves = 0;
         for (size_t i = 0; i < moves.len(); i++) {
             board.make_move(moves[i], history);
             node_count += 1;
-            score = -negamax_step(-beta, -alpha, depth - 1, table, node_count);
+            if (evaluated_moves == 0) {
+                score = -negamax_step<true>(-beta, -alpha, depth - 1, table, node_count);
+            } else {
+                score = -negamax_step<false>(-alpha - 1, -alpha, depth - 1, table, node_count);
+                if (score > alpha) {
+                    score = -negamax_step<true>(-beta, -alpha, depth - 1, table, node_count);
+                }
+            }
             board.unmake_move(history);
+            evaluated_moves += 1;
             alpha = std::max(score, alpha);
             if (score > best_score_this_depth) {
                 best_score_this_depth = score;
@@ -211,6 +251,7 @@ Move SearchHandler::run_iterative_deepening_search() {
             }
             if (score >= beta) {
                 break;
+                // perform beta-cutoff
             }
         }
 
