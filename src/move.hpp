@@ -40,16 +40,16 @@ class Move {
         static const Move NULL_MOVE;
 
         uint16_t get_move() const { return move; };
-        uint8_t get_src_square() const { return GET_BITS(move, 5, 0); };
-        uint8_t get_dest_square() const { return GET_BITS(move, 11, 6); };
+        uint8_t get_src_square() const { return get_bits(move, 5, 0); };
+        uint8_t get_dest_square() const { return get_bits(move, 11, 6); };
 
-        uint8_t get_src_rank() const { return GET_BITS(move, 5, 3); };
-        uint8_t get_src_file() const { return GET_BITS(move, 2, 0); };
+        uint8_t get_src_rank() const { return get_bits(move, 5, 3); };
+        uint8_t get_src_file() const { return get_bits(move, 2, 0); };
 
-        uint8_t get_dest_rank() const { return GET_BITS(move, 11, 9); };
-        uint8_t get_dest_file() const { return GET_BITS(move, 8, 6); };
+        uint8_t get_dest_rank() const { return get_bits(move, 11, 9); };
+        uint8_t get_dest_file() const { return get_bits(move, 8, 6); };
 
-        MoveFlags get_move_flags() const { return (MoveFlags) GET_BITS(move, 15, 12); };
+        MoveFlags get_move_flags() const { return (MoveFlags) get_bits(move, 15, 12); };
 
         bool is_null_move() const { return move == 0; };
         bool is_capture() const { return (static_cast<int>(get_move_flags()) & 0x04) != 0; };
@@ -95,7 +95,7 @@ class MoveHistoryEntry {
         // 2 bytes
         Piece p;
         // 1 byte
-        char castling;
+        uint8_t castling;
         // 1 byte
         uint8_t previous_en_passant;
         // 1 byte
@@ -115,10 +115,10 @@ class MoveHistoryEntry {
         Piece get_piece() const { return p; };
         Move get_move() const { return m; };
         uint_fast8_t get_previous_en_passant_file() const { return previous_en_passant; };
-        bool get_white_kingside_castle() const { return GET_BIT(castling, 3); };
-        bool get_white_queenside_castle() const { return GET_BIT(castling, 1); };
-        bool get_black_kingside_castle() const { return GET_BIT(castling, 2); };
-        bool get_black_queenside_castle() const { return GET_BIT(castling, 0); };
+        bool get_white_kingside_castle() const { return get_bit(castling, 3); };
+        bool get_white_queenside_castle() const { return get_bit(castling, 1); };
+        bool get_black_kingside_castle() const { return get_bit(castling, 2); };
+        bool get_black_queenside_castle() const { return get_bit(castling, 0); };
 
         uint8_t get_halfmove_clock() const { return previous_halfmove_clock; };
 

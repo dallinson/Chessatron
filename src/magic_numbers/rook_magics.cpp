@@ -37,17 +37,17 @@ constexpr int MagicNumbers::RookBits[64] = {12, 11, 11, 11, 11, 11, 11, 12, 11, 
 
 constexpr Bitboard generate_rook_attacks(int square, Bitboard mask) {
     Bitboard to_return = 0;
-    int rank = GET_RANK(square);
-    int file = GET_FILE(square);
+    int rank = get_rank(square);
+    int file = get_file(square);
     for (int r = rank + 1; r <= 7; r++) {
-        Bitboard b = idx_to_bitboard(POSITION(r, file));
+        Bitboard b = idx_to_bitboard(get_position(r, file));
         to_return |= b;
         if (b & mask) {
             break;
         }
     }
     for (int r = rank - 1; r >= 0; r--) {
-        Bitboard b = idx_to_bitboard(POSITION(r, file));
+        Bitboard b = idx_to_bitboard(get_position(r, file));
         to_return |= b;
         if (b & mask) {
             break;
@@ -55,14 +55,14 @@ constexpr Bitboard generate_rook_attacks(int square, Bitboard mask) {
     }
 
     for (int f = file + 1; f <= 7; f++) {
-        Bitboard b = idx_to_bitboard(POSITION(rank, f));
+        Bitboard b = idx_to_bitboard(get_position(rank, f));
         to_return |= b;
         if (b & mask) {
             break;
         }
     }
     for (int f = file - 1; f >= 0; f--) {
-        Bitboard b = idx_to_bitboard(POSITION(rank, f));
+        Bitboard b = idx_to_bitboard(get_position(rank, f));
         to_return |= b;
         if (b & mask) {
             break;

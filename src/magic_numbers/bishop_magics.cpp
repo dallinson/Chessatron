@@ -31,33 +31,33 @@ constexpr int MagicNumbers::BishopBits[64] = {6, 5, 5, 5, 5, 5, 5, 6, 5, 5, 5, 5
                                               5, 5, 7, 9, 9, 7, 5, 5, 5, 5, 7, 7, 7, 7, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 5, 5, 5, 5, 5, 5, 6};
 
 constexpr Bitboard generate_bishop_attacks(int square, Bitboard mask) {
-    int rank = GET_RANK(square);
-    int file = GET_FILE(square);
+    int rank = get_rank(square);
+    int file = get_file(square);
     Bitboard to_return = 0;
     int r, f;
     for (r = rank + 1, f = file + 1; r <= 7 && f <= 7; r++, f++) {
-        Bitboard b = idx_to_bitboard(POSITION(r, f));
+        Bitboard b = idx_to_bitboard(get_position(r, f));
         to_return |= b;
         if (b & mask) {
             break;
         }
     }
     for (r = rank + 1, f = file - 1; r <= 7 && f >= 0; r++, f--) {
-        Bitboard b = idx_to_bitboard(POSITION(r, f));
+        Bitboard b = idx_to_bitboard(get_position(r, f));
         to_return |= b;
         if (b & mask) {
             break;
         }
     }
     for (r = rank - 1, f = file + 1; r >= 0 && f <= 7; r--, f++) {
-        Bitboard b = idx_to_bitboard(POSITION(r, f));
+        Bitboard b = idx_to_bitboard(get_position(r, f));
         to_return |= b;
         if (b & mask) {
             break;
         }
     }
     for (r = rank - 1, f = file - 1; r >= 0 && f >= 0; r--, f--) {
-        Bitboard b = idx_to_bitboard(POSITION(r, f));
+        Bitboard b = idx_to_bitboard(get_position(r, f));
         to_return |= b;
         if (b & mask) {
             break;

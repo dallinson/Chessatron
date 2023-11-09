@@ -10,7 +10,7 @@
 
 void ChessBoard::set_piece(Piece piece, uint8_t pos) {
     pieces[pos] = piece;
-    SET_BIT(bitboards[piece.to_bitboard_idx()], pos);
+    set_bit(bitboards[piece.to_bitboard_idx()], pos);
 }
 
 void ChessBoard::clear_board() {
@@ -116,9 +116,9 @@ std::optional<int> ChessBoard::set_from_fen(const std::string input) {
                 return std::optional<int>();
             }
             Piece piece = Piece(piece_side, piece_value);
-            set_piece(piece, POSITION(rank, file));
-            // zobrist_key ^= ZobristKeys::PositionKeys[(piece * 64) + POSITION(rank, file)];
-            zobrist_key ^= ZobristKeys::PositionKeys[ZOBRIST_POSITION_KEY(piece, POSITION(rank, file))];
+            set_piece(piece, get_position(rank, file));
+            // zobrist_key ^= ZobristKeys::PositionKeys[(piece * 64) + get_position(rank, file)];
+            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(piece, get_position(rank, file))];
             file += 1;
             if (file > 8) {
                 return std::optional<int>();
@@ -221,32 +221,32 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
     if (!to_make.is_null_move()) [[likely]] {
         const Side side = moved.get_side();
         this->pieces[to_make.get_src_square()] = 0;
-        zobrist_key ^= ZobristKeys::PositionKeys[ZOBRIST_POSITION_KEY(moved, to_make.get_src_square())];
+        zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, to_make.get_src_square())];
         // get the piece we're moving and clear the origin square
 
         if (to_make.is_capture() || moved.get_type() == PieceTypes::PAWN) {
             halfmove_clock = 0;
         }
 
-        CLEAR_BIT(this->bitboards[moved.to_bitboard_idx()], to_make.get_src_square());
+        clear_bit(this->bitboards[moved.to_bitboard_idx()], to_make.get_src_square());
         if (at_target.get_value()) {
             // If there _was_ a piece there
             // we do this as en passant captures without a piece at the position
-            CLEAR_BIT(this->bitboards[at_target.to_bitboard_idx()], to_make.get_dest_square());
-            zobrist_key ^= ZobristKeys::PositionKeys[ZOBRIST_POSITION_KEY(at_target, to_make.get_dest_square())];
+            clear_bit(this->bitboards[at_target.to_bitboard_idx()], to_make.get_dest_square());
+            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(at_target, to_make.get_dest_square())];
         }
 
         if (static_cast<int>(to_make.get_move_flags()) >= 8) {
             // Any value >= 8 is a promotion
             Piece promoted_piece = Piece(side, PieceTypes((static_cast<int>(to_make.get_move_flags()) & 0b0011) + 2));
-            zobrist_key ^= ZobristKeys::PositionKeys[ZOBRIST_POSITION_KEY(promoted_piece, to_make.get_dest_square())];
+            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(promoted_piece, to_make.get_dest_square())];
             this->pieces[to_make.get_dest_square()] = promoted_piece;
             // promoted_piece += side;
-            SET_BIT(this->bitboards[promoted_piece.to_bitboard_idx()], to_make.get_dest_square());
+            set_bit(this->bitboards[promoted_piece.to_bitboard_idx()], to_make.get_dest_square());
             // This handles pawn promotions
         } else {
-            SET_BIT(this->bitboards[moved.to_bitboard_idx()], to_make.get_dest_square());
-            zobrist_key ^= ZobristKeys::PositionKeys[ZOBRIST_POSITION_KEY(moved, to_make.get_dest_square())];
+            set_bit(this->bitboards[moved.to_bitboard_idx()], to_make.get_dest_square());
+            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, to_make.get_dest_square())];
             this->pieces[to_make.get_dest_square()] = moved;
             // otherwise sets pieces if moved normally
         }
@@ -261,27 +261,27 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
         if (to_make.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) [[unlikely]] {
             Side enemy_side = ENEMY_SIDE(side);
             int enemy_pawn_idx = to_make.get_dest_square() - 8 + (16 * static_cast<int>(side));
-            CLEAR_BIT(this->bitboards[PAWN_OFFSET + static_cast<int>(enemy_side)], enemy_pawn_idx);
+            clear_bit(this->bitboards[bitboard_offset<PieceTypes::PAWN> + static_cast<int>(enemy_side)], enemy_pawn_idx);
             this->pieces[enemy_pawn_idx] = 0;
-            this->zobrist_key ^= ZobristKeys::PositionKeys[ZOBRIST_POSITION_KEY(Piece(enemy_side, PieceTypes::PAWN), enemy_pawn_idx)];
+            this->zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(enemy_side, PieceTypes::PAWN), enemy_pawn_idx)];
         }
 
         if (to_make.get_move_flags() == MoveFlags::KINGSIDE_CASTLE) {
             // we moved the king, now move the rook
             this->pieces[to_make.get_dest_square() - 1] = this->pieces[to_make.get_dest_square() + 1];
             this->pieces[to_make.get_dest_square() + 1] = 0;
-            CLEAR_BIT(this->bitboards[ROOK_OFFSET + static_cast<int>(side)], to_make.get_dest_square() + 1);
-            zobrist_key ^= ZobristKeys::PositionKeys[ZOBRIST_POSITION_KEY(Piece(side, PieceTypes::ROOK), to_make.get_dest_square() + 1)];
-            SET_BIT(this->bitboards[ROOK_OFFSET + static_cast<int>(side)], to_make.get_dest_square() - 1);
-            zobrist_key ^= ZobristKeys::PositionKeys[ZOBRIST_POSITION_KEY(Piece(side, PieceTypes::ROOK), to_make.get_dest_square() - 1)];
+            clear_bit(this->bitboards[bitboard_offset<PieceTypes::ROOK> + static_cast<int>(side)], to_make.get_dest_square() + 1);
+            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, PieceTypes::ROOK), to_make.get_dest_square() + 1)];
+            set_bit(this->bitboards[bitboard_offset<PieceTypes::ROOK> + static_cast<int>(side)], to_make.get_dest_square() - 1);
+            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, PieceTypes::ROOK), to_make.get_dest_square() - 1)];
         }
         if (to_make.get_move_flags() == MoveFlags::QUEENSIDE_CASTLE) {
             this->pieces[to_make.get_dest_square() + 1] = this->pieces[to_make.get_dest_square() - 2];
             this->pieces[to_make.get_dest_square() - 2] = 0;
-            CLEAR_BIT(this->bitboards[ROOK_OFFSET + static_cast<int>(side)], to_make.get_dest_square() - 2);
-            zobrist_key ^= ZobristKeys::PositionKeys[ZOBRIST_POSITION_KEY(Piece(side, PieceTypes::ROOK), to_make.get_dest_square() - 2)];
-            SET_BIT(this->bitboards[ROOK_OFFSET + static_cast<int>(side)], to_make.get_dest_square() + 1);
-            zobrist_key ^= ZobristKeys::PositionKeys[ZOBRIST_POSITION_KEY(Piece(side, PieceTypes::ROOK), to_make.get_dest_square() + 1)];
+            clear_bit(this->bitboards[bitboard_offset<PieceTypes::ROOK> + static_cast<int>(side)], to_make.get_dest_square() - 2);
+            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, PieceTypes::ROOK), to_make.get_dest_square() - 2)];
+            set_bit(this->bitboards[bitboard_offset<PieceTypes::ROOK> + static_cast<int>(side)], to_make.get_dest_square() + 1);
+            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, PieceTypes::ROOK), to_make.get_dest_square() + 1)];
         }
 
         if (moved.get_type() == PieceTypes::KING) {
@@ -314,8 +314,8 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
     Piece original = pieces[previous_move_info.get_move().get_dest_square()];
     const Side moved_piece_side = original.get_side();
     if (!previous_move_info.get_move().is_null_move()) {
-        CLEAR_BIT(this->bitboards[original.to_bitboard_idx()], previous_move_info.get_move().get_dest_square());
-        zobrist_key ^= ZobristKeys::PositionKeys[ZOBRIST_POSITION_KEY(original, previous_move_info.get_move().get_dest_square())];
+        clear_bit(this->bitboards[original.to_bitboard_idx()], previous_move_info.get_move().get_dest_square());
+        zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(original, previous_move_info.get_move().get_dest_square())];
         // this unsets the target piece
         pieces[previous_move_info.get_move().get_dest_square()] = previous_move_info.get_piece();
 
@@ -323,26 +323,26 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
             // if it's a promotion
             Piece new_piece = Piece(original.get_side(), PieceTypes::PAWN);
             pieces[previous_move_info.get_move().get_src_square()] = new_piece;
-            zobrist_key ^= ZobristKeys::PositionKeys[ZOBRIST_POSITION_KEY(new_piece, previous_move_info.get_move().get_src_square())];
-            SET_BIT(this->bitboards[new_piece.to_bitboard_idx()], previous_move_info.get_move().get_src_square());
+            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(new_piece, previous_move_info.get_move().get_src_square())];
+            set_bit(this->bitboards[new_piece.to_bitboard_idx()], previous_move_info.get_move().get_src_square());
         } else {
             pieces[previous_move_info.get_move().get_src_square()] = original;
-            zobrist_key ^= ZobristKeys::PositionKeys[ZOBRIST_POSITION_KEY(original, previous_move_info.get_move().get_src_square())];
-            SET_BIT(this->bitboards[original.to_bitboard_idx()], previous_move_info.get_move().get_src_square());
+            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(original, previous_move_info.get_move().get_src_square())];
+            set_bit(this->bitboards[original.to_bitboard_idx()], previous_move_info.get_move().get_src_square());
         }
 
         if (previous_move_info.get_move().is_capture()) {
             if (previous_move_info.get_move().get_move_flags() != MoveFlags::EN_PASSANT_CAPTURE) {
                 // if it is a capture
-                SET_BIT(this->bitboards[previous_move_info.get_piece().to_bitboard_idx()], previous_move_info.get_move().get_dest_square());
+                set_bit(this->bitboards[previous_move_info.get_piece().to_bitboard_idx()], previous_move_info.get_move().get_dest_square());
                 zobrist_key ^=
-                    ZobristKeys::PositionKeys[ZOBRIST_POSITION_KEY(previous_move_info.get_piece(), previous_move_info.get_move().get_dest_square())];
+                    ZobristKeys::PositionKeys[calculate_zobrist_key(previous_move_info.get_piece(), previous_move_info.get_move().get_dest_square())];
             } else {
                 const Side enemy_side = ENEMY_SIDE(moved_piece_side);
                 const int enemy_pawn_idx = previous_move_info.get_move().get_dest_square() - 8 + (16 * static_cast<int>(moved_piece_side));
                 this->pieces[enemy_pawn_idx] = Piece(enemy_side, PieceTypes::PAWN);
-                zobrist_key ^= ZobristKeys::PositionKeys[ZOBRIST_POSITION_KEY(this->pieces[enemy_pawn_idx], enemy_pawn_idx)];
-                SET_BIT(this->bitboards[PAWN_OFFSET + static_cast<int>(enemy_side)], enemy_pawn_idx);
+                zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(this->pieces[enemy_pawn_idx], enemy_pawn_idx)];
+                set_bit(this->bitboards[bitboard_offset<PieceTypes::PAWN> + static_cast<int>(enemy_side)], enemy_pawn_idx);
             }
         }
 
@@ -350,19 +350,19 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
             // We need to unmove the rook
             const int origin_square = previous_move_info.get_move().get_dest_square();
             this->pieces[origin_square - 1] = 0;
-            CLEAR_BIT(this->bitboards[ROOK_OFFSET + static_cast<int>(moved_piece_side)], origin_square - 1);
-            zobrist_key ^= ZobristKeys::PositionKeys[ZOBRIST_POSITION_KEY(Piece(moved_piece_side, PieceTypes::ROOK), origin_square - 1)];
+            clear_bit(this->bitboards[bitboard_offset<PieceTypes::ROOK> + static_cast<int>(moved_piece_side)], origin_square - 1);
+            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(moved_piece_side, PieceTypes::ROOK), origin_square - 1)];
             this->pieces[origin_square + 1] = Piece(moved_piece_side, PieceTypes::ROOK);
-            SET_BIT(this->bitboards[ROOK_OFFSET + static_cast<int>(moved_piece_side)], origin_square + 1);
-            zobrist_key ^= ZobristKeys::PositionKeys[ZOBRIST_POSITION_KEY(Piece(moved_piece_side, PieceTypes::ROOK), origin_square + 1)];
+            set_bit(this->bitboards[bitboard_offset<PieceTypes::ROOK> + static_cast<int>(moved_piece_side)], origin_square + 1);
+            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(moved_piece_side, PieceTypes::ROOK), origin_square + 1)];
         } else if (previous_move_info.get_move().get_move_flags() == MoveFlags::QUEENSIDE_CASTLE) {
             const int origin_square = previous_move_info.get_move().get_dest_square();
             this->pieces[origin_square + 1] = 0;
-            CLEAR_BIT(this->bitboards[ROOK_OFFSET + static_cast<int>(moved_piece_side)], origin_square + 1);
-            zobrist_key ^= ZobristKeys::PositionKeys[ZOBRIST_POSITION_KEY(Piece(moved_piece_side, PieceTypes::ROOK), origin_square + 1)];
+            clear_bit(this->bitboards[bitboard_offset<PieceTypes::ROOK> + static_cast<int>(moved_piece_side)], origin_square + 1);
+            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(moved_piece_side, PieceTypes::ROOK), origin_square + 1)];
             this->pieces[origin_square - 2] = Piece(moved_piece_side, PieceTypes::ROOK);
-            SET_BIT(this->bitboards[ROOK_OFFSET + static_cast<int>(moved_piece_side)], origin_square - 2);
-            zobrist_key ^= ZobristKeys::PositionKeys[ZOBRIST_POSITION_KEY(Piece(moved_piece_side, PieceTypes::ROOK), origin_square - 2)];
+            set_bit(this->bitboards[bitboard_offset<PieceTypes::ROOK> + static_cast<int>(moved_piece_side)], origin_square - 2);
+            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(moved_piece_side, PieceTypes::ROOK), origin_square - 2)];
         }
     }
 
@@ -424,8 +424,8 @@ std::optional<Move> ChessBoard::generate_move_from_string(const std::string& s) 
             return std::optional<Move>();
         }
     }
-    int start_square = POSITION(s.at(1) - 49, s.at(0) - 97);
-    int end_square = POSITION(s.at(3) - 49, s.at(2) - 97);
+    int start_square = get_position(s.at(1) - 49, s.at(0) - 97);
+    int end_square = get_position(s.at(3) - 49, s.at(2) - 97);
     // Side move_side = this->get_side_to_move();
     PieceTypes moving_type = this->get_piece(start_square).get_type();
     if (moving_type == PieceTypes::PAWN && (std::abs(start_square - end_square) == 7 || std::abs(start_square - end_square) == 9)) {

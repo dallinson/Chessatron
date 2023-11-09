@@ -12,30 +12,30 @@ enum class Side : uint8_t {
     BLACK = 1,
 };
 
-#define BIT(x) (((uint64_t) 1) << (x))
-#define GET_BIT(val, x) (((val) >> (x)) & 0x1)
-#define SET_BIT(val, x) val |= BIT(x)
-#define CLEAR_BIT(val, x) val &= ~BIT(x)
-#define TOGGLE_BIT(val, x) val ^= BIT(x)
+constexpr inline uint64_t bit(uint8_t x) { return ((uint64_t) 1) << x; };
+template <typename T> constexpr inline T get_bit(T val, uint8_t x) { return (val >> x) & 0x1; };
+template <typename T> constexpr inline void set_bit(T& val, uint8_t x) { val |= bit(x); };
+template <typename T> constexpr inline void clear_bit(T& val, uint8_t x) { val &= ~bit(x); };
+template <typename T> constexpr inline void toggle_bit(T& val, uint8_t x) { val ^= bit(x); };
 
-#define BITS(max, min) ((0xFFFFFFFFFFFFFFFF << (min)) & (0xFFFFFFFFFFFFFFFF >> (64 - ((max) + 1))))
-#define GET_BITS(val, max, min) (((val) &BITS(max, min)) >> (min))
-#define GET_RANK(val) GET_BITS(val, 5, 3)
-#define GET_FILE(val) GET_BITS(val, 2, 0)
+constexpr inline uint64_t bits(uint8_t max, uint8_t min) { return ((0xFFFFFFFFFFFFFFFF << (min)) & (0xFFFFFFFFFFFFFFFF >> (64 - ((max) + 1)))); };
+template <typename T> constexpr inline T get_bits(T val, uint8_t max, uint8_t min) { return (val & bits(max, min)) >> min; };
+constexpr inline uint8_t get_rank(uint8_t pos) { return get_bits(pos, 5, 3); };
+constexpr inline uint8_t get_file(uint8_t pos) { return get_bits(pos, 2, 0); };
 // rank is the row and file the column
 
-#define POSITION(rank, file) ((((rank) &0x7) << 3) + ((file) &0x7))
+constexpr inline uint8_t get_position(uint8_t rank, uint8_t file) { return ((rank & 0x7) << 3) | (file & 0x7); };
 #define ENEMY_SIDE(side) (((side) == Side::WHITE) ? Side::BLACK : Side::WHITE)
 
 void print_bitboard(Bitboard to_print);
 
 constexpr inline int bitboard_to_idx(Bitboard bitboard) { return std::countr_zero(bitboard); };
 
-constexpr inline Bitboard idx_to_bitboard(int idx) { return BIT(idx); };
+constexpr inline Bitboard idx_to_bitboard(int idx) { return bit(idx); };
 
 constexpr inline int pop_min_bit(Bitboard& num) {
     const int to_return = bitboard_to_idx(num);
-    CLEAR_BIT(num, to_return);
+    clear_bit(num, to_return);
     return to_return;
 };
 
