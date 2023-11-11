@@ -227,7 +227,8 @@ Move SearchHandler::run_iterative_deepening_search() {
 
         const auto depth_score = negamax_step<NodeTypes::ROOT_NODE>(alpha, beta, depth, table, node_count);
 
-        const auto time_so_far = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - search_start_point).count();
+        const auto time_so_far = std::max(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - search_start_point).count(), (int64_t) 1);
+        // Set time so far to a minimum of 1 to avoid divide by 0 in nps calculation
 
         if (!search_cancelled) {
             const auto nps = static_cast<uint64_t>(node_count / (static_cast<float>(time_so_far) / 1000));
