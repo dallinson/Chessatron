@@ -211,7 +211,7 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
 }
 
 Move SearchHandler::run_iterative_deepening_search() {
-    uint64_t node_count = 0;
+    node_count = 0;
     pv_move = Move::NULL_MOVE;
     // reset pv move so we don't accidentally play an illegal one from a previous search
     const auto search_start_point = std::chrono::steady_clock::now();
@@ -234,7 +234,7 @@ Move SearchHandler::run_iterative_deepening_search() {
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - search_start_point).count(), (int64_t) 1);
         // Set time so far to a minimum of 1 to avoid divide by 0 in nps calculation
 
-        if (!search_cancelled) {
+        if (!search_cancelled && print_info) {
             const auto nps = static_cast<uint64_t>(node_count / (static_cast<float>(time_so_far) / 1000));
             printf("info depth %d bestmove %s nodes %" PRIu64 " nps %" PRIu64 " ", depth, pv_move.to_string().c_str(), node_count, nps);
             if (std::abs(depth_score) == MagicNumbers::PositiveInfinity) {

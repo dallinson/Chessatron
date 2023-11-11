@@ -74,6 +74,8 @@ class SearchHandler {
         int perft_depth = 0;
         uint32_t search_time_ms;
         Move pv_move;
+        uint64_t node_count;
+        bool print_info = true;
 
         void search_thread_function();
         template <NodeTypes node_type> Score negamax_step(Score alpha, Score beta, int depth, TranspositionTable& transpositions, uint64_t& node_count);
@@ -90,6 +92,8 @@ class SearchHandler {
         MoveHistory& get_history() { return this->history; };
 
         void set_board(const ChessBoard& c) { this->board = c; };
+        uint64_t get_node_count() { return node_count; };
+        void set_print_info(bool print) { print_info = print; };
         void reset();
 
         void search(int ms, int32_t max_depth = MagicNumbers::PositiveInfinity);

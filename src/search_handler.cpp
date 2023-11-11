@@ -22,7 +22,7 @@ void SearchHandler::search_thread_function() {
                 move = Search::select_random_move(board);
                 // Just choose a random move
             }
-            if (this_search_id == current_search_id) {
+            if (this_search_id == current_search_id && print_info) {
                 printf("bestmove %s\n", move.to_string().c_str());
                 fflush(stdout);
             }
