@@ -118,10 +118,20 @@ int main(int argc, char** argv) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 #endif
-    (void) argc;
-    (void) argv;
     srand(time(NULL));
     SearchHandler s;
+
+    if (argc > 1) {
+        if (std::string(argv[1]) == "bench") {
+            if (argc > 2) {
+                s.run_bench(std::stoi(argv[2]));
+            } else {
+                s.run_bench();
+            }
+            s.shutdown();
+            return 0;
+        }
+    }
 
     for (std::string line; std::getline(std::cin, line);) {
         if (line == "uci") {

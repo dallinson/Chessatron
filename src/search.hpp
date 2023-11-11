@@ -97,7 +97,7 @@ class SearchHandler {
         void reset();
 
         void search(int ms, int32_t max_depth = MagicNumbers::PositiveInfinity);
-
+        void run_bench(int depth=8);
         void run_perft(int depth);
 
         void EndSearch() { search_cancelled = true; }
