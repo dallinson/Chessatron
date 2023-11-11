@@ -11,6 +11,13 @@
 #include "chessboard.hpp"
 #include "evaluation.hpp"
 
+enum class NodeTypes {
+    ROOT_NODE,
+    PV_NODE,
+    NON_PV_NODE
+};
+constexpr inline bool is_pv_node(NodeTypes n) { return n == NodeTypes::ROOT_NODE || n == NodeTypes::PV_NODE; };
+
 namespace Perft {
     uint64_t run_perft(ChessBoard& c, int depth, bool print_debug = false);
 }
@@ -66,11 +73,11 @@ class SearchHandler {
         std::future<void> cancelFuture;
         int perft_depth = 0;
         uint32_t search_time_ms;
-        Move bestMove;
+        Move pv_move;
 
         void search_thread_function();
-        template <bool pv_node> Score negamax_step(Score alpha, Score beta, int depth, TranspositionTable& transpositions, uint64_t& node_count);
-        template <bool pv_node> Score quiescent_search(Score alpha, Score beta, TranspositionTable& transpositions, uint64_t& node_count);
+        template <NodeTypes node_type> Score negamax_step(Score alpha, Score beta, int depth, TranspositionTable& transpositions, uint64_t& node_count);
+        template <NodeTypes node_type> Score quiescent_search(Score alpha, Score beta, TranspositionTable& transpositions, uint64_t& node_count);
         Move run_negamax(int depth, TranspositionTable& transpositions);
         Move run_iterative_deepening_search();
 
