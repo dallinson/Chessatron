@@ -10,7 +10,14 @@
 #define WHITE_IDX 0
 #define BLACK_IDX 1
 
-enum class PieceTypes : uint8_t { PAWN = 1, ROOK = 2, KNIGHT = 3, BISHOP = 4, QUEEN = 5, KING = 6 };
+enum class PieceTypes : uint8_t {
+    PAWN = 1,
+    ROOK = 2,
+    KNIGHT = 3,
+    BISHOP = 4,
+    QUEEN = 5,
+    KING = 6
+};
 
 class Piece {
     private:

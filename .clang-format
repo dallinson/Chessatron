@@ -8,3 +8,6 @@ UseTab: Never
 SpaceAfterCStyleCast: true
 NamespaceIndentation: All
 PointerAlignment: Left
+SpacesInAngles: Never
+SpaceAfterTemplateKeyword: true
+AllowShortEnumsOnASingleLine: false

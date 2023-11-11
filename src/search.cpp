@@ -85,8 +85,10 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         return 0;
     }
 
+    constexpr auto pv_node_type = is_pv_node(node_type) ? NodeTypes::PV_NODE : NodeTypes::NON_PV_NODE;
+
     if (depth <= 0) {
-        return quiescent_search<is_pv_node(node_type) ? NodeTypes::PV_NODE : NodeTypes::NON_PV_NODE>(alpha, beta, transpositions, node_count);
+        return quiescent_search<pv_node_type>(alpha, beta, transpositions, node_count);
         // return c.evaluate();
     }
 
@@ -94,7 +96,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         // Try null move pruning if we aren't in check
         board.make_move(Move::NULL_MOVE, history);
         // First we make the null move
-        auto null_score = -negamax_step<is_pv_node(node_type) ? NodeTypes::PV_NODE : NodeTypes::NON_PV_NODE>(-beta, -alpha, depth - 1 - 2, transpositions, node_count);
+        auto null_score = -negamax_step<pv_node_type>(-beta, -alpha, depth - 1 - 2, transpositions, node_count);
         board.unmake_move(history);
         if (null_score >= beta) {
             return beta;
@@ -155,7 +157,8 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
     return alpha;
 }
 
-template <NodeTypes node_type> Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTable& transpositions, uint64_t& node_count) {
+template <NodeTypes node_type>
+Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTable& transpositions, uint64_t& node_count) {
     if (Search::is_draw(board, history)) {
         return 0;
     }
@@ -227,7 +230,8 @@ Move SearchHandler::run_iterative_deepening_search() {
 
         const auto depth_score = negamax_step<NodeTypes::ROOT_NODE>(alpha, beta, depth, table, node_count);
 
-        const auto time_so_far = std::max(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - search_start_point).count(), (int64_t) 1);
+        const auto time_so_far = std::max(
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - search_start_point).count(), (int64_t) 1);
         // Set time so far to a minimum of 1 to avoid divide by 0 in nps calculation
 
         if (!search_cancelled) {

@@ -6,7 +6,11 @@
 #include "move.hpp"
 #include "utils.hpp"
 
-enum class MoveGenType { ALL_LEGAL, CAPTURES, NON_CAPTURES };
+enum class MoveGenType {
+    ALL_LEGAL,
+    CAPTURES,
+    NON_CAPTURES
+};
 
 namespace MoveGenerator {
     template <MoveGenType gen_type> MoveList generate_legal_moves(const ChessBoard& c, const Side side);
