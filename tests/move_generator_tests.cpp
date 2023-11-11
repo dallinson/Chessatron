@@ -194,7 +194,7 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountKiwipete) {
 }
 
 TEST(MoveGeneratorTests, TestCorrectMoveCountKiwipeteB2B3) {
-    ChessBoard c, o;
+    ChessBoard c;
     c.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/1PN2Q1p/P1PBBPPP/R3K2R b KQkq - 0 1");
     auto legal_moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, Side::BLACK);
 
@@ -230,7 +230,7 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountKiwipeteB2B3) {
 }
 
 TEST(MoveGeneratorTests, TestCorrectMoveCountKiwipeteE1D1C7C6) {
-    ChessBoard c, o;
+    ChessBoard c;
     MoveHistory m;
     c.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R2K3R b kq - 1 1");
     c.make_move(Move(2738), m);
