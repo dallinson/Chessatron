@@ -87,6 +87,17 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
 
     constexpr auto pv_node_type = is_pv_node(node_type) ? NodeTypes::PV_NODE : NodeTypes::NON_PV_NODE;
 
+    const auto tt_entry = table[board];
+    if constexpr (!is_pv_node(node_type)) {
+        const bool should_cutoff = tt_entry.get_depth() >= depth
+                                   && (tt_entry.get_bound_type() == BoundTypes::EXACT_BOUND
+                                   || (tt_entry.get_bound_type() == BoundTypes::LOWER_BOUND && tt_entry.get_score() >= beta)
+                                   || (tt_entry.get_bound_type() == BoundTypes::UPPER_BOUND && tt_entry.get_score() <= alpha));
+        if (should_cutoff) {
+            return tt_entry.get_score();
+        }
+    }
+
     if (depth <= 0) {
         return quiescent_search<pv_node_type>(alpha, beta, transpositions, node_count);
         // return c.evaluate();
@@ -113,7 +124,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         }
     }
     // mate detection
-    bool found_pv_move = MoveOrdering::reorder_pv_move(moves, table[board].get_pv_move());
+    bool found_pv_move = MoveOrdering::reorder_pv_move(moves, tt_entry.get_pv_move());
     const auto capture_count = MoveOrdering::reorder_captures_first(moves, static_cast<size_t>(found_pv_move)) - static_cast<size_t>(found_pv_move);
     MoveOrdering::sort_captures_mvv_lva(moves, board, static_cast<size_t>(found_pv_move), capture_count);
     Move best_move = Move::NULL_MOVE;
@@ -149,11 +160,13 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
             }
         }
         if (score >= beta) {
+            transpositions.store(TranspositionTableEntry(best_move, depth, BoundTypes::LOWER_BOUND, score), board);
             return beta;
         }
         alpha = std::max(score, alpha);
     }
-    transpositions.store(TranspositionTableEntry(best_move, depth), board);
+    const BoundTypes bound_type = best_score <= alpha ? BoundTypes::UPPER_BOUND : BoundTypes::EXACT_BOUND;
+    transpositions.store(TranspositionTableEntry(best_move, depth, bound_type, best_score), board);
     return alpha;
 }
 
