@@ -8,6 +8,8 @@
 #include <semaphore>
 #include <thread>
 
+#include <cmath>
+
 #include "chessboard.hpp"
 #include "evaluation.hpp"
 
@@ -31,12 +33,15 @@ namespace Search {
 class TranspositionTableEntry {
     private:
         Move pv_move;
+        uint8_t depth;
+        uint8_t padding;
 
     public:
-        TranspositionTableEntry() : pv_move(Move::NULL_MOVE){};
-        TranspositionTableEntry(Move pv_move) : pv_move(pv_move){};
+        TranspositionTableEntry() : pv_move(Move::NULL_MOVE) {};
+        TranspositionTableEntry(Move pv_move, uint8_t depth) : pv_move(pv_move), depth(depth) {};
 
-        Move get_pv_move() { return this->pv_move; };
+        Move get_pv_move() const { return this->pv_move; };
+        uint8_t get_depth() const { return this->depth; };
 };
 
 class TranspositionTable {
@@ -58,7 +63,13 @@ class TranspositionTable {
             return *this;
         }
         ~TranspositionTable() { free(table); };
-        TranspositionTableEntry& operator[](const ChessBoard& key) { return table[key.get_zobrist_key() >> (64 - 22)]; };
+        const TranspositionTableEntry& operator[](const ChessBoard& key) const { return table[key.get_zobrist_key() >> (64 - 22)]; };
+        void store(const TranspositionTableEntry entry, const ChessBoard& key) {
+            const auto tt_key = key.get_zobrist_key() >> (64 - 22);
+            if (entry.get_depth() >= table[tt_key].get_depth()) {
+                table[tt_key] = entry;
+            }
+        }
 };
 
 class SearchHandler {

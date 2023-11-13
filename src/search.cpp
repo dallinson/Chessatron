@@ -153,7 +153,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         }
         alpha = std::max(score, alpha);
     }
-    transpositions[board] = TranspositionTableEntry(best_move);
+    transpositions.store(TranspositionTableEntry(best_move, depth), board);
     return alpha;
 }
 
