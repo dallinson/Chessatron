@@ -5,7 +5,7 @@
 
 #include "chessboard.hpp"
 
-typedef int32_t Score;
+typedef int16_t Score;
 #define MOBILITY_WEIGHT 10
 // the number of centipawns each possible move is worth
 

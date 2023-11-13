@@ -4,7 +4,7 @@
 
 #include "move_generator.hpp"
 
-constexpr std::array<int32_t, 6> Evaluation::PieceScores = {100, 500, 320, 330, 900, 20000};
+constexpr std::array<Score, 6> Evaluation::PieceScores = {100, 500, 320, 330, 900, 20000};
 
 Score Evaluation::evaluate_board(const ChessBoard& c, const Side side) {
     auto slider_moves = std::popcount(Evaluation::calculate_sliding_mobility(c, side));
