@@ -89,7 +89,8 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
 
     const auto tt_entry = table[board];
     if constexpr (!is_pv_node(node_type)) {
-        const bool should_cutoff = tt_entry.get_depth() >= depth
+        const bool should_cutoff = tt_entry.get_key() == board.get_zobrist_key() 
+                                   && tt_entry.get_depth() >= depth
                                    && (tt_entry.get_bound_type() == BoundTypes::EXACT_BOUND
                                    || (tt_entry.get_bound_type() == BoundTypes::LOWER_BOUND && tt_entry.get_score() >= beta)
                                    || (tt_entry.get_bound_type() == BoundTypes::UPPER_BOUND && tt_entry.get_score() <= alpha));
@@ -160,13 +161,13 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
             }
         }
         if (score >= beta) {
-            transpositions.store(TranspositionTableEntry(best_move, depth, BoundTypes::LOWER_BOUND, score), board);
+            transpositions.store(TranspositionTableEntry(best_move, depth, BoundTypes::LOWER_BOUND, score, board.get_zobrist_key()), board);
             return beta;
         }
         alpha = std::max(score, alpha);
     }
     const BoundTypes bound_type = best_score <= alpha ? BoundTypes::UPPER_BOUND : BoundTypes::EXACT_BOUND;
-    transpositions.store(TranspositionTableEntry(best_move, depth, bound_type, best_score), board);
+    transpositions.store(TranspositionTableEntry(best_move, depth, bound_type, best_score, board.get_zobrist_key()), board);
     return alpha;
 }
 

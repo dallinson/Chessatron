@@ -38,20 +38,22 @@ enum class BoundTypes : uint8_t {
 
 class TranspositionTableEntry {
     private:
+        ZobristKey key;
+        Score score;
         Move pv_move;
         uint8_t depth;
         BoundTypes bound;
-        Score score;
         uint16_t padding;
 
     public:
         TranspositionTableEntry() : pv_move(Move::NULL_MOVE) {};
-        TranspositionTableEntry(Move pv_move, uint8_t depth, BoundTypes bound, Score score) : pv_move(pv_move), depth(depth), bound(bound), score(score) {};
+        TranspositionTableEntry(Move pv_move, uint8_t depth, BoundTypes bound, Score score, ZobristKey key) : key(key), score(score), pv_move(pv_move), depth(depth), bound(bound) {};
 
         Move get_pv_move() const { return this->pv_move; };
         uint8_t get_depth() const { return this->depth; };
         BoundTypes get_bound_type() const { return this->bound; };
         Score get_score() const { return this->score; };
+        ZobristKey get_key() const { return this->key; };
 };
 
 class TranspositionTable {
@@ -73,9 +75,9 @@ class TranspositionTable {
             return *this;
         }
         ~TranspositionTable() { free(table); };
-        const TranspositionTableEntry& operator[](const ChessBoard& key) const { return table[key.get_zobrist_key() >> (64 - 21)]; };
+        const TranspositionTableEntry& operator[](const ChessBoard& key) const { return table[key.get_zobrist_key() >> (64 - 20)]; };
         void store(const TranspositionTableEntry entry, const ChessBoard& key) {
-            const auto tt_key = key.get_zobrist_key() >> (64 - 21);
+            const auto tt_key = key.get_zobrist_key() >> (64 - 20);
             if (entry.get_depth() >= table[tt_key].get_depth()) {
                 table[tt_key] = entry;
             }
