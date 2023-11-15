@@ -135,7 +135,10 @@ int main(int argc, char** argv) {
 
     for (std::string line; std::getline(std::cin, line);) {
         if (line == "uci") {
-            std::cout << "uciok\n";
+            std::cout << "id name Chessatron\n";
+            std::cout << "option name Hash type spin default 16 min 16 max 16\n";
+            std::cout << "option name Threads type spin default 1 min 1 max 1\n";
+            std::cout << "uciok" << std::endl;
         } else if (line == "isready") {
             std::cout << "readyok\n";
         } else if (line == "ucinewgame") {
