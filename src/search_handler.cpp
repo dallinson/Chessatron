@@ -50,6 +50,7 @@ void SearchHandler::search(int ms, int32_t max_depth) {
     perft_depth = max_depth;
     // cancel a search if performing one
     search_time_ms = ms > 0 ? ms : MagicNumbers::PositiveInfinity;
+    infinite_search = ms <= 0;
     in_search = true;
     semaphore.release();
     // We then wake up the search thread

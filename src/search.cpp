@@ -263,7 +263,7 @@ Move SearchHandler::run_iterative_deepening_search() {
             }
         }
 
-        if (time_so_far > ((search_time_ms * 3) / 10)) {
+        if (!infinite_search && time_so_far > ((search_time_ms * 3) / 10)) {
             break;
         }
     }

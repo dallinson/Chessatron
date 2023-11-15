@@ -90,7 +90,7 @@ class SearchHandler {
         std::binary_semaphore semaphore{0};
         ChessBoard board;
         MoveHistory history;
-        std::atomic<bool> in_search, search_cancelled, shutting_down, should_perft = false;
+        std::atomic<bool> in_search, search_cancelled, shutting_down, should_perft, infinite_search = false;
         TranspositionTable table;
         std::atomic<int> current_search_id = 0;
         std::future<void> cancelFuture;
