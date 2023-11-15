@@ -14,23 +14,27 @@ void SearchHandler::search_thread_function() {
         }
         search_cancelled = false;
         in_search = true;
-        if (should_perft) {
-            Perft::run_perft(board, perft_depth, true);
-            should_perft = false;
-        } else {
-            auto move = run_iterative_deepening_search();
-            if (move.is_null_move()) {
-                // Unlikely, but possible!
-                move = Search::select_random_move(board);
-                // Just choose a random move
+        {
+            std::lock_guard<std::mutex> lock(search_mutex);
+            if (should_perft) {
+                Perft::run_perft(board, perft_depth, true);
+                should_perft = false;
+            } else {
+                auto move = run_iterative_deepening_search();
+                if (move.is_null_move()) {
+                    // Unlikely, but possible!
+                    move = Search::select_random_move(board);
+                    // Just choose a random move
+                }
+                if (this_search_id == current_search_id && print_info) {
+                    printf("bestmove %s\n", move.to_string().c_str());
+                    fflush(stdout);
+                }
+                // We've had issues with stdout not being flushed in the past
             }
-            if (this_search_id == current_search_id && print_info) {
-                printf("bestmove %s\n", move.to_string().c_str());
-                fflush(stdout);
-            }
-            // We've had issues with stdout not being flushed in the past
         }
         in_search = false;
+        cv.notify_all();
     }
 }
 
@@ -141,10 +145,11 @@ void SearchHandler::run_bench(int depth) {
     uint64_t total_nodes = 0;
     const auto start = std::chrono::steady_clock::now();
     for (const auto& fen : fens) {
+        std::unique_lock<std::mutex> lock(search_mutex);
         this->reset();
         this->board.set_from_fen(fen);
         this->search(0, depth);
-        while (in_search) {};
+        cv.wait(lock, [this] { return !this->is_searching(); });
         // loop until search completes
         total_nodes += node_count;
         std::cout << fen << " " << node_count << std::endl;

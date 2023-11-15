@@ -88,6 +88,9 @@ class SearchHandler {
     private:
         std::thread searchThread;
         std::binary_semaphore semaphore{0};
+        std::mutex search_mutex;
+        std::condition_variable cv;
+        
         ChessBoard board;
         MoveHistory history;
         std::atomic<bool> in_search, search_cancelled, shutting_down, should_perft, infinite_search = false;
