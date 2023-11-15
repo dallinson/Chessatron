@@ -137,12 +137,19 @@ void SearchHandler::run_bench(int depth) {
         "7k/8/7P/5B2/5K2/8/8/8 b - - 0 175"
     };
     print_info = false;
+    uint64_t total_nodes = 0;
+    const auto start = std::chrono::steady_clock::now();
     for (const auto& fen : fens) {
         this->reset();
         this->board.set_from_fen(fen);
         this->search(0, depth);
         while (in_search) {};
         // loop until search completes
+        total_nodes += node_count;
         std::cout << fen << " " << node_count << std::endl;
     }
+    const auto duration = std::max(
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count(), (int64_t) 1);
+    std::cout << total_nodes << " nodes " << total_nodes / (duration / 1000) << " nps" << std::endl;
+
 }
