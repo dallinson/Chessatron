@@ -14,6 +14,7 @@ Score Evaluation::evaluate_board(const ChessBoard& c, const Side side) {
              (std::popcount(c.get_bishop_occupancy(side)) * get_piece_score(PieceTypes::BISHOP)) +
              (std::popcount(c.get_queen_occupancy(side)) * get_piece_score(PieceTypes::QUEEN))) +
             (slider_moves * MOBILITY_WEIGHT)) +
+            (check_for_bishop_pair(c, side) * BISHOP_PAIR_WEIGHT) +
            adjust_positional_value(c, side);
 }
 
@@ -170,4 +171,12 @@ Bitboard Evaluation::calculate_sliding_mobility(const ChessBoard& c, const Side 
     to_return &= ~friendly_occupancy;
     // clear friendlies
     return to_return;
+}
+
+bool Evaluation::check_for_bishop_pair(const ChessBoard& board, const Side side) {
+    constexpr Bitboard dark_mask = 0xaa55aa55aa55aa55;
+    const Bitboard this_side_bishops = board.get_bishop_occupancy(side);
+    const Bitboard light_bishops = this_side_bishops & ~dark_mask;
+    const Bitboard dark_bishops = this_side_bishops & dark_mask;
+    return (light_bishops != 0) && (dark_bishops != 0);
 }

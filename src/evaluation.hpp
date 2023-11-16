@@ -7,6 +7,7 @@
 
 typedef int16_t Score;
 #define MOBILITY_WEIGHT 10
+#define BISHOP_PAIR_WEIGHT 50
 // the number of centipawns each possible move is worth
 
 namespace PieceSquareTables {
@@ -32,4 +33,5 @@ namespace Evaluation {
     template <PieceTypes piece> Score adjust_positional_value(const ChessBoard& c, const Side s);
     Score adjust_positional_value(const ChessBoard& c, const Side s);
     Bitboard calculate_sliding_mobility(const ChessBoard& c, const Side side);
+    bool check_for_bishop_pair(const ChessBoard& board, const Side side);
 } // namespace Evaluation
