@@ -78,7 +78,7 @@ class TranspositionTable {
         const TranspositionTableEntry& operator[](const ChessBoard& key) const { return table[key.get_zobrist_key() >> (64 - 20)]; };
         void store(const TranspositionTableEntry entry, const ChessBoard& key) {
             const auto tt_key = key.get_zobrist_key() >> (64 - 20);
-            if (entry.get_depth() >= table[tt_key].get_depth()) {
+            if (entry.get_bound_type() == BoundTypes::EXACT_BOUND || entry.get_depth() >= table[tt_key].get_depth()) {
                 table[tt_key] = entry;
             }
         }
@@ -90,7 +90,7 @@ class SearchHandler {
         std::binary_semaphore semaphore{0};
         std::mutex search_mutex;
         std::condition_variable cv;
-        
+
         ChessBoard board;
         MoveHistory history;
         std::atomic<bool> in_search, search_cancelled, shutting_down, should_perft, infinite_search = false;
