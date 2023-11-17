@@ -6,6 +6,7 @@
 
 typedef uint64_t Bitboard;
 typedef uint64_t ZobristKey;
+typedef int16_t Score;
 
 enum class Side : uint8_t {
     WHITE = 0,

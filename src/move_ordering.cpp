@@ -6,6 +6,8 @@
 #include "evaluation.hpp"
 #include "move_generator.hpp"
 
+constexpr std::array<uint8_t, 6> ordering_scores = { 1, 5, 3, 3, 9, 20 };
+
 size_t MoveOrdering::reorder_captures_first(MoveList& move_list, size_t start_pos) {
     size_t captures = start_pos;
     for (size_t i = start_pos; i < move_list.len(); i++) {
@@ -24,11 +26,11 @@ void MoveOrdering::sort_captures_mvv_lva(MoveList& move_list, const ChessBoard& 
         const auto b_target_type =
             b.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE ? PieceTypes::PAWN : c.get_piece(b.get_dest_square()).get_type();
         if (a_target_type != b_target_type) {
-            return Evaluation::get_piece_score(a_target_type) > Evaluation::get_piece_score(b_target_type);
+            return ordering_scores[static_cast<uint8_t>(a_target_type) - 1] > ordering_scores[static_cast<uint8_t>(b_target_type) - 1];
             // you're meant to use operator<; we use operator> in order to sort the victims in descending order
         }
-        int a_src = Evaluation::get_piece_score(c.get_piece(a.get_src_square()).get_type());
-        int b_src = Evaluation::get_piece_score(c.get_piece(b.get_src_square()).get_type());
+        uint8_t a_src = ordering_scores[static_cast<uint8_t>(c.get_piece(a.get_src_square()).get_type()) - 1];
+        uint8_t b_src = ordering_scores[static_cast<uint8_t>(c.get_piece(b.get_src_square()).get_type()) - 1];
         return a_src < b_src;
         // If the targets are equally valuable, sort the least valuable attacker first
     });
