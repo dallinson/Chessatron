@@ -104,14 +104,16 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         // return c.evaluate();
     }
 
-    if (board.get_checkers(board.get_side_to_move()) == 0 && history[history.len() - 1].get_move() != Move::NULL_MOVE) {
-        // Try null move pruning if we aren't in check
-        board.make_move(Move::NULL_MOVE, history);
-        // First we make the null move
-        auto null_score = -negamax_step<pv_node_type>(-beta, -alpha, depth - 1 - 2, transpositions, node_count);
-        board.unmake_move(history);
-        if (null_score >= beta) {
-            return beta;
+    if constexpr (!is_pv_node(node_type)) {
+        if (board.get_checkers(board.get_side_to_move()) == 0 && history[history.len() - 1].get_move() != Move::NULL_MOVE) {
+            // Try null move pruning if we aren't in check
+            board.make_move(Move::NULL_MOVE, history);
+            // First we make the null move
+            auto null_score = -negamax_step<pv_node_type>(-beta, -alpha, depth - 1 - 2, transpositions, node_count);
+            board.unmake_move(history);
+            if (null_score >= beta) {
+                return beta;
+            }
         }
     }
 
