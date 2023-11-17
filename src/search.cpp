@@ -223,6 +223,34 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
     return alpha;
 }
 
+Score SearchHandler::run_aspiration_window_search(int depth, Score previous_score) {
+    Score window = 40;
+    Score alpha, beta;
+    while (true) {
+        if (depth <= 4) {
+            alpha = MagicNumbers::NegativeInfinity;
+            beta = MagicNumbers::PositiveInfinity;
+        } else {
+            alpha = previous_score - window;
+            beta = previous_score + window;
+        }
+
+        previous_score = negamax_step<NodeTypes::ROOT_NODE>(alpha, beta, depth, table, node_count);
+
+        if (search_cancelled) {
+            return previous_score;
+        }
+
+        if (alpha < previous_score && previous_score < beta) {
+            break;
+        }
+
+        window *= 2;
+    }
+
+    return previous_score;
+}
+
 Move SearchHandler::run_iterative_deepening_search() {
     node_count = 0;
     pv_move = Move::NULL_MOVE;
@@ -236,12 +264,10 @@ Move SearchHandler::run_iterative_deepening_search() {
         // If only one move is legal in this position we don't need to search; we can just return the one legal move
         // in order to save some time
     }
+    Score current_score = 0;
     for (int depth = 1; depth <= perft_depth && !search_cancelled; depth++) {
-        // We need to init for the depth=1 iteration where no PV-move exists
-        Score alpha = MagicNumbers::NegativeInfinity;
-        Score beta = MagicNumbers::PositiveInfinity;
-
-        const auto depth_score = negamax_step<NodeTypes::ROOT_NODE>(alpha, beta, depth, table, node_count);
+        
+        current_score = run_aspiration_window_search(depth, current_score);
 
         const auto time_so_far = std::max(
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - search_start_point).count(), (int64_t) 1);
@@ -250,16 +276,16 @@ Move SearchHandler::run_iterative_deepening_search() {
         if (!search_cancelled && print_info) {
             const auto nps = static_cast<uint64_t>(node_count / (static_cast<float>(time_so_far) / 1000));
             printf("info depth %d bestmove %s nodes %" PRIu64 " nps %" PRIu64 " ", depth, pv_move.to_string().c_str(), node_count, nps);
-            if (std::abs(depth_score) == MagicNumbers::PositiveInfinity) {
+            if (std::abs(current_score) == MagicNumbers::PositiveInfinity) {
                 // If this is a checkmate
-                printf("mate %d\n", ((depth_score / std::abs(depth_score)) * depth) / 2);
+                printf("mate %d\n", ((current_score / std::abs(current_score)) * depth) / 2);
                 // Divide by 2 as mate expects the result in moves, not plies
-                if (depth_score == MagicNumbers::PositiveInfinity) {
+                if (current_score == MagicNumbers::PositiveInfinity) {
                     return pv_move;
                 }
                 // No need to check any other moves if we can guarantee a mate
             } else {
-                printf("cp %d\n", depth_score);
+                printf("cp %d\n", current_score);
             }
         }
 
