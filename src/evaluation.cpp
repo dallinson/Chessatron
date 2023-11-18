@@ -10,7 +10,7 @@ template <bool is_endgame> Score Evaluation::evaluate_board(const ChessBoard& bo
     while (side_pieces) {
         auto piece_idx = pop_min_bit(side_pieces);
         const auto piece = board.get_piece(piece_idx);
-        if (side == Side::BLACK) {
+        if (side == Side::WHITE) {
             piece_idx ^= 0b00111000;
         }
         to_return += get_piece_score<is_endgame>(piece.get_type());
