@@ -3,33 +3,30 @@
 #include <array>
 #include <cstdint>
 
+#include "magic_numbers/positional_scores.hpp"
 #include "chessboard.hpp"
+#include "utils.hpp"
 
-typedef int16_t Score;
 #define MOBILITY_WEIGHT 10
 // the number of centipawns each possible move is worth
 
-namespace PieceSquareTables {
-    extern const std::array<Score, 64> PawnScores;
-    extern const std::array<Score, 64> RookScores;
-    extern const std::array<Score, 64> BishopScores;
-    extern const std::array<Score, 64> KnightScores;
-    extern const std::array<Score, 64> QueenScores;
-    extern const std::array<Score, 64> KingMidgameScores;
-    extern const std::array<Score, 64> KingEndgameScores;
-} // namespace PieceSquareTables
-
 namespace Evaluation {
 
-    extern const std::array<Score, 6> PieceScores;
-    constexpr Score get_piece_score(PieceTypes p) { return PieceScores[static_cast<int>(p) - 1]; };
+    constexpr std::array<Score, 6> MidgameScores = { 82, 477, 337, 365, 1025, 0 };
+    constexpr std::array<Score, 6> EndgameScores = { 94, 512, 281, 297, 936, 0 };
+    template <bool is_endgame>
+    constexpr Score get_piece_score(PieceTypes p) { 
+        const auto piece_idx = static_cast<uint8_t>(p) - 1;
+        if constexpr(is_endgame) {
+            return EndgameScores[piece_idx];
+        } else {
+            return MidgameScores[piece_idx];
+        }
+    };
 
     Score evaluate_board(ChessBoard& c);
+    template <bool is_endgame>
     Score evaluate_board(const ChessBoard& c, const Side side);
 
-    bool is_endgame(const ChessBoard& c);
-
-    template <PieceTypes piece> Score adjust_positional_value(const ChessBoard& c, const Side s);
-    Score adjust_positional_value(const ChessBoard& c, const Side s);
-    Bitboard calculate_sliding_mobility(const ChessBoard& c, const Side side);
+    uint8_t calculate_game_phase(const ChessBoard& board);
 } // namespace Evaluation
