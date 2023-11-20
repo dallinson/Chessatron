@@ -6,7 +6,7 @@
 #include "evaluation.hpp"
 #include "move_generator.hpp"
 
-constexpr std::array<uint16_t, 6> ordering_scores = { 100, 500, 320, 330, 900, 20000 };
+constexpr std::array<int16_t, 6> ordering_scores = { 100, 500, 320, 330, 900, 20000 };
 
 size_t MoveOrdering::reorder_captures_first(MoveList& move_list, size_t start_pos) {
     size_t captures = start_pos;
@@ -29,8 +29,8 @@ void MoveOrdering::sort_captures_mvv_lva(MoveList& move_list, const ChessBoard& 
             return ordering_scores[static_cast<int>(a_target_type) - 1] > ordering_scores[static_cast<int>(b_target_type) - 1];
             // you're meant to use operator<; we use operator> in order to sort the victims in descending order
         }
-        const auto a_src = ordering_scores[static_cast<uint16_t>(c.get_piece(a.get_src_square()).get_type()) - 1];
-        const auto b_src = ordering_scores[static_cast<uint16_t>(c.get_piece(b.get_src_square()).get_type()) - 1];
+        const auto a_src = ordering_scores[static_cast<int>(c.get_piece(a.get_src_square()).get_type()) - 1];
+        const auto b_src = ordering_scores[static_cast<int>(c.get_piece(b.get_src_square()).get_type()) - 1];
         return a_src < b_src;
         // If the targets are equally valuable, sort the least valuable attacker first
     });
