@@ -236,7 +236,7 @@ Move SearchHandler::run_iterative_deepening_search() {
         // If only one move is legal in this position we don't need to search; we can just return the one legal move
         // in order to save some time
     }
-    for (int depth = 1; depth <= perft_depth && !search_cancelled; depth++) {
+    for (int depth = 1; depth <= TimeManagement::get_search_depth(tc) && !search_cancelled; depth++) {
         // We need to init for the depth=1 iteration where no PV-move exists
         Score alpha = MagicNumbers::NegativeInfinity;
         Score beta = MagicNumbers::PositiveInfinity;
@@ -263,7 +263,7 @@ Move SearchHandler::run_iterative_deepening_search() {
             }
         }
 
-        if (!infinite_search && time_so_far > ((search_time_ms * 3) / 10)) {
+        if (TimeManagement::is_time_based_tc(tc) && time_so_far > TimeManagement::calculate_soft_limit(tc)) {
             break;
         }
     }
