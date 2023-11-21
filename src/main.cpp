@@ -116,7 +116,7 @@ void process_go_command(const std::vector<std::string>& line, SearchHandler& s) 
     //    59.3 + (static_cast<float>(72830 - (2330 * halfmoves_so_far)) / static_cast<float>(2644 + (halfmoves_so_far * (10 + halfmoves_so_far))));
 
     // s.search((remaining_time / static_cast<int>(remaining_halfmoves)) + increment, depth);
-    s.search(VariableTimeTC {TimeManagement::calculate_hard_limit(remaining_time, increment), remaining_time, increment});
+    s.search(VariableTimeTC {TimeManagement::calculate_hard_limit(remaining_time, increment, s.get_board()), remaining_time, increment});
 }
 
 int main(int argc, char** argv) {

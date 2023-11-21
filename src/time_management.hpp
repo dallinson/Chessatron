@@ -105,7 +105,7 @@ namespace TimeManagement {
         const float remaining_halfmoves = 59.3 + (static_cast<float>(72830 - (2330 * halfmoves_so_far)) / static_cast<float>(2644 + (halfmoves_so_far * (10 + halfmoves_so_far))));
         const auto endgame_time = (side_time / static_cast<int>(remaining_halfmoves)) + side_increment;
 
-        const auto midgame_phase = std::min(calculate_game_phase(board), (uint8_t) 24);
+        const auto midgame_phase = std::min(Evaluation::calculate_game_phase(board), (uint8_t) 24);
         const auto endgame_phase = 24 - midgame_phase;
 
         return ((midgame_phase * midgame_time) + (endgame_phase * endgame_time)) / 24;
