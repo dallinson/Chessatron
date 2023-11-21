@@ -98,8 +98,17 @@ namespace TimeManagement {
      * @param side_increment 
      * @return uint32_t 
      */
-    inline uint32_t calculate_hard_limit(const uint32_t side_time, const uint32_t side_increment) {
-        return side_time / 20 + side_increment / 2;
+    inline uint32_t calculate_hard_limit(const uint32_t side_time, const uint32_t side_increment, const ChessBoard& board) {
+        const auto midgame_time = side_time / 20 + side_increment / 2;
+
+        auto halfmoves_so_far = (2 * board.get_fullmove_counter()) + static_cast<int>(board.get_side_to_move());
+        const float remaining_halfmoves = 59.3 + (static_cast<float>(72830 - (2330 * halfmoves_so_far)) / static_cast<float>(2644 + (halfmoves_so_far * (10 + halfmoves_so_far))));
+        const auto endgame_time = (side_time / static_cast<int>(remaining_halfmoves)) + side_increment;
+
+        const auto midgame_phase = std::min(calculate_game_phase(board), (uint8_t) 24);
+        const auto endgame_phase = 24 - midgame_phase;
+
+        return ((midgame_phase * midgame_time) + (endgame_phase * endgame_time)) / 24;
     }
 
     /**
