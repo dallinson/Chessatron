@@ -48,20 +48,19 @@ void SearchHandler::shutdown() {
 
 SearchHandler::SearchHandler() { this->searchThread = std::thread(&SearchHandler::search_thread_function, this); }
 
-void SearchHandler::search(int ms, int32_t max_depth) {
+void SearchHandler::search(const TimeControlInfo& tc) {
     current_search_id += 1;
     search_cancelled = true;
-    perft_depth = max_depth;
     // cancel a search if performing one
-    search_time_ms = ms > 0 ? ms : MagicNumbers::PositiveInfinity;
-    infinite_search = ms <= 0;
     in_search = true;
+    this->tc = tc;
     semaphore.release();
     // We then wake up the search thread
     int id_to_cancel = current_search_id;
-    if (ms > 0) {
-        cancelFuture = std::async(std::launch::async, [ms, this, id_to_cancel]() {
-            std::this_thread::sleep_for(std::chrono::milliseconds{ms});
+    const auto tc_search_time = TimeManagement::get_search_time(tc);
+    if (TimeManagement::is_time_based_tc(tc)) {
+        cancelFuture = std::async(std::launch::async, [tc_search_time, this, id_to_cancel]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds{tc_search_time});
             if (this->get_current_search_id() == id_to_cancel) {
                 // only cancel the current searcg
                 this->EndSearch();
@@ -70,7 +69,7 @@ void SearchHandler::search(int ms, int32_t max_depth) {
     }
 }
 
-void SearchHandler::run_perft(int depth) {
+void SearchHandler::run_perft(uint16_t depth) {
     search_cancelled = true;
     // cancel any existing search
     perft_depth = depth;
@@ -86,7 +85,7 @@ void SearchHandler::reset() {
     table = TranspositionTable();
 }
 
-void SearchHandler::run_bench(int depth) {
+void SearchHandler::run_bench(uint16_t depth) {
     static constexpr std::array fens = { // taken from alexandria, originally from bitgenie
         "r3k2r/2pb1ppp/2pp1q2/p7/1nP1B3/1P2P3/P2N1PPP/R2QK2R w KQkq a6 0 14",
         "4rrk1/2p1b1p1/p1p3q1/4p3/2P2n1p/1P1NR2P/PB3PP1/3R1QK1 b - - 2 24",
@@ -148,7 +147,7 @@ void SearchHandler::run_bench(int depth) {
         std::unique_lock<std::mutex> lock(search_mutex);
         this->reset();
         this->board.set_from_fen(fen);
-        this->search(0, depth);
+        this->search(DepthTC { depth });
         cv.wait(lock, [this] { return !this->is_searching(); });
         // loop until search completes
         total_nodes += node_count;

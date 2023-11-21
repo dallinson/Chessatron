@@ -12,6 +12,7 @@
 
 #include "chessboard.hpp"
 #include "evaluation.hpp"
+#include "time_management.hpp"
 
 enum class NodeTypes {
     ROOT_NODE,
@@ -97,8 +98,8 @@ class SearchHandler {
         TranspositionTable table;
         std::atomic<int> current_search_id = 0;
         std::future<void> cancelFuture;
-        int perft_depth = 0;
-        uint32_t search_time_ms;
+        uint16_t perft_depth;
+        TimeControlInfo tc;
         Move pv_move;
         uint64_t node_count;
         bool print_info = true;
@@ -123,9 +124,9 @@ class SearchHandler {
         void set_print_info(bool print) { print_info = print; };
         void reset();
 
-        void search(int ms, int32_t max_depth = MagicNumbers::PositiveInfinity);
-        void run_bench(int depth=8);
-        void run_perft(int depth);
+        void search(const TimeControlInfo& tc);
+        void run_bench(uint16_t depth=8);
+        void run_perft(uint16_t depth);
 
         void EndSearch() { search_cancelled = true; }
 

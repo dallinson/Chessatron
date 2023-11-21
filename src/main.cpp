@@ -66,13 +66,17 @@ void process_position_command(const std::string& line, ChessBoard& c, MoveHistor
 }
 
 void process_go_command(const std::vector<std::string>& line, SearchHandler& s) {
-    int wtime = 0, btime = 0, winc = 0, binc = 0, movetime = 0;
-    int movestogo = 1;
-    int depth = MagicNumbers::PositiveInfinity;
+    uint32_t wtime = 0, btime = 0, winc = 0, binc = 0, movetime = 0;
+    uint32_t movestogo = 1;
+    uint16_t depth = std::numeric_limits<uint16_t>::max();
+    if (line.size() == 0) {
+        s.search(InfiniteTC {});
+        return;
+    }
     for (size_t i = 0; i < line.size(); i++) {
         auto& this_elem = line[i];
         if (this_elem == "infinite") {
-            s.search(0);
+            s.search(InfiniteTC {});
             return;
         } else if (i != (line.size() - 1)) {
             if (this_elem == "wtime") {
@@ -92,11 +96,13 @@ void process_go_command(const std::vector<std::string>& line, SearchHandler& s) 
                 movestogo = std::stoi(line[i + 1]);
             } else if (this_elem == "depth") {
                 depth = std::stoi(line[i + 1]);
+                s.search(DepthTC { depth });
+                return;
             }
         }
     }
     if (movetime != 0) {
-        s.search(movetime, depth);
+        s.search(FixedTimeTC { movetime });
         return;
     }
     auto current_side = s.get_board().get_side_to_move();
@@ -110,7 +116,7 @@ void process_go_command(const std::vector<std::string>& line, SearchHandler& s) 
     //    59.3 + (static_cast<float>(72830 - (2330 * halfmoves_so_far)) / static_cast<float>(2644 + (halfmoves_so_far * (10 + halfmoves_so_far))));
 
     // s.search((remaining_time / static_cast<int>(remaining_halfmoves)) + increment, depth);
-    s.search(remaining_time / 20 + increment / 2, depth);
+    s.search(VariableTimeTC {TimeManagement::calculate_hard_limit(remaining_time, increment), remaining_time, increment});
 }
 
 int main(int argc, char** argv) {

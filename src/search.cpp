@@ -264,11 +264,11 @@ Move SearchHandler::run_iterative_deepening_search() {
         // If only one move is legal in this position we don't need to search; we can just return the one legal move
         // in order to save some time
     }
+
     Score current_score = 0;
-    for (int depth = 1; depth <= perft_depth && !search_cancelled; depth++) {
+    for (int depth = 1; depth <= TimeManagement::get_search_depth(tc) && !search_cancelled; depth++) {
         
         current_score = run_aspiration_window_search(depth, current_score);
-
         const auto time_so_far = std::max(
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - search_start_point).count(), (int64_t) 1);
         // Set time so far to a minimum of 1 to avoid divide by 0 in nps calculation
@@ -289,7 +289,7 @@ Move SearchHandler::run_iterative_deepening_search() {
             }
         }
 
-        if (!infinite_search && time_so_far > ((search_time_ms * 3) / 10)) {
+        if (TimeManagement::is_time_based_tc(tc) && time_so_far > TimeManagement::calculate_soft_limit(tc)) {
             break;
         }
     }
