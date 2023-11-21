@@ -109,7 +109,7 @@ namespace TimeManagement {
      * @return uint32_t 
      */
     inline uint32_t calculate_soft_limit(const TimeControlInfo& tc) {
-        return (get_search_time(tc) / 10) * 3;
+        return (get_search_time(tc) / 10) * 6;
     }
 
 };
