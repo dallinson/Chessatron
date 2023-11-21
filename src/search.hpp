@@ -105,6 +105,7 @@ class SearchHandler {
         bool print_info = true;
 
         void search_thread_function();
+        Score run_aspiration_window_search(int depth, Score previous_score);
         template <NodeTypes node_type> Score negamax_step(Score alpha, Score beta, int depth, TranspositionTable& transpositions, uint64_t& node_count);
         template <NodeTypes node_type> Score quiescent_search(Score alpha, Score beta, TranspositionTable& transpositions, uint64_t& node_count);
         Move run_negamax(int depth, TranspositionTable& transpositions);
