@@ -154,7 +154,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
             } else {
                 score = -negamax_step<NodeTypes::NON_PV_NODE>(-alpha - 1, -alpha, depth - 1 - lmr_reduction, transpositions, node_count);
                 if (score > alpha) {
-                    score = -negamax_step<NodeTypes::PV_NODE>(-beta, -alpha, depth - 1 - lmr_reduction, transpositions, node_count);
+                    score = -negamax_step<NodeTypes::PV_NODE>(-beta, -alpha, depth - 1, transpositions, node_count);
                 }
             }
         } else {
