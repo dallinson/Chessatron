@@ -89,13 +89,17 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
 
     const auto tt_entry = table[board];
     if constexpr (!is_pv_node(node_type)) {
-        const bool should_cutoff = tt_entry.get_key() == board.get_zobrist_key() 
-                                   && tt_entry.get_depth() >= depth
-                                   && (tt_entry.get_bound_type() == BoundTypes::EXACT_BOUND
-                                   || (tt_entry.get_bound_type() == BoundTypes::LOWER_BOUND && tt_entry.get_score() >= beta)
-                                   || (tt_entry.get_bound_type() == BoundTypes::UPPER_BOUND && tt_entry.get_score() <= alpha));
-        if (should_cutoff) {
-            return tt_entry.get_score();
+        if (tt_entry.get_key() == board.get_zobrist_key() && tt_entry.get_depth() >= depth) {
+            switch (tt_entry.get_bound_type()) {
+                case BoundTypes::EXACT_BOUND:
+                    return tt_entry.get_score();
+                case BoundTypes::LOWER_BOUND:
+                    return beta;
+                case BoundTypes::UPPER_BOUND:
+                    return alpha;
+                default:
+                    break;
+            }
         }
     }
 
@@ -129,7 +133,6 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
     const auto capture_count = MoveOrdering::reorder_captures_first(moves, static_cast<size_t>(found_pv_move)) - static_cast<size_t>(found_pv_move);
     MoveOrdering::sort_captures_mvv_lva(moves, board, static_cast<size_t>(found_pv_move), capture_count);
     Move best_move = Move::NULL_MOVE;
-    Score best_score = MagicNumbers::NegativeInfinity;
     const Score original_alpha = alpha;
     for (size_t i = 0; i < moves.len(); i++) {
         if (search_cancelled) {
@@ -152,21 +155,20 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
             score = -negamax_step<NodeTypes::NON_PV_NODE>(-alpha - 1, -alpha, depth - 1, transpositions, node_count);
         }
         board.unmake_move(history);
-        if (score > best_score) {
-            best_score = score;
+        if (score > alpha) {
+            alpha = score;
             best_move = move;
             if constexpr (node_type == NodeTypes::ROOT_NODE) {
                 pv_move = best_move;
             }
         }
         if (score >= beta) {
-            transpositions.store(TranspositionTableEntry(best_move, depth, BoundTypes::LOWER_BOUND, score, board.get_zobrist_key()), board);
+            transpositions.store(TranspositionTableEntry(best_move, depth, BoundTypes::LOWER_BOUND, beta, board.get_zobrist_key()), board);
             return beta;
         }
-        alpha = std::max(score, alpha);
     }
     const BoundTypes bound_type = alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND;
-    transpositions.store(TranspositionTableEntry(best_move, depth, bound_type, best_score, board.get_zobrist_key()), board);
+    transpositions.store(TranspositionTableEntry(best_move, depth, bound_type, alpha, board.get_zobrist_key()), board);
     return alpha;
 }
 
