@@ -111,7 +111,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         auto null_score = -negamax_step<pv_node_type>(-beta, -alpha, depth - 1 - 2, transpositions, node_count);
         board.unmake_move(history);
         if (null_score >= beta) {
-            return beta;
+            return null_score;
         }
     }
 
@@ -152,8 +152,9 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
             score = -negamax_step<NodeTypes::NON_PV_NODE>(-alpha - 1, -alpha, depth - 1, transpositions, node_count);
         }
         board.unmake_move(history);
-        if (score > best_score) {
-            best_score = score;
+        best_score = std::max(score, best_score);
+        if (score >= alpha) {
+            alpha = score;
             best_move = move;
             if constexpr (node_type == NodeTypes::ROOT_NODE) {
                 pv_move = best_move;
@@ -161,13 +162,12 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         }
         if (score >= beta) {
             transpositions.store(TranspositionTableEntry(best_move, depth, BoundTypes::LOWER_BOUND, score, board.get_zobrist_key()), board);
-            return beta;
+            return score;
         }
-        alpha = std::max(score, alpha);
     }
     const BoundTypes bound_type = alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND;
     transpositions.store(TranspositionTableEntry(best_move, depth, bound_type, best_score, board.get_zobrist_key()), board);
-    return alpha;
+    return best_score;
 }
 
 template <NodeTypes node_type>
@@ -175,11 +175,11 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
     if (Search::is_draw(board, history)) {
         return 0;
     }
-    Score stand_pat = Evaluation::evaluate_board(board);
-    if (stand_pat >= beta) {
-        return beta;
+    Score static_eval = Evaluation::evaluate_board(board);
+    if (static_eval >= beta) {
+        return static_eval;
     }
-    alpha = std::max(stand_pat, alpha);
+    alpha = std::max(static_eval, alpha);
     auto moves = MoveGenerator::generate_legal_moves<MoveGenType::CAPTURES>(board, board.get_side_to_move());
     if (moves.len() == 0 && MoveGenerator::generate_legal_moves<MoveGenType::NON_CAPTURES>(board, board.get_side_to_move()).len() == 0) {
         if (board.get_checkers(board.get_side_to_move()) != 0) {
@@ -192,6 +192,7 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
     auto capture_count = moves.len();
     MoveOrdering::sort_captures_mvv_lva(moves, board, 0, capture_count);
     int evaluated_moves = 0;
+    Score best_score = static_eval;
     for (size_t i = 0; i < capture_count; i++) {
         if (search_cancelled) {
             break;
@@ -216,11 +217,12 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
         board.unmake_move(history);
         evaluated_moves += 1;
         if (score >= beta) {
-            return beta;
+            return score;
         }
         alpha = std::max(score, alpha);
+        best_score = std::max(score, best_score);
     }
-    return alpha;
+    return best_score;
 }
 
 Score SearchHandler::run_aspiration_window_search(int depth, Score previous_score) {
