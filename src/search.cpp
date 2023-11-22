@@ -153,7 +153,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         }
         board.unmake_move(history);
         best_score = std::max(score, best_score);
-        if (score >= alpha) {
+        if (score > alpha) {
             alpha = score;
             best_move = move;
             if constexpr (node_type == NodeTypes::ROOT_NODE) {
