@@ -94,9 +94,15 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
                 case BoundTypes::EXACT_BOUND:
                     return tt_entry.get_score();
                 case BoundTypes::LOWER_BOUND:
-                    return beta;
+                    if (tt_entry.get_score() >= beta) {
+                        return beta;
+                    }
+                    break;
                 case BoundTypes::UPPER_BOUND:
-                    return alpha;
+                    if (tt_entry.get_score() <= alpha) {
+                        return alpha;
+                    }
+                    break;
                 default:
                     break;
             }
