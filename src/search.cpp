@@ -125,7 +125,10 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         }
     }
     // mate detection
-    bool found_pv_move = MoveOrdering::reorder_pv_move(moves, tt_entry.get_pv_move());
+    bool found_pv_move = false;
+    if (tt_entry.get_key() == board.get_zobrist_key()) {
+        found_pv_move = MoveOrdering::reorder_pv_move(moves, tt_entry.get_pv_move());
+    }
     const auto capture_count = MoveOrdering::reorder_captures_first(moves, static_cast<size_t>(found_pv_move)) - static_cast<size_t>(found_pv_move);
     MoveOrdering::sort_captures_mvv_lva(moves, board, static_cast<size_t>(found_pv_move), capture_count);
     if (depth >= 5 && !found_pv_move) {
