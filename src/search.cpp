@@ -124,13 +124,18 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
             return 0;
         }
     }
-    // mate detection
+    // mate and draw detection
+
     bool found_pv_move = MoveOrdering::reorder_pv_move(moves, tt_entry.get_pv_move());
     const auto capture_count = MoveOrdering::reorder_captures_first(moves, static_cast<size_t>(found_pv_move)) - static_cast<size_t>(found_pv_move);
+    // move reordering
+
     MoveOrdering::sort_captures_mvv_lva(moves, board, static_cast<size_t>(found_pv_move), capture_count);
     if (depth >= 5 && !found_pv_move) {
         depth -= 1;
     }
+    // iir
+
     Move best_move = Move::NULL_MOVE;
     Score best_score = MagicNumbers::NegativeInfinity;
     const Score original_alpha = alpha;
@@ -138,21 +143,22 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         if (search_cancelled) {
             break;
         }
+        const auto lmr_reduction = i > 4 ? 1 : 0;
         const auto& move = moves[i];
         board.make_move(move, history);
         node_count += 1;
         Score score;
         if constexpr (is_pv_node(node_type)) {
             if (i == 0) {
-                score = -negamax_step<NodeTypes::PV_NODE>(-beta, -alpha, depth - 1, transpositions, node_count);
+                score = -negamax_step<NodeTypes::PV_NODE>(-beta, -alpha, depth - 1 - lmr_reduction, transpositions, node_count);
             } else {
-                score = -negamax_step<NodeTypes::NON_PV_NODE>(-alpha - 1, -alpha, depth - 1, transpositions, node_count);
+                score = -negamax_step<NodeTypes::NON_PV_NODE>(-alpha - 1, -alpha, depth - 1 - lmr_reduction, transpositions, node_count);
                 if (score > alpha) {
-                    score = -negamax_step<NodeTypes::PV_NODE>(-beta, -alpha, depth - 1, transpositions, node_count);
+                    score = -negamax_step<NodeTypes::PV_NODE>(-beta, -alpha, depth - 1 - lmr_reduction, transpositions, node_count);
                 }
             }
         } else {
-            score = -negamax_step<NodeTypes::NON_PV_NODE>(-alpha - 1, -alpha, depth - 1, transpositions, node_count);
+            score = -negamax_step<NodeTypes::NON_PV_NODE>(-alpha - 1, -alpha, depth - 1 - lmr_reduction, transpositions, node_count);
         }
         board.unmake_move(history);
         if (score > best_score) {
