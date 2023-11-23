@@ -407,7 +407,7 @@ std::optional<Move> ChessBoard::generate_move_from_string(const std::string& s) 
     MoveFlags m = MoveFlags(0);
     if (s.size() == 5) {
         // if bit 8 is set it's a promotion
-        switch (s.at(4)) {
+        switch (std::tolower(s.at(4))) {
         case 'r':
             m = MoveFlags::ROOK_PROMOTION;
             break;
