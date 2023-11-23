@@ -139,27 +139,36 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
     Move best_move = Move::NULL_MOVE;
     Score best_score = MagicNumbers::NegativeInfinity;
     const Score original_alpha = alpha;
-    for (size_t i = 0; i < moves.len(); i++) {
+    for (size_t evaluated_moves = 0; evaluated_moves < moves.len(); evaluated_moves++) {
         if (search_cancelled) {
             break;
         }
-        const auto lmr_reduction = i > 4 ? 1 : 0;
-        const auto& move = moves[i];
+        const auto& move = moves[evaluated_moves];
         board.make_move(move, history);
         node_count += 1;
         Score score;
-        if constexpr (is_pv_node(node_type)) {
-            if (i == 0) {
-                score = -negamax_step<NodeTypes::PV_NODE>(-beta, -alpha, depth - 1 - lmr_reduction, transpositions, node_count);
-            } else {
-                score = -negamax_step<NodeTypes::NON_PV_NODE>(-alpha - 1, -alpha, depth - 1 - lmr_reduction, transpositions, node_count);
-                if (score > alpha) {
-                    score = -negamax_step<NodeTypes::PV_NODE>(-beta, -alpha, depth - 1, transpositions, node_count);
-                }
+
+        const bool is_lmr_potential_move = evaluated_moves >= 1 + static_cast<size_t>(is_pv_node(node_type));
+        
+        // See if we can perform LMR
+        if (depth >= 2 && is_lmr_potential_move) {
+            const auto lmr_reduction = static_cast<int>(std::floor(1 + ((std::log(depth) * std::log(evaluated_moves)) / 2)));
+            score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - lmr_reduction, transpositions, node_count);
+
+            // it's possible the LMR score will raise alpha; in this case we re-search with the full depth
+            if (score > alpha) {
+                score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - 1, transpositions, node_count);
             }
-        } else {
-            score = -negamax_step<NodeTypes::NON_PV_NODE>(-alpha - 1, -alpha, depth - 1 - lmr_reduction, transpositions, node_count);
         }
+        // if we didn't perform LMR
+        else if (!is_pv_node(node_type) || is_lmr_potential_move) {
+            score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - 1, transpositions, node_count);
+        }
+
+        if (is_pv_node(node_type) && (!is_lmr_potential_move || score > alpha)) {
+            score = -negamax_step<NodeTypes::PV_NODE>(-beta, -alpha, depth - 1, transpositions, node_count);
+        }
+
         board.unmake_move(history);
         if (score > best_score) {
             best_score = score;
