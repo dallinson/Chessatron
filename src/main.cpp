@@ -154,6 +154,8 @@ int main(int argc, char** argv) {
             break;
         } else if (line == "stop") {
             s.EndSearch();
+        } else if (line == "d") {
+            s.get_board().print_board();
         } else {
             auto parsed_line = split_on_whitespace(line);
             if (parsed_line.size() >= 1) {
