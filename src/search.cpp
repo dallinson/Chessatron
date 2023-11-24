@@ -126,11 +126,13 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
     }
     // mate and draw detection
 
-    bool found_pv_move = MoveOrdering::reorder_pv_move(moves, tt_entry.get_pv_move());
-    const auto capture_count = MoveOrdering::reorder_captures_first(moves, static_cast<size_t>(found_pv_move)) - static_cast<size_t>(found_pv_move);
+    //bool found_pv_move = MoveOrdering::reorder_pv_move(moves, tt_entry.get_pv_move());
+    bool found_pv_move = false;
+    MoveOrdering::reorder_moves(moves, board, tt_entry.get_pv_move(), found_pv_move);
+    //const auto capture_count = MoveOrdering::reorder_captures_first(moves, static_cast<size_t>(found_pv_move)) - static_cast<size_t>(found_pv_move);
     // move reordering
 
-    MoveOrdering::sort_captures_mvv_lva(moves, board, static_cast<size_t>(found_pv_move), capture_count);
+    //MoveOrdering::sort_captures_mvv_lva(moves, board, static_cast<size_t>(found_pv_move), capture_count);
     if (depth >= 5 && !found_pv_move) {
         depth -= 1;
     }
@@ -198,10 +200,12 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
             return 0;
         }
     }
-    auto capture_count = moves.len();
-    MoveOrdering::sort_captures_mvv_lva(moves, board, 0, capture_count);
+    //auto capture_count = moves.len();
+    //MoveOrdering::sort_captures_mvv_lva(moves, board, 0, capture_count);
+    bool found_pv_move = false;
+    MoveOrdering::reorder_moves(moves, board, Move::NULL_MOVE, found_pv_move);
     int evaluated_moves = 0;
-    for (size_t i = 0; i < capture_count; i++) {
+    for (size_t i = 0; i < moves.len(); i++) {
         if (search_cancelled) {
             break;
         }

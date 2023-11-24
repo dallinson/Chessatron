@@ -50,9 +50,11 @@ class Move {
         uint8_t get_dest_file() const { return get_bits(move, 8, 6); };
 
         MoveFlags get_move_flags() const { return (MoveFlags) get_bits(move, 15, 12); };
+        PieceTypes get_promotion_piece_type() const { return static_cast<PieceTypes>((static_cast<int>(get_move_flags()) & 0b0011) + 1); };
 
         bool is_null_move() const { return move == 0; };
         bool is_capture() const { return (static_cast<int>(get_move_flags()) & 0x04) != 0; };
+        bool is_promotion() const { return static_cast<int>(get_move_flags()) >= 8; };
         bool is_castling_move() const { return get_move_flags() == MoveFlags::QUEENSIDE_CASTLE || get_move_flags() == MoveFlags::KINGSIDE_CASTLE; };
 
         std::string to_string() const;
