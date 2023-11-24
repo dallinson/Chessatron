@@ -13,6 +13,7 @@ void MoveOrdering::reorder_moves(MoveList& moves, const ChessBoard& board, const
     for (size_t i = 0; i < moves.len(); i++) {
         moves[i].score = 0;
         if (moves[i].move == pv_move) {
+            found_pv_move = true;
             moves[i].score = std::numeric_limits<int32_t>::max();
             continue;
         }
@@ -21,12 +22,13 @@ void MoveOrdering::reorder_moves(MoveList& moves, const ChessBoard& board, const
             const auto src_score = ordering_scores[static_cast<uint8_t>(board.get_piece(moves[i].move.get_src_square()).get_type()) - 1];
             const auto dest_type = moves[i].move.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE ? PieceTypes::PAWN : board.get_piece(moves[i].move.get_dest_square()).get_type();
             const auto dest_score = ordering_scores[static_cast<uint8_t>(dest_type) - 1];
-            moves[i].score += (dest_score - src_score);
+            moves[i].score += 100 * dest_score;
+            moves[i].score += (20 - src_score);
         }
-        if (moves[i].move.is_promotion()) {
+        /*if (moves[i].move.is_promotion()) {
             moves[i].score += 100000;
             moves[i].score += ordering_scores[static_cast<int>(moves[i].move.get_promotion_piece_type())];
-        }
+        }*/
     }
     std::sort(&moves[0], &moves[moves.len()], [](const ScoredMove a, const ScoredMove b) {
         return a.score > b.score;
