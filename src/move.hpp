@@ -58,18 +58,24 @@ class Move {
         std::string to_string() const;
 };
 
+struct ScoredMove {
+    int32_t score;
+    Move move;
+    uint16_t padding;
+};
+
 bool operator==(const Move& lhs, const Move& rhs);
 
 class MoveList {
     private:
         size_t idx;
-        Move data[MAX_TURN_MOVE_COUNT];
+        ScoredMove data[MAX_TURN_MOVE_COUNT];
 
     public:
         MoveList() : idx(0){};
 
         void add_move(const Move to_add) {
-            this->data[idx] = to_add;
+            this->data[idx].move = to_add;
             idx += 1;
         };
 
@@ -79,10 +85,10 @@ class MoveList {
             idx += other_len;
         };
 
-        Move& operator[](size_t arg_idx) { return data[arg_idx]; }
-        const Move& operator[](size_t arg_idx) const { return data[arg_idx]; }
+        ScoredMove& operator[](size_t arg_idx) { return data[arg_idx]; }
+        const ScoredMove& operator[](size_t arg_idx) const { return data[arg_idx]; }
 
-        const Move* get_data_addr() const { return data; }
+        const ScoredMove* get_data_addr() const { return data; }
 
         size_t len() const { return this->idx; };
 };

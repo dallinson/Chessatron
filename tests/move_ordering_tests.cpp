@@ -11,9 +11,9 @@ TEST(MoveOrderingTests, TestReorderCaptures) {
     auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, c.get_side_to_move());
     MoveOrdering::reorder_captures_first(moves, 0);
     for (size_t i = 0; i < 4; i++) {
-        ASSERT_TRUE(moves[i].is_capture());
+        ASSERT_TRUE(moves[i].move.is_capture());
     }
     for (size_t i = 4; i < moves.len(); i++) {
-        ASSERT_FALSE(moves[i].is_capture());
+        ASSERT_FALSE(moves[i].move.is_capture());
     }
 }
