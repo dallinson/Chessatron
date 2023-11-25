@@ -25,10 +25,10 @@ void MoveOrdering::reorder_moves(MoveList& moves, const ChessBoard& board, const
             moves[i].score += 100 * dest_score;
             moves[i].score += (20 - src_score);
         }
-        /*if (moves[i].move.is_promotion()) {
+        if (moves[i].move.get_move_flags() == MoveFlags::QUEEN_PROMOTION || moves[i].move.get_move_flags() == MoveFlags::QUEEN_PROMOTION_CAPTURE) {
             moves[i].score += 100000;
             moves[i].score += ordering_scores[static_cast<int>(moves[i].move.get_promotion_piece_type())];
-        }*/
+        }
     }
     std::sort(&moves[0], &moves[moves.len()], [](const ScoredMove a, const ScoredMove b) {
         return a.score > b.score;
