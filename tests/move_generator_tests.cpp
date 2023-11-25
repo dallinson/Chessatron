@@ -299,7 +299,7 @@ TEST(MoveGeneratorTests, TestCorrectCaptureCount) {
     auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, c.get_side_to_move());
     int captures = 0;
     for (size_t i = 0; i < moves.len(); i++) {
-        if (moves[i].is_capture()) {
+        if (moves[i].move.is_capture()) {
             captures += 1;
         }
     }

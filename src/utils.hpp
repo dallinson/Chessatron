@@ -1,6 +1,7 @@
 #pragma once
 
 #include <bit>
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 
@@ -14,13 +15,13 @@ enum class Side : uint8_t {
 };
 
 constexpr inline uint64_t bit(uint8_t x) { return ((uint64_t) 1) << x; };
-template <typename T> constexpr inline T get_bit(T val, uint8_t x) { return (val >> x) & 0x1; };
-template <typename T> constexpr inline void set_bit(T& val, uint8_t x) { val |= bit(x); };
-template <typename T> constexpr inline void clear_bit(T& val, uint8_t x) { val &= ~bit(x); };
-template <typename T> constexpr inline void toggle_bit(T& val, uint8_t x) { val ^= bit(x); };
+template <std::integral T> constexpr inline T get_bit(T val, uint8_t x) { return (val >> x) & 0x1; };
+template <std::integral T> constexpr inline void set_bit(T& val, uint8_t x) { val |= bit(x); };
+template <std::integral T> constexpr inline void clear_bit(T& val, uint8_t x) { val &= ~bit(x); };
+template <std::integral T> constexpr inline void toggle_bit(T& val, uint8_t x) { val ^= bit(x); };
 
 constexpr inline uint64_t bits(uint8_t max, uint8_t min) { return ((0xFFFFFFFFFFFFFFFF << (min)) & (0xFFFFFFFFFFFFFFFF >> (64 - ((max) + 1)))); };
-template <typename T> constexpr inline T get_bits(T val, uint8_t max, uint8_t min) { return (val & bits(max, min)) >> min; };
+template <std::integral T> constexpr inline T get_bits(T val, uint8_t max, uint8_t min) { return (val & bits(max, min)) >> min; };
 constexpr inline uint8_t get_rank(uint8_t pos) { return get_bits(pos, 5, 3); };
 constexpr inline uint8_t get_file(uint8_t pos) { return get_bits(pos, 2, 0); };
 // rank is the row and file the column
