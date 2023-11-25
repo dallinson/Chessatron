@@ -107,7 +107,7 @@ TEST(ChessBoardTests, TestMakeUnmakeMove) {
     auto BishopMoves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE);
     MoveHistory h;
     for (size_t j = 0; j < BishopMoves.len(); j++) {
-        Move m = BishopMoves[j];
+        Move m = BishopMoves[j].move;
         ASSERT_EQ(h.len(), 0);
         c.make_move(m, h);
         ASSERT_EQ(h.len(), 1);

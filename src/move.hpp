@@ -50,12 +50,20 @@ class Move {
         uint8_t get_dest_file() const { return get_bits(move, 8, 6); };
 
         MoveFlags get_move_flags() const { return (MoveFlags) get_bits(move, 15, 12); };
+        PieceTypes get_promotion_piece_type() const { return static_cast<PieceTypes>((static_cast<int>(get_move_flags()) & 0b0011) + 1); };
 
         bool is_null_move() const { return move == 0; };
         bool is_capture() const { return (static_cast<int>(get_move_flags()) & 0x04) != 0; };
+        bool is_promotion() const { return static_cast<int>(get_move_flags()) >= 8; };
         bool is_castling_move() const { return get_move_flags() == MoveFlags::QUEENSIDE_CASTLE || get_move_flags() == MoveFlags::KINGSIDE_CASTLE; };
 
         std::string to_string() const;
+};
+
+struct ScoredMove {
+    int32_t score;
+    Move move;
+    uint16_t padding;
 };
 
 bool operator==(const Move& lhs, const Move& rhs);
@@ -63,13 +71,13 @@ bool operator==(const Move& lhs, const Move& rhs);
 class MoveList {
     private:
         size_t idx;
-        Move data[MAX_TURN_MOVE_COUNT];
+        ScoredMove data[MAX_TURN_MOVE_COUNT];
 
     public:
         MoveList() : idx(0){};
 
         void add_move(const Move to_add) {
-            this->data[idx] = to_add;
+            this->data[idx].move = to_add;
             idx += 1;
         };
 
@@ -79,10 +87,10 @@ class MoveList {
             idx += other_len;
         };
 
-        Move& operator[](size_t arg_idx) { return data[arg_idx]; }
-        const Move& operator[](size_t arg_idx) const { return data[arg_idx]; }
+        ScoredMove& operator[](size_t arg_idx) { return data[arg_idx]; }
+        const ScoredMove& operator[](size_t arg_idx) const { return data[arg_idx]; }
 
-        const Move* get_data_addr() const { return data; }
+        const ScoredMove* get_data_addr() const { return data; }
 
         size_t len() const { return this->idx; };
 };
