@@ -19,7 +19,7 @@ uint64_t perft(ChessBoard& c, MoveHistory& m, int depth) {
     if (depth == 1) {
         if constexpr (print_debug) {
             for (size_t i = 0; i < moves.len(); i++) {
-                printf("%s: 1\n", moves[i].to_string().c_str());
+                printf("%s: 1\n", moves[i].move.to_string().c_str());
             }
         }
         return moves.len();
@@ -27,10 +27,10 @@ uint64_t perft(ChessBoard& c, MoveHistory& m, int depth) {
 
     for (size_t i = 0; i < moves.len(); i++) {
         uint64_t val;
-        c.make_move(moves[i], m);
+        c.make_move(moves[i].move, m);
         val = perft<false>(c, m, depth - 1);
         if constexpr (print_debug) {
-            std::cout << moves[i].to_string() << ": " << val << std::endl;
+            std::cout << moves[i].move.to_string() << ": " << val << std::endl;
         }
         to_return += val;
         c.unmake_move(m);
@@ -54,7 +54,7 @@ uint64_t Perft::run_perft(ChessBoard& c, int depth, bool print_debug) {
 
 Move Search::select_random_move(const ChessBoard& c) {
     auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, c.get_side_to_move());
-    return moves[rand() % moves.len()];
+    return moves[rand() % moves.len()].move;
 }
 
 bool Search::is_threefold_repetition(const MoveHistory& m, const int halfmove_clock, const ZobristKey z) {
@@ -126,11 +126,13 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
     }
     // mate and draw detection
 
-    bool found_pv_move = MoveOrdering::reorder_pv_move(moves, tt_entry.get_pv_move());
-    const auto capture_count = MoveOrdering::reorder_captures_first(moves, static_cast<size_t>(found_pv_move)) - static_cast<size_t>(found_pv_move);
+    //bool found_pv_move = MoveOrdering::reorder_pv_move(moves, tt_entry.get_pv_move());
+    bool found_pv_move = false;
+    MoveOrdering::reorder_moves(moves, board, tt_entry.get_pv_move(), found_pv_move);
+    //const auto capture_count = MoveOrdering::reorder_captures_first(moves, static_cast<size_t>(found_pv_move)) - static_cast<size_t>(found_pv_move);
     // move reordering
 
-    MoveOrdering::sort_captures_mvv_lva(moves, board, static_cast<size_t>(found_pv_move), capture_count);
+    //MoveOrdering::sort_captures_mvv_lva(moves, board, static_cast<size_t>(found_pv_move), capture_count);
     if (depth >= 5 && !found_pv_move) {
         depth -= 1;
     }
@@ -145,7 +147,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         }
         const auto lmr_reduction = i > 4 ? 1 : 0;
         const auto& move = moves[i];
-        board.make_move(move, history);
+        board.make_move(move.move, history);
         node_count += 1;
         Score score;
         if constexpr (is_pv_node(node_type)) {
@@ -163,7 +165,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         board.unmake_move(history);
         if (score > best_score) {
             best_score = score;
-            best_move = move;
+            best_move = move.move;
             if constexpr (node_type == NodeTypes::ROOT_NODE) {
                 pv_move = best_move;
             }
@@ -198,15 +200,17 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
             return 0;
         }
     }
-    auto capture_count = moves.len();
-    MoveOrdering::sort_captures_mvv_lva(moves, board, 0, capture_count);
+    //auto capture_count = moves.len();
+    //MoveOrdering::sort_captures_mvv_lva(moves, board, 0, capture_count);
+    bool found_pv_move = false;
+    MoveOrdering::reorder_moves(moves, board, Move::NULL_MOVE, found_pv_move);
     int evaluated_moves = 0;
-    for (size_t i = 0; i < capture_count; i++) {
+    for (size_t i = 0; i < moves.len(); i++) {
         if (search_cancelled) {
             break;
         }
         const auto& move = moves[i];
-        board.make_move(move, history);
+        board.make_move(move.move, history);
         node_count += 1;
         Score score;
         if constexpr (is_pv_node(node_type)) {
@@ -269,7 +273,7 @@ Move SearchHandler::run_iterative_deepening_search() {
     auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(board, board.get_side_to_move());
     // We generate legal moves only as it saves us having to continually rerun legality checks
     if (moves.len() == 1) {
-        return moves[0];
+        return moves[0].move;
         // If only one move is legal in this position we don't need to search; we can just return the one legal move
         // in order to save some time
     }

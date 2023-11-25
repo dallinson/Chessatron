@@ -160,7 +160,7 @@ bool MoveGenerator::is_move_pseudolegal(const ChessBoard& c, const Move to_test)
     }
 
     for (size_t i = 0; i < moves.len(); i++) {
-        if (moves[i] == to_test) {
+        if (moves[i].move == to_test) {
             return true;
         }
     }

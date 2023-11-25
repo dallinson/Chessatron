@@ -155,6 +155,6 @@ void SearchHandler::run_bench(uint16_t depth) {
     }
     const auto duration = std::max(
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count(), (int64_t) 1);
-    std::cout << total_nodes << " nodes " << total_nodes / (duration / 1000) << " nps" << std::endl;
+    std::cout << total_nodes << " nodes " << (total_nodes / duration) * 1000 << " nps" << std::endl;
 
 }
