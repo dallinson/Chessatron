@@ -28,6 +28,10 @@ namespace MagicNumbers {
     extern const Bitboard KnightMoves[64];
     extern const Bitboard PawnAttacks[128];
 
+    extern std::array<double, 256> LnValues;
+
+    void generate_magics();
+
     constexpr int16_t PositiveInfinity = 16000;
     constexpr int16_t NegativeInfinity = -PositiveInfinity;
     // int32_t so a known constant size
