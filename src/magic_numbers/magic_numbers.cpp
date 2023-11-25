@@ -1,5 +1,7 @@
 #include "../magic_numbers.hpp"
 
+#include <cmath>
+
 #define GET_SIGN(x) (((x) > 0) - ((x) < 0))
 // clever way of doing a sign function, from https://stackoverflow.com/a/1903975
 #define ABS(x) (((x) < 0) ? -(x) : (x))
@@ -121,6 +123,16 @@ consteval std::array<Bitboard, 64> generate_king_moves() {
 }
 
 constexpr std::array<Bitboard, 64> MagicNumbers::KingMoves = generate_king_moves();
+
+std::array<double, 256> generate_ln_values() {
+    std::array<double, 256> to_return = {};
+    for (int i = 0; i < 256; i++) {
+        to_return[i] = std::log(i);
+    }
+    return to_return;
+}
+std::array<double, 256> MagicNumbers::LnValues = generate_ln_values();
+
 
 constexpr Bitboard MagicNumbers::KnightMoves[64] = {
     0x20400UL,
