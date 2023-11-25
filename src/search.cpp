@@ -88,8 +88,9 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
     constexpr auto pv_node_type = is_pv_node(node_type) ? NodeTypes::PV_NODE : NodeTypes::NON_PV_NODE;
 
     const auto tt_entry = table[board];
+    const bool tt_hit = tt_entry.get_key() == board.get_zobrist_key();
     if constexpr (!is_pv_node(node_type)) {
-        const bool should_cutoff = tt_entry.get_key() == board.get_zobrist_key() 
+        const bool should_cutoff = tt_hit
                                    && tt_entry.get_depth() >= depth
                                    && (tt_entry.get_bound_type() == BoundTypes::EXACT_BOUND
                                    || (tt_entry.get_bound_type() == BoundTypes::LOWER_BOUND && tt_entry.get_score() >= beta)
@@ -126,13 +127,10 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
     }
     // mate and draw detection
 
-    //bool found_pv_move = MoveOrdering::reorder_pv_move(moves, tt_entry.get_pv_move());
     bool found_pv_move = false;
-    MoveOrdering::reorder_moves(moves, board, tt_entry.get_key() == board.get_zobrist_key() ? tt_entry.get_pv_move() : Move::NULL_MOVE, found_pv_move);
-    //const auto capture_count = MoveOrdering::reorder_captures_first(moves, static_cast<size_t>(found_pv_move)) - static_cast<size_t>(found_pv_move);
+    MoveOrdering::reorder_moves(moves, board, tt_hit ? tt_entry.get_pv_move() : Move::NULL_MOVE, found_pv_move);
     // move reordering
 
-    //MoveOrdering::sort_captures_mvv_lva(moves, board, static_cast<size_t>(found_pv_move), capture_count);
     if (depth >= 5 && !found_pv_move) {
         depth -= 1;
     }
@@ -195,11 +193,25 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
     if (Search::is_draw(board, history)) {
         return 0;
     }
-    Score stand_pat = Evaluation::evaluate_board(board);
-    if (stand_pat >= beta) {
+
+    const auto tt_entry = table[board];
+    const bool tt_hit = tt_entry.get_key() == board.get_zobrist_key();
+    if constexpr (!is_pv_node(node_type)) {
+        const bool should_cutoff = tt_hit
+                                   && (tt_entry.get_bound_type() == BoundTypes::EXACT_BOUND
+                                   || (tt_entry.get_bound_type() == BoundTypes::LOWER_BOUND && tt_entry.get_score() >= beta)
+                                   || (tt_entry.get_bound_type() == BoundTypes::UPPER_BOUND && tt_entry.get_score() <= alpha));
+        // any entry accessed during qsearch will have been stored at a depth higher than this
+        if (should_cutoff) {
+            return tt_entry.get_score();
+        }
+    }
+
+    Score static_eval = Evaluation::evaluate_board(board);
+    if (static_eval >= beta) {
         return beta;
     }
-    alpha = std::max(stand_pat, alpha);
+    alpha = std::max(static_eval, alpha);
     auto moves = MoveGenerator::generate_legal_moves<MoveGenType::CAPTURES>(board, board.get_side_to_move());
     if (moves.len() == 0 && MoveGenerator::generate_legal_moves<MoveGenType::NON_CAPTURES>(board, board.get_side_to_move()).len() == 0) {
         if (board.get_checkers(board.get_side_to_move()) != 0) {
@@ -209,10 +221,9 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
             return 0;
         }
     }
-    //auto capture_count = moves.len();
-    //MoveOrdering::sort_captures_mvv_lva(moves, board, 0, capture_count);
+
     bool found_pv_move = false;
-    MoveOrdering::reorder_moves(moves, board, Move::NULL_MOVE, found_pv_move);
+    MoveOrdering::reorder_moves(moves, board, tt_hit ? tt_entry.get_pv_move() : Move::NULL_MOVE, found_pv_move);
     int evaluated_moves = 0;
     for (size_t i = 0; i < moves.len(); i++) {
         if (search_cancelled) {
