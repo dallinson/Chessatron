@@ -12,8 +12,8 @@
 
 namespace Evaluation {
 
-    constexpr std::array<Score, 6> MidgameScores = { 82, 477, 337, 365, 1025, 0 };
-    constexpr std::array<Score, 6> EndgameScores = { 94, 512, 281, 297, 936, 0 };
+    constexpr std::array<Score, 6> MidgameScores = { 82, 337, 365, 477, 1025,  0};
+    constexpr std::array<Score, 6> EndgameScores = { 94, 281, 297, 512,  936,  0};
     template <bool is_endgame>
     constexpr Score get_piece_score(PieceTypes p) { 
         const auto piece_idx = static_cast<uint8_t>(p) - 1;

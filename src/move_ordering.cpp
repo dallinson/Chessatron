@@ -6,7 +6,7 @@
 #include "evaluation.hpp"
 #include "move_generator.hpp"
 
-constexpr std::array<uint8_t, 6> ordering_scores = { 1, 5, 3, 3, 9, 20 };
+constexpr std::array<uint8_t, 6> ordering_scores = { 1, 3, 3, 5, 9, 20 };
 
 void MoveOrdering::reorder_moves(MoveList& moves, const ChessBoard& board, const Move pv_move, bool& found_pv_move) {
     found_pv_move = false;
