@@ -78,6 +78,38 @@ bool Search::is_draw(const ChessBoard& c, const MoveHistory& m) {
     return c.get_halfmove_clock() >= 100 || is_threefold_repetition(m, c.get_halfmove_clock(), c.get_zobrist_key());
 }
 
+/*bool static_exchange_evaluation(const ChessBoard& board, const Move move, const int threshold) {
+    PieceTypes next_victim = move.is_promotion() ? move.get_promotion_piece_type() : board.get_piece(move.get_src_square()).get_type();
+
+    Score balance = Search::SEEScores[static_cast<int>(board.get_piece(move.get_dest_square()).get_type())];
+    if (move.is_promotion()) {
+        balance += (Search::SEEScores[static_cast<int>(move.get_promotion_piece_type())] - Search::SEEScores[static_cast<int>(PieceTypes::PAWN)]);
+    } else if (move.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) {
+        balance = Search::SEEScores[static_cast<int>(PieceTypes::PAWN)];
+    }
+
+    balance -= threshold;
+
+    if (balance < 0) return false;
+
+    balance -= Search::SEEScores[static_cast<int>(next_victim)];
+
+    if (balance >= 0) return true;
+
+    const Bitboard bishops = board.get_bishop_occupancy() | board.get_queen_occupancy();
+    const Bitboard rooks = board.get_rook_occupancy() | board.get_queen_occupancy();
+
+    Bitboard occupied = board.get_occupancy();
+    occupied ^= bit(move.get_src_square());
+    occupied |= bit(move.get_dest_square());
+    if (move.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) {
+        const auto ep_target_square = get_position(move.get_src_rank(), move.get_dest_file());
+        occupied ^= bit(ep_target_square);
+    }
+
+    Bitboard attackers = MoveGenerator::get_checkers()
+}*/
+
 template <NodeTypes node_type>
 Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, TranspositionTable& transpositions, uint64_t& node_count) {
 

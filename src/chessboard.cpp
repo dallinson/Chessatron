@@ -33,7 +33,7 @@ void ChessBoard::clear_board() {
 }
 
 void ChessBoard::print_board() const {
-    static const char* piece_str = ".PRNBQK..prnbqk.";
+    static const char* piece_str = ".PNBRQK..pnbrqk.";
     for (int rank = 7; rank >= 0; rank--) {
         for (int file = 0; file < 8; file++) {
             printf("%c", piece_str[pieces[(rank * 8) + file].get_value()]);
@@ -381,7 +381,7 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
 void ChessBoard::recompute_blockers_and_checkers(const Side side) {
     const int king_idx = bitboard_to_idx(this->get_king_occupancy(side));
     const Side enemy_side = ENEMY_SIDE(side);
-    checkers[static_cast<int>(side)] = MoveGenerator::get_checkers(*this, side, king_idx);
+    checkers[static_cast<int>(side)] = MoveGenerator::get_checkers(*this, side);
 
     pinned_pieces[static_cast<int>(side)] = 0;
 

@@ -4,24 +4,38 @@
 
 #include "magic_numbers.hpp"
 
-int MoveGenerator::get_checking_piece_count(const ChessBoard& c, const Side side, const int king_idx) {
-    return std::popcount(MoveGenerator::get_checkers(c, side, king_idx));
+int MoveGenerator::get_checking_piece_count(const ChessBoard& c, const Side side) {
+    return std::popcount(MoveGenerator::get_checkers(c, side));
 }
 
-Bitboard MoveGenerator::get_checkers(const ChessBoard& c, const Side side, const int king_idx) {
+Bitboard MoveGenerator::get_checkers(const ChessBoard& c, const Side side) {
     const Side enemy_side = ENEMY_SIDE(side);
 
-    Bitboard bishop_mask = MoveGenerator::generate_bishop_movemask(c.get_occupancy(), king_idx);
-    Bitboard rook_mask = MoveGenerator::generate_rook_movemask(c.get_occupancy(), king_idx);
+    return get_attackers(c, enemy_side, bitboard_to_idx(c.get_king_occupancy(side)), c.get_occupancy());
+}
+
+/**
+ * @brief Gets the pieces on side side that attack the piece at position target_idx
+ * 
+ * @param board 
+ * @param side 
+ * @param target_idx 
+ * @param occupancy 
+ * @return Bitboard 
+ */
+Bitboard MoveGenerator::get_attackers(const ChessBoard& board, const Side side, const int target_idx, const Bitboard occupancy) {
+    const Side enemy_side = ENEMY_SIDE(side);
+    Bitboard bishop_mask = MoveGenerator::generate_bishop_movemask(occupancy, target_idx);
+    Bitboard rook_mask = MoveGenerator::generate_rook_movemask(occupancy, target_idx);
 
     Bitboard to_return = 0;
 
-    to_return |= c.get_queen_occupancy(enemy_side) & (bishop_mask | rook_mask);
-    to_return |= c.get_bishop_occupancy(enemy_side) & bishop_mask;
-    to_return |= c.get_rook_occupancy(enemy_side) & rook_mask;
-    to_return |= c.get_knight_occupancy(enemy_side) & MagicNumbers::KnightMoves[king_idx];
-    to_return |= c.get_pawn_occupancy(enemy_side) & MagicNumbers::PawnAttacks[(64 * static_cast<int>(side)) + king_idx];
-    to_return |= c.get_king_occupancy(enemy_side) & MagicNumbers::KingMoves[king_idx];
+    to_return |= board.get_queen_occupancy(side) & (bishop_mask | rook_mask);
+    to_return |= board.get_bishop_occupancy(side) & bishop_mask;
+    to_return |= board.get_rook_occupancy(side) & rook_mask;
+    to_return |= board.get_knight_occupancy(side) & MagicNumbers::KnightMoves[target_idx];
+    to_return |= board.get_pawn_occupancy(side) & MagicNumbers::PawnAttacks[(64 * static_cast<int>(enemy_side)) + target_idx];
+    to_return |= board.get_king_occupancy(side) & MagicNumbers::KingMoves[target_idx];
 
     return to_return;
 }
@@ -59,11 +73,13 @@ Bitboard MoveGenerator::generate_movemask(const PieceTypes piece_type, const Bit
 }
 
 void MoveGenerator::generate_castling_moves(const ChessBoard& c, const Side side, MoveList& move_list) {
+    const Bitboard total_occupancy = c.get_occupancy();
+    const auto enemy_side = ENEMY_SIDE(side);
     if (c.get_kingside_castling(side)) {
         int shift_val = 56 * static_cast<int>(side);
         if (((uint64_t) 0b10010000 ^ ((c.get_occupancy() >> shift_val) & 0xF0)) == 0) {
             // if only these spaces are occupied
-            if (get_checking_piece_count(c, side, 5 + shift_val) == 0 && get_checking_piece_count(c, side, 6 + shift_val) == 0) {
+            if (get_attackers(c, enemy_side, 5 + shift_val, total_occupancy) == 0 && get_attackers(c, enemy_side, 6 + shift_val, total_occupancy) == 0) {
                 move_list.add_move(Move(MoveFlags::KINGSIDE_CASTLE, 6 + shift_val, 4 + shift_val));
             }
         }
@@ -72,7 +88,7 @@ void MoveGenerator::generate_castling_moves(const ChessBoard& c, const Side side
         int shift_val = 56 * static_cast<int>(side);
         if (((uint64_t) 0b00010001 ^ ((c.get_occupancy() >> shift_val) & 0x1F)) == 0) {
             // if only these spaces are occupied
-            if (get_checking_piece_count(c, side, 3 + shift_val) == 0 && get_checking_piece_count(c, side, 2 + shift_val) == 0) {
+            if (get_attackers(c, enemy_side, 3 + shift_val, total_occupancy) == 0 && get_attackers(c, enemy_side, 2 + shift_val, total_occupancy) == 0) {
                 move_list.add_move(Move(MoveFlags::QUEENSIDE_CASTLE, 2 + shift_val, 4 + shift_val));
             }
         }
