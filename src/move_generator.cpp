@@ -11,7 +11,7 @@ int MoveGenerator::get_checking_piece_count(const ChessBoard& c, const Side side
 Bitboard MoveGenerator::get_checkers(const ChessBoard& c, const Side side) {
     const Side enemy_side = ENEMY_SIDE(side);
 
-    return get_attackers(c, enemy_side, bitboard_to_idx(c.get_king_occupancy(side)), c.get_occupancy());
+    return get_attackers(c, enemy_side, get_lsb(c.get_king_occupancy(side)), c.get_occupancy());
 }
 
 /**
@@ -96,7 +96,7 @@ void MoveGenerator::generate_castling_moves(const ChessBoard& c, const Side side
 }
 
 bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
-    int king_idx = bitboard_to_idx(c.get_king_occupancy(c.get_side_to_move()));
+    int king_idx = get_lsb(c.get_king_occupancy(c.get_side_to_move()));
     const auto move_side = c.get_piece(m.get_src_square()).get_side();
     const Side enemy_side = ENEMY_SIDE(move_side);
     if (m.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) {
@@ -129,7 +129,7 @@ bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
         Bitboard checking_pieces = c.get_checkers(c.get_side_to_move());
         if (checking_pieces) {
             // if there's a piece checking our king - we know at most one piece can be checking as double checks are king moves only
-            if (!(MagicNumbers::ConnectingSquares[(64 * king_idx) + bitboard_to_idx(checking_pieces)] & idx_to_bitboard(m.get_dest_square()))) {
+            if (!(MagicNumbers::ConnectingSquares[(64 * king_idx) + get_lsb(checking_pieces)] & idx_to_bitboard(m.get_dest_square()))) {
                 return false;
             }
         }

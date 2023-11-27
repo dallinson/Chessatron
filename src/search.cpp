@@ -78,7 +78,7 @@ bool Search::is_draw(const ChessBoard& c, const MoveHistory& m) {
     return c.get_halfmove_clock() >= 100 || is_threefold_repetition(m, c.get_halfmove_clock(), c.get_zobrist_key());
 }
 
-/*bool static_exchange_evaluation(const ChessBoard& board, const Move move, const int threshold) {
+bool Search::static_exchange_evaluation(const ChessBoard& board, const Move move, const int threshold) {
     PieceTypes next_victim = move.is_promotion() ? move.get_promotion_piece_type() : board.get_piece(move.get_src_square()).get_type();
 
     Score balance = Search::SEEScores[static_cast<int>(board.get_piece(move.get_dest_square()).get_type())];
@@ -107,8 +107,56 @@ bool Search::is_draw(const ChessBoard& c, const MoveHistory& m) {
         occupied ^= bit(ep_target_square);
     }
 
-    Bitboard attackers = MoveGenerator::get_checkers()
-}*/
+    Bitboard attackers = (MoveGenerator::get_attackers(board, board.get_side_to_move(), move.get_dest_square(), occupied)
+                    | MoveGenerator::get_attackers(board, ENEMY_SIDE(board.get_side_to_move()), move.get_dest_square(), occupied))
+                    & occupied;
+    
+    Side moving_side = ENEMY_SIDE(board.get_side_to_move());
+
+    while (true) {
+        const Bitboard this_side_attackers = attackers & board.get_occupancy(moving_side);
+
+        if (this_side_attackers == 0) {
+            break;
+        }
+
+        Bitboard victim_attackers = 0;
+
+        for (next_victim = PieceTypes::PAWN; next_victim <= PieceTypes::QUEEN; next_victim = static_cast<PieceTypes>(static_cast<int>(next_victim) + 1)) {
+            victim_attackers = this_side_attackers & board.get_bitboard((2 * (static_cast<int>(next_victim) - 1)) + static_cast<int>(moving_side));
+            if (victim_attackers != 0) {
+                break;
+            }
+        }
+
+        occupied ^= bit(get_lsb(victim_attackers));
+
+        if (next_victim == PieceTypes::PAWN || next_victim == PieceTypes::BISHOP || next_victim == PieceTypes::QUEEN) {
+            // the pieces that attack diagonally
+            attackers |= MoveGenerator::generate_bishop_movemask(occupied, move.get_dest_square()) & bishops;
+        }
+
+        if (next_victim == PieceTypes::ROOK || next_victim == PieceTypes::QUEEN) {
+            // the pieces that attack orthogonally
+            attackers |= MoveGenerator::generate_rook_movemask(occupied, move.get_dest_square()) & rooks;
+        }
+
+        attackers &= occupied;
+
+        moving_side = ENEMY_SIDE(moving_side);
+
+        balance = -balance - 1 - Search::SEEScores[static_cast<int>(next_victim)];
+
+        if (balance >= 0) {
+            if (next_victim == PieceTypes::KING && (attackers & board.get_occupancy(moving_side))) {
+                moving_side = ENEMY_SIDE(moving_side);
+                break;
+            }
+        }
+    }
+
+    return board.get_side_to_move() != moving_side;
+}
 
 template <NodeTypes node_type>
 Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, TranspositionTable& transpositions, uint64_t& node_count) {

@@ -379,7 +379,7 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
 }
 
 void ChessBoard::recompute_blockers_and_checkers(const Side side) {
-    const int king_idx = bitboard_to_idx(this->get_king_occupancy(side));
+    const int king_idx = get_lsb(this->get_king_occupancy(side));
     const Side enemy_side = ENEMY_SIDE(side);
     checkers[static_cast<int>(side)] = MoveGenerator::get_checkers(*this, side);
 
