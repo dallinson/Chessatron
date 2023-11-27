@@ -260,7 +260,7 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
 
         if (to_make.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) [[unlikely]] {
             Side enemy_side = ENEMY_SIDE(side);
-            int enemy_pawn_idx = to_make.get_dest_square() - 8 + (16 * static_cast<int>(side));
+            int enemy_pawn_idx = /*to_make.get_dest_square() - 8 + (16 * static_cast<int>(side));*/ get_position(to_make.get_src_rank(), to_make.get_dest_file());
             clear_bit(this->bitboards[bitboard_offset<PieceTypes::PAWN> + static_cast<int>(enemy_side)], enemy_pawn_idx);
             this->pieces[enemy_pawn_idx] = 0;
             this->zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(enemy_side, PieceTypes::PAWN), enemy_pawn_idx)];

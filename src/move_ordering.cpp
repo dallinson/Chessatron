@@ -19,11 +19,8 @@ void MoveOrdering::reorder_moves(MoveList& moves, const ChessBoard& board, const
             continue;
         }
         if (moves[i].move.is_capture()) {
-            if (Search::static_exchange_evaluation(board, moves[i].move, -20)) {
-                moves[i].score += 1000000;
-            } else {
-                moves[i].score -= 1000000;
-            }
+            moves[i].score += 1000000;
+
             const auto src_score = ordering_scores[static_cast<uint8_t>(board.get_piece(moves[i].move.get_src_square()).get_type()) - 1];
             const auto dest_type = moves[i].move.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE ? PieceTypes::PAWN : board.get_piece(moves[i].move.get_dest_square()).get_type();
             const auto dest_score = ordering_scores[static_cast<uint8_t>(dest_type) - 1];
