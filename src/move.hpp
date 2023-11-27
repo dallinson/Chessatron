@@ -50,7 +50,7 @@ class Move {
         uint8_t get_dest_file() const { return get_bits(move, 8, 6); };
 
         MoveFlags get_move_flags() const { return (MoveFlags) get_bits(move, 15, 12); };
-        PieceTypes get_promotion_piece_type() const { return static_cast<PieceTypes>((static_cast<int>(get_move_flags()) & 0b0011) + 1); };
+        PieceTypes get_promotion_piece_type() const { return static_cast<PieceTypes>((static_cast<int>(get_move_flags()) & 0b0011) + 2); };
 
         bool is_null_move() const { return move == 0; };
         bool is_capture() const { return (static_cast<int>(get_move_flags()) & 0x04) != 0; };

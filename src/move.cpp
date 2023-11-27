@@ -16,7 +16,7 @@ std::string Move::to_string() const {
     to_return.push_back(this->get_dest_file() + 97);
     to_return.push_back(this->get_dest_rank() + 49);
 
-    if (static_cast<int>(this->get_move_flags()) >= 8) {
+    if (this->is_promotion()) {
         switch (this->get_promotion_piece_type()) {
         case PieceTypes::ROOK:
             to_return.push_back('r');
