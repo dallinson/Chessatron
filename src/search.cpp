@@ -150,8 +150,8 @@ bool Search::static_exchange_evaluation(const ChessBoard& board, const Move move
         if (balance >= 0) {
             if (next_victim == PieceTypes::KING && (attackers & board.get_occupancy(moving_side))) {
                 moving_side = ENEMY_SIDE(moving_side);
-                break;
             }
+            break;
         }
     }
 
