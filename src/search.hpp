@@ -26,7 +26,7 @@ namespace Perft {
 }
 
 namespace Search {
-    constexpr std::array<Score, 7> SEEScores = { 0, 103, 422, 437, 694, 1313, 0 };
+    constexpr std::array<Score, 7> SEEScores = { 0, 100, 300, 300, 500, 900, 0 };
 
     Move select_random_move(const ChessBoard& c);
     bool is_threefold_repetition(const MoveHistory& m, const int halfmove_clock, const ZobristKey z);
