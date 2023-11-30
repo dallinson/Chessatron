@@ -19,13 +19,13 @@ enum class MoveFlags : uint8_t {
     QUEENSIDE_CASTLE = 3,
     CAPTURE = 4,
     EN_PASSANT_CAPTURE = 5,
-    ROOK_PROMOTION = 8,
-    KNIGHT_PROMOTION = 9,
-    BISHOP_PROMOTION = 10,
+    KNIGHT_PROMOTION = 8,
+    BISHOP_PROMOTION = 9,
+    ROOK_PROMOTION = 10,
     QUEEN_PROMOTION = 11,
-    ROOK_PROMOTION_CAPTURE = 12,
-    KNIGHT_PROMOTION_CAPTURE = 13,
-    BISHOP_PROMOTION_CAPTURE = 14,
+    KNIGHT_PROMOTION_CAPTURE = 12,
+    BISHOP_PROMOTION_CAPTURE = 13,
+    ROOK_PROMOTION_CAPTURE = 14,
     QUEEN_PROMOTION_CAPTURE = 15,
 };
 
@@ -50,7 +50,7 @@ class Move {
         uint8_t get_dest_file() const { return get_bits(move, 8, 6); };
 
         MoveFlags get_move_flags() const { return (MoveFlags) get_bits(move, 15, 12); };
-        PieceTypes get_promotion_piece_type() const { return static_cast<PieceTypes>((static_cast<int>(get_move_flags()) & 0b0011) + 1); };
+        PieceTypes get_promotion_piece_type() const { return static_cast<PieceTypes>((static_cast<int>(get_move_flags()) & 0b0011) + 2); };
 
         bool is_null_move() const { return move == 0; };
         bool is_capture() const { return (static_cast<int>(get_move_flags()) & 0x04) != 0; };

@@ -14,8 +14,9 @@ enum class MoveGenType {
 
 namespace MoveGenerator {
     template <MoveGenType gen_type> MoveList generate_legal_moves(const ChessBoard& c, const Side side);
-    int get_checking_piece_count(const ChessBoard& c, const Side side, const int king_idx);
-    Bitboard get_checkers(const ChessBoard& c, const Side side, const int king_idx);
+    int get_checking_piece_count(const ChessBoard& c, const Side side);
+    Bitboard get_checkers(const ChessBoard& c, const Side side);
+    Bitboard get_attackers(const ChessBoard& board, const Side side, const int target_idx, const Bitboard occupancy);
 
     Bitboard generate_bishop_movemask(const Bitboard b, const int idx);
     Bitboard generate_rook_movemask(const Bitboard b, const int idx);
@@ -39,7 +40,7 @@ template <MoveGenType gen_type> MoveList MoveGenerator::generate_legal_moves(con
 
     MoveGenerator::generate_moves<PieceTypes::KING, gen_type>(c, side, to_return);
 
-    int checking_piece_count = MoveGenerator::get_checking_piece_count(c, side, bitboard_to_idx(c.get_king_occupancy(side)));
+    int checking_piece_count = MoveGenerator::get_checking_piece_count(c, side);
 
     if (checking_piece_count >= 2) {
         return to_return;
@@ -61,11 +62,11 @@ template <PieceTypes piece_type, MoveGenType gen_type> void MoveGenerator::gener
     if constexpr (piece_type == PieceTypes::PAWN) {
         return generate_pawn_moves<gen_type>(c, side, move_list);
     }
-    const int king_idx = bitboard_to_idx(c.get_king_occupancy(side));
+    const int king_idx = get_lsb(c.get_king_occupancy(side));
     const Bitboard friendly_occupancy = c.get_side_occupancy(side);
     const Bitboard enemy_occupancy = c.get_side_occupancy(ENEMY_SIDE(side));
     const Bitboard total_occupancy = enemy_occupancy | friendly_occupancy;
-    const auto checking_idx = bitboard_to_idx(c.get_checkers(side));
+    const auto checking_idx = get_lsb(c.get_checkers(side));
     const auto enemy_side = ENEMY_SIDE(side);
     Bitboard pieces = c.get_piece_occupancy<piece_type>(side);
     while (pieces) {
@@ -119,14 +120,14 @@ template <MoveGenType gen_type> void MoveGenerator::generate_pawn_moves(const Ch
     const Side enemy_side = ENEMY_SIDE(side);
     const Bitboard enemy_occupancy = c.get_occupancy(enemy_side);
     const Bitboard total_occupancy = enemy_occupancy | c.get_occupancy(side);
-    const auto king_idx = bitboard_to_idx(c.get_king_occupancy(side));
+    const auto king_idx = get_lsb(c.get_king_occupancy(side));
     const auto ahead_offset = side == Side::WHITE ? 8 : -8;
     const auto capture_front_left = side == Side::WHITE ? 7 : -7;
     const auto capture_front_right = side == Side::WHITE ? 9 : -9;
     const auto left_wall = side == Side::WHITE ? 0u : 7u;
     const auto right_wall = side == Side::WHITE ? 7u : 0u;
 
-    const auto checking_idx = bitboard_to_idx(c.get_checkers(side));
+    const auto checking_idx = get_lsb(c.get_checkers(side));
 
     const auto start_rank = side == Side::WHITE ? 1u : 6u;
     const auto penultimate_rank = side == Side::WHITE ? 6u : 1u;

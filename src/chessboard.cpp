@@ -33,7 +33,7 @@ void ChessBoard::clear_board() {
 }
 
 void ChessBoard::print_board() const {
-    static const char* piece_str = ".PRNBQK..prnbqk.";
+    static const char* piece_str = ".PNBRQK..pnbrqk.";
     for (int rank = 7; rank >= 0; rank--) {
         for (int file = 0; file < 8; file++) {
             printf("%c", piece_str[pieces[(rank * 8) + file].get_value()]);
@@ -260,7 +260,7 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
 
         if (to_make.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) [[unlikely]] {
             Side enemy_side = ENEMY_SIDE(side);
-            int enemy_pawn_idx = to_make.get_dest_square() - 8 + (16 * static_cast<int>(side));
+            int enemy_pawn_idx = /*to_make.get_dest_square() - 8 + (16 * static_cast<int>(side));*/ get_position(to_make.get_src_rank(), to_make.get_dest_file());
             clear_bit(this->bitboards[bitboard_offset<PieceTypes::PAWN> + static_cast<int>(enemy_side)], enemy_pawn_idx);
             this->pieces[enemy_pawn_idx] = 0;
             this->zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(enemy_side, PieceTypes::PAWN), enemy_pawn_idx)];
@@ -379,9 +379,9 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
 }
 
 void ChessBoard::recompute_blockers_and_checkers(const Side side) {
-    const int king_idx = bitboard_to_idx(this->get_king_occupancy(side));
+    const int king_idx = get_lsb(this->get_king_occupancy(side));
     const Side enemy_side = ENEMY_SIDE(side);
-    checkers[static_cast<int>(side)] = MoveGenerator::get_checkers(*this, side, king_idx);
+    checkers[static_cast<int>(side)] = MoveGenerator::get_checkers(*this, side);
 
     pinned_pieces[static_cast<int>(side)] = 0;
 

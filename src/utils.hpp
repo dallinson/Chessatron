@@ -31,12 +31,12 @@ constexpr inline uint8_t get_position(uint8_t rank, uint8_t file) { return ((ran
 
 void print_bitboard(Bitboard to_print);
 
-constexpr inline int bitboard_to_idx(Bitboard bitboard) { return std::countr_zero(bitboard); };
+constexpr inline int get_lsb(Bitboard bitboard) { return std::countr_zero(bitboard); };
 
 constexpr inline Bitboard idx_to_bitboard(int idx) { return bit(idx); };
 
 constexpr inline int pop_min_bit(Bitboard& num) {
-    const int to_return = bitboard_to_idx(num);
+    const int to_return = get_lsb(num);
     clear_bit(num, to_return);
     return to_return;
 };

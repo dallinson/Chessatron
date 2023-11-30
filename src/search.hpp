@@ -26,9 +26,12 @@ namespace Perft {
 }
 
 namespace Search {
+    constexpr std::array<Score, 7> SEEScores = { 0, 100, 300, 300, 500, 900, 0 };
+
     Move select_random_move(const ChessBoard& c);
     bool is_threefold_repetition(const MoveHistory& m, const int halfmove_clock, const ZobristKey z);
     bool is_draw(const ChessBoard& c, const MoveHistory& m);
+    bool static_exchange_evaluation(const ChessBoard& board, const Move move, const int threshold);
 } // namespace Search
 
 enum class BoundTypes : uint8_t {

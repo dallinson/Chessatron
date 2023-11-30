@@ -12,9 +12,9 @@
 
 enum class PieceTypes : uint8_t {
     PAWN = 1,
-    ROOK = 2,
-    KNIGHT = 3,
-    BISHOP = 4,
+    KNIGHT = 2,
+    BISHOP = 3,
+    ROOK = 4,
     QUEEN = 5,
     KING = 6
 };
