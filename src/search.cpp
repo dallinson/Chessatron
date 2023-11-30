@@ -304,6 +304,11 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
             break;
         }
         const auto& move = moves[i];
+
+        if (!Search::static_exchange_evaluation(board, move.move, -20)) {
+            continue;
+        }
+
         board.make_move(move.move, history);
         node_count += 1;
         Score score;
