@@ -84,3 +84,35 @@ TEST(PerftTests, TestCastlingPosition) {
     ASSERT_EQ(Perft::run_perft(c, 4), 591483);
     ASSERT_EQ(Perft::run_perft(c, 5), 13795582);
 }
+
+TEST(PerftTests, TestKiwipeteEnPassant) {
+    ChessBoard c, o;
+    c.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
+    o.set_from_fen("2kr3r/p2pqpb1/bn2pnp1/2pPN3/1pQ1P3/2N4p/PPPBBPPP/R3K2R w KQ c6 0 3");
+
+    MoveHistory m;
+    c.make_move(c.generate_move_from_string("f3d3").value(), m);
+    c.make_move(c.generate_move_from_string("e8c8").value(), m);
+    c.make_move(c.generate_move_from_string("d3c4").value(), m);
+    c.make_move(c.generate_move_from_string("c7c5").value(), m);
+
+    auto moves_perft = Perft::run_perft(c, 1);
+    auto fen_perft = Perft::run_perft(o, 1);
+    ASSERT_EQ(moves_perft, fen_perft);
+    ASSERT_EQ(moves_perft, 49);
+
+    c.unmake_move(m);
+    o.set_from_fen("2kr3r/p1ppqpb1/bn2pnp1/3PN3/1pQ1P3/2N4p/PPPBBPPP/R3K2R b KQ - 3 2");
+    moves_perft = Perft::run_perft(c, 2);
+    fen_perft = Perft::run_perft(o, 2);
+    ASSERT_EQ(moves_perft, fen_perft);
+    ASSERT_EQ(moves_perft, 1981);
+
+    c.unmake_move(m);
+    o.set_from_fen("2kr3r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2NQ3p/PPPBBPPP/R3K2R w KQ - 2 2");
+    moves_perft = Perft::run_perft(c, 3);
+    fen_perft = Perft::run_perft(o, 3);
+    ASSERT_EQ(moves_perft, fen_perft);
+    ASSERT_EQ(moves_perft, 91866);
+
+}

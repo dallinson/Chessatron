@@ -133,6 +133,42 @@ std::array<double, 256> generate_ln_values() {
 }
 std::array<double, 256> MagicNumbers::LnValues = generate_ln_values();
 
+consteval std::array<Bitboard, 128> generate_diagonal_squares() {
+    std::array<Bitboard, 128> to_return;
+    int r, f;
+    for (int n = 0; n < 64; n++) {
+        // The elements in the positions matching 2n are in the direction a1-h8
+        // The elements in the positions matching 2n + 1 are in the direction a8-h1
+        int rank = get_rank(n);
+        int file = get_file(n);
+        Bitboard this_a1 = 0;
+        this_a1 |= bit(n);
+        for (r = rank + 1, f = file + 1; r <= 7 && f <= 7; r++, f++) {
+            Bitboard b = idx_to_bitboard(get_position(r, f));
+            this_a1 |= b;
+        }
+        for (r = rank - 1, f = file - 1; r >= 0 && f >= 0; r--, f--) {
+            Bitboard b = idx_to_bitboard(get_position(r, f));
+            this_a1 |= b;
+        }
+
+        Bitboard this_a8 = 0;
+        this_a8 |= bit(n);
+        for (r = rank + 1, f = file - 1; r <= 7 && f >= 0; r++, f--) {
+            Bitboard b = idx_to_bitboard(get_position(r, f));
+            this_a8 |= b;
+        }
+        for (r = rank - 1, f = file + 1; r >= 0 && f <= 7; r--, f++) {
+            Bitboard b = idx_to_bitboard(get_position(r, f));
+            this_a8 |= b;
+        }
+        to_return[2 * n] = this_a1;
+        to_return[(2 * n) + 1] = this_a8;
+    }
+    return to_return;
+}
+
+constexpr std::array<Bitboard, 128> MagicNumbers::DiagonalSquares = generate_diagonal_squares();
 
 constexpr Bitboard MagicNumbers::KnightMoves[64] = {
     0x20400UL,

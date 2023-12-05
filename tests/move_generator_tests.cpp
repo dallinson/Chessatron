@@ -313,3 +313,11 @@ TEST(MoveGeneratorTests, TestThreatenedCastle) {
     MoveGenerator::generate_castling_moves(c, c.get_side_to_move(), moves);
     ASSERT_EQ(moves.len(), 0);
 }
+
+TEST(MoveGeneratorTests, TestPawnPinningCapture) {
+    ChessBoard c;
+    c.set_from_fen("rnbqk1nr/pppp1ppp/4p3/8/1b6/2PP4/PP2PPPP/RNBQKBNR w KQkq - 1 3");
+    MoveList m;
+    MoveGenerator::generate_pawn_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE, m);
+    ASSERT_EQ(m.len(), 13);
+}

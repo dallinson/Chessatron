@@ -54,24 +54,6 @@ Bitboard MoveGenerator::generate_queen_movemask(const Bitboard b, const int idx)
     return MoveGenerator::generate_bishop_movemask(b, idx) | MoveGenerator::generate_rook_movemask(b, idx);
 }
 
-Bitboard MoveGenerator::generate_movemask(const PieceTypes piece_type, const Bitboard b, const int idx) {
-    switch (piece_type) {
-    case PieceTypes::BISHOP:
-        return generate_bishop_movemask(b, idx);
-    case PieceTypes::KING:
-        return MagicNumbers::KingMoves[idx];
-    case PieceTypes::KNIGHT:
-        return MagicNumbers::KnightMoves[idx];
-    case PieceTypes::QUEEN:
-        return generate_queen_movemask(b, idx);
-    case PieceTypes::ROOK:
-        return generate_rook_movemask(b, idx);
-    case PieceTypes::PAWN:
-        break;
-    }
-    return 0;
-}
-
 void MoveGenerator::generate_castling_moves(const ChessBoard& c, const Side side, MoveList& move_list) {
     const Bitboard total_occupancy = c.get_occupancy();
     const auto enemy_side = ENEMY_SIDE(side);
@@ -183,18 +165,3 @@ bool MoveGenerator::is_move_pseudolegal(const ChessBoard& c, const Move to_test)
     return false;
 }
 
-Bitboard MoveGenerator::generate_safe_king_spaces(const ChessBoard& c, const Side side) {
-    Bitboard enemy_occupancy = c.get_occupancy(ENEMY_SIDE(side));
-    const Bitboard blockers = (enemy_occupancy | c.get_occupancy(side)) ^ c.get_king_occupancy(side);
-    Bitboard to_return = 0;
-    while (enemy_occupancy) {
-        const auto piece_idx = pop_min_bit(enemy_occupancy);
-        const auto piece_type = c.get_piece(piece_idx).get_type();
-        if (piece_type == PieceTypes::PAWN) {
-            to_return |= MagicNumbers::PawnAttacks[(64 * static_cast<int>(ENEMY_SIDE(side))) + piece_idx];
-        } else {
-            to_return |= generate_movemask(piece_type, blockers, piece_idx);
-        }
-    }
-    return ~to_return;
-}

@@ -332,3 +332,17 @@ TEST(ChessBoardTests, TestHalfmoveClock) {
     ASSERT_EQ(c.get_halfmove_clock(), 12);
     // and tests normal captures reset it
 }
+
+TEST(ChessBoardTests, TestKiwipeteEnPassantEquality) {
+    ChessBoard c, o;
+    c.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
+    o.set_from_fen("2kr3r/p2pqpb1/bn2pnp1/2pPN3/1pQ1P3/2N4p/PPPBBPPP/R3K2R w KQ c6 0 3");
+
+    MoveHistory m;
+    c.make_move(c.generate_move_from_string("f3d3").value(), m);
+    c.make_move(c.generate_move_from_string("e8c8").value(), m);
+    c.make_move(c.generate_move_from_string("d3c4").value(), m);
+    c.make_move(c.generate_move_from_string("c7c5").value(), m);
+
+    ASSERT_EQ(c, o);
+}
