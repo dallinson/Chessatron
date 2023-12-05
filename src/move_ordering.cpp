@@ -9,7 +9,7 @@
 
 constexpr std::array<uint8_t, 6> ordering_scores = { 1, 3, 3, 5, 9, 20 };
 
-void MoveOrdering::reorder_moves(MoveList& moves, const ChessBoard& board, const Move pv_move, bool& found_pv_move) {
+void MoveOrdering::reorder_moves(MoveList& moves, const ChessBoard& board, const Move pv_move, bool& found_pv_move, std::array<uint32_t, 8192>& history_table) {
     found_pv_move = false;
     for (size_t i = 0; i < moves.len(); i++) {
         if (board.get_piece(moves[i].move.get_src_square()).get_type() == PieceTypes::PAWN) {
@@ -32,6 +32,8 @@ void MoveOrdering::reorder_moves(MoveList& moves, const ChessBoard& board, const
             const auto dest_score = ordering_scores[static_cast<uint8_t>(dest_type) - 1];
             moves[i].score += 100 * dest_score;
             moves[i].score += (20 - src_score);
+        } else {
+            moves[i].score += history_table[moves[i].move.get_history_idx(board.get_side_to_move())];
         }
         /*if (moves[i].move.is_promotion()) {
             moves[i].score += 100000;
