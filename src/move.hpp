@@ -57,6 +57,8 @@ class Move {
         bool is_promotion() const { return static_cast<int>(get_move_flags()) >= 8; };
         bool is_castling_move() const { return get_move_flags() == MoveFlags::QUEENSIDE_CASTLE || get_move_flags() == MoveFlags::KINGSIDE_CASTLE; };
 
+        uint16_t get_history_idx(Side side_to_move) const { return (static_cast<int>(side_to_move) << 12) + get_bits(move, 11, 0); };
+
         std::string to_string() const;
 };
 
