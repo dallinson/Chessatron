@@ -8,7 +8,7 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountStartPos) {
     ChessBoard c;
     c.set_from_fen("startpos");
 
-    auto lst = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE);
+    auto lst = MoveGenerator::generate_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE);
     ASSERT_EQ(lst.len(), 20);
     MoveList m;
     MoveGenerator::generate_pawn_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE, m);
@@ -17,7 +17,7 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountStartPos) {
     MoveGenerator::generate_moves<PieceTypes::KNIGHT, MoveGenType::ALL_LEGAL>(c, Side::WHITE, m);
     ASSERT_EQ(m.len(), 4);
 
-    lst = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, Side::BLACK);
+    lst = MoveGenerator::generate_moves<MoveGenType::ALL_LEGAL>(c, Side::BLACK);
     ASSERT_EQ(lst.len(), 20);
     m = MoveList();
     MoveGenerator::generate_pawn_moves<MoveGenType::ALL_LEGAL>(c, Side::BLACK, m);
@@ -35,14 +35,13 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountMaxMoves) {
     MoveGenerator::generate_moves<PieceTypes::ROOK, MoveGenType::ALL_LEGAL>(c, Side::WHITE, rook_moves);
     ASSERT_EQ(rook_moves.len(), 19);
 
-    auto lst = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE);
+    auto lst = MoveGenerator::generate_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE);
     ASSERT_EQ(lst.len(), 218);
 }
 
 TEST(MoveGeneratorTests, TestEnPassant) {
     ChessBoard c;
-    c.set_from_fen("rnbqkbnr/pppp1ppp/8/3Pp3/8/8/PPP1PPPP/RNBQKBNR ");
-    c.set_en_passant_file(4);
+    c.set_from_fen("rnbqkbnr/pppp1ppp/8/3Pp3/8/8/PPP1PPPP/RNBQKBNR w - e6 0 1");
 
     MoveList pawn_moves;
     MoveGenerator::generate_pawn_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE, pawn_moves);
@@ -52,9 +51,11 @@ TEST(MoveGeneratorTests, TestEnPassant) {
 TEST(MoveGeneratorTests, TestDoubleCheck) {
     ChessBoard c;
     c.set_from_fen("7k/8/b3r3/8/8/8/4K3/1Q6 w - - 0 1");
-    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE);
+    auto moves = MoveGenerator::generate_moves<MoveGenType::ALL_PSEUDOLEGAL>(c, Side::WHITE);
+    moves = MoveGenerator::filter_to_legal_moves(moves, c);
     ASSERT_EQ(moves.len(), 4);
-    auto king_moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE);
+    auto king_moves = MoveGenerator::generate_moves<MoveGenType::ALL_PSEUDOLEGAL>(c, Side::WHITE);
+    king_moves = MoveGenerator::filter_to_legal_moves(king_moves, c);
     ASSERT_EQ(king_moves.len(), moves.len());
 }
 
@@ -159,7 +160,7 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountKiwipete) {
     ChessBoard c, o;
     c.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");
     o.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");
-    auto legal_moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE);
+    auto legal_moves = MoveGenerator::generate_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE);
 
     MoveList rook_moves;
     MoveGenerator::generate_moves<PieceTypes::ROOK, MoveGenType::ALL_LEGAL>(c, Side::WHITE, rook_moves);
@@ -196,7 +197,7 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountKiwipete) {
 TEST(MoveGeneratorTests, TestCorrectMoveCountKiwipeteB2B3) {
     ChessBoard c;
     c.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/1PN2Q1p/P1PBBPPP/R3K2R b KQkq - 0 1");
-    auto legal_moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, Side::BLACK);
+    auto legal_moves = MoveGenerator::generate_moves<MoveGenType::ALL_LEGAL>(c, Side::BLACK);
 
     MoveList rook_moves;
     MoveGenerator::generate_moves<PieceTypes::ROOK, MoveGenType::ALL_LEGAL>(c, Side::BLACK, rook_moves);
@@ -235,34 +236,41 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountKiwipeteE1D1C7C6) {
     c.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R2K3R b kq - 1 1");
     c.make_move(Move(2738), m);
 
-    auto legal_moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE);
+    auto legal_moves = MoveGenerator::generate_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE);
 
     MoveList rook_moves;
     MoveGenerator::generate_moves<PieceTypes::ROOK, MoveGenType::ALL_LEGAL>(c, Side::WHITE, rook_moves);
+    rook_moves = MoveGenerator::filter_to_legal_moves(rook_moves, c);
     ASSERT_EQ(rook_moves.len(), 5);
 
     MoveList bishop_moves;
     MoveGenerator::generate_moves<PieceTypes::BISHOP, MoveGenType::ALL_LEGAL>(c, Side::WHITE, bishop_moves);
+    bishop_moves = MoveGenerator::filter_to_legal_moves(bishop_moves, c);
     ASSERT_EQ(bishop_moves.len(), 11);
 
     MoveList king_moves;
     MoveGenerator::generate_moves<PieceTypes::KING, MoveGenType::ALL_LEGAL>(c, Side::WHITE, king_moves);
+    king_moves = MoveGenerator::filter_to_legal_moves(king_moves, c);
     ASSERT_EQ(king_moves.len(), 2);
 
     MoveList castling_moves;
     MoveGenerator::generate_castling_moves(c, Side::WHITE, castling_moves);
+    castling_moves = MoveGenerator::filter_to_legal_moves(castling_moves, c);
     ASSERT_EQ(castling_moves.len(), 0);
 
     MoveList queen_moves;
     MoveGenerator::generate_moves<PieceTypes::QUEEN, MoveGenType::ALL_LEGAL>(c, Side::WHITE, queen_moves);
+    queen_moves = MoveGenerator::filter_to_legal_moves(queen_moves, c);
     ASSERT_EQ(queen_moves.len(), 9);
 
     MoveList knight_moves;
     MoveGenerator::generate_moves<PieceTypes::KNIGHT, MoveGenType::ALL_LEGAL>(c, Side::WHITE, knight_moves);
+    knight_moves = MoveGenerator::filter_to_legal_moves(knight_moves, c);
     ASSERT_EQ(knight_moves.len(), 10);
 
     MoveList pawn_moves;
     MoveGenerator::generate_pawn_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE, pawn_moves);
+    pawn_moves = MoveGenerator::filter_to_legal_moves(pawn_moves, c);
     ASSERT_EQ(pawn_moves.len(), 9);
 
     ASSERT_EQ(legal_moves.len(), 46);
@@ -280,7 +288,8 @@ TEST(MoveGeneratorTests, TestWhiteBishopKing) {
     ChessBoard c;
     c.set_from_fen("1B6/8/2r5/1knK4/8/8/8/8 w - - 16 166");
     MoveList king_moves;
-    MoveGenerator::generate_moves<PieceTypes::KING, MoveGenType::ALL_LEGAL>(c, Side::WHITE, king_moves);
+    MoveGenerator::generate_moves<PieceTypes::KING, MoveGenType::ALL_PSEUDOLEGAL>(c, Side::WHITE, king_moves);
+    king_moves = MoveGenerator::filter_to_legal_moves(king_moves, c);
     ASSERT_EQ(king_moves.len(), 2);
 }
 
@@ -288,7 +297,8 @@ TEST(MoveGeneratorTests, TestMoveKingNearKing) {
     ChessBoard c;
     c.set_from_fen("5n2/8/P4P1B/1p6/1p1P2P1/1k6/8/K7 b - - 0 72");
     MoveList king_moves;
-    MoveGenerator::generate_moves<PieceTypes::KING, MoveGenType::ALL_LEGAL>(c, Side::BLACK, king_moves);
+    MoveGenerator::generate_moves<PieceTypes::KING, MoveGenType::ALL_PSEUDOLEGAL>(c, Side::BLACK, king_moves);
+    king_moves = MoveGenerator::filter_to_legal_moves(king_moves, c);
     ASSERT_EQ(king_moves.len(), 5);
 }
 
@@ -296,7 +306,7 @@ TEST(MoveGeneratorTests, TestCorrectCaptureCount) {
     ChessBoard c;
     c.set_from_fen("6kr/pp2r2p/n1p1PB1Q/2q5/2B4P/2N3p1/PPP3P1/7K w - - 1 0");
     // Taken from https://wtharvey.com/m8n4.txt, Serafino Dubois vs Augustus Mongredien, London, 1862
-    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, c.get_side_to_move());
+    auto moves = MoveGenerator::generate_moves<MoveGenType::ALL_LEGAL>(c, c.get_side_to_move());
     int captures = 0;
     for (size_t i = 0; i < moves.len(); i++) {
         if (moves[i].move.is_capture()) {

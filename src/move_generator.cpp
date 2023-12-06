@@ -79,7 +79,7 @@ void MoveGenerator::generate_castling_moves(const ChessBoard& c, const Side side
         int shift_val = 56 * static_cast<int>(side);
         if (((uint64_t) 0b10010000 ^ ((c.get_occupancy() >> shift_val) & 0xF0)) == 0) {
             // if only these spaces are occupied
-            if (get_attackers(c, enemy_side, 5 + shift_val, total_occupancy) == 0 && get_attackers(c, enemy_side, 6 + shift_val, total_occupancy) == 0) {
+            if (get_attackers(c, enemy_side, 5 + shift_val, total_occupancy) == 0) {
                 move_list.add_move(Move(MoveFlags::KINGSIDE_CASTLE, 6 + shift_val, 4 + shift_val));
             }
         }
@@ -88,7 +88,7 @@ void MoveGenerator::generate_castling_moves(const ChessBoard& c, const Side side
         int shift_val = 56 * static_cast<int>(side);
         if (((uint64_t) 0b00010001 ^ ((c.get_occupancy() >> shift_val) & 0x1F)) == 0) {
             // if only these spaces are occupied
-            if (get_attackers(c, enemy_side, 3 + shift_val, total_occupancy) == 0 && get_attackers(c, enemy_side, 2 + shift_val, total_occupancy) == 0) {
+            if (get_attackers(c, enemy_side, 3 + shift_val, total_occupancy) == 0) {
                 move_list.add_move(Move(MoveFlags::QUEENSIDE_CASTLE, 2 + shift_val, 4 + shift_val));
             }
         }
@@ -197,4 +197,14 @@ Bitboard MoveGenerator::generate_safe_king_spaces(const ChessBoard& c, const Sid
         }
     }
     return ~to_return;
+}
+
+MoveList MoveGenerator::filter_to_legal_moves(const MoveList& move_list, const ChessBoard& board) {
+    MoveList to_return;
+    for (size_t i = 0; i < move_list.len(); i++) {
+        if (is_move_legal(board, move_list[i].move)) {
+            to_return.add_move(move_list[i].move);
+        }
+    }
+    return to_return;
 }

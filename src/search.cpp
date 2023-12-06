@@ -14,7 +14,7 @@ uint64_t perft(ChessBoard& c, MoveHistory& m, int depth) {
     MoveList moves;
     uint64_t to_return = 0;
 
-    moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, c.get_side_to_move());
+    moves = MoveGenerator::generate_moves<MoveGenType::ALL_LEGAL>(c, c.get_side_to_move());
 
     if (depth == 1) {
         if constexpr (print_debug) {
@@ -53,7 +53,7 @@ uint64_t Perft::run_perft(ChessBoard& c, int depth, bool print_debug) {
 }
 
 Move Search::select_random_move(const ChessBoard& c) {
-    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, c.get_side_to_move());
+    auto moves = MoveGenerator::generate_moves<MoveGenType::ALL_LEGAL>(c, c.get_side_to_move());
     return moves[rand() % moves.len()].move;
 }
 
@@ -195,7 +195,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         }
     }
 
-    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(board, board.get_side_to_move());
+    auto moves = MoveGenerator::generate_moves<MoveGenType::ALL_LEGAL>(board, board.get_side_to_move());
     if (moves.len() == 0) {
         if (board.get_checkers(board.get_side_to_move()) != 0) {
             // if in check
@@ -226,6 +226,10 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
             break;
         }
         const auto& move = moves[evaluated_moves];
+
+        if (!MoveGenerator::is_move_legal(board, move.move)) {
+            continue;
+        }
 
         if (depth <= 10 && !Search::static_exchange_evaluation(board, move.move, move.move.is_capture() ? (-20 * depth * depth) : (-65 * depth))) {
             continue;
@@ -286,8 +290,8 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
         return beta;
     }
     alpha = std::max(stand_pat, alpha);
-    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::CAPTURES>(board, board.get_side_to_move());
-    if (moves.len() == 0 && MoveGenerator::generate_legal_moves<MoveGenType::NON_CAPTURES>(board, board.get_side_to_move()).len() == 0) {
+    auto moves = MoveGenerator::generate_moves<MoveGenType::CAPTURES>(board, board.get_side_to_move());
+    if (moves.len() == 0 && MoveGenerator::generate_moves<MoveGenType::NON_CAPTURES>(board, board.get_side_to_move()).len() == 0) {
         if (board.get_checkers(board.get_side_to_move()) != 0) {
             // if in check
             return MagicNumbers::NegativeInfinity;
@@ -370,7 +374,7 @@ Move SearchHandler::run_iterative_deepening_search() {
     // reset pv move so we don't accidentally play an illegal one from a previous search
     const auto search_start_point = std::chrono::steady_clock::now();
     // TranspositionTable transpositions;
-    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(board, board.get_side_to_move());
+    auto moves = MoveGenerator::generate_moves<MoveGenType::ALL_LEGAL>(board, board.get_side_to_move());
     // We generate legal moves only as it saves us having to continually rerun legality checks
     if (moves.len() == 1) {
         return moves[0].move;
