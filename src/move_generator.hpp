@@ -12,6 +12,9 @@ enum class MoveGenType {
     NON_CAPTURES
 };
 
+constexpr inline bool generate_captures(MoveGenType gen_type) { return gen_type != MoveGenType::NON_CAPTURES; };
+constexpr inline bool generate_non_captures(MoveGenType gen_type) { return gen_type != MoveGenType::CAPTURES; };
+
 namespace MoveGenerator {
     template <MoveGenType gen_type> MoveList generate_legal_moves(const ChessBoard& c, const Side side);
     int get_checking_piece_count(const ChessBoard& c, const Side side);
@@ -101,9 +104,9 @@ template <PieceTypes piece_type, MoveGenType gen_type> void MoveGenerator::gener
     while (pieces) {
         const auto piece_idx = pop_min_bit(pieces);
         auto potential_moves = generate_movemask<piece_type>(total_occupancy, piece_idx) & ~friendly_occupancy;
-        if constexpr (gen_type == MoveGenType::CAPTURES) {
+        if constexpr (!generate_non_captures(gen_type)) {
             potential_moves &= enemy_occupancy;
-        } else if constexpr (gen_type == MoveGenType::NON_CAPTURES) {
+        } else if constexpr (!generate_captures(gen_type)) {
             potential_moves &= ~enemy_occupancy;
         }
         if constexpr (piece_type != PieceTypes::KING) {
@@ -176,116 +179,126 @@ template <MoveGenType gen_type> void MoveGenerator::generate_pawn_moves(const Ch
     
     // First we examine unpinned pieces
     {
-        Bitboard advancing_board = (side == Side::WHITE ? unpinned_pawns << 8 : unpinned_pawns >> 8) & ~total_occupancy;
-        Bitboard double_advancing_board = (side == Side::WHITE ? advancing_board << 8 : advancing_board >> 8) & ~total_occupancy & valid_in_check_moves;
-        advancing_board &= valid_in_check_moves;
-        advancing_board = side == Side::WHITE ? advancing_board >> 8 : advancing_board << 8;
-        double_advancing_board = side == Side::WHITE ? double_advancing_board >> 16 : double_advancing_board << 16;
-        Bitboard promotables = advancing_board & penultimate_rank_bitboard;
-        advancing_board &= ~penultimate_rank_bitboard;
-        double_advancing_board &= start_rank_bitboard;
-        while (advancing_board) {
-            const auto pawn_idx = pop_min_bit(advancing_board);
-            move_list.add_move(Move(MoveFlags::QUIET_MOVE, pawn_idx + ahead_offset, pawn_idx));
-        }
-        while (promotables) {
-            const auto pawn_idx = pop_min_bit(promotables);
-            move_list.add_move(Move(MoveFlags::QUEEN_PROMOTION, pawn_idx + ahead_offset, pawn_idx));
-            move_list.add_move(Move(MoveFlags::KNIGHT_PROMOTION, pawn_idx + ahead_offset, pawn_idx));
-            move_list.add_move(Move(MoveFlags::ROOK_PROMOTION, pawn_idx + ahead_offset, pawn_idx));
-            move_list.add_move(Move(MoveFlags::BISHOP_PROMOTION, pawn_idx + ahead_offset, pawn_idx));
-        }
-        while (double_advancing_board) {
-            const auto pawn_idx = pop_min_bit(double_advancing_board);
-            move_list.add_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, pawn_idx + (2 *ahead_offset), pawn_idx));
+        if constexpr (generate_non_captures(gen_type)) {
+            Bitboard advancing_board = (side == Side::WHITE ? unpinned_pawns << 8 : unpinned_pawns >> 8) & ~total_occupancy;
+            Bitboard double_advancing_board = (side == Side::WHITE ? advancing_board << 8 : advancing_board >> 8) & ~total_occupancy & valid_in_check_moves;
+            advancing_board &= valid_in_check_moves;
+            advancing_board = side == Side::WHITE ? advancing_board >> 8 : advancing_board << 8;
+            double_advancing_board = side == Side::WHITE ? double_advancing_board >> 16 : double_advancing_board << 16;
+            Bitboard promotables = advancing_board & penultimate_rank_bitboard;
+            advancing_board &= ~penultimate_rank_bitboard;
+            double_advancing_board &= start_rank_bitboard;
+            while (advancing_board) {
+                const auto pawn_idx = pop_min_bit(advancing_board);
+                move_list.add_move(Move(MoveFlags::QUIET_MOVE, pawn_idx + ahead_offset, pawn_idx));
+            }
+            while (promotables) {
+                const auto pawn_idx = pop_min_bit(promotables);
+                move_list.add_move(Move(MoveFlags::QUEEN_PROMOTION, pawn_idx + ahead_offset, pawn_idx));
+                move_list.add_move(Move(MoveFlags::KNIGHT_PROMOTION, pawn_idx + ahead_offset, pawn_idx));
+                move_list.add_move(Move(MoveFlags::ROOK_PROMOTION, pawn_idx + ahead_offset, pawn_idx));
+                move_list.add_move(Move(MoveFlags::BISHOP_PROMOTION, pawn_idx + ahead_offset, pawn_idx));
+            }
+            while (double_advancing_board) {
+                const auto pawn_idx = pop_min_bit(double_advancing_board);
+                move_list.add_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, pawn_idx + (2 *ahead_offset), pawn_idx));
+            }
         }
         // Next we examine captures - 0 is h-side, 1 is a-side
-        Bitboard potential_captures[2];
-        Bitboard promotion_captures[2];
-        int shifts[2];
-        potential_captures[0] = (side == Side::WHITE ? unpinned_pawns << 9 : unpinned_pawns >> 7) & enemy_occupancy & ~a_file & valid_in_check_moves;
-        potential_captures[0] = side == Side::WHITE ? potential_captures[0] >> 9 : potential_captures[0] << 7;
-        potential_captures[1] = (side == Side::WHITE ? unpinned_pawns << 7 : unpinned_pawns >> 9) & enemy_occupancy & ~h_file & valid_in_check_moves;
-        potential_captures[1] = side == Side::WHITE ? potential_captures[1] >> 7 : potential_captures[1] << 9;
+        if constexpr (generate_captures(gen_type)) {
+            Bitboard potential_captures[2];
+            Bitboard promotion_captures[2];
+            int shifts[2];
+            potential_captures[0] = (side == Side::WHITE ? unpinned_pawns << 9 : unpinned_pawns >> 7) & enemy_occupancy & ~a_file & valid_in_check_moves;
+            potential_captures[0] = side == Side::WHITE ? potential_captures[0] >> 9 : potential_captures[0] << 7;
+            potential_captures[1] = (side == Side::WHITE ? unpinned_pawns << 7 : unpinned_pawns >> 9) & enemy_occupancy & ~h_file & valid_in_check_moves;
+            potential_captures[1] = side == Side::WHITE ? potential_captures[1] >> 7 : potential_captures[1] << 9;
 
-        shifts[0] = side == Side::WHITE ? 9 : -7;
-        shifts[1] = side == Side::WHITE ? 7 : -9;
+            shifts[0] = side == Side::WHITE ? 9 : -7;
+            shifts[1] = side == Side::WHITE ? 7 : -9;
 
-        for (int i = 0; i < 2; i++) {
-            promotion_captures[i] = potential_captures[i] & penultimate_rank_bitboard;
-            potential_captures[i] &= ~penultimate_rank_bitboard;
-            while (potential_captures[i]) {
-                const auto pawn_idx = pop_min_bit(potential_captures[i]);
-                move_list.add_move(Move(MoveFlags::CAPTURE, pawn_idx + shifts[i], pawn_idx));
-            }
-            while (promotion_captures[i]) {
-                const auto pawn_idx = pop_min_bit(promotion_captures[i]);
-                move_list.add_move(Move(MoveFlags::QUEEN_PROMOTION_CAPTURE, pawn_idx + shifts[i], pawn_idx));
-                move_list.add_move(Move(MoveFlags::KNIGHT_PROMOTION_CAPTURE, pawn_idx + shifts[i], pawn_idx));
-                move_list.add_move(Move(MoveFlags::ROOK_PROMOTION_CAPTURE, pawn_idx + shifts[i], pawn_idx));
-                move_list.add_move(Move(MoveFlags::BISHOP_PROMOTION_CAPTURE, pawn_idx + shifts[i], pawn_idx));
+            for (int i = 0; i < 2; i++) {
+                promotion_captures[i] = potential_captures[i] & penultimate_rank_bitboard;
+                potential_captures[i] &= ~penultimate_rank_bitboard;
+                while (potential_captures[i]) {
+                    const auto pawn_idx = pop_min_bit(potential_captures[i]);
+                    move_list.add_move(Move(MoveFlags::CAPTURE, pawn_idx + shifts[i], pawn_idx));
+                }
+                while (promotion_captures[i]) {
+                    const auto pawn_idx = pop_min_bit(promotion_captures[i]);
+                    move_list.add_move(Move(MoveFlags::QUEEN_PROMOTION_CAPTURE, pawn_idx + shifts[i], pawn_idx));
+                    move_list.add_move(Move(MoveFlags::KNIGHT_PROMOTION_CAPTURE, pawn_idx + shifts[i], pawn_idx));
+                    move_list.add_move(Move(MoveFlags::ROOK_PROMOTION_CAPTURE, pawn_idx + shifts[i], pawn_idx));
+                    move_list.add_move(Move(MoveFlags::BISHOP_PROMOTION_CAPTURE, pawn_idx + shifts[i], pawn_idx));
+                }
             }
         }
     }
 
-    Bitboard potential_ep = pawn_mask & ep_rank_bitboard;
-    while (potential_ep) {
-        const auto pawn_idx = pop_min_bit(potential_ep);
-        if (std::abs(board.get_en_passant_file() - static_cast<int>(get_file(pawn_idx))) == 1) {
-            const auto ep_target_square = get_position(((int) get_rank(pawn_idx)), board.get_en_passant_file()) + ahead_offset;
-            const Bitboard cleared_bitboard = total_occupancy ^ idx_to_bitboard(pawn_idx) ^ idx_to_bitboard(ep_target_square) ^
-                                                idx_to_bitboard(ep_target_square - ahead_offset);
-            const Bitboard threatening_bishops =
-                generate_bishop_movemask(cleared_bitboard, king_idx) & (board.get_bishop_occupancy(enemy_side) | board.get_queen_occupancy(enemy_side));
-            const Bitboard threatening_rooks =
-                generate_rook_movemask(cleared_bitboard, king_idx) & (board.get_rook_occupancy(enemy_side) | board.get_queen_occupancy(enemy_side));
-            // We only need to worry about discovered checks from sliders; you cannot end a turn in check 
+    if constexpr (generate_captures(gen_type)) {
+        Bitboard potential_ep = pawn_mask & ep_rank_bitboard;
+        while (potential_ep) {
+            const auto pawn_idx = pop_min_bit(potential_ep);
+            if (std::abs(board.get_en_passant_file() - static_cast<int>(get_file(pawn_idx))) == 1) {
+                const auto ep_target_square = get_position(((int) get_rank(pawn_idx)), board.get_en_passant_file()) + ahead_offset;
+                const Bitboard cleared_bitboard = total_occupancy ^ idx_to_bitboard(pawn_idx) ^ idx_to_bitboard(ep_target_square) ^
+                                                    idx_to_bitboard(ep_target_square - ahead_offset);
+                const Bitboard threatening_bishops =
+                    generate_bishop_movemask(cleared_bitboard, king_idx) & (board.get_bishop_occupancy(enemy_side) | board.get_queen_occupancy(enemy_side));
+                const Bitboard threatening_rooks =
+                    generate_rook_movemask(cleared_bitboard, king_idx) & (board.get_rook_occupancy(enemy_side) | board.get_queen_occupancy(enemy_side));
+                // We only need to worry about discovered checks from sliders; you cannot end a turn in check 
 
-            if (threatening_bishops == 0 && threatening_rooks == 0) {
-                move_list.add_move(Move(MoveFlags::EN_PASSANT_CAPTURE, ep_target_square, pawn_idx));
+                if (threatening_bishops == 0 && threatening_rooks == 0) {
+                    move_list.add_move(Move(MoveFlags::EN_PASSANT_CAPTURE, ep_target_square, pawn_idx));
+                }
             }
         }
     }
 
     // For pinned pieces
     {
-        Bitboard advancing_board = (side == Side::WHITE ? pinned_pawns << 8 : pinned_pawns >> 8) & ~total_occupancy & valid_in_check_moves & (file_bitboard << get_file(king_idx));
-        Bitboard double_advancing_board = (side == Side::WHITE ? advancing_board << 8 : advancing_board >> 8) & ~total_occupancy & valid_in_check_moves;
-        advancing_board = side == Side::WHITE ? advancing_board >> 8 : advancing_board << 8;
-        double_advancing_board = side == Side::WHITE ? double_advancing_board >> 16 : double_advancing_board << 16;
-        double_advancing_board &= start_rank_bitboard;
+        if constexpr (generate_non_captures(gen_type)) {
+            Bitboard advancing_board = (side == Side::WHITE ? pinned_pawns << 8 : pinned_pawns >> 8) & ~total_occupancy & valid_in_check_moves & (file_bitboard << get_file(king_idx));
+            Bitboard double_advancing_board = (side == Side::WHITE ? advancing_board << 8 : advancing_board >> 8) & ~total_occupancy & valid_in_check_moves;
+            advancing_board = side == Side::WHITE ? advancing_board >> 8 : advancing_board << 8;
+            double_advancing_board = side == Side::WHITE ? double_advancing_board >> 16 : double_advancing_board << 16;
+            double_advancing_board &= start_rank_bitboard;
 
-        // Only one piece can be pinned in a given direction
-        if (advancing_board != 0) {
-            const auto pawn_idx = get_lsb(advancing_board);
-            move_list.add_move(Move(MoveFlags::QUIET_MOVE, pawn_idx + ahead_offset, pawn_idx));
-            // If it can double advance it must be the same as the single advancing piece
-            if (double_advancing_board != 0) {
-                move_list.add_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, pawn_idx + (2 * ahead_offset), pawn_idx));
+            // Only one piece can be pinned in a given direction
+            if (advancing_board != 0) {
+                const auto pawn_idx = get_lsb(advancing_board);
+                move_list.add_move(Move(MoveFlags::QUIET_MOVE, pawn_idx + ahead_offset, pawn_idx));
+                // If it can double advance it must be the same as the single advancing piece
+                if (double_advancing_board != 0) {
+                    move_list.add_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, pawn_idx + (2 * ahead_offset), pawn_idx));
+                }
             }
+            // If a pawn is pinned, it cannot be quietly promoted
         }
-        // If a pawn is pinned, it cannot be quietly promoted
 
-        Bitboard potential_captures[2];
-        int shifts[2];
-        potential_captures[0] = (side == Side::WHITE ? pinned_pawns << 9 : pinned_pawns >> 7) & enemy_occupancy & ~a_file & valid_in_check_moves;
-        potential_captures[0] = side == Side::WHITE ? potential_captures[0] >> 9 : potential_captures[0] << 7;
-        potential_captures[1] = (side == Side::WHITE ? pinned_pawns << 7 : pinned_pawns >> 9) & enemy_occupancy & ~h_file & valid_in_check_moves;
-        potential_captures[1] = side == Side::WHITE ? potential_captures[1] >> 7 : potential_captures[1] << 9;
+        if constexpr (generate_captures(gen_type)) {
+            Bitboard potential_captures[2];
+            int shifts[2];
+            potential_captures[0] = (side == Side::WHITE ? pinned_pawns << 9 : pinned_pawns >> 7) & enemy_occupancy & ~a_file & valid_in_check_moves;
+            potential_captures[0] = side == Side::WHITE ? potential_captures[0] >> 9 : potential_captures[0] << 7;
+            potential_captures[1] = (side == Side::WHITE ? pinned_pawns << 7 : pinned_pawns >> 9) & enemy_occupancy & ~h_file & valid_in_check_moves;
+            potential_captures[1] = side == Side::WHITE ? potential_captures[1] >> 7 : potential_captures[1] << 9;
 
-        shifts[0] = side == Side::WHITE ? 9 : -7;
-        shifts[1] = side == Side::WHITE ? 7 : -9;
+            shifts[0] = side == Side::WHITE ? 9 : -7;
+            shifts[1] = side == Side::WHITE ? 7 : -9;
 
-        for (int i = 0; i < 2; i++) {
-            potential_captures[i] &= MagicNumbers::DiagonalSquares[(2 * king_idx) + (i ^ static_cast<int>(side))];
-            const auto pawn_idx = get_lsb(potential_captures[i]);
-            if ((potential_captures[i] & penultimate_rank_bitboard) != 0) {
-                move_list.add_move(Move(MoveFlags::QUEEN_PROMOTION_CAPTURE, pawn_idx + shifts[i], pawn_idx));
-                move_list.add_move(Move(MoveFlags::KNIGHT_PROMOTION_CAPTURE, pawn_idx + shifts[i], pawn_idx));
-                move_list.add_move(Move(MoveFlags::ROOK_PROMOTION_CAPTURE, pawn_idx + shifts[i], pawn_idx));
-                move_list.add_move(Move(MoveFlags::BISHOP_PROMOTION_CAPTURE, pawn_idx + shifts[i], pawn_idx));
-            } else if ((potential_captures[i] & ~penultimate_rank_bitboard) != 0) {
-                move_list.add_move(Move(MoveFlags::CAPTURE, pawn_idx + shifts[i], pawn_idx));
+            for (int i = 0; i < 2; i++) {
+                potential_captures[i] &= MagicNumbers::DiagonalSquares[(2 * king_idx) + (i ^ static_cast<int>(side))];
+                const auto pawn_idx = get_lsb(potential_captures[i]);
+                if ((potential_captures[i] & penultimate_rank_bitboard) != 0) {
+                    move_list.add_move(Move(MoveFlags::QUEEN_PROMOTION_CAPTURE, pawn_idx + shifts[i], pawn_idx));
+                    move_list.add_move(Move(MoveFlags::KNIGHT_PROMOTION_CAPTURE, pawn_idx + shifts[i], pawn_idx));
+                    move_list.add_move(Move(MoveFlags::ROOK_PROMOTION_CAPTURE, pawn_idx + shifts[i], pawn_idx));
+                    move_list.add_move(Move(MoveFlags::BISHOP_PROMOTION_CAPTURE, pawn_idx + shifts[i], pawn_idx));
+                } else if ((potential_captures[i] & ~penultimate_rank_bitboard) != 0) {
+                    move_list.add_move(Move(MoveFlags::CAPTURE, pawn_idx + shifts[i], pawn_idx));
+                }
             }
         }
     }
