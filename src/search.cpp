@@ -195,7 +195,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         }
     }
 
-    auto moves = MoveGenerator::generate_moves<MoveGenType::ALL_LEGAL>(board, board.get_side_to_move());
+    auto moves = MoveGenerator::generate_moves<MoveGenType::ALL_PSEUDOLEGAL>(board, board.get_side_to_move());
     if (moves.len() == 0) {
         if (board.get_checkers(board.get_side_to_move()) != 0) {
             // if in check
