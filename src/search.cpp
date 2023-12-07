@@ -129,7 +129,7 @@ bool Search::static_exchange_evaluation(const ChessBoard& board, const Move move
             }
         }
 
-        occupied ^= bit(get_lsb(victim_attackers));
+        occupied ^= (victim_attackers ^ (victim_attackers & (victim_attackers - 1)));
 
         if (next_victim == PieceTypes::PAWN || next_victim == PieceTypes::BISHOP || next_victim == PieceTypes::QUEEN) {
             // the pieces that attack diagonally
@@ -309,6 +309,10 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
             break;
         }
         const auto& move = moves[i];
+
+        if (!MoveGenerator::is_move_legal(board, move.move)) {
+            continue;
+        }
 
         if (!Search::static_exchange_evaluation(board, move.move, -20)) {
             continue;
