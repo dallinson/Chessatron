@@ -214,7 +214,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
     Score best_score = MagicNumbers::NegativeInfinity;
     const Score original_alpha = alpha;
 
-    bool had_legal = false;
+    int legals = 0;
 
     for (size_t evaluated_moves = 0; evaluated_moves < moves.len(); evaluated_moves++) {
         if (search_cancelled) {
@@ -225,7 +225,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         if (!MoveGenerator::is_move_legal(board, move.move)) {
             continue;
         } else {
-            had_legal = true;
+            legals += 1;
         }
 
         if (depth <= 10 && !Search::static_exchange_evaluation(board, move.move, move.move.is_capture() ? (-20 * depth * depth) : (-65 * depth))) {
@@ -273,7 +273,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         alpha = std::max(score, alpha);
     }
 
-    if (!had_legal) {
+    if (legals == 0) {
         if (board.get_checkers(board.get_side_to_move()) == 0) {
             return 0;
         } else {
@@ -302,7 +302,7 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
     bool found_pv_move = false;
     MoveOrdering::reorder_moves(moves, board, Move::NULL_MOVE, found_pv_move, history_table);
 
-    bool had_legal = false;
+    int legals = 0;
 
     for (size_t evaluated_moves = 0; evaluated_moves < moves.len(); evaluated_moves++) {
         if (search_cancelled) {
@@ -313,7 +313,7 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
         if (!MoveGenerator::is_move_legal(board, move.move)) {
             continue;
         } else {
-            had_legal = true;
+            legals += 1;
         }
 
         if (!Search::static_exchange_evaluation(board, move.move, -20)) {
@@ -344,23 +344,24 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
         alpha = std::max(score, alpha);
     }
 
-    if (!had_legal) {
-        const auto non_captures = MoveGenerator::generate_moves<MoveGenType::NON_CAPTURES>(board, board.get_side_to_move());
-
+    if (legals == 0) {
+        int legal_non_captures = 0;
+        auto non_captures = MoveGenerator::generate_moves<MoveGenType::NON_CAPTURES>(board, board.get_side_to_move());
         for (size_t i = 0; i < non_captures.len(); i++) {
             if (MoveGenerator::is_move_legal(board, non_captures[i].move)) {
-                return alpha;
+                legal_non_captures += 1;
             }
         }
-        
-        if (board.get_checkers(board.get_side_to_move()) == 0) {
-            return 0;
-        } else {
-            return MagicNumbers::NegativeInfinity;
+        if (legal_non_captures == 0) {
+            if (board.get_checkers(board.get_side_to_move()) != 0) {
+                // if in check
+                return MagicNumbers::NegativeInfinity;
+            } else {
+                return 0;
+            }
         }
-    } else {
-        return alpha;
     }
+    return alpha;
 
 }
 

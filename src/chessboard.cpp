@@ -214,7 +214,7 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
     Piece moved = this->pieces[to_make.get_src_square()];
     Piece at_target = this->pieces[to_make.get_dest_square()];
 
-    assert(at_target.get_type() != PieceTypes::KING);
+    assert(at_target.get_type() != PieceTypes::KING || to_make == Move::NULL_MOVE);
 
     auto to_add = MoveHistoryEntry(this->zobrist_key, to_make, at_target, this->en_passant_file, this->halfmove_clock,
                                    this->get_kingside_castling(Side::WHITE), this->get_kingside_castling(Side::BLACK),

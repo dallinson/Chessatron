@@ -55,11 +55,11 @@ template <MoveGenType gen_type> MoveList MoveGenerator::generate_moves(const Che
         MoveGenerator::generate_pawn_moves<gen_type>(c, side, to_return);
     }
 
-    if constexpr (gen_type == MoveGenType::ALL_LEGAL) {
+    //if constexpr (gen_type == MoveGenType::ALL_LEGAL) {
         return filter_to_legal_moves(to_return, c);
-    } else {
-        return to_return;
-    }
+    //} else {
+    //    return to_return;
+    //}
 }
 
 template <PieceTypes piece_type, MoveGenType gen_type> void MoveGenerator::generate_moves(const ChessBoard& c, const Side side, MoveList& move_list) {
