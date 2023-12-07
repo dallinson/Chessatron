@@ -129,7 +129,7 @@ bool Search::static_exchange_evaluation(const ChessBoard& board, const Move move
             }
         }
 
-        occupied ^= bit(get_lsb(victim_attackers));
+        occupied ^= (victim_attackers & -victim_attackers);
 
         if (next_victim == PieceTypes::PAWN || next_victim == PieceTypes::BISHOP || next_victim == PieceTypes::QUEEN) {
             // the pieces that attack diagonally
@@ -184,7 +184,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         // return c.evaluate();
     }
 
-    if (board.get_checkers(board.get_side_to_move()) == 0 && history[history.len() - 1].get_move() != Move::NULL_MOVE) {
+    if (board.get_checkers(board.get_side_to_move()) == 0 && (history.len() == 0 || (history[history.len() - 1].get_move() != Move::NULL_MOVE))) {
         // Try null move pruning if we aren't in check
         board.make_move(Move::NULL_MOVE, history);
         // First we make the null move
