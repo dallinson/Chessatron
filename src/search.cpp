@@ -196,14 +196,6 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
     }
 
     auto moves = MoveGenerator::generate_moves<MoveGenType::ALL_PSEUDOLEGAL>(board, board.get_side_to_move());
-    if (moves.len() == 0) {
-        if (board.get_checkers(board.get_side_to_move()) != 0) {
-            // if in check
-            return MagicNumbers::NegativeInfinity;
-        } else {
-            return 0;
-        }
-    }
     // mate and draw detection
 
     //bool found_pv_move = MoveOrdering::reorder_pv_move(moves, tt_entry.get_pv_move());
@@ -221,6 +213,9 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
     Move best_move = Move::NULL_MOVE;
     Score best_score = MagicNumbers::NegativeInfinity;
     const Score original_alpha = alpha;
+
+    bool had_legal = false;
+
     for (size_t evaluated_moves = 0; evaluated_moves < moves.len(); evaluated_moves++) {
         if (search_cancelled) {
             break;
@@ -229,6 +224,8 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
 
         if (!MoveGenerator::is_move_legal(board, move.move)) {
             continue;
+        } else {
+            had_legal = true;
         }
 
         if (depth <= 10 && !Search::static_exchange_evaluation(board, move.move, move.move.is_capture() ? (-20 * depth * depth) : (-65 * depth))) {
@@ -275,6 +272,15 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         }
         alpha = std::max(score, alpha);
     }
+
+    if (!had_legal) {
+        if (board.get_checkers(board.get_side_to_move()) == 0) {
+            return 0;
+        } else {
+            return MagicNumbers::NegativeInfinity;
+        }
+    }
+
     const BoundTypes bound_type = alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND;
     transpositions.store(TranspositionTableEntry(best_move, depth, bound_type, best_score, board.get_zobrist_key()), board);
     return alpha;
@@ -291,27 +297,23 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
     }
     alpha = std::max(stand_pat, alpha);
     auto moves = MoveGenerator::generate_moves<MoveGenType::CAPTURES>(board, board.get_side_to_move());
-    if (moves.len() == 0 && MoveGenerator::generate_moves<MoveGenType::NON_CAPTURES>(board, board.get_side_to_move()).len() == 0) {
-        if (board.get_checkers(board.get_side_to_move()) != 0) {
-            // if in check
-            return MagicNumbers::NegativeInfinity;
-        } else {
-            return 0;
-        }
-    }
     //auto capture_count = moves.len();
     //MoveOrdering::sort_captures_mvv_lva(moves, board, 0, capture_count);
     bool found_pv_move = false;
     MoveOrdering::reorder_moves(moves, board, Move::NULL_MOVE, found_pv_move, history_table);
-    int evaluated_moves = 0;
-    for (size_t i = 0; i < moves.len(); i++) {
+
+    bool had_legal = false;
+
+    for (size_t evaluated_moves = 0; evaluated_moves < moves.len(); evaluated_moves++) {
         if (search_cancelled) {
             break;
         }
-        const auto& move = moves[i];
+        const auto& move = moves[evaluated_moves];
 
         if (!MoveGenerator::is_move_legal(board, move.move)) {
             continue;
+        } else {
+            had_legal = true;
         }
 
         if (!Search::static_exchange_evaluation(board, move.move, -20)) {
@@ -341,7 +343,25 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
         }
         alpha = std::max(score, alpha);
     }
-    return alpha;
+
+    if (!had_legal) {
+        const auto non_captures = MoveGenerator::generate_moves<MoveGenType::NON_CAPTURES>(board, board.get_side_to_move());
+
+        for (size_t i = 0; i < non_captures.len(); i++) {
+            if (MoveGenerator::is_move_legal(board, non_captures[i].move)) {
+                return alpha;
+            }
+        }
+        
+        if (board.get_checkers(board.get_side_to_move()) == 0) {
+            return 0;
+        } else {
+            return MagicNumbers::NegativeInfinity;
+        }
+    } else {
+        return alpha;
+    }
+
 }
 
 Score SearchHandler::run_aspiration_window_search(int depth, Score previous_score, std::array<uint32_t, 8192>& history_table) {
