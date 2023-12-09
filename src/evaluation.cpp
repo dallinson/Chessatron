@@ -6,19 +6,16 @@
 
 template <bool is_endgame> Score Evaluation::evaluate_board(const ChessBoard& board, const Side side) {
     Score to_return = 0;
-    auto side_pieces = board.get_side_occupancy(side);
-    while (side_pieces) {
-        auto piece_idx = pop_min_bit(side_pieces);
-        const auto piece = board.get_piece(piece_idx);
-        if (side == Side::WHITE) {
-            piece_idx ^= 0b00111000;
-        }
-        to_return += get_piece_score<is_endgame>(piece.get_type());
-        if constexpr (is_endgame) {
-            to_return += PieceSquareTables::EndgameTables[static_cast<uint8_t>(piece.get_type()) - 1][piece_idx];
-        } else {
-            to_return += PieceSquareTables::MidgameTables[static_cast<uint8_t>(piece.get_type()) - 1][piece_idx];
-        }
+
+    to_return += (get_piece_score<is_endgame>(PieceTypes::PAWN) * std::popcount(board.get_piece_occupancy<PieceTypes::PAWN>(side)));
+    to_return += (get_piece_score<is_endgame>(PieceTypes::KNIGHT) * std::popcount(board.get_piece_occupancy<PieceTypes::KNIGHT>(side)));
+    to_return += (get_piece_score<is_endgame>(PieceTypes::BISHOP) * std::popcount(board.get_piece_occupancy<PieceTypes::BISHOP>(side)));
+    to_return += (get_piece_score<is_endgame>(PieceTypes::ROOK) * std::popcount(board.get_piece_occupancy<PieceTypes::ROOK>(side)));
+    to_return += (get_piece_score<is_endgame>(PieceTypes::QUEEN) * std::popcount(board.get_piece_occupancy<PieceTypes::QUEEN>(side)));
+    if constexpr (is_endgame) {
+        to_return += board.get_endgame_score(side);
+    } else {
+        to_return += board.get_midgame_score(side);
     }
     return to_return;
 }

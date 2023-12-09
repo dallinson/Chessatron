@@ -3,6 +3,7 @@
 #include <array>
 
 #include "../utils.hpp"
+#include "../pieces.hpp"
 
 namespace PieceSquareTables {
     // clang-format off
@@ -150,6 +151,18 @@ namespace PieceSquareTables {
             KingEndgameTable,
         }
     };
+
+    template <bool is_endgame>
+    constexpr inline Score get_psqt_score(const Piece p, uint8_t pos) {
+        if (p.get_side() == Side::WHITE) {
+            pos ^= 0b00111000;
+        }
+        if constexpr (is_endgame) {
+            return EndgameTables[static_cast<int>(p.get_type()) - 1][pos];
+        } else {
+            return MidgameTables[static_cast<int>(p.get_type()) - 1][pos];
+        }
+    }
 
     // clang-format on
 };

@@ -103,7 +103,8 @@ TEST(ChessBoardTests, TestMakeUnmakeMove) {
     ChessBoard c, o;
     c.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");
     o.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");
-
+    const auto original_midgame_score = c.get_midgame_score(Side::WHITE);
+    const auto original_endgame_score = c.get_endgame_score(Side::WHITE);
     auto BishopMoves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE);
     MoveHistory h;
     for (size_t j = 0; j < BishopMoves.len(); j++) {
@@ -112,6 +113,8 @@ TEST(ChessBoardTests, TestMakeUnmakeMove) {
         c.make_move(m, h);
         ASSERT_EQ(h.len(), 1);
         c.unmake_move(h);
+        ASSERT_EQ(original_midgame_score, c.get_midgame_score(Side::WHITE)) << "Midgame score mismatch after move " << m.to_string();
+        ASSERT_EQ(original_endgame_score, c.get_endgame_score(Side::WHITE)) << "Endgame score mismatch after move " << m.to_string();
         for (int i = 0; i < 64; i++) {
             ASSERT_EQ(c.get_piece(i).get_value(), o.get_piece(i).get_value())
                 << "Mismatch at piece " << std::to_string(i) << " after move " << m.to_string() << " with flags "
@@ -316,11 +319,15 @@ TEST(ChessBoardTests, TestHalfmoveClock) {
 
     c.set_from_fen("8/4k3/8/6K1/2p5/8/1P6/8 w - - 24 48");
     ASSERT_EQ(c.get_halfmove_clock(), 24);
+    const auto original_midgame_score = c.get_midgame_score(Side::WHITE);
+    const auto original_endgame_score = c.get_endgame_score(Side::WHITE);
     c.make_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, 25, 9), m);
     c.make_move(Move(MoveFlags::EN_PASSANT_CAPTURE, 17, 26), m);
     ASSERT_EQ(c.get_halfmove_clock(), 0);
     c.unmake_move(m);
     c.unmake_move(m);
+    ASSERT_EQ(original_midgame_score, c.get_midgame_score(Side::WHITE));
+    ASSERT_EQ(original_endgame_score, c.get_endgame_score(Side::WHITE));
     ASSERT_EQ(c.get_halfmove_clock(), 24);
     // en passant captures are correctly handled
 
@@ -331,4 +338,19 @@ TEST(ChessBoardTests, TestHalfmoveClock) {
     c.unmake_move(m);
     ASSERT_EQ(c.get_halfmove_clock(), 12);
     // and tests normal captures reset it
+}
+
+TEST(ChessBoardTests, TestUnmakeScores) {
+    ChessBoard c;
+    MoveHistory m;
+    c.set_from_fen("1r4k1/P7/8/3Pp3/8/1b6/P7/R3K2R w KQ e6 0 1");
+    const auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE);
+    const auto mg_score = c.get_midgame_score(Side::WHITE);
+    const auto eg_score = c.get_endgame_score(Side::WHITE);
+    for (size_t i = 0; i < moves.len(); i++) {
+        c.make_move(moves[i].move, m);
+        c.unmake_move(m);
+        ASSERT_EQ(c.get_midgame_score(Side::WHITE), mg_score) << "Midgame score mismatch on move " << moves[i].move.to_string();
+        ASSERT_EQ(c.get_endgame_score(Side::WHITE), eg_score) << "Endgame score mismatch on move " << moves[i].move.to_string();
+    }
 }
