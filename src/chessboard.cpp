@@ -51,6 +51,7 @@ void ChessBoard::clear_board() {
     midgame_scores = {0};
     endgame_scores = {0};
     // Only the white side to move key should be set
+    midgame_phase = 0;
 }
 
 void ChessBoard::print_board() const {
