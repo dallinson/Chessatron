@@ -17,7 +17,7 @@ namespace Evaluation {
     template <bool is_endgame>
     constexpr Score get_piece_score(PieceTypes p) { 
         const auto piece_idx = static_cast<uint8_t>(p) - 1;
-        if constexpr(is_endgame) {
+        if constexpr (is_endgame) {
             return EndgameScores[piece_idx];
         } else {
             return MidgameScores[piece_idx];
