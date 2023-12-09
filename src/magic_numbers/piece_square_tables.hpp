@@ -8,6 +8,9 @@
 namespace PieceSquareTables {
     // clang-format off
 
+    constexpr std::array<Score, 6> MidgameScores = { 82, 337, 365, 477, 1025,  0};
+    constexpr std::array<Score, 6> EndgameScores = { 94, 281, 297, 512,  936,  0};
+
     constexpr std::array<Score, 64> PawnMidgameTable = {
                 0,   0,   0,   0,   0,   0,  0,   0,
                 98, 134,  61,  95,  68, 126, 34, -11,

@@ -5,9 +5,11 @@
 #include <string>
 
 #include "magic_numbers.hpp"
-#include "magic_numbers/positional_scores.hpp"
+#include "magic_numbers/piece_square_tables.hpp"
 #include "move_generator.hpp"
 #include "zobrist_hashing.hpp"
+
+constexpr static std::array<uint8_t, 6> MidgamePhaseArray = { 0, 1, 1, 2, 4, 0 };
 
 void ChessBoard::set_piece(Piece piece, uint8_t pos) {
     pieces[pos] = piece;
@@ -22,6 +24,11 @@ void ChessBoard::set_piece(Piece piece, uint8_t pos) {
 
     midgame_scores[static_cast<int>(piece_side)] += PieceSquareTables::MidgameTables[static_cast<int>(piece_type) - 1][pos];
     endgame_scores[static_cast<int>(piece_side)] += PieceSquareTables::EndgameTables[static_cast<int>(piece_type) - 1][pos];
+
+    midgame_scores[static_cast<int>(piece_side)] += PieceSquareTables::MidgameScores[static_cast<int>(piece_type) - 1];
+    endgame_scores[static_cast<int>(piece_side)] += PieceSquareTables::EndgameScores[static_cast<int>(piece_type) - 1];
+
+    midgame_phase += MidgamePhaseArray[static_cast<int>(piece_type) - 1];
 }
 
 void ChessBoard::clear_board() {
@@ -252,6 +259,11 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
             zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(at_target, to_make.get_dest_square())];
             midgame_scores[static_cast<int>(ENEMY_SIDE(side))] -= PieceSquareTables::get_psqt_score<false>(Piece(ENEMY_SIDE(side), at_target.get_type()), to_make.get_dest_square());
             endgame_scores[static_cast<int>(ENEMY_SIDE(side))] -= PieceSquareTables::get_psqt_score<true>(Piece(ENEMY_SIDE(side), at_target.get_type()), to_make.get_dest_square());
+
+            midgame_scores[static_cast<int>(ENEMY_SIDE(side))] -= PieceSquareTables::MidgameScores[static_cast<int>(at_target.get_type()) - 1];
+            endgame_scores[static_cast<int>(ENEMY_SIDE(side))] -= PieceSquareTables::EndgameScores[static_cast<int>(at_target.get_type()) - 1];
+
+            midgame_phase -= MidgamePhaseArray[static_cast<int>(at_target.get_type()) - 1];
         }
 
         if (static_cast<int>(to_make.get_move_flags()) >= 8) {
@@ -264,6 +276,11 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
             // This handles pawn promotions
             midgame_scores[static_cast<int>(side)] += PieceSquareTables::get_psqt_score<false>(Piece(side, promoted_piece.get_type()), to_make.get_dest_square());
             endgame_scores[static_cast<int>(side)] += PieceSquareTables::get_psqt_score<true>(Piece(side, promoted_piece.get_type()), to_make.get_dest_square());
+
+            midgame_scores[static_cast<int>(side)] += (PieceSquareTables::MidgameScores[static_cast<int>(promoted_piece.get_type()) - 1] - PieceSquareTables::MidgameScores[static_cast<int>(PieceTypes::PAWN) - 1]);
+            endgame_scores[static_cast<int>(side)] += (PieceSquareTables::EndgameScores[static_cast<int>(promoted_piece.get_type()) - 1] - PieceSquareTables::EndgameScores[static_cast<int>(PieceTypes::PAWN) - 1]);
+
+            midgame_phase += MidgamePhaseArray[static_cast<int>(promoted_piece.get_type()) - 1];
         } else {
             set_bit(this->bitboards[moved.to_bitboard_idx()], to_make.get_dest_square());
             zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, to_make.get_dest_square())];
@@ -288,6 +305,9 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
             this->zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(enemy_side, PieceTypes::PAWN), enemy_pawn_idx)];
             midgame_scores[static_cast<int>(enemy_side)] -= PieceSquareTables::get_psqt_score<false>(Piece(enemy_side, PieceTypes::PAWN), enemy_pawn_idx);
             endgame_scores[static_cast<int>(enemy_side)] -= PieceSquareTables::get_psqt_score<true>(Piece(enemy_side, PieceTypes::PAWN), enemy_pawn_idx);
+
+            midgame_scores[static_cast<int>(ENEMY_SIDE(side))] -= PieceSquareTables::MidgameScores[static_cast<int>(PieceTypes::PAWN) - 1];
+            endgame_scores[static_cast<int>(ENEMY_SIDE(side))] -= PieceSquareTables::EndgameScores[static_cast<int>(PieceTypes::PAWN) - 1];
         }
 
         if (to_make.get_move_flags() == MoveFlags::KINGSIDE_CASTLE) {
@@ -366,6 +386,11 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
             set_bit(this->bitboards[new_piece.to_bitboard_idx()], previous_move_info.get_move().get_src_square());
             midgame_scores[static_cast<int>(moved_piece_side)] += PieceSquareTables::get_psqt_score<false>(new_piece, previous_move_info.get_move().get_src_square());
             endgame_scores[static_cast<int>(moved_piece_side)] += PieceSquareTables::get_psqt_score<true>(new_piece, previous_move_info.get_move().get_src_square());
+
+            midgame_scores[static_cast<int>(moved_piece_side)] -= (PieceSquareTables::MidgameScores[static_cast<int>(moved.get_type()) - 1] - PieceSquareTables::MidgameScores[static_cast<int>(PieceTypes::PAWN) - 1]);
+            endgame_scores[static_cast<int>(moved_piece_side)] -= (PieceSquareTables::EndgameScores[static_cast<int>(moved.get_type()) - 1] - PieceSquareTables::EndgameScores[static_cast<int>(PieceTypes::PAWN) - 1]);
+
+            midgame_phase -= MidgamePhaseArray[static_cast<int>(moved.get_type()) - 1];
         } else {
             pieces[previous_move_info.get_move().get_src_square()] = moved;
             zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, previous_move_info.get_move().get_src_square())];
@@ -382,6 +407,11 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
                     ZobristKeys::PositionKeys[calculate_zobrist_key(previous_move_info.get_piece(), previous_move_info.get_move().get_dest_square())];
                 midgame_scores[static_cast<int>(ENEMY_SIDE(moved_piece_side))] += PieceSquareTables::get_psqt_score<false>(previous_move_info.get_piece(), previous_move_info.get_move().get_dest_square());
                 endgame_scores[static_cast<int>(ENEMY_SIDE(moved_piece_side))] += PieceSquareTables::get_psqt_score<true>(previous_move_info.get_piece(), previous_move_info.get_move().get_dest_square());
+
+                midgame_scores[static_cast<int>(ENEMY_SIDE(moved_piece_side))] += PieceSquareTables::MidgameScores[static_cast<int>(previous_move_info.get_piece().get_type()) - 1];
+                endgame_scores[static_cast<int>(ENEMY_SIDE(moved_piece_side))] += PieceSquareTables::EndgameScores[static_cast<int>(previous_move_info.get_piece().get_type()) - 1];
+
+                midgame_phase += MidgamePhaseArray[static_cast<int>(previous_move_info.get_piece().get_type()) - 1];
             } else {
                 const Side enemy_side = ENEMY_SIDE(moved_piece_side);
                 const int enemy_pawn_idx = previous_move_info.get_move().get_dest_square() - 8 + (16 * static_cast<int>(moved_piece_side));
@@ -390,6 +420,9 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
                 set_bit(this->bitboards[bitboard_offset<PieceTypes::PAWN> + static_cast<int>(enemy_side)], enemy_pawn_idx);
                 midgame_scores[static_cast<int>(ENEMY_SIDE(moved_piece_side))] += PieceSquareTables::get_psqt_score<false>(Piece(ENEMY_SIDE(moved_piece_side), PieceTypes::PAWN), enemy_pawn_idx);
                 endgame_scores[static_cast<int>(ENEMY_SIDE(moved_piece_side))] += PieceSquareTables::get_psqt_score<true>(Piece(ENEMY_SIDE(moved_piece_side), PieceTypes::PAWN), enemy_pawn_idx);
+
+                midgame_scores[static_cast<int>(ENEMY_SIDE(moved_piece_side))] += PieceSquareTables::MidgameScores[static_cast<int>(PieceTypes::PAWN) - 1];
+                endgame_scores[static_cast<int>(ENEMY_SIDE(moved_piece_side))] += PieceSquareTables::EndgameScores[static_cast<int>(PieceTypes::PAWN) - 1];
             }
         }
 
