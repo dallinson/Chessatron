@@ -128,7 +128,7 @@ class SearchHandler {
         void reset();
 
         void search(const TimeControlInfo& tc);
-        void run_bench(uint16_t depth=8);
+        void run_bench(uint16_t depth=16);
         void run_perft(uint16_t depth);
 
         void EndSearch() { search_cancelled = true; }
