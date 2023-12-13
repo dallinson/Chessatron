@@ -21,10 +21,3 @@ Score Evaluation::evaluate_board(ChessBoard& board) {
     const auto endgame_phase = 24 - midgame_phase;
     return ((midgame_score * midgame_phase) + (endgame_score * endgame_phase)) / 24;
 }
-
-uint8_t Evaluation::calculate_game_phase(const ChessBoard& board) {
-    return std::popcount(board.get_knight_occupancy())
-        + std::popcount(board.get_bishop_occupancy())
-        + 2 * std::popcount(board.get_rook_occupancy())
-        + 4 * std::popcount(board.get_queen_occupancy());
-}
