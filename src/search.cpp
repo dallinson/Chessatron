@@ -187,7 +187,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
     const auto static_eval = Evaluation::evaluate_board(board);
 
     // Reverse futility pruning
-    if (depth < 7 && (static_eval - (100 * depth)) >= beta) {
+    if (depth < 7 && (static_eval - (70 * depth)) >= beta) {
         return beta;
     }
 
