@@ -25,6 +25,4 @@ namespace Evaluation {
     Score evaluate_board(ChessBoard& c);
     template <bool is_endgame>
     Score evaluate_board(const ChessBoard& c, const Side side);
-
-    uint8_t calculate_game_phase(const ChessBoard& board);
 } // namespace Evaluation
