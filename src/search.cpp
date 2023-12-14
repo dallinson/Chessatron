@@ -187,8 +187,10 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
     const auto static_eval = Evaluation::evaluate_board(board);
 
     // Reverse futility pruning
-    if (depth < 9 && (static_eval - (66 * depth)) >= beta) {
-        return beta;
+    if constexpr (!is_pv_node(node_type)) {
+        if (board.get_checkers(board.get_side_to_move()) == 0 && depth < 7 && (static_eval - (70 * depth)) >= beta) {
+            return beta;
+        }
     }
 
     if (static_eval >= beta && board.get_checkers(board.get_side_to_move()) == 0 && (history.len() == 0 || (history[history.len() - 1].get_move() != Move::NULL_MOVE))) {
