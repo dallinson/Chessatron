@@ -184,6 +184,17 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         // return c.evaluate();
     }
 
+    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(board, board.get_side_to_move());
+    if (moves.len() == 0) {
+        if (board.get_checkers(board.get_side_to_move()) != 0) {
+            // if in check
+            return MagicNumbers::NegativeInfinity;
+        } else {
+            return 0;
+        }
+    }
+    // mate and draw detection
+
     const auto static_eval = Evaluation::evaluate_board(board);
 
     // Reverse futility pruning
@@ -202,16 +213,6 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         }
     }
 
-    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(board, board.get_side_to_move());
-    if (moves.len() == 0) {
-        if (board.get_checkers(board.get_side_to_move()) != 0) {
-            // if in check
-            return MagicNumbers::NegativeInfinity;
-        } else {
-            return 0;
-        }
-    }
-    // mate and draw detection
 
     //bool found_pv_move = MoveOrdering::reorder_pv_move(moves, tt_entry.get_pv_move());
     bool found_pv_move = false;
@@ -288,11 +289,18 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
     if (Search::is_draw(board, history)) {
         return 0;
     }
-    Score stand_pat = Evaluation::evaluate_board(board);
-    if (stand_pat >= beta) {
+
+    Score static_eval = Evaluation::evaluate_board(board);
+
+    if (static_eval >= beta) {
         return beta;
     }
-    alpha = std::max(stand_pat, alpha);
+    alpha = std::max(static_eval, alpha);
+
+    if ((static_eval - 66) >= beta) {
+        return beta;
+    }
+
     auto moves = MoveGenerator::generate_legal_moves<MoveGenType::CAPTURES>(board, board.get_side_to_move());
     if (moves.len() == 0 && MoveGenerator::generate_legal_moves<MoveGenType::NON_CAPTURES>(board, board.get_side_to_move()).len() == 0) {
         if (board.get_checkers(board.get_side_to_move()) != 0) {
@@ -302,6 +310,7 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
             return 0;
         }
     }
+
     //auto capture_count = moves.len();
     //MoveOrdering::sort_captures_mvv_lva(moves, board, 0, capture_count);
     bool found_pv_move = false;

@@ -81,9 +81,7 @@ namespace TimeManagement {
      */
     inline uint32_t get_search_time(const TimeControlInfo& tc) {
         return std::visit([](const auto& tc) {
-            if constexpr (std::is_same_v<std::decay_t<decltype(tc)>, FixedTimeTC>) {
-                return tc.search_time;
-            } else if constexpr (std::is_same_v<std::decay_t<decltype(tc)>, VariableTimeTC>) {
+            if constexpr (std::is_same_v<std::decay_t<decltype(tc)>, FixedTimeTC> || std::is_same_v<std::decay_t<decltype(tc)>, VariableTimeTC>) {
                 return tc.search_time;
             } else {
                 return std::numeric_limits<uint32_t>::max();
