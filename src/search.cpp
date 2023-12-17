@@ -315,7 +315,7 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
         }
         const auto& move = moves[i];
 
-        if (!Search::static_exchange_evaluation(board, move.move, -20)) {
+        if (!move.see_ordering_result) {
             continue;
         }
 
