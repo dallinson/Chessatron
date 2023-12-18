@@ -26,6 +26,10 @@ void MoveOrdering::reorder_moves(MoveList& moves, const ChessBoard& board, const
             const auto dest_score = ordering_scores[static_cast<uint8_t>(dest_type) - 1];
             moves[i].score += 100 * dest_score;
             moves[i].score += (20 - src_score);
+            moves[i].see_ordering_result = Search::static_exchange_evaluation(board, moves[i].move, -20);
+            if (!moves[i].see_ordering_result) {
+                moves[i].score -= 1000000;
+            }
         } else {
             moves[i].score += history_table[moves[i].move.get_history_idx(board.get_side_to_move())];
         }
