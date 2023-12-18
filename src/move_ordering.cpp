@@ -32,6 +32,11 @@ void MoveOrdering::reorder_moves(MoveList& moves, const ChessBoard& board, const
             }
         } else {
             moves[i].score += history_table[moves[i].move.get_history_idx(board.get_side_to_move())];
+            moves[i].see_ordering_result = Search::static_exchange_evaluation(board, moves[i].move, -65);
+            if (!moves[i].see_ordering_result) {
+                moves[i].score -= 100000;
+            }
+
         }
         /*if (moves[i].move.is_promotion()) {
             moves[i].score += 100000;
