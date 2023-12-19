@@ -75,7 +75,7 @@ bool Search::is_threefold_repetition(const MoveHistory& m, const int halfmove_cl
 }
 
 bool Search::is_draw(const ChessBoard& c, const MoveHistory& m) {
-    return c.get_halfmove_clock() >= 100 || is_threefold_repetition(m, c.get_halfmove_clock(), c.get_zobrist_key());
+    return c.get_halfmove_clock() >= 100 || is_threefold_repetition(m, c.get_halfmove_clock(), c.get_zobrist_key()) || Search::detect_insufficient_material(c, c.get_side_to_move());
 }
 
 bool Search::static_exchange_evaluation(const ChessBoard& board, const Move move, const int threshold) {
@@ -158,6 +158,21 @@ bool Search::static_exchange_evaluation(const ChessBoard& board, const Move move
     return board.get_side_to_move() != moving_side;
 }
 
+bool Search::detect_insufficient_material(const ChessBoard& board, const Side side) {
+    const Side enemy_side = ENEMY_SIDE(side);
+    if (board.get_occupancy(enemy_side) == board.get_king_occupancy(enemy_side)) {
+        // if the enemy side only has the king
+        const Bitboard pieces = board.get_queen_occupancy(side) | board.get_rook_occupancy(side) | board.get_bishop_occupancy(side) | board.get_knight_occupancy(side) | board.get_pawn_occupancy(side);
+        if (pieces == 0) {
+            return true;
+        }
+        if (pieces == board.get_bishop_occupancy(side) || pieces == board.get_knight_occupancy(side)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 template <NodeTypes node_type>
 Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, TranspositionTable& transpositions, uint64_t& node_count, std::array<uint32_t, 8192>& history_table) {
 
@@ -213,6 +228,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
             return 0;
         }
     }
+
     // mate and draw detection
 
     //bool found_pv_move = MoveOrdering::reorder_pv_move(moves, tt_entry.get_pv_move());
@@ -290,11 +306,11 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
     if (Search::is_draw(board, history)) {
         return 0;
     }
-    Score stand_pat = Evaluation::evaluate_board(board);
-    if (stand_pat >= beta) {
+    Score static_eval = Evaluation::evaluate_board(board);
+    if (static_eval >= beta) {
         return beta;
     }
-    alpha = std::max(stand_pat, alpha);
+    alpha = std::max(static_eval, alpha);
     auto moves = MoveGenerator::generate_legal_moves<MoveGenType::CAPTURES>(board, board.get_side_to_move());
     if (moves.len() == 0 && MoveGenerator::generate_legal_moves<MoveGenType::NON_CAPTURES>(board, board.get_side_to_move()).len() == 0) {
         if (board.get_checkers(board.get_side_to_move()) != 0) {
