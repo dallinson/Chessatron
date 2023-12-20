@@ -112,4 +112,13 @@ namespace TimeManagement {
         return (get_search_time(tc) / 10) * 3;
     }
 
+    inline uint32_t calculate_scaled_soft_limit(const TimeControlInfo& tc, const int bestmove_count) {
+        if (!is_time_based_tc(tc)) {
+            return get_search_time(tc);
+        }
+        constexpr double best_move_scale[5] = { 2.50, 1.20, 0.95, 0.85, 0.80 };
+        const auto scale_factor = bestmove_count > 5 ? 0.80 : best_move_scale[bestmove_count - 1];
+        return scale_factor * calculate_soft_limit(tc);
+    }
+
 };

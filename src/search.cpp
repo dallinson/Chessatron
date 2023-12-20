@@ -387,6 +387,9 @@ Move SearchHandler::run_iterative_deepening_search() {
         // in order to save some time
     }
 
+    Move current_best_move = pv_move;
+    int best_move_count = 1;
+
     std::array<uint32_t, 8192> history_table;
     history_table.fill(0);
 
@@ -414,7 +417,13 @@ Move SearchHandler::run_iterative_deepening_search() {
             }
         }
 
-        if (TimeManagement::is_time_based_tc(tc) && time_so_far > TimeManagement::calculate_soft_limit(tc)) {
+        if (current_best_move == pv_move) {
+            best_move_count += 1;
+        } else {
+            current_best_move = pv_move;
+        }
+
+        if (TimeManagement::is_time_based_tc(tc) && time_so_far > TimeManagement::calculate_scaled_soft_limit(tc, best_move_count)) {
             break;
         }
     }
