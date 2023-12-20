@@ -421,6 +421,7 @@ Move SearchHandler::run_iterative_deepening_search() {
             best_move_count += 1;
         } else {
             current_best_move = pv_move;
+            best_move_count = 1;
         }
 
         if (TimeManagement::is_time_based_tc(tc) && time_so_far > TimeManagement::calculate_scaled_soft_limit(tc, best_move_count)) {
