@@ -167,7 +167,7 @@ bool Search::detect_insufficient_material(const ChessBoard& board, const Side si
             return true;
         }
         if (pieces == board.get_bishop_occupancy(side) || pieces == board.get_knight_occupancy(side)) {
-            return true;
+            return std::popcount(pieces) == 1;
         }
     }
     return false;
