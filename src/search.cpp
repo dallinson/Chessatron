@@ -208,7 +208,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
     if (moves.len() == 0) {
         if (board.get_checkers(board.get_side_to_move()) != 0) {
             // if in check
-            return MagicNumbers::NegativeInfinity;
+            return MagicNumbers::NegativeInfinity - depth;
         } else {
             return 0;
         }
@@ -299,7 +299,7 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
     if (moves.len() == 0 && MoveGenerator::generate_legal_moves<MoveGenType::NON_CAPTURES>(board, board.get_side_to_move()).len() == 0) {
         if (board.get_checkers(board.get_side_to_move()) != 0) {
             // if in check
-            return MagicNumbers::NegativeInfinity;
+            return MagicNumbers::NegativeInfinity ;
         } else {
             return 0;
         }
@@ -401,7 +401,7 @@ Move SearchHandler::run_iterative_deepening_search() {
         if (!search_cancelled && print_info) {
             const auto nps = static_cast<uint64_t>(node_count / (static_cast<float>(time_so_far) / 1000));
             printf("info depth %d bestmove %s nodes %" PRIu64 " nps %" PRIu64 " ", depth, pv_move.to_string().c_str(), node_count, nps);
-            if (std::abs(current_score) == MagicNumbers::PositiveInfinity) {
+            if (std::abs(current_score) >= MagicNumbers::PositiveInfinity) {
                 // If this is a checkmate
                 printf("mate %d\n", ((current_score / std::abs(current_score)) * depth) / 2);
                 // Divide by 2 as mate expects the result in moves, not plies
