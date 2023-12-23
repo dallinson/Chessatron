@@ -290,11 +290,11 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
     if (Search::is_draw(board, history)) {
         return 0;
     }
-    Score stand_pat = Evaluation::evaluate_board(board);
-    if (stand_pat >= beta) {
+    Score static_eval = Evaluation::evaluate_board(board);
+    if (static_eval >= beta) {
         return beta;
     }
-    alpha = std::max(stand_pat, alpha);
+
     auto moves = MoveGenerator::generate_legal_moves<MoveGenType::CAPTURES>(board, board.get_side_to_move());
     if (moves.len() == 0 && MoveGenerator::generate_legal_moves<MoveGenType::NON_CAPTURES>(board, board.get_side_to_move()).len() == 0) {
         if (board.get_checkers(board.get_side_to_move()) != 0) {
@@ -304,8 +304,20 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
             return 0;
         }
     }
-    //auto capture_count = moves.len();
-    //MoveOrdering::sort_captures_mvv_lva(moves, board, 0, capture_count);
+
+    // Delta pruning
+    Score pruning_delta = 975;
+    for (size_t i = 0; i < moves.len(); i++) {
+        if (moves[i].move.is_promotion()) {
+            pruning_delta += 775;
+            break;
+        }
+    }
+    if (static_eval < (alpha - pruning_delta)) {
+        return alpha;
+    }
+    alpha = std::max(static_eval, alpha);
+
     bool found_pv_move = false;
     MoveOrdering::reorder_moves(moves, board, Move::NULL_MOVE, found_pv_move, history_table);
     int evaluated_moves = 0;
