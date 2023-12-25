@@ -320,8 +320,7 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
             return 0;
         }
     }
-    //auto capture_count = moves.len();
-    //MoveOrdering::sort_captures_mvv_lva(moves, board, 0, capture_count);
+
     bool found_pv_move = false;
     MoveOrdering::reorder_moves(moves, board, Move::NULL_MOVE, found_pv_move, history_table);
     int evaluated_moves = 0;
