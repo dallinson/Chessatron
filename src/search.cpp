@@ -321,20 +321,7 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
 
         board.make_move(move.move, history);
         node_count += 1;
-        Score score;
-        if constexpr (is_pv_node(node_type)) {
-            if (evaluated_moves == 0) {
-                score = -quiescent_search<NodeTypes::PV_NODE>(-beta, -alpha, transpositions, node_count, history_table);
-            } else {
-                score = -quiescent_search<NodeTypes::NON_PV_NODE>(-alpha - 1, -alpha, transpositions, node_count, history_table);
-                if (score > alpha) {
-                    score = -quiescent_search<NodeTypes::PV_NODE>(-beta, -alpha, transpositions, node_count, history_table);
-                }
-            }
-        } else {
-            score = -quiescent_search<NodeTypes::NON_PV_NODE>(-alpha - 1, -alpha, transpositions, node_count, history_table);
-        }
-
+        Score score = -quiescent_search<NodeTypes::PV_NODE>(-beta, -alpha, transpositions, node_count, history_table);
         board.unmake_move(history);
         evaluated_moves += 1;
         if (score >= beta) {
