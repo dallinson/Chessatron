@@ -323,7 +323,6 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
 
     bool found_pv_move = false;
     MoveOrdering::reorder_moves(moves, board, Move::NULL_MOVE, found_pv_move, history_table);
-    int evaluated_moves = 0;
     for (size_t i = 0; i < moves.len(); i++) {
         if (search_cancelled) {
             break;
@@ -338,7 +337,6 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
         node_count += 1;
         Score score = -quiescent_search<NodeTypes::PV_NODE>(-beta, -alpha, transpositions, node_count, history_table);
         board.unmake_move(history);
-        evaluated_moves += 1;
         if (score >= beta) {
             return beta;
         }
