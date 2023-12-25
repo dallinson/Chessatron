@@ -32,6 +32,7 @@ namespace Search {
     bool is_threefold_repetition(const MoveHistory& m, const int halfmove_clock, const ZobristKey z);
     bool is_draw(const ChessBoard& c, const MoveHistory& m);
     bool static_exchange_evaluation(const ChessBoard& board, const Move move, const int threshold);
+    bool detect_insufficient_material(const ChessBoard& board, const Side side);
 } // namespace Search
 
 enum class BoundTypes : uint8_t {
