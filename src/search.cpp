@@ -232,17 +232,16 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         } else {
             return 0;
         }
+    } else if (moves.len() == 1) {
+        extensions += 1;
     }
 
     // mate and draw detection
 
-    //bool found_pv_move = MoveOrdering::reorder_pv_move(moves, tt_entry.get_pv_move());
     bool found_pv_move = false;
     MoveOrdering::reorder_moves(moves, board, tt_entry.get_key() == board.get_zobrist_key() ? tt_entry.get_pv_move() : Move::NULL_MOVE, found_pv_move, history_table);
-    //const auto capture_count = MoveOrdering::reorder_captures_first(moves, static_cast<size_t>(found_pv_move)) - static_cast<size_t>(found_pv_move);
     // move reordering
 
-    //MoveOrdering::sort_captures_mvv_lva(moves, board, static_cast<size_t>(found_pv_move), capture_count);
     if (depth >= 5 && !found_pv_move) {
         depth -= 1;
     }
