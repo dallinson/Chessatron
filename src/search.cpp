@@ -292,7 +292,9 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         }
         if (score >= beta) {
             transpositions.store(TranspositionTableEntry(best_move, depth, BoundTypes::LOWER_BOUND, score, board.get_zobrist_key()), board);
-            history_table[move.move.get_history_idx(board.get_side_to_move())] += (depth * depth);
+            if (!move.move.is_capture()) {
+                history_table[move.move.get_history_idx(board.get_side_to_move())] += (depth * depth);
+            }
             return beta;
         }
         alpha = std::max(score, alpha);
