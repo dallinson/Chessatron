@@ -175,6 +175,7 @@ bool Search::detect_insufficient_material(const ChessBoard& board, const Side si
 
 template <NodeTypes node_type>
 Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, TranspositionTable& transpositions, uint64_t& node_count, std::array<uint32_t, 8192>& history_table) {
+    int move_specific_extensions = 0;
 
     if (Search::is_draw(board, history)) {
         return 0;
@@ -257,6 +258,27 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
             continue;
         }
 
+        if (node_type != NodeTypes::ROOT_NODE
+            && move.move == tt_entry.get_pv_move()
+            && depth >= 8
+            && tt_entry.get_key() == board.get_zobrist_key()
+            && tt_entry.get_depth() >= (depth - 3)) {
+                const auto singularity_beta = std::max(MagicNumbers::NegativeInfinity, (int16_t) (tt_entry.get_score() - depth * 12 / 16));
+                const auto singularity_depth = (depth - 1) / 2;
+                Score search_score = MagicNumbers::NegativeInfinity;
+                for (size_t j = 0; j < moves.len(); j++) {
+                    if (moves[j].move == move.move) {
+                        continue;
+                    }
+                    board.make_move(moves[j].move, history);
+                    search_score = std::max(search_score, negamax_step<node_type>(singularity_beta - 1, singularity_beta, singularity_depth, transpositions, node_count, history_table));
+                    board.unmake_move(history);
+                }
+                if (search_score < singularity_beta) {
+                    move_specific_extensions += 1;
+                }
+        }
+
         board.make_move(move.move, history);
         node_count += 1;
         Score score;
@@ -266,20 +288,20 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         // See if we can perform LMR
         if (depth >= 2 && is_lmr_potential_move) {
             const auto lmr_reduction = static_cast<int>(std::round(1.30 + ((MagicNumbers::LnValues[depth] * MagicNumbers::LnValues[evaluated_moves]) / 2.80)));
-            score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - lmr_reduction + extensions, transpositions, node_count, history_table);
+            score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - lmr_reduction + extensions + move_specific_extensions, transpositions, node_count, history_table);
 
             // it's possible the LMR score will raise alpha; in this case we re-search with the full depth
             if (score > alpha) {
-                score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - 1 + extensions, transpositions, node_count, history_table);
+                score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - 1 + extensions + move_specific_extensions, transpositions, node_count, history_table);
             }
         }
         // if we didn't perform LMR
         else if (!is_pv_node(node_type) || is_lmr_potential_move) {
-            score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - 1 + extensions, transpositions, node_count, history_table);
+            score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - 1 + extensions + move_specific_extensions, transpositions, node_count, history_table);
         }
 
         if (is_pv_node(node_type) && (!is_lmr_potential_move || score > alpha)) {
-            score = -negamax_step<NodeTypes::PV_NODE>(-beta, -alpha, depth - 1 + extensions, transpositions, node_count, history_table);
+            score = -negamax_step<NodeTypes::PV_NODE>(-beta, -alpha, depth - 1 + extensions + move_specific_extensions, transpositions, node_count, history_table);
         }
 
         board.unmake_move(history);
