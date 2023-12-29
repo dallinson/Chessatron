@@ -293,7 +293,9 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
         }
         if (score >= beta) {
             transpositions.store(TranspositionTableEntry(best_move, depth, BoundTypes::LOWER_BOUND, score, board.get_zobrist_key()), board);
-            history_table[move.move.get_history_idx(board.get_side_to_move())] += (depth * depth);
+            if (!move.move.is_capture()) {
+                history_table[move.move.get_history_idx(board.get_side_to_move())] += (depth * depth);
+            }
             for (size_t i = (search_stack[ply].killer_moves.size() - 1); i > 0; i--) {
                 search_stack[ply].killer_moves[i] = search_stack[ply].killer_moves[i - 1];
             }
