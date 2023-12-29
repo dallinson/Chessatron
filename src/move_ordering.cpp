@@ -9,7 +9,7 @@
 
 constexpr std::array<uint8_t, 6> ordering_scores = { 1, 3, 3, 5, 9, 20 };
 
-void MoveOrdering::reorder_moves(MoveList& moves, const ChessBoard& board, const Move pv_move, bool& found_pv_move, std::array<uint32_t, 8192>& history_table) {
+void MoveOrdering::reorder_moves(MoveList& moves, const ChessBoard& board, const Move pv_move, bool& found_pv_move, const std::array<uint32_t, 8192>& history_table, const std::array<Move, 2>& killers) {
     found_pv_move = false;
     for (size_t i = 0; i < moves.len(); i++) {
         moves[i].score = 0;
@@ -17,6 +17,11 @@ void MoveOrdering::reorder_moves(MoveList& moves, const ChessBoard& board, const
             found_pv_move = true;
             moves[i].score = std::numeric_limits<int32_t>::max();
             continue;
+        }
+        for (const auto& killer : killers) {
+            if (moves[i].move == killer) {
+                moves[i].score += 10000000;
+            }
         }
         if (moves[i].move.is_capture()) {
             moves[i].score += 1000000;

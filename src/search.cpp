@@ -174,8 +174,9 @@ bool Search::detect_insufficient_material(const ChessBoard& board, const Side si
 }
 
 template <NodeTypes node_type>
-Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, TranspositionTable& transpositions, uint64_t& node_count, std::array<uint32_t, 8192>& history_table) {
+Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, TranspositionTable& transpositions, int& max_ply, std::array<uint32_t, 8192>& history_table) {
 
+    max_ply = std::max(ply, max_ply);
     if (Search::is_draw(board, history)) {
         return 0;
     }
@@ -195,8 +196,8 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         }
     }
 
-    if (depth <= 0) {
-        return quiescent_search<pv_node_type>(alpha, beta, transpositions, node_count, history_table);
+    if (depth <= 0 || ply >= MAX_PLY) {
+        return quiescent_search<pv_node_type>(alpha, beta, ply, transpositions, max_ply, history_table);
         // return c.evaluate();
     }
 
@@ -217,7 +218,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         // Try null move pruning if we aren't in check
         board.make_move(Move::NULL_MOVE, history);
         // First we make the null move
-        auto null_score = -negamax_step<pv_node_type>(-beta, -alpha, depth - 1 - (depth >= 8 ? 3 : 2), transpositions, node_count, history_table);
+        auto null_score = -negamax_step<pv_node_type>(-beta, -alpha, depth - 1 - (depth >= 8 ? 3 : 2), ply + 1, transpositions, max_ply, history_table);
         board.unmake_move(history);
         if (null_score >= beta) {
             return beta;
@@ -236,7 +237,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
     // mate and draw detection
 
     bool found_pv_move = false;
-    MoveOrdering::reorder_moves(moves, board, tt_entry.get_key() == board.get_zobrist_key() ? tt_entry.get_pv_move() : Move::NULL_MOVE, found_pv_move, history_table);
+    MoveOrdering::reorder_moves(moves, board, tt_entry.get_key() == board.get_zobrist_key() ? tt_entry.get_pv_move() : Move::NULL_MOVE, found_pv_move, history_table, search_stack[ply].killer_moves);
     // move reordering
 
     if (depth >= 5 && !found_pv_move) {
@@ -266,20 +267,20 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         // See if we can perform LMR
         if (depth >= 2 && is_lmr_potential_move) {
             const auto lmr_reduction = static_cast<int>(std::round(1.30 + ((MagicNumbers::LnValues[depth] * MagicNumbers::LnValues[evaluated_moves]) / 2.80)));
-            score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - lmr_reduction + extensions, transpositions, node_count, history_table);
+            score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - lmr_reduction + extensions, ply + 1, transpositions, max_ply, history_table);
 
             // it's possible the LMR score will raise alpha; in this case we re-search with the full depth
             if (score > alpha) {
-                score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - 1 + extensions, transpositions, node_count, history_table);
+                score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - 1 + extensions, ply + 1, transpositions, max_ply, history_table);
             }
         }
         // if we didn't perform LMR
         else if (!is_pv_node(node_type) || is_lmr_potential_move) {
-            score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - 1 + extensions, transpositions, node_count, history_table);
+            score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - 1 + extensions, ply + 1, transpositions, max_ply, history_table);
         }
 
         if (is_pv_node(node_type) && (!is_lmr_potential_move || score > alpha)) {
-            score = -negamax_step<NodeTypes::PV_NODE>(-beta, -alpha, depth - 1 + extensions, transpositions, node_count, history_table);
+            score = -negamax_step<NodeTypes::PV_NODE>(-beta, -alpha, depth - 1 + extensions, ply + 1, transpositions, max_ply, history_table);
         }
 
         board.unmake_move(history);
@@ -293,6 +294,10 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         if (score >= beta) {
             transpositions.store(TranspositionTableEntry(best_move, depth, BoundTypes::LOWER_BOUND, score, board.get_zobrist_key()), board);
             history_table[move.move.get_history_idx(board.get_side_to_move())] += (depth * depth);
+            for (size_t i = (search_stack[ply].killer_moves.size() - 1); i > 0; i--) {
+                search_stack[ply].killer_moves[i] = search_stack[ply].killer_moves[i - 1];
+            }
+            search_stack[ply].killer_moves[0] = move.move;
             return beta;
         }
         alpha = std::max(score, alpha);
@@ -303,7 +308,8 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
 }
 
 template <NodeTypes node_type>
-Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTable& transpositions, uint64_t& node_count, std::array<uint32_t, 8192>& history_table) {
+Score SearchHandler::quiescent_search(Score alpha, Score beta, int ply, TranspositionTable& transpositions, int& max_ply, std::array<uint32_t, 8192>& history_table) {
+    max_ply = std::max(max_ply, ply);
     if (Search::is_draw(board, history)) {
         return 0;
     }
@@ -311,6 +317,11 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
     if (static_eval >= beta) {
         return beta;
     }
+
+    if (ply >= MAX_PLY) {
+        return static_eval;
+    }
+
     alpha = std::max(static_eval, alpha);
     auto moves = MoveGenerator::generate_legal_moves<MoveGenType::CAPTURES>(board, board.get_side_to_move());
     if (moves.len() == 0 && MoveGenerator::generate_legal_moves<MoveGenType::NON_CAPTURES>(board, board.get_side_to_move()).len() == 0) {
@@ -324,7 +335,7 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
     //auto capture_count = moves.len();
     //MoveOrdering::sort_captures_mvv_lva(moves, board, 0, capture_count);
     bool found_pv_move = false;
-    MoveOrdering::reorder_moves(moves, board, Move::NULL_MOVE, found_pv_move, history_table);
+    MoveOrdering::reorder_moves(moves, board, Move::NULL_MOVE, found_pv_move, history_table, search_stack[ply].killer_moves);
     int evaluated_moves = 0;
     for (size_t i = 0; i < moves.len(); i++) {
         if (search_cancelled) {
@@ -341,15 +352,15 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
         Score score;
         if constexpr (is_pv_node(node_type)) {
             if (evaluated_moves == 0) {
-                score = -quiescent_search<NodeTypes::PV_NODE>(-beta, -alpha, transpositions, node_count, history_table);
+                score = -quiescent_search<NodeTypes::PV_NODE>(-beta, -alpha, ply + 1, transpositions, max_ply, history_table);
             } else {
-                score = -quiescent_search<NodeTypes::NON_PV_NODE>(-alpha - 1, -alpha, transpositions, node_count, history_table);
+                score = -quiescent_search<NodeTypes::NON_PV_NODE>(-alpha - 1, -alpha, ply + 1, transpositions, max_ply, history_table);
                 if (score > alpha) {
-                    score = -quiescent_search<NodeTypes::PV_NODE>(-beta, -alpha, transpositions, node_count, history_table);
+                    score = -quiescent_search<NodeTypes::PV_NODE>(-beta, -alpha, ply + 1, transpositions, max_ply, history_table);
                 }
             }
         } else {
-            score = -quiescent_search<NodeTypes::NON_PV_NODE>(-alpha - 1, -alpha, transpositions, node_count, history_table);
+            score = -quiescent_search<NodeTypes::NON_PV_NODE>(-alpha - 1, -alpha, ply + 1, transpositions, max_ply, history_table);
         }
 
         board.unmake_move(history);
@@ -362,7 +373,7 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
     return alpha;
 }
 
-Score SearchHandler::run_aspiration_window_search(int depth, Score previous_score, std::array<uint32_t, 8192>& history_table) {
+Score SearchHandler::run_aspiration_window_search(int depth, Score previous_score, int& max_ply, std::array<uint32_t, 8192>& history_table) {
     Score window = 40;
     Score alpha, beta;
     while (true) {
@@ -374,7 +385,7 @@ Score SearchHandler::run_aspiration_window_search(int depth, Score previous_scor
             beta = previous_score + window;
         }
 
-        previous_score = negamax_step<NodeTypes::ROOT_NODE>(alpha, beta, depth, table, node_count, history_table);
+        previous_score = negamax_step<NodeTypes::ROOT_NODE>(alpha, beta, depth, 0, table, max_ply, history_table);
 
         if (search_cancelled) {
             return previous_score;
@@ -406,18 +417,20 @@ Move SearchHandler::run_iterative_deepening_search() {
 
     std::array<uint32_t, 8192> history_table;
     history_table.fill(0);
+    search_stack.fill(SearchStackFrame());
 
     Score current_score = 0;
     for (int depth = 1; depth <= TimeManagement::get_search_depth(tc) && !search_cancelled; depth++) {
-        
-        current_score = run_aspiration_window_search(depth, current_score, history_table);
+
+        int sel_depth = 0;
+        current_score = run_aspiration_window_search(depth, current_score, sel_depth, history_table);
         const auto time_so_far = std::max(
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - search_start_point).count(), (int64_t) 1);
         // Set time so far to a minimum of 1 to avoid divide by 0 in nps calculation
 
         if (!search_cancelled && print_info) {
             const auto nps = static_cast<uint64_t>(node_count / (static_cast<float>(time_so_far) / 1000));
-            printf("info depth %d bestmove %s nodes %" PRIu64 " nps %" PRIu64 " ", depth, pv_move.to_string().c_str(), node_count, nps);
+            printf("info depth %d seldepth %d bestmove %s nodes %" PRIu64 " nps %" PRIu64 " ", depth, sel_depth, pv_move.to_string().c_str(), node_count, nps);
             if (std::abs(current_score) >= MagicNumbers::PositiveInfinity) {
                 // If this is a checkmate
                 printf("mate %d\n", ((current_score / std::abs(current_score)) * depth) / 2);
