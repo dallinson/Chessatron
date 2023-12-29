@@ -300,12 +300,14 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
                 search_stack[ply].killer_moves[i] = search_stack[ply].killer_moves[i - 1];
             }
             search_stack[ply].killer_moves[0] = move.move;
+            search_stack[ply + 1].killer_moves = {0};
             return beta;
         }
         alpha = std::max(score, alpha);
     }
     const BoundTypes bound_type = alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND;
     transpositions.store(TranspositionTableEntry(best_move, depth, bound_type, best_score, board.get_zobrist_key()), board);
+    search_stack[ply + 1].killer_moves = {0};
     return alpha;
 }
 
@@ -372,11 +374,13 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, int ply, Transpos
                 search_stack[ply].killer_moves[i] = search_stack[ply].killer_moves[i - 1];
             }
             search_stack[ply].killer_moves[0] = move.move;
-
+            search_stack[ply + 1].killer_moves = {0};
             return beta;
         }
         alpha = std::max(score, alpha);
     }
+    
+    search_stack[ply + 1].killer_moves = {0};
     return alpha;
 }
 
