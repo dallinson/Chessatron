@@ -98,6 +98,9 @@ class SearchHandler {
         
         ChessBoard board;
         MoveHistory history;
+        std::array<uint32_t, 8192> history_table;
+        std::array<Move, 8192> countermove_table;
+
         std::atomic<bool> in_search, search_cancelled, shutting_down, should_perft, infinite_search = false;
         TranspositionTable table;
         std::atomic<int> current_search_id = 0;
@@ -109,9 +112,9 @@ class SearchHandler {
         bool print_info = true;
 
         void search_thread_function();
-        Score run_aspiration_window_search(int depth, Score previous_score, std::array<uint32_t, 8192>& history_table);
-        template <NodeTypes node_type> Score negamax_step(Score alpha, Score beta, int depth, TranspositionTable& transpositions, uint64_t& node_count, std::array<uint32_t, 8192>& history_table);
-        template <NodeTypes node_type> Score quiescent_search(Score alpha, Score beta, TranspositionTable& transpositions, uint64_t& node_count, std::array<uint32_t, 8192>& history_table);
+        Score run_aspiration_window_search(int depth, Score previous_score);
+        template <NodeTypes node_type> Score negamax_step(Score alpha, Score beta, int depth, TranspositionTable& transpositions, uint64_t& node_count);
+        template <NodeTypes node_type> Score quiescent_search(Score alpha, Score beta, TranspositionTable& transpositions, uint64_t& node_count);
         Move run_negamax(int depth, TranspositionTable& transpositions);
         Move run_iterative_deepening_search();
 

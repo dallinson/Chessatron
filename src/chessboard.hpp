@@ -148,8 +148,8 @@ class ChessBoard {
         ZobristKey get_polyglot_zobrist_key() const {
             auto default_key = this->zobrist_key;
             if (en_passant_file != 9) {
-                const Side enemy_side = ENEMY_SIDE(side_to_move);
-                const size_t offset = en_passant_file + 8 * static_cast<int>(enemy_side);
+                const Side opponent = enemy_side(side_to_move);
+                const size_t offset = en_passant_file + 8 * static_cast<int>(opponent);
                 if ((get_pawn_occupancy(side_to_move) & ZobristKeys::EnPassantCheckBitboards[offset]) == 0) {
                     default_key ^= ZobristKeys::EnPassantKeys[en_passant_file];
                 }

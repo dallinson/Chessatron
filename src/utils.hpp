@@ -27,7 +27,7 @@ constexpr inline uint8_t get_file(uint8_t pos) { return get_bits(pos, 2, 0); };
 // rank is the row and file the column
 
 constexpr inline uint8_t get_position(uint8_t rank, uint8_t file) { return ((rank & 0x7) << 3) | (file & 0x7); };
-#define ENEMY_SIDE(side) (((side) == Side::WHITE) ? Side::BLACK : Side::WHITE)
+constexpr inline Side enemy_side(Side side) { return ((side) == Side::WHITE) ? Side::BLACK : Side::WHITE; };
 
 void print_bitboard(Bitboard to_print);
 

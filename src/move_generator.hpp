@@ -64,10 +64,10 @@ template <PieceTypes piece_type, MoveGenType gen_type> void MoveGenerator::gener
     }
     const int king_idx = get_lsb(c.get_king_occupancy(side));
     const Bitboard friendly_occupancy = c.get_side_occupancy(side);
-    const Bitboard enemy_occupancy = c.get_side_occupancy(ENEMY_SIDE(side));
+    const Bitboard enemy_occupancy = c.get_side_occupancy(enemy_side(side));
     const Bitboard total_occupancy = enemy_occupancy | friendly_occupancy;
     const auto checking_idx = get_lsb(c.get_checkers(side));
-    const auto enemy_side = ENEMY_SIDE(side);
+    const auto opponent = enemy_side(side);
     Bitboard pieces = c.get_piece_occupancy<piece_type>(side);
     while (pieces) {
         const auto piece_idx = pop_min_bit(pieces);
@@ -93,14 +93,14 @@ template <PieceTypes piece_type, MoveGenType gen_type> void MoveGenerator::gener
             const auto target_idx = pop_min_bit(potential_moves);
             if constexpr (piece_type == PieceTypes::KING) {
                 const Bitboard cleared_bitboard = total_occupancy ^ idx_to_bitboard(king_idx);
-                const auto potential_diagonal_sliders = (c.get_bishop_occupancy(enemy_side) | c.get_queen_occupancy(enemy_side));
-                const auto potential_orthogonal_sliders = (c.get_rook_occupancy(enemy_side) | c.get_queen_occupancy(enemy_side));
+                const auto potential_diagonal_sliders = (c.get_bishop_occupancy(opponent) | c.get_queen_occupancy(opponent));
+                const auto potential_orthogonal_sliders = (c.get_rook_occupancy(opponent) | c.get_queen_occupancy(opponent));
                 const bool is_dest_checked =
                     ((generate_bishop_movemask(cleared_bitboard, target_idx) & potential_diagonal_sliders) ||
                      (generate_rook_movemask(cleared_bitboard, target_idx) & potential_orthogonal_sliders) ||
-                     (c.get_knight_occupancy(enemy_side) & MagicNumbers::KnightMoves[target_idx]) ||
-                     (c.get_pawn_occupancy(enemy_side) & MagicNumbers::PawnAttacks[(64 * static_cast<int>(side)) + target_idx]) ||
-                     (c.get_king_occupancy(enemy_side) & MagicNumbers::KingMoves[target_idx]));
+                     (c.get_knight_occupancy(opponent) & MagicNumbers::KnightMoves[target_idx]) ||
+                     (c.get_pawn_occupancy(opponent) & MagicNumbers::PawnAttacks[(64 * static_cast<int>(side)) + target_idx]) ||
+                     (c.get_king_occupancy(opponent) & MagicNumbers::KingMoves[target_idx]));
                 if (is_dest_checked) {
                     continue;
                 }
@@ -117,8 +117,8 @@ template <PieceTypes piece_type, MoveGenType gen_type> void MoveGenerator::gener
 
 template <MoveGenType gen_type> void MoveGenerator::generate_pawn_moves(const ChessBoard& c, const Side side, MoveList& move_list) {
     Bitboard pawn_mask = c.get_pawn_occupancy(side);
-    const Side enemy_side = ENEMY_SIDE(side);
-    const Bitboard enemy_occupancy = c.get_occupancy(enemy_side);
+    const Side opponent = enemy_side(side);
+    const Bitboard enemy_occupancy = c.get_occupancy(opponent);
     const Bitboard total_occupancy = enemy_occupancy | c.get_occupancy(side);
     const auto king_idx = get_lsb(c.get_king_occupancy(side));
     const auto ahead_offset = side == Side::WHITE ? 8 : -8;
@@ -199,9 +199,9 @@ template <MoveGenType gen_type> void MoveGenerator::generate_pawn_moves(const Ch
                 const Bitboard cleared_bitboard = total_occupancy ^ idx_to_bitboard(pawn_idx) ^ idx_to_bitboard(ep_target_square) ^
                                                   idx_to_bitboard(ep_target_square - ahead_offset);
                 const Bitboard threatening_bishops =
-                    generate_bishop_movemask(cleared_bitboard, king_idx) & (c.get_bishop_occupancy(enemy_side) | c.get_queen_occupancy(enemy_side));
+                    generate_bishop_movemask(cleared_bitboard, king_idx) & (c.get_bishop_occupancy(opponent) | c.get_queen_occupancy(opponent));
                 const Bitboard threatening_rooks =
-                    generate_rook_movemask(cleared_bitboard, king_idx) & (c.get_rook_occupancy(enemy_side) | c.get_queen_occupancy(enemy_side));
+                    generate_rook_movemask(cleared_bitboard, king_idx) & (c.get_rook_occupancy(opponent) | c.get_queen_occupancy(opponent));
 
                 if (threatening_bishops == 0 && threatening_rooks == 0) {
                     move_list.add_move(Move(MoveFlags::EN_PASSANT_CAPTURE, ep_target_square, pawn_idx));

@@ -156,4 +156,6 @@ class MoveHistory {
         };
 
         const MoveHistoryEntry& operator[](size_t idx) const { return data[idx]; }
+        const MoveHistoryEntry& last_move() const { return data[idx - 1]; }
+        const MoveHistoryEntry& previous_move() const { return data[idx - 2]; }
 };
