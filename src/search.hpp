@@ -91,7 +91,9 @@ class TranspositionTable {
         }
 };
 
-struct SearchStackFrame {};
+struct SearchStackFrame {
+    Move quiet_alpha_raise;
+};
 
 class SearchHandler {
     private:

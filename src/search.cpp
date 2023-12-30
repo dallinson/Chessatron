@@ -248,6 +248,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
     // iir
 
     Move best_move = Move::NULL_MOVE;
+    search_stack[ply].quiet_alpha_raise = Move::NULL_MOVE;
     Score best_score = MagicNumbers::NegativeInfinity;
     const Score original_alpha = alpha;
     for (size_t evaluated_moves = 0; evaluated_moves < moves.len(); evaluated_moves++) {
@@ -297,10 +298,16 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
             transpositions.store(TranspositionTableEntry(best_move, depth, BoundTypes::LOWER_BOUND, score, board.get_zobrist_key()), board);
             if (!move.move.is_capture()) {
                 history_table[move.move.get_history_idx(board.get_side_to_move())] += (depth * depth);
+                history_table[search_stack[ply].quiet_alpha_raise.get_history_idx(board.get_side_to_move())] -= 1024;
             }
             return beta;
         }
-        alpha = std::max(score, alpha);
+        if (score > alpha) {
+            alpha = score;
+            if (!move.move.is_capture()) {
+                search_stack[ply].quiet_alpha_raise = move.move;
+            }
+        }
     }
     const BoundTypes bound_type = alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND;
     transpositions.store(TranspositionTableEntry(best_move, depth, bound_type, best_score, board.get_zobrist_key()), board);
