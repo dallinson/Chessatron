@@ -21,8 +21,6 @@ enum class NodeTypes {
 };
 constexpr inline bool is_pv_node(NodeTypes n) { return n == NodeTypes::ROOT_NODE || n == NodeTypes::PV_NODE; };
 
-constexpr static int MAX_PLY = 250;
-
 namespace Perft {
     uint64_t run_perft(ChessBoard& c, int depth, bool print_debug = false);
 }
@@ -92,7 +90,7 @@ class TranspositionTable {
 };
 
 struct SearchStackFrame {
-    std::array<Move, 2> killer_moves = {0};
+    std::array<Move, KILLER_COUNT> killer_moves = {0};
 };
 
 class SearchHandler {

@@ -14,6 +14,9 @@ enum class Side : uint8_t {
     BLACK = 1,
 };
 
+constexpr static int MAX_PLY = 250;
+constexpr static int KILLER_COUNT = 1;
+
 constexpr inline uint64_t bit(uint8_t x) { return ((uint64_t) 1) << x; };
 template <std::integral T> constexpr inline T get_bit(T val, uint8_t x) { return (val >> x) & 0x1; };
 template <std::integral T> constexpr inline void set_bit(T& val, uint8_t x) { val |= bit(x); };
