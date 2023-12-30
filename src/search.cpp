@@ -174,7 +174,7 @@ bool Search::detect_insufficient_material(const ChessBoard& board, const Side si
 }
 
 template <NodeTypes node_type>
-Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, TranspositionTable& transpositions, uint64_t& node_count) {
+Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, TranspositionTable& transpositions, uint64_t& node_count) {
 
     if (Search::is_draw(board, history)) {
         return 0;
@@ -196,7 +196,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
     }
 
     if (depth <= 0) {
-        return quiescent_search<pv_node_type>(alpha, beta, transpositions, node_count);
+        return quiescent_search<pv_node_type>(alpha, beta, ply, transpositions, node_count);
         // return c.evaluate();
     }
 
@@ -205,6 +205,9 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
     } 
 
     const auto static_eval = Evaluation::evaluate_board(board);
+    if (ply >= MAX_PLY) {
+        return static_eval;
+    }
 
     // Reverse futility pruning
     if constexpr (!is_pv_node(node_type)) {
@@ -217,7 +220,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         // Try null move pruning if we aren't in check
         board.make_move(Move::NULL_MOVE, history);
         // First we make the null move
-        auto null_score = -negamax_step<pv_node_type>(-beta, -alpha, depth - 1 - (depth >= 8 ? 3 : 2), transpositions, node_count);
+        auto null_score = -negamax_step<pv_node_type>(-beta, -alpha, depth - 1 - (depth >= 8 ? 3 : 2), ply + 1, transpositions, node_count);
         board.unmake_move(history);
         if (null_score >= beta) {
             return beta;
@@ -266,20 +269,20 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
         // See if we can perform LMR
         if (depth >= 2 && is_lmr_potential_move) {
             const auto lmr_reduction = static_cast<int>(std::round(1.30 + ((MagicNumbers::LnValues[depth] * MagicNumbers::LnValues[evaluated_moves]) / 2.80)));
-            score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - lmr_reduction + extensions, transpositions, node_count);
+            score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - lmr_reduction + extensions, ply + 1, transpositions, node_count);
 
             // it's possible the LMR score will raise alpha; in this case we re-search with the full depth
             if (score > alpha) {
-                score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - 1 + extensions, transpositions, node_count);
+                score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - 1 + extensions, ply + 1, transpositions, node_count);
             }
         }
         // if we didn't perform LMR
         else if (!is_pv_node(node_type) || is_lmr_potential_move) {
-            score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - 1 + extensions, transpositions, node_count);
+            score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - 1 + extensions, ply + 1, transpositions, node_count);
         }
 
         if (is_pv_node(node_type) && (!is_lmr_potential_move || score > alpha)) {
-            score = -negamax_step<NodeTypes::PV_NODE>(-beta, -alpha, depth - 1 + extensions, transpositions, node_count);
+            score = -negamax_step<NodeTypes::PV_NODE>(-beta, -alpha, depth - 1 + extensions, ply + 1, transpositions, node_count);
         }
 
         board.unmake_move(history);
@@ -305,11 +308,14 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
 }
 
 template <NodeTypes node_type>
-Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTable& transpositions, uint64_t& node_count) {
+Score SearchHandler::quiescent_search(Score alpha, Score beta, int ply, TranspositionTable& transpositions, uint64_t& node_count) {
     if (Search::is_draw(board, history)) {
         return 0;
     }
     Score static_eval = Evaluation::evaluate_board(board);
+    if (ply >= MAX_PLY) {
+        return static_eval;
+    }
     if (static_eval >= beta) {
         return beta;
     }
@@ -343,15 +349,15 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
         Score score;
         if constexpr (is_pv_node(node_type)) {
             if (evaluated_moves == 0) {
-                score = -quiescent_search<NodeTypes::PV_NODE>(-beta, -alpha, transpositions, node_count);
+                score = -quiescent_search<NodeTypes::PV_NODE>(-beta, -alpha, ply + 1, transpositions, node_count);
             } else {
-                score = -quiescent_search<NodeTypes::NON_PV_NODE>(-alpha - 1, -alpha, transpositions, node_count);
+                score = -quiescent_search<NodeTypes::NON_PV_NODE>(-alpha - 1, -alpha, ply + 1, transpositions, node_count);
                 if (score > alpha) {
-                    score = -quiescent_search<NodeTypes::PV_NODE>(-beta, -alpha, transpositions, node_count);
+                    score = -quiescent_search<NodeTypes::PV_NODE>(-beta, -alpha, ply + 1, transpositions, node_count);
                 }
             }
         } else {
-            score = -quiescent_search<NodeTypes::NON_PV_NODE>(-alpha - 1, -alpha, transpositions, node_count);
+            score = -quiescent_search<NodeTypes::NON_PV_NODE>(-alpha - 1, -alpha, ply + 1, transpositions, node_count);
         }
 
         board.unmake_move(history);
@@ -376,7 +382,7 @@ Score SearchHandler::run_aspiration_window_search(int depth, Score previous_scor
             beta = previous_score + window;
         }
 
-        previous_score = negamax_step<NodeTypes::ROOT_NODE>(alpha, beta, depth, table, node_count);
+        previous_score = negamax_step<NodeTypes::ROOT_NODE>(alpha, beta, depth, 0, table, node_count);
 
         if (search_cancelled) {
             return previous_score;
