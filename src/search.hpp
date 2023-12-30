@@ -92,7 +92,7 @@ class TranspositionTable {
 };
 
 struct SearchStackFrame {
-    Move quiet_alpha_raise;
+    std::vector<Move> quiet_alpha_raises;
 };
 
 class SearchHandler {
