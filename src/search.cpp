@@ -422,7 +422,7 @@ Move SearchHandler::run_iterative_deepening_search() {
     }
 
     for (size_t i = 0; i < history_table.size(); i++) {
-        history_table[i] = std::min((uint32_t) 1000000, std::max((uint32_t) 0, history_table[i]));
+        history_table[i] = std::clamp(history_table[i], -2000000000, 2000000000);
     }
 
     Score current_score = 0;
