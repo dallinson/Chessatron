@@ -83,6 +83,7 @@ void SearchHandler::reset() {
     history = MoveHistory();
     board = ChessBoard();
     table = TranspositionTable();
+    history_table.fill(0);
 }
 
 void SearchHandler::run_bench(uint16_t depth) {

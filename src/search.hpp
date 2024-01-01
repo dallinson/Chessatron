@@ -98,6 +98,8 @@ class SearchHandler {
         
         ChessBoard board;
         MoveHistory history;
+        std::array<uint32_t, 8192> history_table;
+
         std::atomic<bool> in_search, search_cancelled, shutting_down, should_perft, infinite_search = false;
         TranspositionTable table;
         std::atomic<int> current_search_id = 0;
