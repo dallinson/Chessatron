@@ -104,7 +104,7 @@ class SearchHandler {
         
         ChessBoard board;
         MoveHistory history;
-        std::array<int32_t, 8192> history_table;
+        std::array<uint32_t, 8192> history_table;
         std::array<SearchStackFrame, MAX_PLY + 2> search_stack;
 
         std::atomic<bool> in_search, search_cancelled, shutting_down, should_perft, infinite_search = false;
