@@ -421,7 +421,9 @@ Move SearchHandler::run_iterative_deepening_search() {
         // in order to save some time
     }
 
-    history_table.fill(0);
+    for (size_t i = 0; i < history_table.size(); i++) {
+        history_table[i] = std::min(1000000, std::max(-1000000, history_table[i]));
+    }
 
     Score current_score = 0;
     for (int depth = 1; depth <= TimeManagement::get_search_depth(tc) && !search_cancelled; depth++) {
