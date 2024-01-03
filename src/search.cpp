@@ -174,7 +174,7 @@ bool Search::detect_insufficient_material(const ChessBoard& board, const Side si
 }
 
 template <NodeTypes node_type>
-Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, TranspositionTable& transpositions, uint64_t& node_count, std::array<uint32_t, 8192>& history_table) {
+Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, TranspositionTable& transpositions, uint64_t& node_count, std::array<int32_t, 8192>& history_table) {
 
     if (Search::is_draw(board, history)) {
         return 0;
@@ -305,7 +305,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, Transposit
 }
 
 template <NodeTypes node_type>
-Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTable& transpositions, uint64_t& node_count, std::array<uint32_t, 8192>& history_table) {
+Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTable& transpositions, uint64_t& node_count, std::array<int32_t, 8192>& history_table) {
     if (Search::is_draw(board, history)) {
         return 0;
     }
@@ -364,7 +364,7 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, TranspositionTabl
     return alpha;
 }
 
-Score SearchHandler::run_aspiration_window_search(int depth, Score previous_score, std::array<uint32_t, 8192>& history_table) {
+Score SearchHandler::run_aspiration_window_search(int depth, Score previous_score, std::array<int32_t, 8192>& history_table) {
     Score window = 40;
     Score alpha, beta;
     while (true) {
@@ -406,7 +406,7 @@ Move SearchHandler::run_iterative_deepening_search() {
         // in order to save some time
     }
 
-    std::array<uint32_t, 8192> history_table;
+    std::array<int32_t, 8192> history_table;
     history_table.fill(0);
 
     Score current_score = 0;
