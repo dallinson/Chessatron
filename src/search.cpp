@@ -235,6 +235,8 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
         } else {
             return 0;
         }
+    } else if (moves.len() == 1) {
+        extensions += 1;
     }
     // mate and draw detection
 
