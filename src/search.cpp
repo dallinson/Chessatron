@@ -241,7 +241,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
     // mate and draw detection
 
     bool found_pv_move = false;
-    MoveOrdering::reorder_moves(moves, board, tt_entry.get_key() == board.get_zobrist_key() ? tt_entry.get_pv_move() : Move::NULL_MOVE, found_pv_move, history_table);
+    MoveOrdering::reorder_moves(moves, board, tt_entry.get_key() == board.get_zobrist_key() ? tt_entry.get_pv_move() : Move::NULL_MOVE, found_pv_move, history_table, frequency_table);
     // move reordering
 
     if (depth >= 5 && !found_pv_move) {
@@ -305,6 +305,10 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
                 }
             }
             return beta;
+        } else {
+            if (!move.move.is_capture()) {
+                frequency_table[move.move.get_history_idx(board.get_side_to_move())] += 1;
+            }
         }
         if (score > alpha) {
             alpha = score;
@@ -343,7 +347,7 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, int ply, Transpos
     //auto capture_count = moves.len();
     //MoveOrdering::sort_captures_mvv_lva(moves, board, 0, capture_count);
     bool found_pv_move = false;
-    MoveOrdering::reorder_moves(moves, board, Move::NULL_MOVE, found_pv_move, history_table);
+    MoveOrdering::reorder_moves(moves, board, Move::NULL_MOVE, found_pv_move, history_table, frequency_table);
     int evaluated_moves = 0;
     for (size_t i = 0; i < moves.len(); i++) {
         if (search_cancelled) {
@@ -424,6 +428,7 @@ Move SearchHandler::run_iterative_deepening_search() {
     }
 
     history_table.fill(0);
+    frequency_table.fill(0);
 
     Score current_score = 0;
     for (int depth = 1; depth <= TimeManagement::get_search_depth(tc) && !search_cancelled; depth++) {
