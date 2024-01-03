@@ -96,6 +96,8 @@ class MoveList {
         const ScoredMove* get_data_addr() const { return data; }
 
         size_t len() const { return this->idx; };
+
+        void clear() { this->idx = 0; };
 };
 
 class MoveHistoryEntry {
