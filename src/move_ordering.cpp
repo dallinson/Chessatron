@@ -33,10 +33,6 @@ void MoveOrdering::reorder_moves(MoveList& moves, const ChessBoard& board, const
         } else {
             moves[i].score += history_table[moves[i].move.get_history_idx(board.get_side_to_move())];
         }
-        /*if (moves[i].move.is_promotion()) {
-            moves[i].score += 100000;
-            moves[i].score += ordering_scores[static_cast<int>(moves[i].move.get_promotion_piece_type())];
-        }*/
     }
     std::sort(&moves[0], &moves[moves.len()], [](const ScoredMove a, const ScoredMove b) {
         return a.score > b.score;

@@ -8,12 +8,9 @@
 
 enum class MoveGenType {
     ALL_LEGAL,
-    CAPTURES,
-    NON_CAPTURES
+    QUIESCENCE,
+    NON_QUIESCENCE,
 };
-
-constexpr inline bool generate_captures(MoveGenType gen_type) { return gen_type != MoveGenType::NON_CAPTURES; };
-constexpr inline bool generate_non_captures(MoveGenType gen_type) { return gen_type != MoveGenType::CAPTURES; };
 
 namespace MoveGenerator {
     template <MoveGenType gen_type> MoveList generate_legal_moves(const ChessBoard& c, const Side side);
@@ -48,7 +45,7 @@ template <MoveGenType gen_type> MoveList MoveGenerator::generate_legal_moves(con
         return to_return;
     }
 
-    if (gen_type != MoveGenType::CAPTURES && checking_piece_count == 0) {
+    if (gen_type != MoveGenType::QUIESCENCE && checking_piece_count == 0) {
         MoveGenerator::generate_castling_moves(c, side, to_return);
     }
     MoveGenerator::generate_moves<PieceTypes::QUEEN, gen_type>(c, side, to_return);
@@ -104,9 +101,9 @@ template <PieceTypes piece_type, MoveGenType gen_type> void MoveGenerator::gener
     while (pieces) {
         const auto piece_idx = pop_min_bit(pieces);
         auto potential_moves = generate_movemask<piece_type>(total_occupancy, piece_idx) & ~friendly_occupancy;
-        if constexpr (!generate_non_captures(gen_type)) {
+        if constexpr (gen_type == MoveGenType::QUIESCENCE) {
             potential_moves &= enemy_occupancy;
-        } else if constexpr (!generate_captures(gen_type)) {
+        } else if constexpr (gen_type == MoveGenType::NON_QUIESCENCE) {
             potential_moves &= ~enemy_occupancy;
         }
         if constexpr (piece_type != PieceTypes::KING) {
@@ -179,33 +176,35 @@ template <MoveGenType gen_type> void MoveGenerator::generate_pawn_moves(const Ch
     
     // First we examine unpinned pieces
     {
-        if constexpr (generate_non_captures(gen_type)) {
-            Bitboard advancing_board = (side == Side::WHITE ? unpinned_pawns << 8 : unpinned_pawns >> 8) & ~total_occupancy;
-            Bitboard double_advancing_board = (side == Side::WHITE ? advancing_board << 8 : advancing_board >> 8) & ~total_occupancy & valid_in_check_moves;
-            advancing_board &= valid_in_check_moves;
-            advancing_board = side == Side::WHITE ? advancing_board >> 8 : advancing_board << 8;
-            double_advancing_board = side == Side::WHITE ? double_advancing_board >> 16 : double_advancing_board << 16;
-            Bitboard promotables = advancing_board & penultimate_rank_bitboard;
-            advancing_board &= ~penultimate_rank_bitboard;
-            double_advancing_board &= start_rank_bitboard;
+        Bitboard advancing_board = (side == Side::WHITE ? unpinned_pawns << 8 : unpinned_pawns >> 8) & ~total_occupancy;
+        Bitboard double_advancing_board = (side == Side::WHITE ? advancing_board << 8 : advancing_board >> 8) & ~total_occupancy & valid_in_check_moves;
+        advancing_board &= valid_in_check_moves;
+        advancing_board = side == Side::WHITE ? advancing_board >> 8 : advancing_board << 8;
+        double_advancing_board = side == Side::WHITE ? double_advancing_board >> 16 : double_advancing_board << 16;
+        Bitboard promotables = advancing_board & penultimate_rank_bitboard;
+        advancing_board &= ~penultimate_rank_bitboard;
+        double_advancing_board &= start_rank_bitboard;
+        if constexpr (gen_type != MoveGenType::QUIESCENCE) {
             while (advancing_board) {
                 const auto pawn_idx = pop_min_bit(advancing_board);
                 move_list.add_move(Move(MoveFlags::QUIET_MOVE, pawn_idx + ahead_offset, pawn_idx));
             }
-            while (promotables) {
-                const auto pawn_idx = pop_min_bit(promotables);
-                move_list.add_move(Move(MoveFlags::QUEEN_PROMOTION, pawn_idx + ahead_offset, pawn_idx));
-                move_list.add_move(Move(MoveFlags::KNIGHT_PROMOTION, pawn_idx + ahead_offset, pawn_idx));
-                move_list.add_move(Move(MoveFlags::ROOK_PROMOTION, pawn_idx + ahead_offset, pawn_idx));
-                move_list.add_move(Move(MoveFlags::BISHOP_PROMOTION, pawn_idx + ahead_offset, pawn_idx));
-            }
+        }
+        while (promotables) {
+            const auto pawn_idx = pop_min_bit(promotables);
+            if constexpr (gen_type != MoveGenType::NON_QUIESCENCE) move_list.add_move(Move(MoveFlags::QUEEN_PROMOTION, pawn_idx + ahead_offset, pawn_idx));
+            if constexpr (gen_type != MoveGenType::NON_QUIESCENCE) move_list.add_move(Move(MoveFlags::KNIGHT_PROMOTION, pawn_idx + ahead_offset, pawn_idx));
+            if constexpr (gen_type != MoveGenType::QUIESCENCE) move_list.add_move(Move(MoveFlags::ROOK_PROMOTION, pawn_idx + ahead_offset, pawn_idx));
+            if constexpr (gen_type != MoveGenType::QUIESCENCE) move_list.add_move(Move(MoveFlags::BISHOP_PROMOTION, pawn_idx + ahead_offset, pawn_idx));
+        }
+        if constexpr (gen_type != MoveGenType::QUIESCENCE) {
             while (double_advancing_board) {
                 const auto pawn_idx = pop_min_bit(double_advancing_board);
                 move_list.add_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, pawn_idx + (2 *ahead_offset), pawn_idx));
             }
         }
         // Next we examine captures - 0 is h-side, 1 is a-side
-        if constexpr (generate_captures(gen_type)) {
+        if constexpr (gen_type != MoveGenType::NON_QUIESCENCE) {
             Bitboard potential_captures[2];
             Bitboard promotion_captures[2];
             int shifts[2];
@@ -235,7 +234,7 @@ template <MoveGenType gen_type> void MoveGenerator::generate_pawn_moves(const Ch
         }
     }
 
-    if constexpr (generate_captures(gen_type)) {
+    if constexpr (gen_type != MoveGenType::NON_QUIESCENCE) {
         Bitboard potential_ep = pawn_mask & ep_rank_bitboard;
         while (potential_ep) {
             const auto pawn_idx = pop_min_bit(potential_ep);
@@ -258,7 +257,7 @@ template <MoveGenType gen_type> void MoveGenerator::generate_pawn_moves(const Ch
 
     // For pinned pieces
     {
-        if constexpr (generate_non_captures(gen_type)) {
+        if constexpr (gen_type != MoveGenType::QUIESCENCE) {
             Bitboard advancing_board = (side == Side::WHITE ? pinned_pawns << 8 : pinned_pawns >> 8) & ~total_occupancy & valid_in_check_moves & (file_bitboard << get_file(king_idx));
             Bitboard double_advancing_board = (side == Side::WHITE ? advancing_board << 8 : advancing_board >> 8) & ~total_occupancy & valid_in_check_moves;
             advancing_board = side == Side::WHITE ? advancing_board >> 8 : advancing_board << 8;
@@ -277,7 +276,7 @@ template <MoveGenType gen_type> void MoveGenerator::generate_pawn_moves(const Ch
             // If a pawn is pinned, it cannot be quietly promoted
         }
 
-        if constexpr (generate_captures(gen_type)) {
+        if constexpr (gen_type != MoveGenType::NON_QUIESCENCE) {
             Bitboard potential_captures[2];
             int shifts[2];
             potential_captures[0] = (side == Side::WHITE ? pinned_pawns << 9 : pinned_pawns >> 7) & enemy_occupancy & ~a_file & valid_in_check_moves;
