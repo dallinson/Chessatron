@@ -331,8 +331,8 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, int ply, Transpos
         return beta;
     }
     alpha = std::max(static_eval, alpha);
-    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::CAPTURES>(board, board.get_side_to_move());
-    if (moves.len() == 0 && MoveGenerator::generate_legal_moves<MoveGenType::NON_CAPTURES>(board, board.get_side_to_move()).len() == 0) {
+    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIESCENCE>(board, board.get_side_to_move());
+    if (moves.len() == 0 && MoveGenerator::generate_legal_moves<MoveGenType::NON_QUIESCENCE>(board, board.get_side_to_move()).len() == 0) {
         if (board.get_checkers(board.get_side_to_move()) != 0) {
             // if in check
             return MagicNumbers::NegativeInfinity ;
@@ -340,8 +340,7 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, int ply, Transpos
             return 0;
         }
     }
-    //auto capture_count = moves.len();
-    //MoveOrdering::sort_captures_mvv_lva(moves, board, 0, capture_count);
+
     bool found_pv_move = false;
     MoveOrdering::reorder_moves(moves, board, Move::NULL_MOVE, found_pv_move, history_table);
     int evaluated_moves = 0;
@@ -351,8 +350,14 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, int ply, Transpos
         }
         const auto& move = moves[i];
 
-        if (!move.see_ordering_result) {
-            continue;
+        if (move.move.is_capture()) {
+            if (!move.see_ordering_result) {
+                continue;
+            }
+        } else {
+            if (!Search::static_exchange_evaluation(board, move.move, -65)) {
+                continue;
+            }
         }
 
         board.make_move(move.move, history);
