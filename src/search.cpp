@@ -331,8 +331,8 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, int ply, Transpos
         return beta;
     }
     alpha = std::max(static_eval, alpha);
-    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::CAPTURES>(board, board.get_side_to_move());
-    if (moves.len() == 0 && MoveGenerator::generate_legal_moves<MoveGenType::NON_CAPTURES>(board, board.get_side_to_move()).len() == 0) {
+    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIESCENCE>(board, board.get_side_to_move());
+    if (moves.len() == 0 && MoveGenerator::generate_legal_moves<MoveGenType::NON_QUIESCENCE>(board, board.get_side_to_move()).len() == 0) {
         if (board.get_checkers(board.get_side_to_move()) != 0) {
             // if in check
             return MagicNumbers::NegativeInfinity ;
