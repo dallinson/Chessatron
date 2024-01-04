@@ -29,6 +29,10 @@ class ChessBoard {
         std::array<Bitboard, 2> checkers = {0};
         std::array<Bitboard, 2> pinned_pieces = {0};
 
+        std::array<Score, 2> midgame_scores = {0};
+        std::array<Score, 2> endgame_scores = {0};
+        uint8_t midgame_phase = 0;
+
         ZobristKey zobrist_key = 0;
         int halfmove_clock = 0;
         int fullmove_counter = 0;
@@ -135,6 +139,10 @@ class ChessBoard {
 
         inline Bitboard get_checkers(const Side side) const { return checkers[static_cast<int>(side)]; };
         inline Bitboard get_pinned_pieces(const Side side) const { return pinned_pieces[static_cast<int>(side)]; };
+
+        Score get_midgame_score(Side side) const { return midgame_scores[static_cast<int>(side)]; };
+        Score get_endgame_score(Side side) const { return endgame_scores[static_cast<int>(side)]; };
+        uint8_t get_midgame_phase() const { return midgame_phase; };
 
         inline ZobristKey get_zobrist_key() const { return zobrist_key; };
         ZobristKey get_polyglot_zobrist_key() const {

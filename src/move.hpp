@@ -65,7 +65,8 @@ class Move {
 struct ScoredMove {
     int32_t score;
     Move move;
-    uint16_t padding;
+    bool see_ordering_result;
+    uint8_t padding;
 };
 
 bool operator==(const Move& lhs, const Move& rhs);
@@ -95,6 +96,8 @@ class MoveList {
         const ScoredMove* get_data_addr() const { return data; }
 
         size_t len() const { return this->idx; };
+
+        void clear() { this->idx = 0; };
 };
 
 class MoveHistoryEntry {

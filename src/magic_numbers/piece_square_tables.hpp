@@ -3,9 +3,13 @@
 #include <array>
 
 #include "../utils.hpp"
+#include "../pieces.hpp"
 
 namespace PieceSquareTables {
     // clang-format off
+
+    constexpr std::array<Score, 6> MidgameScores = { 82, 337, 365, 477, 1025,  0};
+    constexpr std::array<Score, 6> EndgameScores = { 94, 281, 297, 512,  936,  0};
 
     constexpr std::array<Score, 64> PawnMidgameTable = {
                 0,   0,   0,   0,   0,   0,  0,   0,
@@ -150,6 +154,18 @@ namespace PieceSquareTables {
             KingEndgameTable,
         }
     };
+
+    template <bool is_endgame>
+    constexpr inline Score get_psqt_score(const Piece p, uint8_t pos) {
+        if (p.get_side() == Side::WHITE) {
+            pos ^= 0b00111000;
+        }
+        if constexpr (is_endgame) {
+            return EndgameTables[static_cast<int>(p.get_type()) - 1][pos];
+        } else {
+            return MidgameTables[static_cast<int>(p.get_type()) - 1][pos];
+        }
+    }
 
     // clang-format on
 };
