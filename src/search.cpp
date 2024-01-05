@@ -331,13 +331,24 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, int ply, Transpos
         return beta;
     }
     alpha = std::max(static_eval, alpha);
-    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIESCENCE>(board, board.get_side_to_move());
-    if (moves.len() == 0 && MoveGenerator::generate_legal_moves<MoveGenType::NON_QUIESCENCE>(board, board.get_side_to_move()).len() == 0) {
-        if (board.get_checkers(board.get_side_to_move()) != 0) {
-            // if in check
-            return MagicNumbers::NegativeInfinity ;
-        } else {
-            return 0;
+
+    MoveList moves;
+    if (board.get_checkers(board.get_side_to_move()) == 0) {
+        // if not in check
+        moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIESCENCE>(board, board.get_side_to_move());
+        if (moves.len() == 0 && MoveGenerator::generate_legal_moves<MoveGenType::NON_QUIESCENCE>(board, board.get_side_to_move()).len() == 0) {
+            if (board.get_checkers(board.get_side_to_move()) != 0) {
+                // if in check
+                return MagicNumbers::NegativeInfinity;
+            } else {
+                return 0;
+            }
+        }
+    } else {
+        // If in check, generate all moves
+        moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(board, board.get_side_to_move());
+        if (moves.len() == 0) {
+            return MagicNumbers::NegativeInfinity;
         }
     }
 
