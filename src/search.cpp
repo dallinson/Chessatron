@@ -257,13 +257,13 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
         if (search_cancelled) {
             break;
         }
-        const auto& move = moves[evaluated_moves];
+        const auto move = moves[evaluated_moves].move;
 
-        if (depth <= 10 && !Search::static_exchange_evaluation(board, move.move, move.move.is_capture() ? (-20 * depth * depth) : (-65 * depth))) {
+        if (depth <= 10 && !Search::static_exchange_evaluation(board, move, move.is_capture() ? (-20 * depth * depth) : (-65 * depth))) {
             continue;
         }
 
-        board.make_move(move.move, history);
+        board.make_move(move, history);
         node_count += 1;
         Score score;
 
@@ -291,15 +291,15 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
         board.unmake_move(history);
         if (score > best_score) {
             best_score = score;
-            best_move = move.move;
+            best_move = move;
             if constexpr (node_type == NodeTypes::ROOT_NODE) {
                 pv_move = best_move;
             }
         }
         if (score >= beta) {
             transpositions.store(TranspositionTableEntry(best_move, depth, BoundTypes::LOWER_BOUND, score, board.get_zobrist_key()), board);
-            if (!move.move.is_capture()) {
-                history_table[move.move.get_history_idx(board.get_side_to_move())] += (depth * depth);
+            if (!move.is_capture()) {
+                history_table[move.get_history_idx(board.get_side_to_move())] += (depth * depth);
                 for (size_t i = 0; i < search_stack[ply].quiet_alpha_raises.len(); i++) {
                     history_table[search_stack[ply].quiet_alpha_raises[i].move.get_history_idx(board.get_side_to_move())] -= (depth * depth);
                 }
@@ -308,8 +308,8 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
         }
         if (score > alpha) {
             alpha = score;
-            if (!move.move.is_capture()) {
-                search_stack[ply].quiet_alpha_raises.add_move(move.move);
+            if (!move.is_capture()) {
+                search_stack[ply].quiet_alpha_raises.add_move(move);
             }
         }
     }
@@ -348,7 +348,7 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, int ply, Transpos
         if (search_cancelled) {
             break;
         }
-        const auto& move = moves[i];
+        const auto move = moves[i];
 
         if (move.move.is_capture()) {
             if (!move.see_ordering_result) {
