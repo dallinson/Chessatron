@@ -69,13 +69,17 @@ template <PieceTypes piece_type, MoveGenType gen_type> void MoveGenerator::gener
     const auto checking_idx = get_lsb(c.get_checkers(side));
     const auto enemy_side = ENEMY_SIDE(side);
     Bitboard pieces = c.get_piece_occupancy<piece_type>(side);
+    Bitboard enemy_check_spaces = 0;
+    if constexpr (gen_type != MoveGenType::ALL_LEGAL) {
+        enemy_check_spaces = generate_movemask(piece_type, total_occupancy, get_lsb(c.get_king_occupancy(enemy_side)));
+    }
     while (pieces) {
         const auto piece_idx = pop_min_bit(pieces);
         auto potential_moves = generate_movemask(piece_type, total_occupancy, piece_idx) & ~friendly_occupancy;
         if constexpr (gen_type == MoveGenType::QUIESCENCE) {
-            potential_moves &= enemy_occupancy;
+            potential_moves &= (enemy_occupancy | enemy_check_spaces);
         } else if constexpr (gen_type == MoveGenType::NON_QUIESCENCE) {
-            potential_moves &= ~enemy_occupancy;
+            potential_moves &= ~(enemy_occupancy | enemy_check_spaces);
         }
         if constexpr (piece_type != PieceTypes::KING) {
             if (checking_idx != 64) {
