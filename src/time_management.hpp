@@ -99,7 +99,9 @@ namespace TimeManagement {
      * @return uint32_t 
      */
     inline uint32_t calculate_hard_limit(const uint32_t side_time, const uint32_t side_increment) {
-        return  (4 * (side_time / 5)) + side_increment / 2;
+        (void) side_increment;
+        const auto divided_time = std::max((4 * (side_time / 5)), 50u);
+        return divided_time - 50;
     }
 
     /**
