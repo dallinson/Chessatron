@@ -17,8 +17,19 @@ void MoveOrdering::reorder_moves(MoveList& moves, const ChessBoard& board, const
             found_pv_move = true;
             moves[i].score = std::numeric_limits<int32_t>::max();
             continue;
-        }
-        if (moves[i].move.is_capture()) {
+        } else if (moves[i].move.is_promotion()) {
+            switch (moves[i].move.get_promotion_piece_type()) {
+                case PieceTypes::QUEEN:
+                    moves[i].score = 20000000;
+                    break;
+                case PieceTypes::KNIGHT:
+                    moves[i].score = 10000000;
+                    break;
+                default:
+                    moves[i].score = -1000000;
+                    break;
+            }
+        } else if (moves[i].move.is_capture()) {
             moves[i].score += 1000000;
 
             const auto src_score = ordering_scores[static_cast<uint8_t>(board.get_piece(moves[i].move.get_src_square()).get_type()) - 1];
