@@ -350,7 +350,7 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, int ply, Transpos
         }
         const auto& move = moves[i];
 
-        if (move.move.is_capture()) {
+        if (move.move.is_capture() && !move.move.is_promotion()) {
             if (!move.see_ordering_result) {
                 continue;
             }
