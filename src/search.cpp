@@ -323,6 +323,7 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, int ply, Transpos
     if (Search::is_draw(board, history)) {
         return 0;
     }
+
     Score static_eval = Evaluation::evaluate_board(board);
     if (ply >= MAX_PLY) {
         return static_eval;
@@ -331,6 +332,7 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, int ply, Transpos
         return beta;
     }
     alpha = std::max(static_eval, alpha);
+
     auto moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIESCENCE>(board, board.get_side_to_move());
     if (moves.len() == 0 && MoveGenerator::generate_legal_moves<MoveGenType::NON_QUIESCENCE>(board, board.get_side_to_move()).len() == 0) {
         if (board.get_checkers(board.get_side_to_move()) != 0) {
