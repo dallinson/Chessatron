@@ -449,7 +449,7 @@ Move SearchHandler::run_iterative_deepening_search() {
             } else {
                 printf("cp %d ", current_score);
             }
-            printf("time %lld pv %s\n", time_so_far, pv_move.to_string().c_str());
+            printf("time %" PRIi64 " pv %s\n", time_so_far, pv_move.to_string().c_str());
         }
 
         if (current_score == MagicNumbers::PositiveInfinity) {
