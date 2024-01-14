@@ -19,5 +19,5 @@ Score Evaluation::evaluate_board(ChessBoard& board) {
 
     const auto midgame_phase = std::min(board.get_midgame_phase(), (uint8_t) 24);
     const auto endgame_phase = 24 - midgame_phase;
-    return ((midgame_score * midgame_phase) + (endgame_score * endgame_phase)) / 24;
+    return 12 + (((midgame_score * midgame_phase) + (endgame_score * endgame_phase)) / 24);
 }
