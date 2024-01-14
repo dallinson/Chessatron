@@ -4,8 +4,8 @@
 
 #include "move_generator.hpp"
 
-constexpr Score midgame_tempo_bonus = 7;
-constexpr Score endgame_tempo_bonus = 13;
+constexpr Score midgame_tempo_bonus = 24;
+constexpr Score endgame_tempo_bonus = 44;
 
 template <bool is_endgame> Score Evaluation::evaluate_board(const ChessBoard& board, const Side side) {
     if constexpr (is_endgame) {
