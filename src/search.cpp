@@ -440,16 +440,10 @@ Move SearchHandler::run_iterative_deepening_search() {
 
         if (!search_cancelled && print_info) {
             const auto nps = static_cast<uint64_t>(node_count / (static_cast<float>(time_so_far) / 1000));
-            printf("info depth %d nodes %" PRIu64 " nps %" PRIu64 " score ", depth, node_count, nps);
-            if (std::abs(current_score) >= MagicNumbers::PositiveInfinity) {
-                // If this is a checkmate
-                printf("mate %d ", ((current_score / std::abs(current_score)) * depth) / 2);
-                // Divide by 2 as mate expects the result in moves, not plies
-                // No need to check any other moves if we can guarantee a mate
-            } else {
-                printf("cp %d ", current_score);
-            }
-            printf("time %" PRIi64 " pv %s\n", time_so_far, pv_move.to_string().c_str());
+            std::cout << "info depth " << depth << " nodes " << node_count << " nps " << nps << " score " << 
+                ((std::abs(current_score) >= MagicNumbers::PositiveInfinity) ? 
+                ("mate " + std::to_string(((current_score / std::abs(current_score)) * depth) / 2)) : 
+                ("cp " + std::to_string(current_score))) << " time " << time_so_far << " pv " << pv_move.to_string() << std::endl;
         }
 
         if (current_score == MagicNumbers::PositiveInfinity) {
