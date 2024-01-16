@@ -220,7 +220,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
         // Try null move pruning if we aren't in check
         board.make_move(Move::NULL_MOVE, history);
         // First we make the null move
-        auto null_score = -negamax_step<pv_node_type>(-beta, -alpha, depth - 1 - (depth >= 8 ? 3 : 2), ply + 1, transpositions, node_count);
+        auto null_score = -negamax_step<pv_node_type>(-beta, -alpha, depth - 2 - (depth >= 8 ? 3 : 2), ply + 1, transpositions, node_count);
         board.unmake_move(history);
         if (null_score >= beta) {
             return beta;
