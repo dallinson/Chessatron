@@ -101,6 +101,7 @@ class SearchHandler {
         std::binary_semaphore semaphore{0};
         std::mutex search_mutex;
         std::condition_variable cv;
+        std::chrono::time_point<std::chrono::steady_clock> search_start_point;
         
         ChessBoard board;
         MoveHistory history;

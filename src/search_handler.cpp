@@ -56,17 +56,6 @@ void SearchHandler::search(const TimeControlInfo& tc) {
     this->tc = tc;
     semaphore.release();
     // We then wake up the search thread
-    int id_to_cancel = current_search_id;
-    const auto tc_search_time = TimeManagement::get_search_time(tc);
-    if (TimeManagement::is_time_based_tc(tc)) {
-        cancelFuture = std::async(std::launch::async, [tc_search_time, this, id_to_cancel]() {
-            std::this_thread::sleep_for(std::chrono::milliseconds{tc_search_time});
-            if (this->get_current_search_id() == id_to_cancel) {
-                // only cancel the current searcg
-                this->EndSearch();
-            }
-        });
-    }
 }
 
 void SearchHandler::run_perft(uint16_t depth) {
