@@ -75,7 +75,7 @@ bool Search::is_threefold_repetition(const MoveHistory& m, const int halfmove_cl
 }
 
 bool Search::is_draw(const ChessBoard& c, const MoveHistory& m) {
-    return c.get_halfmove_clock() >= 100 || is_threefold_repetition(m, c.get_halfmove_clock(), c.get_zobrist_key()) || Search::detect_insufficient_material(c, c.get_side_to_move());
+    return c.get_halfmove_clock() > 100 || is_threefold_repetition(m, c.get_halfmove_clock(), c.get_zobrist_key()) || Search::detect_insufficient_material(c, c.get_side_to_move());
 }
 
 bool Search::static_exchange_evaluation(const ChessBoard& board, const Move move, const int threshold) {
