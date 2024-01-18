@@ -541,8 +541,9 @@ std::optional<Move> ChessBoard::generate_move_from_string(const std::string& s) 
         } else if (end_square - start_square == 2) {
             m = MoveFlags::KINGSIDE_CASTLE;
         }
-    } else if (this->get_piece(end_square) != 0) {
-        m = MoveFlags::CAPTURE;
+    } 
+    if (this->get_piece(end_square) != 0) {
+        m = MoveFlags(static_cast<int>(m) | static_cast<int>(MoveFlags::CAPTURE));
     }
 
     return std::optional<Move>(Move(m, end_square, start_square));
