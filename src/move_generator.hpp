@@ -21,7 +21,7 @@ namespace MoveGenerator {
     Bitboard generate_bishop_movemask(const Bitboard b, const int idx);
     Bitboard generate_rook_movemask(const Bitboard b, const int idx);
     Bitboard generate_queen_movemask(const Bitboard b, const int idx);
-    Bitboard generate_movemask(const PieceTypes piece_type, const Bitboard b, const int idx);
+    template <PieceTypes piece_type> Bitboard generate_movemask(const Bitboard b, const int idx);
 
     template <PieceTypes piece_type, MoveGenType gen_type> void generate_moves(const ChessBoard& c, const Side side, MoveList& move_list);
     template <MoveGenType gen_type> void generate_pawn_moves(const ChessBoard& c, const Side side, MoveList& move_list);
@@ -29,10 +29,8 @@ namespace MoveGenerator {
 
     bool is_move_legal(const ChessBoard& c, const Move m);
     bool is_move_pseudolegal(const ChessBoard& c, const Move to_test);
-    Bitboard generate_safe_king_spaces(const ChessBoard& c, const Side side);
 
     template <MoveGenType gen_type> MoveList generate_legal_moves(const ChessBoard& c, const Side side);
-
 } // namespace MoveGenerator
 
 template <MoveGenType gen_type> MoveList MoveGenerator::generate_legal_moves(const ChessBoard& c, const Side side) {
@@ -58,6 +56,33 @@ template <MoveGenType gen_type> MoveList MoveGenerator::generate_legal_moves(con
     return to_return;
 }
 
+template <>
+inline Bitboard MoveGenerator::generate_movemask<PieceTypes::BISHOP>(const Bitboard b, const int idx) {
+    return generate_bishop_movemask(b, idx);
+}
+
+template <>
+inline Bitboard MoveGenerator::generate_movemask<PieceTypes::ROOK>(const Bitboard b, const int idx) {
+    return generate_rook_movemask(b, idx);
+}
+
+template <>
+inline Bitboard MoveGenerator::generate_movemask<PieceTypes::QUEEN>(const Bitboard b, const int idx) {
+    return generate_queen_movemask(b, idx);
+}
+
+template <>
+inline Bitboard MoveGenerator::generate_movemask<PieceTypes::KNIGHT>(const Bitboard b, const int idx) {
+    (void) b;
+    return MagicNumbers::KnightMoves[idx];
+}
+
+template <>
+inline Bitboard MoveGenerator::generate_movemask<PieceTypes::KING>(const Bitboard b, const int idx) {
+    (void) b;
+    return MagicNumbers::KingMoves[idx];
+}
+
 template <PieceTypes piece_type, MoveGenType gen_type> void MoveGenerator::generate_moves(const ChessBoard& c, const Side side, MoveList& move_list) {
     if constexpr (piece_type == PieceTypes::PAWN) {
         return generate_pawn_moves<gen_type>(c, side, move_list);
@@ -71,7 +96,7 @@ template <PieceTypes piece_type, MoveGenType gen_type> void MoveGenerator::gener
     Bitboard pieces = c.get_piece_occupancy<piece_type>(side);
     while (pieces) {
         const auto piece_idx = pop_min_bit(pieces);
-        auto potential_moves = generate_movemask(piece_type, total_occupancy, piece_idx) & ~friendly_occupancy;
+        auto potential_moves = generate_movemask<piece_type>(total_occupancy, piece_idx) & ~friendly_occupancy;
         if constexpr (gen_type == MoveGenType::QUIESCENCE) {
             potential_moves &= enemy_occupancy;
         } else if constexpr (gen_type == MoveGenType::NON_QUIESCENCE) {
