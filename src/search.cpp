@@ -241,7 +241,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
     // mate and draw detection
 
     bool found_pv_move = false;
-    MoveOrdering::reorder_moves(moves, board, tt_entry.get_key() == board.get_zobrist_key() ? tt_entry.get_pv_move() : Move::NULL_MOVE, found_pv_move, history_table);
+    MoveOrdering::reorder_moves(moves, board, tt_entry.get_key() == board.get_zobrist_key() ? tt_entry.get_pv_move() : Move::NULL_MOVE, history_table, found_pv_move);
     // move reordering
 
     if (depth >= 5 && !found_pv_move) {
@@ -342,7 +342,7 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, int ply, Transpos
     }
 
     bool found_pv_move = false;
-    MoveOrdering::reorder_moves(moves, board, Move::NULL_MOVE, found_pv_move, history_table);
+    MoveOrdering::reorder_moves(moves, board, Move::NULL_MOVE, history_table, found_pv_move);
     int evaluated_moves = 0;
     for (size_t i = 0; i < moves.len(); i++) {
         if (search_cancelled) {
@@ -350,7 +350,7 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, int ply, Transpos
         }
         const auto& move = moves[i];
 
-        if (move.move.is_capture()) {
+        if (move.move.is_capture() && !move.move.is_promotion()) {
             if (!move.see_ordering_result) {
                 continue;
             }
