@@ -191,7 +191,14 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
                                    || (tt_entry.get_bound_type() == BoundTypes::LOWER_BOUND && tt_entry.get_score() >= beta)
                                    || (tt_entry.get_bound_type() == BoundTypes::UPPER_BOUND && tt_entry.get_score() <= alpha));
         if (should_cutoff) {
-            return tt_entry.get_score();
+            switch (tt_entry.get_bound_type()) {
+                case BoundTypes::EXACT_BOUND:
+                    return tt_entry.get_score();
+                case BoundTypes::LOWER_BOUND:
+                    return beta;
+                case BoundTypes::UPPER_BOUND:
+                    return alpha;
+            }
         }
     }
 
