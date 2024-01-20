@@ -323,6 +323,18 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, int ply, Transpos
     if (Search::is_draw(board, history)) {
         return 0;
     }
+
+    const auto tt_entry = table[board];
+    if constexpr (!is_pv_node(node_type)) {
+        const bool should_cutoff = tt_entry.get_key() == board.get_zobrist_key() 
+                                   && (tt_entry.get_bound_type() == BoundTypes::EXACT_BOUND
+                                   || (tt_entry.get_bound_type() == BoundTypes::LOWER_BOUND && tt_entry.get_score() >= beta)
+                                   || (tt_entry.get_bound_type() == BoundTypes::UPPER_BOUND && tt_entry.get_score() <= alpha));
+        if (should_cutoff) {
+            return tt_entry.get_score();
+        }
+    }
+
     Score static_eval = Evaluation::evaluate_board(board);
     if (ply >= MAX_PLY) {
         return static_eval;
