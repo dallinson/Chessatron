@@ -65,23 +65,12 @@ class TranspositionTableEntry {
 
 class TranspositionTable {
     private:
-        TranspositionTableEntry* table;
+        std::vector<TranspositionTableEntry> table;
 
     public:
         TranspositionTable() {
-            table = (TranspositionTableEntry*) calloc((16 * 1024 * 1024) / sizeof(TranspositionTableEntry), sizeof(TranspositionTableEntry));
+            table.resize((16 * 1024 * 1024) / sizeof(TranspositionTableEntry));
         };
-        TranspositionTable& operator=(const TranspositionTable& other) {
-            if (this != &other) {
-                if (table != nullptr) {
-                    free(table);
-                }
-                table = (TranspositionTableEntry*) calloc((16 * 1024 * 1024) / sizeof(TranspositionTableEntry), sizeof(TranspositionTableEntry));
-                std::copy(other.table, other.table + ((16 * 1024 * 1024) / sizeof(TranspositionTableEntry)), table);
-            }
-            return *this;
-        }
-        ~TranspositionTable() { free(table); };
         const TranspositionTableEntry& operator[](const ChessBoard& key) const { return table[key.get_zobrist_key() >> (64 - 20)]; };
         void store(const TranspositionTableEntry entry, const ChessBoard& key) {
             const auto tt_key = key.get_zobrist_key() >> (64 - 20);
