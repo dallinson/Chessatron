@@ -70,6 +70,7 @@ class TranspositionTable {
     public:
         TranspositionTable() {
             table.resize((16 * 1024 * 1024) / sizeof(TranspositionTableEntry));
+            std::fill((uint8_t*) table.data(), (uint8_t*) &table[table.size()], 0);
         };
         const TranspositionTableEntry& operator[](const ChessBoard& key) const { return table[key.get_zobrist_key() >> (64 - 20)]; };
         void store(const TranspositionTableEntry entry, const ChessBoard& key) {
