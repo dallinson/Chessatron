@@ -9,7 +9,7 @@
 
 constexpr std::array<uint8_t, 6> ordering_scores = { 1, 2, 3, 4, 5, 6 };
 
-void MoveOrdering::reorder_moves(MoveList& moves, const ChessBoard& board, const Move pv_move, std::array<int32_t, 8192>& history_table, bool& found_pv_move) {
+void MoveOrdering::reorder_moves(MoveList& moves, const ChessBoard& board, const Move pv_move, std::array<int32_t, 8192>& history_table, Move killer_move, bool& found_pv_move) {
     found_pv_move = false;
     for (size_t i = 0; i < moves.len(); i++) {
         moves[i].score = 0;
@@ -39,6 +39,8 @@ void MoveOrdering::reorder_moves(MoveList& moves, const ChessBoard& board, const
             const auto dest_type = moves[i].move.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE ? PieceTypes::PAWN : board.get_piece(moves[i].move.get_dest_square()).get_type();
             const auto dest_score = ordering_scores[static_cast<uint8_t>(dest_type) - 1];
             moves[i].score += ((100000 * dest_score) + (6 - src_score));
+        } else if (moves[i].move == killer_move) {
+            moves[i].score = 800000000;
         } else {
             moves[i].score += history_table[moves[i].move.get_history_idx(board.get_side_to_move())];
         }
