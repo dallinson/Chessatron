@@ -271,7 +271,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
         
         // See if we can perform LMR
         if (depth >= 2 && is_lmr_potential_move) {
-            const auto lmr_reduction = static_cast<int>(std::round(1.30 + ((MagicNumbers::LnValues[depth] * MagicNumbers::LnValues[evaluated_moves]) / 2.80))) + static_cast<int>(!is_pv_node(node_type));
+            const auto lmr_reduction = static_cast<int>(std::round(1.30 + ((MagicNumbers::LnValues[depth] * MagicNumbers::LnValues[evaluated_moves]) / 2.80))) - static_cast<int>(is_pv_node(node_type));
             score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - lmr_reduction + extensions, ply + 1, transpositions, node_count);
 
             // it's possible the LMR score will raise alpha; in this case we re-search with the full depth
