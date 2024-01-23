@@ -231,7 +231,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
     if (moves.len() == 0) {
         if (board.get_checkers(board.get_side_to_move()) != 0) {
             // if in check
-            return MagicNumbers::NegativeInfinity - depth;
+            return ply + MagicNumbers::NegativeInfinity;
         } else {
             return 0;
         }
@@ -336,7 +336,7 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, int ply, Transpos
     if (moves.len() == 0 && MoveGenerator::generate_legal_moves<MoveGenType::NON_QUIESCENCE>(board, board.get_side_to_move()).len() == 0) {
         if (board.get_checkers(board.get_side_to_move()) != 0) {
             // if in check
-            return MagicNumbers::NegativeInfinity ;
+            return ply + MagicNumbers::NegativeInfinity;
         } else {
             return 0;
         }
@@ -443,12 +443,12 @@ Move SearchHandler::run_iterative_deepening_search() {
         if (!search_cancelled && print_info) {
             const auto nps = static_cast<uint64_t>(node_count / (static_cast<float>(time_so_far) / 1000));
             std::cout << "info depth " << depth << " nodes " << node_count << " nps " << nps << " score " << 
-                ((std::abs(current_score) >= MagicNumbers::PositiveInfinity) ? 
-                ("mate " + std::to_string(((current_score / std::abs(current_score)) * depth) / 2)) : 
+                ((std::abs(current_score) >= (MagicNumbers::PositiveInfinity - MAX_PLY)) ? 
+                ("mate " + std::to_string(((current_score / std::abs(current_score)) * (depth + 1)) / 2)) : 
                 ("cp " + std::to_string(current_score))) << " time " << time_so_far << " pv " << pv_move.to_string() << std::endl;
         }
 
-        if (current_score == MagicNumbers::PositiveInfinity) {
+        if (current_score >= (MagicNumbers::PositiveInfinity - MAX_PLY)) {
             return pv_move;
         }
 
