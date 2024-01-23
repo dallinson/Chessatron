@@ -381,6 +381,7 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, int ply, Transpos
         evaluated_moves += 1;
         if (score >= beta) {
             search_stack[ply].killer_move = move.move;
+            history_table[move.move.get_history_idx(board.get_side_to_move())] += 1;
             return beta;
         }
         alpha = std::max(score, alpha);
