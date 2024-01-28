@@ -194,6 +194,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
             return tt_entry.get_score();
         }
     }
+    const bool tt_hit = tt_entry.get_key() == board.get_zobrist_key();
 
     if (depth <= 0) {
         return quiescent_search<pv_node_type>(alpha, beta, ply, transpositions, node_count);
@@ -242,6 +243,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
 
     bool found_pv_move = false;
     MoveOrdering::reorder_moves(moves, board, tt_entry.get_key() == board.get_zobrist_key() ? tt_entry.get_pv_move() : Move::NULL_MOVE, history_table, search_stack[ply].killer_move, found_pv_move);
+    const bool tt_move = found_pv_move && tt_hit;
     // move reordering
 
     if (depth >= 5 && !found_pv_move) {
@@ -266,11 +268,13 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
         board.make_move(move.move, history);
         node_count += 1;
         Score score;
-
-        const bool is_lmr_potential_move = evaluated_moves >= 1 + static_cast<size_t>(is_pv_node(node_type));
         
         // See if we can perform LMR
-        if (depth >= 2 && is_lmr_potential_move) {
+        if (depth > 2 && evaluated_moves >= std::max((size_t) 1,
+                static_cast<size_t>(is_pv_node(node_type)) +
+                static_cast<size_t>(!tt_move) +
+                static_cast<size_t>(node_type == NodeTypes::ROOT_NODE) +
+                static_cast<size_t>(move.move.is_capture() || move.move.is_promotion()))) {
             const auto lmr_reduction = static_cast<int>(std::round(1.30 + ((MagicNumbers::LnValues[depth] * MagicNumbers::LnValues[evaluated_moves]) / 2.80)));
             score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - lmr_reduction + extensions, ply + 1, transpositions, node_count);
 
@@ -280,11 +284,11 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
             }
         }
         // if we didn't perform LMR
-        else if (!is_pv_node(node_type) || is_lmr_potential_move) {
+        else if (!is_pv_node(node_type) || evaluated_moves >= 1) {
             score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - 1 + extensions, ply + 1, transpositions, node_count);
         }
 
-        if (is_pv_node(node_type) && (!is_lmr_potential_move || score > alpha)) {
+        if (is_pv_node(node_type) && (score > alpha || evaluated_moves == 0)) {
             score = -negamax_step<NodeTypes::PV_NODE>(-beta, -alpha, depth - 1 + extensions, ply + 1, transpositions, node_count);
         }
 
