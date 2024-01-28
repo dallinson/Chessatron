@@ -288,7 +288,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
             score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - 1 + extensions, ply + 1, transpositions, node_count);
         }
 
-        if (is_pv_node(node_type) && (score > alpha || evaluated_moves == 0)) {
+        if (is_pv_node(node_type) && (evaluated_moves == 0 || score > alpha)) {
             score = -negamax_step<NodeTypes::PV_NODE>(-beta, -alpha, depth - 1 + extensions, ply + 1, transpositions, node_count);
         }
 
