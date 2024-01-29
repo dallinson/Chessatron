@@ -246,8 +246,10 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
     const bool tt_move = found_pv_move && tt_hit;
     // move reordering
 
-    if (depth >= 5 && !found_pv_move) {
-        depth -= 1;
+    if constexpr (!is_pv_node(node_type)) {
+        if (depth >= 5 && !tt_move) {
+            depth -= 1;
+        }
     }
     // iir
 
