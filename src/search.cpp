@@ -261,7 +261,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
         }
         const auto& move = moves[evaluated_moves];
 
-        if (depth <= 10 && !Search::static_exchange_evaluation(board, move.move, move.move.is_capture() ? (-20 * depth * depth) : (-65 * depth))) {
+        if (depth <= 15 && !Search::static_exchange_evaluation(board, move.move, move.move.is_capture() ? (-20 * depth * depth) : (-65 * depth))) {
             continue;
         }
 
