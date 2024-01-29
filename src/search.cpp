@@ -265,6 +265,11 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
             continue;
         }
 
+        const auto fp_depth = depth + (history_table[move.move.get_history_idx(board.get_side_to_move())] / 3500);
+        if (!board.in_check() && fp_depth < 15 && static_eval + 100 * fp_depth < alpha) {
+            continue;
+        }
+
         board.make_move(move.move, history);
         node_count += 1;
         Score score;
