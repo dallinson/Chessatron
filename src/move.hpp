@@ -39,7 +39,7 @@ class Move {
         Move(MoveFlags flags, uint_fast8_t dest, uint_fast8_t src) : move((((uint16_t) flags) << 12) | (((uint16_t) dest) << 6) | src){};
         static const Move NULL_MOVE;
 
-        uint16_t get_move() const { return move; };
+        uint16_t get_value() const { return move; };
         uint8_t get_src_square() const { return get_bits(move, 5, 0); };
         uint8_t get_dest_square() const { return get_bits(move, 11, 6); };
 
