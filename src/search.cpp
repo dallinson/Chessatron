@@ -263,7 +263,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
         const auto& move = moves[evaluated_moves];
 
         if constexpr(!is_pv_node(node_type)) {
-            if (depth >= 5 && !board.in_check() && move.move.is_quiet() && evaluated_quiets >= (5 + depth)) {
+            if (depth <= 6 && !board.in_check() && move.move.is_quiet() && evaluated_quiets >= depth * depth) {
                 continue;
             }
         }
