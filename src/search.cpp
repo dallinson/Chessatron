@@ -257,10 +257,15 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
     const Score original_alpha = alpha;
     int evaluated_quiets = 0;
     for (size_t evaluated_moves = 0; evaluated_moves < moves.len(); evaluated_moves++) {
+
+        auto move_specific_extensions = extensions;
+
         if (search_cancelled) {
             break;
         }
         const auto& move = moves[evaluated_moves];
+
+        if (move.move == search_stack[ply].excluded_move) continue;
 
         if constexpr(!is_pv_node(node_type)) {
             if (depth <= 6 && !board.in_check() && move.move.is_quiet() && evaluated_quiets >= depth * depth) {
@@ -271,6 +276,25 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
         if (depth <= 10 && !Search::static_exchange_evaluation(board, move.move, move.move.is_capture() ? (-20 * depth * depth) : (-65 * depth))) {
             continue;
         }
+
+        if (node_type != NodeTypes::ROOT_NODE
+            && tt_hit
+            && tt_move == move.move
+            && search_stack[ply].excluded_move != Move::NULL_MOVE
+            && std::abs(tt_entry.get_score()) < 10000
+            && tt_entry.get_bound_type() != BoundTypes::UPPER_BOUND
+            && tt_entry.get_depth() >= depth - 3) {
+                const auto singular_beta = tt_entry.get_score() - 3 * depth;
+                const auto singular_depth = (depth - 1) / 2;
+
+                search_stack[ply].excluded_move = move.move;
+                const auto value = negamax_step<NodeTypes::NON_PV_NODE>(singular_beta - 1, singular_beta, singular_depth, ply, transpositions, node_count);
+                search_stack[ply].excluded_move = Move::NULL_MOVE;
+
+                if (value < singular_beta) {
+                    move_specific_extensions += 1;
+                }
+            }
 
         const auto pre_move_node_count = node_count;
         board.make_move(move.move, history);
@@ -284,20 +308,20 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
                 static_cast<size_t>(node_type == NodeTypes::ROOT_NODE) +
                 static_cast<size_t>(move.move.is_capture() || move.move.is_promotion()))) {
             const auto lmr_reduction = static_cast<int>(std::round(1.30 + ((MagicNumbers::LnValues[depth] * MagicNumbers::LnValues[evaluated_moves]) / 2.80)));
-            score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - lmr_reduction + extensions, ply + 1, transpositions, node_count);
+            score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - lmr_reduction + move_specific_extensions, ply + 1, transpositions, node_count);
 
             // it's possible the LMR score will raise alpha; in this case we re-search with the full depth
             if (score > alpha) {
-                score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - 1 + extensions, ply + 1, transpositions, node_count);
+                score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - 1 + move_specific_extensions, ply + 1, transpositions, node_count);
             }
         }
         // if we didn't perform LMR
         else if (!is_pv_node(node_type) || evaluated_moves >= 1) {
-            score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - 1 + extensions, ply + 1, transpositions, node_count);
+            score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - 1 + move_specific_extensions, ply + 1, transpositions, node_count);
         }
 
         if (is_pv_node(node_type) && (evaluated_moves == 0 || score > alpha)) {
-            score = -negamax_step<NodeTypes::PV_NODE>(-beta, -alpha, depth - 1 + extensions, ply + 1, transpositions, node_count);
+            score = -negamax_step<NodeTypes::PV_NODE>(-beta, -alpha, depth - 1 + move_specific_extensions, ply + 1, transpositions, node_count);
         }
 
         board.unmake_move(history);

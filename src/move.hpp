@@ -34,7 +34,7 @@ class Move {
         uint16_t move;
 
     public:
-        Move(){};
+        Move() {};
         Move(uint16_t v) : move(v){};
         Move(MoveFlags flags, uint_fast8_t dest, uint_fast8_t src) : move((((uint16_t) flags) << 12) | (((uint16_t) dest) << 6) | src){};
         static const Move NULL_MOVE;
