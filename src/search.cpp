@@ -272,6 +272,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
             continue;
         }
 
+        const auto pre_move_node_count = node_count;
         board.make_move(move.move, history);
         node_count += 1;
         Score score;
@@ -300,6 +301,9 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
         }
 
         board.unmake_move(history);
+        if constexpr (node_type == NodeTypes::ROOT_NODE) {
+            node_spent_table[move.move.get_value() & 0x0FFF] += (node_count - pre_move_node_count);
+        }
         if (score > best_score) {
             best_score = score;
             best_move = move.move;
@@ -443,6 +447,7 @@ Move SearchHandler::run_iterative_deepening_search() {
     }
 
     history_table.fill(0);
+    node_spent_table.fill(0);
 
     Score current_score = 0;
     for (int depth = 1; depth <= TimeManagement::get_search_depth(tc) && !search_cancelled; depth++) {
@@ -464,7 +469,7 @@ Move SearchHandler::run_iterative_deepening_search() {
             return pv_move;
         }
 
-        if (TimeManagement::is_time_based_tc(tc) && time_so_far > TimeManagement::calculate_soft_limit(tc)) {
+        if (TimeManagement::is_time_based_tc(tc) && time_so_far > TimeManagement::calculate_soft_limit(tc, node_spent_table, pv_move, node_count)) {
             break;
         }
     }
