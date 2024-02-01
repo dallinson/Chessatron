@@ -268,12 +268,11 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
             }
         }
 
-        if (depth <= 10 && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && !Search::static_exchange_evaluation(board, move.move, move.move.is_capture() ? (-20 * depth * depth) : (-65 * depth))) {
+        if (!board.in_check() && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && !move.move.is_capture() && depth <= 6 && static_eval + 200 * depth < alpha) {
             continue;
         }
 
-        const auto fp_depth = depth + (history_table[move.move.get_history_idx(board.get_side_to_move())] / 3500);
-        if (!board.in_check() && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && !move.move.is_capture() && fp_depth < 15 && static_eval + 100 * fp_depth < alpha) {
+        if (depth <= 10 && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && !Search::static_exchange_evaluation(board, move.move, move.move.is_capture() ? (-20 * depth * depth) : (-65 * depth))) {
             continue;
         }
 
