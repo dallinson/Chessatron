@@ -39,7 +39,7 @@ class Move {
         Move(MoveFlags flags, uint_fast8_t dest, uint_fast8_t src) : move((((uint16_t) flags) << 12) | (((uint16_t) dest) << 6) | src){};
         static const Move NULL_MOVE;
 
-        uint16_t get_move() const { return move; };
+        uint16_t get_value() const { return move; };
         uint8_t get_src_square() const { return get_bits(move, 5, 0); };
         uint8_t get_dest_square() const { return get_bits(move, 11, 6); };
 
@@ -56,6 +56,7 @@ class Move {
         bool is_capture() const { return (static_cast<int>(get_move_flags()) & 0x04) != 0; };
         bool is_promotion() const { return static_cast<int>(get_move_flags()) >= 8; };
         bool is_castling_move() const { return get_move_flags() == MoveFlags::QUEENSIDE_CASTLE || get_move_flags() == MoveFlags::KINGSIDE_CASTLE; };
+        bool is_quiet() const { return !(is_capture() || is_promotion()); };
 
         uint16_t get_history_idx(Side side_to_move) const { return (static_cast<int>(side_to_move) << 12) + get_bits(move, 11, 0); };
 

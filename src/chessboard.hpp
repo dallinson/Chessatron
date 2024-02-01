@@ -139,8 +139,8 @@ class ChessBoard {
 
         inline Bitboard get_checkers(const Side side) const { return checkers[static_cast<int>(side)]; };
         inline Bitboard get_pinned_pieces(const Side side) const { return pinned_pieces[static_cast<int>(side)]; };
-        bool in_check(const Side side) const { return checkers[static_cast<int>(side)] != 0; };
-        bool in_check() const { return in_check(get_side_to_move()); };
+        bool in_check(const Side side) const { return get_checkers(side) != 0; };
+        bool in_check() const { return in_check(get_side_to_move()); }; 
 
         Score get_midgame_score(Side side) const { return midgame_scores[static_cast<int>(side)]; };
         Score get_endgame_score(Side side) const { return endgame_scores[static_cast<int>(side)]; };

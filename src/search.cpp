@@ -255,21 +255,29 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
     search_stack[ply].quiet_alpha_raises.clear();
     Score best_score = MagicNumbers::NegativeInfinity;
     const Score original_alpha = alpha;
+    int evaluated_quiets = 0;
     for (size_t evaluated_moves = 0; evaluated_moves < moves.len(); evaluated_moves++) {
         if (search_cancelled) {
             break;
         }
         const auto& move = moves[evaluated_moves];
 
-        if (depth <= 10 && !Search::static_exchange_evaluation(board, move.move, move.move.is_capture() ? (-20 * depth * depth) : (-65 * depth))) {
+        if constexpr(!is_pv_node(node_type)) {
+            if (depth <= 6 && !board.in_check() && move.move.is_quiet() && evaluated_quiets >= depth * depth) {
+                continue;
+            }
+        }
+
+        if (depth <= 10 && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && !Search::static_exchange_evaluation(board, move.move, move.move.is_capture() ? (-20 * depth * depth) : (-65 * depth))) {
             continue;
         }
 
         const auto fp_depth = depth + (history_table[move.move.get_history_idx(board.get_side_to_move())] / 3500);
-        if (!board.in_check() && !move.move.is_capture() && fp_depth < 15 && static_eval + 100 * fp_depth < alpha) {
+        if (!board.in_check() && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && !move.move.is_capture() && fp_depth < 15 && static_eval + 100 * fp_depth < alpha) {
             continue;
         }
 
+        const auto pre_move_node_count = node_count;
         board.make_move(move.move, history);
         node_count += 1;
         Score score;
@@ -298,6 +306,9 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
         }
 
         board.unmake_move(history);
+        if constexpr (node_type == NodeTypes::ROOT_NODE) {
+            node_spent_table[move.move.get_value() & 0x0FFF] += (node_count - pre_move_node_count);
+        }
         if (score > best_score) {
             best_score = score;
             best_move = move.move;
@@ -322,6 +333,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
                 search_stack[ply].quiet_alpha_raises.add_move(move.move);
             }
         }
+        evaluated_quiets += static_cast<int>(move.move.is_quiet());
     }
     const BoundTypes bound_type = alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND;
     transpositions.store(TranspositionTableEntry(best_move, depth, bound_type, best_score, board.get_zobrist_key()), board);
@@ -440,6 +452,7 @@ Move SearchHandler::run_iterative_deepening_search() {
     }
 
     history_table.fill(0);
+    node_spent_table.fill(0);
 
     Score current_score = 0;
     for (int depth = 1; depth <= TimeManagement::get_search_depth(tc) && !search_cancelled; depth++) {
@@ -461,7 +474,7 @@ Move SearchHandler::run_iterative_deepening_search() {
             return pv_move;
         }
 
-        if (TimeManagement::is_time_based_tc(tc) && time_so_far > TimeManagement::calculate_soft_limit(tc)) {
+        if (TimeManagement::is_time_based_tc(tc) && time_so_far > TimeManagement::calculate_soft_limit(tc, node_spent_table, pv_move, node_count)) {
             break;
         }
     }
