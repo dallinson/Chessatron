@@ -446,6 +446,9 @@ Move SearchHandler::run_iterative_deepening_search() {
         // in order to save some time
     }
 
+    auto current_best_move = Move::NULL_MOVE;
+    auto best_move_count = 1;
+
     history_table.fill(0);
     node_spent_table.fill(0);
 
@@ -465,11 +468,18 @@ Move SearchHandler::run_iterative_deepening_search() {
                 ("cp " + std::to_string(current_score))) << " time " << time_so_far << " pv " << pv_move.to_string() << std::endl;
         }
 
+        if (current_best_move == pv_move) {
+            best_move_count += 1;
+        } else {
+            current_best_move = pv_move;
+            best_move_count = 1;
+        }
+
         if (current_score >= (MagicNumbers::PositiveInfinity - MAX_PLY)) {
             return pv_move;
         }
 
-        if (TimeManagement::is_time_based_tc(tc) && time_so_far > TimeManagement::calculate_soft_limit(tc, node_spent_table, pv_move, node_count)) {
+        if (TimeManagement::is_time_based_tc(tc) && time_so_far > TimeManagement::calculate_soft_limit(tc, node_spent_table, pv_move, node_count, best_move_count)) {
             break;
         }
     }
