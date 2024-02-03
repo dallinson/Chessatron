@@ -2,11 +2,11 @@
 
 #include <cmath>
 
-#define GET_SIGN(x) (((x) > 0) - ((x) < 0))
+template <typename T> constexpr inline int get_sign(T x) { return (((x) > 0) - ((x) < 0)); };
 // clever way of doing a sign function, from https://stackoverflow.com/a/1903975
-#define ABS(x) (((x) < 0) ? -(x) : (x))
-#define MIN(a, b) (((a) < (b)) ? (a) : (b))
-#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+template <typename T> constexpr inline T abs(T x) { return (((x) < 0) ? -(x) : (x)); } ;
+template <typename T> constexpr inline T min(T a, T b) { return (((a) < (b)) ? (a) : (b)); };
+template <typename T> constexpr inline T max(T a, T b) { return (((a) > (b)) ? (a) : (b)); };
 // pre-C++23 these functions are not constexpr so are reimplemented here
 
 /**
@@ -28,23 +28,23 @@ consteval std::array<Bitboard, 64 * 64> compute_connecting_squares() {
             if (first_square == second_square) {
                 b = idx_to_bitboard(second_square);
             } else if (get_rank(first_square) == get_rank(second_square)) {
-                for (int8_t i = get_file(first_square) - GET_SIGN(file_diff); i != ((int8_t) get_file(second_square)); i -= GET_SIGN(file_diff)) {
+                for (int8_t i = get_file(first_square) - get_sign(file_diff); i != ((int8_t) get_file(second_square)); i -= get_sign(file_diff)) {
                     // use int8_t to satisfy the compiler re loop iteration count
                     b |= idx_to_bitboard(get_position(get_rank(first_square), i));
                 }
             } else if (get_file(first_square) == get_file(second_square)) {
-                for (int8_t i = get_rank(first_square) - GET_SIGN(rank_diff); i != ((int8_t) get_rank(second_square)); i -= GET_SIGN(rank_diff)) {
+                for (int8_t i = get_rank(first_square) - get_sign(rank_diff); i != ((int8_t) get_rank(second_square)); i -= get_sign(rank_diff)) {
                     b |= idx_to_bitboard(get_position(i, get_file(first_square)));
                 }
             } else {
-                int min_square = MIN(first_square, second_square);
-                int max_square = MAX(first_square, second_square);
+                int min_square = min(first_square, second_square);
+                int max_square = max(first_square, second_square);
 
-                if (ABS(rank_diff) == ABS(file_diff)) {
-                    if (GET_SIGN(rank_diff) == GET_SIGN(file_diff)) {
+                if (abs(rank_diff) == abs(file_diff)) {
+                    if (get_sign(rank_diff) == get_sign(file_diff)) {
                         // from bottom left to top right
                         for (int i = 0; i < 64; i++) {
-                            int abs_diff = ABS(first_square - i);
+                            int abs_diff = abs(first_square - i);
                             if ((abs_diff % 9) == 0 && i > min_square && i < max_square) {
                                 b |= bit(i);
                             }
@@ -52,7 +52,7 @@ consteval std::array<Bitboard, 64 * 64> compute_connecting_squares() {
                     } else {
                         // from top left to bottom right
                         for (int i = 0; i < 64; i++) {
-                            int abs_diff = ABS(first_square - i);
+                            int abs_diff = abs(first_square - i);
                             if ((abs_diff % 7) == 0 && i > min_square && i < max_square) {
                                 b |= bit(i);
                             }
@@ -86,10 +86,10 @@ consteval std::array<Bitboard, 64 * 64> compute_aligned_squares() {
                 for (int i = 0; i < 8; i++) {
                     b |= idx_to_bitboard(get_position(i, get_file(first_square)));
                 }
-            } else if (ABS(rank_diff) == ABS(file_diff)) {
+            } else if (abs(rank_diff) == abs(file_diff)) {
                 for (int i = 0; i < 64; i++) {
-                    int abs_diff = ABS(first_square - i);
-                    if ((abs_diff % ((GET_SIGN(rank_diff) == GET_SIGN(file_diff)) ? 9 : 7)) == 0) {
+                    int abs_diff = abs(first_square - i);
+                    if ((abs_diff % ((get_sign(rank_diff) == get_sign(file_diff)) ? 9 : 7)) == 0) {
                         b |= bit(i);
                     }
                 }

@@ -83,7 +83,7 @@ inline Bitboard MoveGenerator::generate_movemask<PieceTypes::KING>(const Bitboar
     return MagicNumbers::KingMoves[idx];
 }
 
-template <PieceTypes piece_type, MoveGenType gen_type> void MoveGenerator::generate_moves(const ChessBoard& c, const Side side, MoveList& move_list) {
+template <PieceTypes piece_type, MoveGenType gen_type> __attribute__((always_inline)) inline void MoveGenerator::generate_moves(const ChessBoard& c, const Side side, MoveList& move_list) {
     if constexpr (piece_type == PieceTypes::PAWN) {
         return generate_pawn_moves<gen_type>(c, side, move_list);
     }
@@ -140,7 +140,7 @@ template <PieceTypes piece_type, MoveGenType gen_type> void MoveGenerator::gener
     }
 }
 
-template <MoveGenType gen_type> void MoveGenerator::generate_pawn_moves(const ChessBoard& c, const Side side, MoveList& move_list) {
+template <MoveGenType gen_type> __attribute__((always_inline)) inline void MoveGenerator::generate_pawn_moves(const ChessBoard& c, const Side side, MoveList& move_list) {
     Bitboard pawn_mask = c.get_pawn_occupancy(side);
     const Side enemy_side = ENEMY_SIDE(side);
     const Bitboard enemy_occupancy = c.get_occupancy(enemy_side);
