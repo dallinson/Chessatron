@@ -4,9 +4,9 @@
 
 template <typename T> constexpr inline int get_sign(T x) { return (((x) > 0) - ((x) < 0)); };
 // clever way of doing a sign function, from https://stackoverflow.com/a/1903975
-template <typename T> constexpr inline T abs(T x) { return (((x) < 0) ? -(x) : (x)); } ;
-template <typename T> constexpr inline T min(T a, T b) { return (((a) < (b)) ? (a) : (b)); };
-template <typename T> constexpr inline T max(T a, T b) { return (((a) > (b)) ? (a) : (b)); };
+template <typename T> constexpr inline T constexpr_abs(T x) { return (((x) < 0) ? -(x) : (x)); } ;
+template <typename T> constexpr inline T constexpr_min(T a, T b) { return (((a) < (b)) ? (a) : (b)); };
+template <typename T> constexpr inline T constexpr_max(T a, T b) { return (((a) > (b)) ? (a) : (b)); };
 // pre-C++23 these functions are not constexpr so are reimplemented here
 
 /**
@@ -37,14 +37,14 @@ consteval std::array<Bitboard, 64 * 64> compute_connecting_squares() {
                     b |= idx_to_bitboard(get_position(i, get_file(first_square)));
                 }
             } else {
-                int min_square = min(first_square, second_square);
-                int max_square = max(first_square, second_square);
+                int min_square = constexpr_min(first_square, second_square);
+                int max_square = constexpr_max(first_square, second_square);
 
-                if (abs(rank_diff) == abs(file_diff)) {
+                if (constexpr_abs(rank_diff) == constexpr_abs(file_diff)) {
                     if (get_sign(rank_diff) == get_sign(file_diff)) {
                         // from bottom left to top right
                         for (int i = 0; i < 64; i++) {
-                            int abs_diff = abs(first_square - i);
+                            int abs_diff = constexpr_abs(first_square - i);
                             if ((abs_diff % 9) == 0 && i > min_square && i < max_square) {
                                 b |= bit(i);
                             }
@@ -52,7 +52,7 @@ consteval std::array<Bitboard, 64 * 64> compute_connecting_squares() {
                     } else {
                         // from top left to bottom right
                         for (int i = 0; i < 64; i++) {
-                            int abs_diff = abs(first_square - i);
+                            int abs_diff = constexpr_abs(first_square - i);
                             if ((abs_diff % 7) == 0 && i > min_square && i < max_square) {
                                 b |= bit(i);
                             }
@@ -86,9 +86,9 @@ consteval std::array<Bitboard, 64 * 64> compute_aligned_squares() {
                 for (int i = 0; i < 8; i++) {
                     b |= idx_to_bitboard(get_position(i, get_file(first_square)));
                 }
-            } else if (abs(rank_diff) == abs(file_diff)) {
+            } else if (constexpr_abs(rank_diff) == constexpr_abs(file_diff)) {
                 for (int i = 0; i < 64; i++) {
-                    int abs_diff = abs(first_square - i);
+                    int abs_diff = constexpr_abs(first_square - i);
                     if ((abs_diff % ((get_sign(rank_diff) == get_sign(file_diff)) ? 9 : 7)) == 0) {
                         b |= bit(i);
                     }
