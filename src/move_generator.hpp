@@ -38,7 +38,7 @@ template <MoveGenType gen_type> MoveList MoveGenerator::generate_legal_moves(con
 
     MoveGenerator::generate_moves<PieceTypes::KING, gen_type>(c, side, to_return);
 
-    int checking_piece_count = MoveGenerator::get_checking_piece_count(c, side);
+    int checking_piece_count = std::popcount(c.get_checkers(side));
 
     if (checking_piece_count >= 2) {
         return to_return;
