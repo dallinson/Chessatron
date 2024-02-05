@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "common.hpp"
 #include "move_generator.hpp"
 
 void SearchHandler::search_thread_function() {
@@ -82,7 +83,7 @@ void SearchHandler::reset() {
     this->EndSearch();
     history = MoveHistory();
     board = ChessBoard();
-    table = TranspositionTable();
+    transposition_table.clear();
 }
 
 void SearchHandler::run_bench(uint16_t depth) {
