@@ -1,18 +1,20 @@
 #include <cstdio>
 #include <iostream>
 #include <string>
+#include <sstream>
 #include <vector>
 
 #ifdef IS_TESTING
 #include <gtest/gtest.h>
 #endif
 
+#include "common.hpp"
 #include "chessboard.hpp"
-
 #include "magic_numbers.hpp"
 #include "pieces.hpp"
 #include "search.hpp"
 #include "utils.hpp"
+#include "uci_options.hpp"
 
 #include "move_generator.hpp"
 
@@ -127,6 +129,9 @@ int main(int argc, char** argv) {
     srand(time(NULL));
     SearchHandler s;
 
+    uci_options.insert(std::make_pair("Hash", UCIOption(1, 2048, "16", [](UCIOption& opt){ transposition_table.resize(size_t(opt)); })));
+    uci_options.insert(std::make_pair("Threads", UCIOption(1, 1, "1", [](UCIOption& opt){ (void) opt; })));
+
     if (argc > 1) {
         if (std::string(argv[1]) == "bench") {
             if (argc > 2) {
@@ -142,8 +147,9 @@ int main(int argc, char** argv) {
     for (std::string line; std::getline(std::cin, line);) {
         if (line == "uci") {
             std::cout << "id name Chessatron\n";
-            std::cout << "option name Hash type spin default 16 min 16 max 16\n";
-            std::cout << "option name Threads type spin default 1 min 1 max 1\n";
+            for (const auto& element : uci_options) {
+                std::cout << "option name " << element.first << element.second << std::endl;
+            }
             std::cout << "uciok" << std::endl;
         } else if (line == "isready") {
             std::cout << "readyok\n";
@@ -163,6 +169,22 @@ int main(int argc, char** argv) {
                     process_go_command(parsed_line, s);
                 } else if (parsed_line[0] == "position") {
                     process_position_command(line, s.get_board(), s.get_history());
+                } else if (parsed_line[0] == "setoption") {
+                    std::istringstream iss(line);
+                    std::string token, value, option_name;
+                    iss >> token;
+                    iss >> token;
+                    while (iss >> token && token != "value") {
+                        option_name += (option_name.empty() ? "" : " ");
+                        option_name += token;
+                    }
+                    while (iss >> token) {
+                        value += (value.empty() ? "" : " ");
+                        value += token;
+                    }
+                    if (uci_options.contains(option_name)) {
+                        uci_options[option_name].set_value(value);
+                    }
                 }
             }
         }

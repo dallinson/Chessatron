@@ -5,8 +5,11 @@
 #include <limits>
 #include <vector>
 
+#include "common.hpp"
 #include "move_generator.hpp"
 #include "move_ordering.hpp"
+
+TranspositionTable transposition_table;
 
 template <bool print_debug> // this could just as easily be done as a parameter but this gives some practice with templates
 uint64_t perft(ChessBoard& c, MoveHistory& m, int depth) {
@@ -174,7 +177,7 @@ bool Search::detect_insufficient_material(const ChessBoard& board, const Side si
 }
 
 template <NodeTypes node_type>
-Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, TranspositionTable& transpositions, uint64_t& node_count) {
+Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, uint64_t& node_count) {
 
     if (Search::is_draw(board, history)) {
         return 0;
@@ -183,7 +186,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
     constexpr auto pv_node_type = is_pv_node(node_type) ? NodeTypes::PV_NODE : NodeTypes::NON_PV_NODE;
     int extensions = 0;
 
-    const auto tt_entry = table[board];
+    const auto tt_entry = transposition_table[board];
     if constexpr (!is_pv_node(node_type)) {
         const bool should_cutoff = tt_entry.get_key() == board.get_zobrist_key() 
                                    && tt_entry.get_depth() >= depth
@@ -197,7 +200,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
     const bool tt_hit = tt_entry.get_key() == board.get_zobrist_key();
 
     if (depth <= 0) {
-        return quiescent_search<pv_node_type>(alpha, beta, ply, transpositions, node_count);
+        return quiescent_search<pv_node_type>(alpha, beta, ply, node_count);
         // return c.evaluate();
     }
 
@@ -221,7 +224,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
         // Try null move pruning if we aren't in check
         board.make_move(Move::NULL_MOVE, history);
         // First we make the null move
-        auto null_score = -negamax_step<pv_node_type>(-beta, -alpha, depth - 2 - (depth >= 8 ? 3 : 2), ply + 1, transpositions, node_count);
+        auto null_score = -negamax_step<pv_node_type>(-beta, -alpha, depth - 2 - (depth >= 8 ? 3 : 2), ply + 1, node_count);
         board.unmake_move(history);
         if (null_score >= beta) {
             return beta;
@@ -288,20 +291,20 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
                 static_cast<size_t>(node_type == NodeTypes::ROOT_NODE) +
                 static_cast<size_t>(move.move.is_capture() || move.move.is_promotion()))) {
             const auto lmr_reduction = static_cast<int>(std::round(1.30 + ((MagicNumbers::LnValues[depth] * MagicNumbers::LnValues[evaluated_moves]) / 2.80)));
-            score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - lmr_reduction + extensions, ply + 1, transpositions, node_count);
+            score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - lmr_reduction + extensions, ply + 1, node_count);
 
             // it's possible the LMR score will raise alpha; in this case we re-search with the full depth
             if (score > alpha) {
-                score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - 1 + extensions, ply + 1, transpositions, node_count);
+                score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - 1 + extensions, ply + 1, node_count);
             }
         }
         // if we didn't perform LMR
         else if (!is_pv_node(node_type) || evaluated_moves >= 1) {
-            score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - 1 + extensions, ply + 1, transpositions, node_count);
+            score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - 1 + extensions, ply + 1, node_count);
         }
 
         if (is_pv_node(node_type) && (evaluated_moves == 0 || score > alpha)) {
-            score = -negamax_step<NodeTypes::PV_NODE>(-beta, -alpha, depth - 1 + extensions, ply + 1, transpositions, node_count);
+            score = -negamax_step<NodeTypes::PV_NODE>(-beta, -alpha, depth - 1 + extensions, ply + 1, node_count);
         }
 
         board.unmake_move(history);
@@ -316,7 +319,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
             }
         }
         if (score >= beta) {
-            transpositions.store(TranspositionTableEntry(best_move, depth, BoundTypes::LOWER_BOUND, score, board.get_zobrist_key()), board);
+            transposition_table.store(TranspositionTableEntry(best_move, depth, BoundTypes::LOWER_BOUND, score, board.get_zobrist_key()), board);
             search_stack[ply].killer_move = move.move;
             if (!move.move.is_capture()) {
                 history_table[move.move.get_history_idx(board.get_side_to_move())] += (depth * depth);
@@ -335,12 +338,12 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, T
         evaluated_quiets += static_cast<int>(move.move.is_quiet());
     }
     const BoundTypes bound_type = alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND;
-    transpositions.store(TranspositionTableEntry(best_move, depth, bound_type, best_score, board.get_zobrist_key()), board);
+    transposition_table.store(TranspositionTableEntry(best_move, depth, bound_type, best_score, board.get_zobrist_key()), board);
     return alpha;
 }
 
 template <NodeTypes node_type>
-Score SearchHandler::quiescent_search(Score alpha, Score beta, int ply, TranspositionTable& transpositions, uint64_t& node_count) {
+Score SearchHandler::quiescent_search(Score alpha, Score beta, int ply, uint64_t& node_count) {
     if (Search::is_draw(board, history)) {
         return 0;
     }
@@ -386,15 +389,15 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, int ply, Transpos
         Score score;
         if constexpr (is_pv_node(node_type)) {
             if (evaluated_moves == 0) {
-                score = -quiescent_search<NodeTypes::PV_NODE>(-beta, -alpha, ply + 1, transpositions, node_count);
+                score = -quiescent_search<NodeTypes::PV_NODE>(-beta, -alpha, ply + 1, node_count);
             } else {
-                score = -quiescent_search<NodeTypes::NON_PV_NODE>(-alpha - 1, -alpha, ply + 1, transpositions, node_count);
+                score = -quiescent_search<NodeTypes::NON_PV_NODE>(-alpha - 1, -alpha, ply + 1, node_count);
                 if (score > alpha) {
-                    score = -quiescent_search<NodeTypes::PV_NODE>(-beta, -alpha, ply + 1, transpositions, node_count);
+                    score = -quiescent_search<NodeTypes::PV_NODE>(-beta, -alpha, ply + 1, node_count);
                 }
             }
         } else {
-            score = -quiescent_search<NodeTypes::NON_PV_NODE>(-alpha - 1, -alpha, ply + 1, transpositions, node_count);
+            score = -quiescent_search<NodeTypes::NON_PV_NODE>(-alpha - 1, -alpha, ply + 1, node_count);
         }
 
         board.unmake_move(history);
@@ -420,7 +423,7 @@ Score SearchHandler::run_aspiration_window_search(int depth, Score previous_scor
             beta = previous_score + window;
         }
 
-        previous_score = negamax_step<NodeTypes::ROOT_NODE>(alpha, beta, depth, 0, table, node_count);
+        previous_score = negamax_step<NodeTypes::ROOT_NODE>(alpha, beta, depth, 0, node_count);
 
         if (search_cancelled) {
             return previous_score;
