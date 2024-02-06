@@ -7,7 +7,7 @@
 
 #include "common.hpp"
 #include "move_generator.hpp"
-#include "move_ordering.hpp"
+#include "movepicker.hpp"
 
 TranspositionTable transposition_table;
 
@@ -245,7 +245,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
     // mate and draw detection
 
     bool found_pv_move = false;
-    MoveOrdering::reorder_moves(moves, board, tt_entry.get_key() == board.get_zobrist_key() ? tt_entry.get_pv_move() : Move::NULL_MOVE, history_table, search_stack[ply].killer_move, found_pv_move);
+    MovePicker mp(std::move(moves), board, tt_entry.get_key() == board.get_zobrist_key() ? tt_entry.get_pv_move() : Move::NULL_MOVE, history_table, search_stack[ply].killer_move, found_pv_move);
     const bool tt_move = found_pv_move && tt_hit;
     // move reordering
 
@@ -255,15 +255,16 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
     // iir
 
     Move best_move = Move::NULL_MOVE;
+    ScoredMove move;
     search_stack[ply].quiet_alpha_raises.clear();
     Score best_score = MagicNumbers::NegativeInfinity;
     const Score original_alpha = alpha;
     int evaluated_quiets = 0;
-    for (size_t evaluated_moves = 0; evaluated_moves < moves.len(); evaluated_moves++) {
+    size_t evaluated_moves = 0;
+    while ((move = mp.next_move()).move != Move::NULL_MOVE) {
         if (search_cancelled) {
             break;
         }
-        const auto& move = moves[evaluated_moves];
 
         if constexpr(!is_pv_node(node_type)) {
             if (depth <= 6 && !board.in_check() && move.move.is_quiet() && evaluated_quiets >= depth * depth) {
@@ -336,6 +337,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
             }
         }
         evaluated_quiets += static_cast<int>(move.move.is_quiet());
+        evaluated_moves += 1;
     }
     const BoundTypes bound_type = alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND;
     transposition_table.store(TranspositionTableEntry(best_move, depth, bound_type, best_score, board.get_zobrist_key()), board);
@@ -366,13 +368,13 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, int ply, uint64_t
     }
 
     bool found_pv_move = false;
-    MoveOrdering::reorder_moves(moves, board, Move::NULL_MOVE, history_table, search_stack[ply].killer_move, found_pv_move);
+    MovePicker mp(std::move(moves), board, Move::NULL_MOVE, history_table, search_stack[ply].killer_move, found_pv_move);
     int evaluated_moves = 0;
-    for (size_t i = 0; i < moves.len(); i++) {
+    ScoredMove move;
+    while ((move = mp.next_move()).move != Move::NULL_MOVE) {
         if (search_cancelled) {
             break;
         }
-        const auto& move = moves[i];
 
         if (move.move.is_capture() && !move.move.is_promotion()) {
             if (!move.see_ordering_result) {
