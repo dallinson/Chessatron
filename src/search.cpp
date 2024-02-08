@@ -218,6 +218,10 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
         if (board.get_checkers(board.get_side_to_move()) == 0 && depth < 7 && (static_eval - (70 * depth)) >= beta) {
             return beta;
         }
+    } else {
+        if (!board.in_check() && depth < 7 && static_eval >= beta && (static_eval - 20) < beta) {
+            extensions += 1;
+        }
     }
 
     if (static_eval >= beta && board.get_checkers(board.get_side_to_move()) == 0 && (history.len() == 0 || (history[history.len() - 1].get_move() != Move::NULL_MOVE))) {
