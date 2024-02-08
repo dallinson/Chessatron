@@ -40,14 +40,14 @@ constexpr Bitboard generate_rook_attacks(int square, Bitboard mask) {
     int rank = get_rank(square);
     int file = get_file(square);
     for (int r = rank + 1; r <= 7; r++) {
-        Bitboard b = idx_to_bitboard(get_position(r, file));
+        Bitboard b = idx_to_bb(get_position(r, file));
         to_return |= b;
         if (b & mask) {
             break;
         }
     }
     for (int r = rank - 1; r >= 0; r--) {
-        Bitboard b = idx_to_bitboard(get_position(r, file));
+        Bitboard b = idx_to_bb(get_position(r, file));
         to_return |= b;
         if (b & mask) {
             break;
@@ -55,14 +55,14 @@ constexpr Bitboard generate_rook_attacks(int square, Bitboard mask) {
     }
 
     for (int f = file + 1; f <= 7; f++) {
-        Bitboard b = idx_to_bitboard(get_position(rank, f));
+        Bitboard b = idx_to_bb(get_position(rank, f));
         to_return |= b;
         if (b & mask) {
             break;
         }
     }
     for (int f = file - 1; f >= 0; f--) {
-        Bitboard b = idx_to_bitboard(get_position(rank, f));
+        Bitboard b = idx_to_bb(get_position(rank, f));
         to_return |= b;
         if (b & mask) {
             break;

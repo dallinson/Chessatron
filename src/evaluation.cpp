@@ -6,18 +6,18 @@
 
 template <bool is_endgame> Score Evaluation::evaluate_board(const ChessBoard& board, const Side side) {
     if constexpr (is_endgame) {
-        return board.get_endgame_score(side);
+        return board.get_eg_score(side);
     } else {
-        return board.get_midgame_score(side);
+        return board.get_mg_score(side);
     }
 }
 
 Score Evaluation::evaluate_board(ChessBoard& board) { 
-    const Side enemy_side = ENEMY_SIDE(board.get_side_to_move()); 
-    const Score midgame_score = evaluate_board<false>(board, board.get_side_to_move()) - evaluate_board<false>(board, enemy_side);
-    const Score endgame_score = evaluate_board<true>(board, board.get_side_to_move()) - evaluate_board<true>(board, enemy_side);
+    const Side enemy = enemy_side(board.get_side_to_move()); 
+    const Score mg_score = evaluate_board<false>(board, board.get_side_to_move()) - evaluate_board<false>(board, enemy);
+    const Score eg_score = evaluate_board<true>(board, board.get_side_to_move()) - evaluate_board<true>(board, enemy);
 
-    const auto midgame_phase = std::min(board.get_midgame_phase(), (uint8_t) 24);
-    const auto endgame_phase = 24 - midgame_phase;
-    return ((midgame_score * midgame_phase) + (endgame_score * endgame_phase)) / 24;
+    const auto mg_phase = std::min(board.get_mg_phase(), (uint8_t) 24);
+    const auto eg_phase = 24 - mg_phase;
+    return ((mg_score * mg_phase) + (eg_score * eg_phase)) / 24;
 }

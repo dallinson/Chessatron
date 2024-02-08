@@ -36,28 +36,28 @@ constexpr Bitboard generate_bishop_attacks(int square, Bitboard mask) {
     Bitboard to_return = 0;
     int r, f;
     for (r = rank + 1, f = file + 1; r <= 7 && f <= 7; r++, f++) {
-        Bitboard b = idx_to_bitboard(get_position(r, f));
+        Bitboard b = idx_to_bb(get_position(r, f));
         to_return |= b;
         if (b & mask) {
             break;
         }
     }
     for (r = rank + 1, f = file - 1; r <= 7 && f >= 0; r++, f--) {
-        Bitboard b = idx_to_bitboard(get_position(r, f));
+        Bitboard b = idx_to_bb(get_position(r, f));
         to_return |= b;
         if (b & mask) {
             break;
         }
     }
     for (r = rank - 1, f = file + 1; r >= 0 && f <= 7; r--, f++) {
-        Bitboard b = idx_to_bitboard(get_position(r, f));
+        Bitboard b = idx_to_bb(get_position(r, f));
         to_return |= b;
         if (b & mask) {
             break;
         }
     }
     for (r = rank - 1, f = file - 1; r >= 0 && f >= 0; r--, f--) {
-        Bitboard b = idx_to_bitboard(get_position(r, f));
+        Bitboard b = idx_to_bb(get_position(r, f));
         to_return |= b;
         if (b & mask) {
             break;

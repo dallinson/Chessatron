@@ -96,7 +96,7 @@ struct SearchStackFrame {
 
 class SearchHandler {
     private:
-        std::thread searchThread;
+        std::thread search_thread;
         std::binary_semaphore semaphore{0};
         std::mutex search_mutex;
         std::condition_variable cv;

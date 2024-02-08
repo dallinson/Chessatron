@@ -44,10 +44,10 @@ void SearchHandler::shutdown() {
     this->search_cancelled = true;
     // If we're in a search, quit searching ASAP
     semaphore.release();
-    this->searchThread.join();
+    this->search_thread.join();
 }
 
-SearchHandler::SearchHandler() { this->searchThread = std::thread(&SearchHandler::search_thread_function, this); }
+SearchHandler::SearchHandler() { this->search_thread = std::thread(&SearchHandler::search_thread_function, this); }
 
 void SearchHandler::search(const TimeControlInfo& tc) {
     current_search_id += 1;
@@ -83,7 +83,7 @@ void SearchHandler::reset() {
     this->EndSearch();
     history = MoveHistory();
     board = ChessBoard();
-    transposition_table.clear();
+    tt.clear();
 }
 
 void SearchHandler::run_bench(uint16_t depth) {
