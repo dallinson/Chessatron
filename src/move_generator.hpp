@@ -23,35 +23,45 @@ namespace MoveGenerator {
     Bitboard generate_queen_movemask(const Bitboard b, const int idx);
     template <PieceTypes piece_type> Bitboard generate_movemask(const Bitboard b, const int idx);
 
-    template <PieceTypes piece_type, MoveGenType gen_type> void generate_moves(const ChessBoard& c, const Side side, MoveList& move_list);
-    template <MoveGenType gen_type> void generate_pawn_moves(const ChessBoard& c, const Side side, MoveList& move_list);
+    template <PieceTypes piece_type, MoveGenType gen_type, bool in_check> void generate_moves(const ChessBoard& c, const Side side, MoveList& move_list);
+    template <MoveGenType gen_type, bool in_check> void generate_pawn_moves(const ChessBoard& c, const Side side, MoveList& move_list);
     void generate_castling_moves(const ChessBoard& c, const Side side, MoveList& move_list);
 
     bool is_move_legal(const ChessBoard& c, const Move m);
     bool is_move_pseudolegal(const ChessBoard& c, const Move to_test);
 
+    template <MoveGenType gen_type, bool in_check> MoveList generate_legal_moves(const ChessBoard& c, const Side side);
     template <MoveGenType gen_type> MoveList generate_legal_moves(const ChessBoard& c, const Side side);
 } // namespace MoveGenerator
 
 template <MoveGenType gen_type> MoveList MoveGenerator::generate_legal_moves(const ChessBoard& c, const Side side) {
+    if (c.in_check()) {
+        return generate_legal_moves<gen_type, true>(c, side);
+    } else {
+        return generate_legal_moves<gen_type, false>(c, side);
+    }
+}
+
+template <MoveGenType gen_type, bool in_check> MoveList MoveGenerator::generate_legal_moves(const ChessBoard& c, const Side side) {
     MoveList to_return;
 
-    MoveGenerator::generate_moves<PieceTypes::KING, gen_type>(c, side, to_return);
+    MoveGenerator::generate_moves<PieceTypes::KING, gen_type, in_check>(c, side, to_return);
 
-    int checking_piece_count = std::popcount(c.get_checkers(side));
-
-    if (checking_piece_count >= 2) {
-        return to_return;
+    if constexpr (in_check) {
+        int checking_piece_count = std::popcount(c.get_checkers(side));
+        if (checking_piece_count >= 2) {
+            return to_return;
+        }
     }
 
-    if (gen_type != MoveGenType::QUIESCENCE && checking_piece_count == 0) {
+    if constexpr (gen_type != MoveGenType::QUIESCENCE && !in_check) {
         MoveGenerator::generate_castling_moves(c, side, to_return);
     }
-    MoveGenerator::generate_moves<PieceTypes::QUEEN, gen_type>(c, side, to_return);
-    MoveGenerator::generate_moves<PieceTypes::BISHOP, gen_type>(c, side, to_return);
-    MoveGenerator::generate_moves<PieceTypes::KNIGHT, gen_type>(c, side, to_return);
-    MoveGenerator::generate_moves<PieceTypes::ROOK, gen_type>(c, side, to_return);
-    MoveGenerator::generate_pawn_moves<gen_type>(c, side, to_return);
+    MoveGenerator::generate_moves<PieceTypes::QUEEN, gen_type, in_check>(c, side, to_return);
+    MoveGenerator::generate_moves<PieceTypes::BISHOP, gen_type, in_check>(c, side, to_return);
+    MoveGenerator::generate_moves<PieceTypes::KNIGHT, gen_type, in_check>(c, side, to_return);
+    MoveGenerator::generate_moves<PieceTypes::ROOK, gen_type, in_check>(c, side, to_return);
+    MoveGenerator::generate_pawn_moves<gen_type, in_check>(c, side, to_return);
 
     return to_return;
 }
@@ -83,7 +93,7 @@ inline Bitboard MoveGenerator::generate_movemask<PieceTypes::KING>(const Bitboar
     return MagicNumbers::KingMoves[idx];
 }
 
-template <PieceTypes piece_type, MoveGenType gen_type> void MoveGenerator::generate_moves(const ChessBoard& c, const Side side, MoveList& move_list) {
+template <PieceTypes piece_type, MoveGenType gen_type, bool in_check> void MoveGenerator::generate_moves(const ChessBoard& c, const Side side, MoveList& move_list) {
     if constexpr (piece_type == PieceTypes::PAWN) {
         return generate_pawn_moves<gen_type>(c, side, move_list);
     }
@@ -103,7 +113,7 @@ template <PieceTypes piece_type, MoveGenType gen_type> void MoveGenerator::gener
             potential_moves &= ~enemy_occupancy;
         }
         if constexpr (piece_type != PieceTypes::KING) {
-            if (checking_idx != 64) {
+            if constexpr (in_check) {
                 // no checking pieces implies the checking idx is 64
                 potential_moves &= MagicNumbers::ConnectingSquares[(64 * king_idx) + checking_idx];
             }
@@ -140,7 +150,7 @@ template <PieceTypes piece_type, MoveGenType gen_type> void MoveGenerator::gener
     }
 }
 
-template <MoveGenType gen_type> void MoveGenerator::generate_pawn_moves(const ChessBoard& c, const Side side, MoveList& move_list) {
+template <MoveGenType gen_type, bool in_check> void MoveGenerator::generate_pawn_moves(const ChessBoard& c, const Side side, MoveList& move_list) {
     Bitboard pawn_mask = c.get_pawn_occupancy(side);
     const Side enemy_side = ENEMY_SIDE(side);
     const Bitboard enemy_occupancy = c.get_occupancy(enemy_side);
@@ -191,7 +201,7 @@ template <MoveGenType gen_type> void MoveGenerator::generate_pawn_moves(const Ch
                 // if there is a piece we _can_ capture
                 (get_bit(c.get_pinned_pieces(side), pawn_idx) == 0 || is_aligned(king_idx, pawn_idx, pawn_idx + capture_front_left)) &&
                 // and we're not pinned/are moving in the capture direction
-                (checking_idx == 64 || checking_idx == pawn_idx + capture_front_left)) {
+                (!in_check || checking_idx == pawn_idx + capture_front_left)) {
                 // or we want are capturing the checking piece
                 if (get_rank(pawn_idx) != penultimate_rank) {
                     move_list.add_move(Move(MoveFlags::CAPTURE, pawn_idx + capture_front_left, pawn_idx));
@@ -207,7 +217,7 @@ template <MoveGenType gen_type> void MoveGenerator::generate_pawn_moves(const Ch
                 // if there is a piece we _can_ capture
                 (get_bit(c.get_pinned_pieces(side), pawn_idx) == 0 || is_aligned(king_idx, pawn_idx, pawn_idx + capture_front_right)) &&
                 // and we're not pinned/are moving in the capture direction
-                (checking_idx == 64 || checking_idx == pawn_idx + capture_front_right)) {
+                (!in_check || checking_idx == pawn_idx + capture_front_right)) {
                 // or we want are capturing the checking piece
                 if (get_rank(pawn_idx) != penultimate_rank) {
                     move_list.add_move(Move(MoveFlags::CAPTURE, pawn_idx + capture_front_right, pawn_idx));
