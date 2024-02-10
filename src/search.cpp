@@ -188,16 +188,16 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
 
     const auto tt_entry = transposition_table[board];
     if constexpr (!is_pv_node(node_type)) {
-        const bool should_cutoff = tt_entry.get_key() == board.get_zobrist_key() 
-                                   && tt_entry.get_depth() >= depth
-                                   && (tt_entry.get_bound_type() == BoundTypes::EXACT_BOUND
-                                   || (tt_entry.get_bound_type() == BoundTypes::LOWER_BOUND && tt_entry.get_score() >= beta)
-                                   || (tt_entry.get_bound_type() == BoundTypes::UPPER_BOUND && tt_entry.get_score() <= alpha));
+        const bool should_cutoff = tt_entry.key() == board.get_zobrist_key() 
+                                   && tt_entry.depth() >= depth
+                                   && (tt_entry.bound_type() == BoundTypes::EXACT_BOUND
+                                   || (tt_entry.bound_type() == BoundTypes::LOWER_BOUND && tt_entry.score() >= beta)
+                                   || (tt_entry.bound_type() == BoundTypes::UPPER_BOUND && tt_entry.score() <= alpha));
         if (should_cutoff) {
-            return tt_entry.get_score();
+            return tt_entry.score();
         }
     }
-    const bool tt_hit = tt_entry.get_key() == board.get_zobrist_key();
+    const bool tt_hit = tt_entry.key() == board.get_zobrist_key();
 
     if (depth <= 0) {
         return quiescent_search<pv_node_type>(alpha, beta, ply, node_count);
@@ -245,7 +245,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
     // mate and draw detection
 
     bool found_pv_move = false;
-    MoveOrdering::reorder_moves(moves, board, tt_entry.get_key() == board.get_zobrist_key() ? tt_entry.get_pv_move() : Move::NULL_MOVE, history_table, search_stack[ply].killer_move, found_pv_move);
+    MoveOrdering::reorder_moves(moves, board, tt_entry.key() == board.get_zobrist_key() ? tt_entry.move() : Move::NULL_MOVE, history_table, search_stack[ply].killer_move, found_pv_move);
     const bool tt_move = found_pv_move && tt_hit;
     // move reordering
 
