@@ -3,6 +3,8 @@
 #include <bit>
 
 #include "move_generator.hpp"
+#include "magic_numbers.hpp"
+#include "search.hpp"
 
 template <bool is_endgame> Score Evaluation::evaluate_board(const ChessBoard& board, const Side side) {
     if constexpr (is_endgame) {
@@ -19,5 +21,7 @@ Score Evaluation::evaluate_board(ChessBoard& board) {
 
     const auto midgame_phase = std::min(board.get_midgame_phase(), (uint8_t) 24);
     const auto endgame_phase = 24 - midgame_phase;
-    return ((midgame_score * midgame_phase) + (endgame_score * endgame_phase)) / 24;
+    return std::clamp(((midgame_score * midgame_phase) + (endgame_score * endgame_phase)) / 24,
+        MagicNumbers::NegativeInfinity + MAX_PLY + 1,
+        MagicNumbers::PositiveInfinity - MAX_PLY - 1);
 }
