@@ -321,12 +321,18 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
         if (score >= beta) {
             transposition_table.store(TranspositionTableEntry(best_move, depth, BoundTypes::LOWER_BOUND, score, board.get_zobrist_key()), board);
             search_stack[ply].killer_move = move.move;
-            if (!move.move.is_capture()) {
-                history_table[move.move.get_history_idx(board.get_side_to_move())] += (depth * depth);
-                for (size_t i = 0; i < search_stack[ply].quiet_alpha_raises.len(); i++) {
-                    history_table[search_stack[ply].quiet_alpha_raises[i].move.get_history_idx(board.get_side_to_move())] -= (depth * depth);
+            for (size_t i = 0; i <= evaluated_moves; i++) {
+                int32_t bonus = 0;
+                if (!move.move.is_capture()) {
+                    if (moves[i].move == best_move) {
+                        bonus = depth * depth;
+                    } else {
+                        bonus = -depth * depth;
+                    }
+                    history_table[move.move.get_history_idx(board.get_side_to_move())] += bonus;
                 }
             }
+
             return beta;
         }
         if (score > alpha) {
