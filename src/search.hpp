@@ -92,7 +92,6 @@ class TranspositionTable {
 };
 
 struct SearchStackFrame {
-    MoveList quiet_alpha_raises;
     Move killer_move;
 };
 
