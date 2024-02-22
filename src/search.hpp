@@ -60,6 +60,7 @@ class TranspositionTableEntry {
         Move move() const { return this->pv_move; };
         uint8_t depth() const { return this->_depth; };
         BoundTypes bound_type() const { return this->_bound; };
+        void set_score(Score new_score) { this->_score = new_score; };
         Score score() const { return this->_score; };
         ZobristKey key() const { return this->_key; };
 };
@@ -74,11 +75,16 @@ class TranspositionTable {
         };
         uint64_t tt_index(const ZobristKey key) const { return static_cast<uint64_t>((static_cast<__uint128_t>(key) * static_cast<__uint128_t>(table.size())) >> 64); };
         const TranspositionTableEntry& operator[](const ChessBoard& key) const { return table[tt_index(key.get_zobrist_key())]; };
-        void store(const TranspositionTableEntry entry, const ChessBoard& key) {
+        void store(TranspositionTableEntry entry, const ChessBoard& key) {
             const auto tt_key = tt_index(key.get_zobrist_key());
             if (table[tt_key].key() != entry.key()
                 || entry.bound_type() == BoundTypes::EXACT_BOUND
                 || entry.depth() + 5 > table[tt_key].depth()) {
+                if (entry.score() <= MagicNumbers::NegativeInfinity + MAX_PLY) {
+                    entry.set_score(MagicNumbers::NegativeInfinity);
+                } else if (entry.score() >= MagicNumbers::PositiveInfinity - MAX_PLY) {
+                    entry.set_score(MagicNumbers::PositiveInfinity);
+                }
                 table[tt_key] = entry;
             }
         }

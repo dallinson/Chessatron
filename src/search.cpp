@@ -194,6 +194,11 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
                                    || (tt_entry.bound_type() == BoundTypes::LOWER_BOUND && tt_entry.score() >= beta)
                                    || (tt_entry.bound_type() == BoundTypes::UPPER_BOUND && tt_entry.score() <= alpha));
         if (should_cutoff) {
+            if (tt_entry.score() == MagicNumbers::PositiveInfinity) {
+                return MagicNumbers::PositiveInfinity - ply;
+            } else if (tt_entry.score() == MagicNumbers::NegativeInfinity) {
+                return MagicNumbers::NegativeInfinity + ply;
+            }
             return tt_entry.score();
         }
     }
