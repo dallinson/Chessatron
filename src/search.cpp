@@ -263,6 +263,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
     Score best_score = MagicNumbers::NegativeInfinity;
     const Score original_alpha = alpha;
     int evaluated_quiets = 0;
+    search_stack[ply].quiet_alpha_raises.clear();
     for (size_t evaluated_moves = 0; evaluated_moves < moves.len(); evaluated_moves++) {
         if (search_cancelled) {
             break;
@@ -333,10 +334,16 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
             if (!move.move.is_capture()) {
                 history_table[move.move.get_history_idx(board.get_side_to_move())] += (depth * depth);
             }
+            for (size_t j = 0; j < search_stack[ply].quiet_alpha_raises.len(); j++) {
+                history_table[search_stack[ply].quiet_alpha_raises[j].move.get_history_idx(board.get_side_to_move())] += (depth * depth);
+            }
             return beta;
         }
         if (score > alpha) {
             alpha = score;
+            if (move.move.is_quiet()) {
+                search_stack[ply].quiet_alpha_raises.add_move(move.move);
+            }
         }
         evaluated_quiets += static_cast<int>(move.move.is_quiet());
     }
