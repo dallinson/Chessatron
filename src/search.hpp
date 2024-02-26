@@ -22,6 +22,7 @@ enum class NodeTypes {
 constexpr inline bool is_pv_node(NodeTypes n) { return n == NodeTypes::ROOT_NODE || n == NodeTypes::PV_NODE; };
 
 constexpr static int MAX_PLY = 250;
+constexpr static int HISTORY_MAX = MAX_PLY * MAX_PLY;
 
 namespace Perft {
     uint64_t run_perft(ChessBoard& c, int depth, bool print_debug = false);
@@ -35,6 +36,7 @@ namespace Search {
     bool is_draw(const ChessBoard& c, const MoveHistory& m);
     bool static_exchange_evaluation(const ChessBoard& board, const Move move, const int threshold);
     bool detect_insufficient_material(const ChessBoard& board, const Side side);
+    void update_history(int32_t& history_value, int32_t bonus);
 } // namespace Search
 
 enum class BoundTypes : uint8_t {

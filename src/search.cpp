@@ -176,6 +176,10 @@ bool Search::detect_insufficient_material(const ChessBoard& board, const Side si
     return false;
 }
 
+void Search::update_history(int32_t& history_value, int32_t bonus) {
+    history_value = history_value + bonus - history_value * std::abs(bonus) / 512;
+}
+
 template <NodeTypes node_type>
 Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, uint64_t& node_count) {
 
@@ -327,11 +331,11 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
             search_stack[ply].killer_move = move.move;
             for (size_t j = 0; j < evaluated_moves; j++) {
                 if (moves[j].move.is_quiet()) {
-                    history_table[moves[j].move.get_history_idx(board.get_side_to_move())] -= (depth * depth);
+                    Search::update_history(history_table[moves[j].move.get_history_idx(board.get_side_to_move())], -depth * depth);
                 }
             }
             if (!move.move.is_capture()) {
-                history_table[move.move.get_history_idx(board.get_side_to_move())] += (depth * depth);
+                Search::update_history(history_table[move.move.get_history_idx(board.get_side_to_move())], depth * depth);
             }
             return beta;
         }
