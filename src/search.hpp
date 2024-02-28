@@ -46,22 +46,23 @@ enum class BoundTypes : uint8_t {
 
 class TranspositionTableEntry {
     private:
-        ZobristKey key;
-        Score score;
+        ZobristKey _key;
+        Score _score;
         Move pv_move;
-        uint8_t depth;
-        BoundTypes bound;
+        uint8_t _depth;
+        BoundTypes _bound;
         uint16_t padding;
 
     public:
-        TranspositionTableEntry() : key(0), pv_move(Move::NULL_MOVE), depth(0), bound(BoundTypes::NONE) {};
-        TranspositionTableEntry(Move pv_move, uint8_t depth, BoundTypes bound, Score score, ZobristKey key) : key(key), score(score), pv_move(pv_move), depth(depth), bound(bound) {};
+        TranspositionTableEntry() : _key(0), pv_move(Move::NULL_MOVE), _depth(0), _bound(BoundTypes::NONE) {};
+        TranspositionTableEntry(Move pv_move, uint8_t depth, BoundTypes bound, Score score, ZobristKey key) : _key(key), _score(score), pv_move(pv_move), _depth(depth), _bound(bound) {};
 
-        Move get_pv_move() const { return this->pv_move; };
-        uint8_t get_depth() const { return this->depth; };
-        BoundTypes get_bound_type() const { return this->bound; };
-        Score get_score() const { return this->score; };
-        ZobristKey get_key() const { return this->key; };
+        Move move() const { return this->pv_move; };
+        uint8_t depth() const { return this->_depth; };
+        BoundTypes bound_type() const { return this->_bound; };
+        void set_score(Score new_score) { this->_score = new_score; };
+        Score score() const { return this->_score; };
+        ZobristKey key() const { return this->_key; };
 };
 
 class TranspositionTable {
@@ -74,9 +75,16 @@ class TranspositionTable {
         };
         uint64_t tt_index(const ZobristKey key) const { return static_cast<uint64_t>((static_cast<__uint128_t>(key) * static_cast<__uint128_t>(table.size())) >> 64); };
         const TranspositionTableEntry& operator[](const ChessBoard& key) const { return table[tt_index(key.get_zobrist_key())]; };
-        void store(const TranspositionTableEntry entry, const ChessBoard& key) {
+        void store(TranspositionTableEntry entry, const ChessBoard& key) {
             const auto tt_key = tt_index(key.get_zobrist_key());
-            if (entry.get_depth() >= table[tt_key].get_depth()) {
+            if (table[tt_key].key() != entry.key()
+                || entry.bound_type() == BoundTypes::EXACT_BOUND
+                || entry.depth() + 5 > table[tt_key].depth()) {
+                if (entry.score() <= MagicNumbers::NegativeInfinity + MAX_PLY) {
+                    entry.set_score(MagicNumbers::NegativeInfinity);
+                } else if (entry.score() >= MagicNumbers::PositiveInfinity - MAX_PLY) {
+                    entry.set_score(MagicNumbers::PositiveInfinity);
+                }
                 table[tt_key] = entry;
             }
         }
@@ -90,7 +98,6 @@ class TranspositionTable {
 };
 
 struct SearchStackFrame {
-    MoveList quiet_alpha_raises;
     Move killer_move;
 };
 
@@ -118,7 +125,7 @@ class SearchHandler {
 
         void search_thread_function();
         Score run_aspiration_window_search(int depth, Score previous_score);
-        template <NodeTypes node_type> Score negamax_step(Score alpha, Score beta, int depth, int ply, uint64_t& node_count);
+        template <NodeTypes node_type> Score negamax_step(Score alpha, Score beta, int depth, int ply, uint64_t& node_count, bool is_cut_node);
         template <NodeTypes node_type> Score quiescent_search(Score alpha, Score beta, int ply, uint64_t& node_count);
         Move run_iterative_deepening_search();
 
