@@ -9,11 +9,14 @@
 #include "move_generator.hpp"
 #include "zobrist_hashing.hpp"
 
-constexpr static std::array<uint8_t, 6> MidgamePhaseArray = { 0, 1, 1, 2, 4, 0 };
+using namespace PieceSquareTables;
+using enum PieceTypes;
+
+constexpr static std::array<uint8_t, 6> mg_phase_vals = { 0, 1, 1, 2, 4, 0 };
 
 void ChessBoard::set_piece(Piece piece, uint8_t pos) {
     pieces[pos] = piece;
-    set_bit(bitboards[piece.to_bitboard_idx()], pos);
+    set_bit(bbs[piece.to_bitboard_idx()], pos);
     zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(piece, pos)];
 
     const auto piece_side = piece.get_side();
@@ -22,18 +25,18 @@ void ChessBoard::set_piece(Piece piece, uint8_t pos) {
         pos ^= 0b00111000;
     }
 
-    midgame_scores[static_cast<int>(piece_side)] += PieceSquareTables::MidgameTables[static_cast<int>(piece_type) - 1][pos];
-    endgame_scores[static_cast<int>(piece_side)] += PieceSquareTables::EndgameTables[static_cast<int>(piece_type) - 1][pos];
+    mg_scores[static_cast<int>(piece_side)] += MidgameTables[static_cast<int>(piece_type) - 1][pos];
+    eg_scores[static_cast<int>(piece_side)] += EndgameTables[static_cast<int>(piece_type) - 1][pos];
 
-    midgame_scores[static_cast<int>(piece_side)] += PieceSquareTables::MidgameScores[static_cast<int>(piece_type) - 1];
-    endgame_scores[static_cast<int>(piece_side)] += PieceSquareTables::EndgameScores[static_cast<int>(piece_type) - 1];
+    mg_scores[static_cast<int>(piece_side)] += MidgameScores[static_cast<int>(piece_type) - 1];
+    eg_scores[static_cast<int>(piece_side)] += EndgameScores[static_cast<int>(piece_type) - 1];
 
-    midgame_phase += MidgamePhaseArray[static_cast<int>(piece_type) - 1];
+    mg_phase += mg_phase_vals[static_cast<int>(piece_type) - 1];
 }
 
 void ChessBoard::clear_board() {
     for (int i = 0; i < 12; i++) {
-        bitboards[i] = 0;
+        bbs[i] = 0;
     }
 
     for (size_t i = 0; i < pieces.size(); i++) {
@@ -48,10 +51,10 @@ void ChessBoard::clear_board() {
 
     zobrist_key = ZobristKeys::SideToMove;
 
-    midgame_scores = {0};
-    endgame_scores = {0};
+    mg_scores = {0};
+    eg_scores = {0};
     // Only the white side to move key should be set
-    midgame_phase = 0;
+    mg_phase = 0;
 }
 
 void ChessBoard::print_board() const {
@@ -91,29 +94,29 @@ std::optional<int> ChessBoard::set_from_fen(const std::string input) {
         } else {
             char current = input[char_idx];
             Side piece_side = Side::WHITE;
-            PieceTypes piece_value = PieceTypes::PAWN;
+            PieceTypes piece_value = PAWN;
             if (current > 96) {
                 piece_side = Side::BLACK;
                 current -= 32;
             }
             switch (current) {
             case 'P':
-                piece_value = PieceTypes::PAWN;
+                piece_value = PAWN;
                 break;
             case 'R':
-                piece_value = PieceTypes::ROOK;
+                piece_value = ROOK;
                 break;
             case 'N':
-                piece_value = PieceTypes::KNIGHT;
+                piece_value = KNIGHT;
                 break;
             case 'B':
-                piece_value = PieceTypes::BISHOP;
+                piece_value = BISHOP;
                 break;
             case 'Q':
-                piece_value = PieceTypes::QUEEN;
+                piece_value = QUEEN;
                 break;
             case 'K':
-                piece_value = PieceTypes::KING;
+                piece_value = KING;
                 break;
             case '1':
                 [[fallthrough]];
@@ -146,7 +149,7 @@ std::optional<int> ChessBoard::set_from_fen(const std::string input) {
             }
         }
         char_idx += 1;
-        if (get_king_occupancy(Side::WHITE) && get_king_occupancy(Side::BLACK)) {
+        if (kings(Side::WHITE) && kings(Side::BLACK)) {
             // prevents array index out of range exception
             recompute_blockers_and_checkers();
         }
@@ -243,28 +246,28 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
         const Side side = moved.get_side();
         this->pieces[to_make.get_src_square()] = 0;
         zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, to_make.get_src_square())];
-        midgame_scores[static_cast<int>(side)] -= PieceSquareTables::get_psqt_score<false>(moved, to_make.get_src_square());
-        endgame_scores[static_cast<int>(side)] -= PieceSquareTables::get_psqt_score<true>(moved, to_make.get_src_square());
+        mg_scores[static_cast<int>(side)] -= get_psqt_score<false>(moved, to_make.get_src_square());
+        eg_scores[static_cast<int>(side)] -= get_psqt_score<true>(moved, to_make.get_src_square());
 
         // get the piece we're moving and clear the origin square
 
-        if (to_make.is_capture() || moved.get_type() == PieceTypes::PAWN) {
+        if (to_make.is_capture() || moved.get_type() == PAWN) {
             halfmove_clock = 0;
         }
 
-        clear_bit(this->bitboards[moved.to_bitboard_idx()], to_make.get_src_square());
+        clear_bit(this->bbs[moved.to_bitboard_idx()], to_make.get_src_square());
         if (at_target.get_value()) {
             // If there _was_ a piece there
             // we do this as en passant captures without a piece at the position
-            clear_bit(this->bitboards[at_target.to_bitboard_idx()], to_make.get_dest_square());
+            clear_bit(this->bbs[at_target.to_bitboard_idx()], to_make.get_dest_square());
             zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(at_target, to_make.get_dest_square())];
-            midgame_scores[static_cast<int>(ENEMY_SIDE(side))] -= PieceSquareTables::get_psqt_score<false>(Piece(ENEMY_SIDE(side), at_target.get_type()), to_make.get_dest_square());
-            endgame_scores[static_cast<int>(ENEMY_SIDE(side))] -= PieceSquareTables::get_psqt_score<true>(Piece(ENEMY_SIDE(side), at_target.get_type()), to_make.get_dest_square());
+            mg_scores[static_cast<int>(enemy_side(side))] -= get_psqt_score<false>(Piece(enemy_side(side), at_target.get_type()), to_make.get_dest_square());
+            eg_scores[static_cast<int>(enemy_side(side))] -= get_psqt_score<true>(Piece(enemy_side(side), at_target.get_type()), to_make.get_dest_square());
 
-            midgame_scores[static_cast<int>(ENEMY_SIDE(side))] -= PieceSquareTables::MidgameScores[static_cast<int>(at_target.get_type()) - 1];
-            endgame_scores[static_cast<int>(ENEMY_SIDE(side))] -= PieceSquareTables::EndgameScores[static_cast<int>(at_target.get_type()) - 1];
+            mg_scores[static_cast<int>(enemy_side(side))] -= MidgameScores[static_cast<int>(at_target.get_type()) - 1];
+            eg_scores[static_cast<int>(enemy_side(side))] -= EndgameScores[static_cast<int>(at_target.get_type()) - 1];
 
-            midgame_phase -= MidgamePhaseArray[static_cast<int>(at_target.get_type()) - 1];
+            mg_phase -= mg_phase_vals[static_cast<int>(at_target.get_type()) - 1];
         }
 
         if (static_cast<int>(to_make.get_move_flags()) >= 8) {
@@ -273,21 +276,21 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
             zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(promoted_piece, to_make.get_dest_square())];
             this->pieces[to_make.get_dest_square()] = promoted_piece;
             // promoted_piece += side;
-            set_bit(this->bitboards[promoted_piece.to_bitboard_idx()], to_make.get_dest_square());
+            set_bit(this->bbs[promoted_piece.to_bitboard_idx()], to_make.get_dest_square());
             // This handles pawn promotions
-            midgame_scores[static_cast<int>(side)] += PieceSquareTables::get_psqt_score<false>(Piece(side, promoted_piece.get_type()), to_make.get_dest_square());
-            endgame_scores[static_cast<int>(side)] += PieceSquareTables::get_psqt_score<true>(Piece(side, promoted_piece.get_type()), to_make.get_dest_square());
+            mg_scores[static_cast<int>(side)] += get_psqt_score<false>(Piece(side, promoted_piece.get_type()), to_make.get_dest_square());
+            eg_scores[static_cast<int>(side)] += get_psqt_score<true>(Piece(side, promoted_piece.get_type()), to_make.get_dest_square());
 
-            midgame_scores[static_cast<int>(side)] += (PieceSquareTables::MidgameScores[static_cast<int>(promoted_piece.get_type()) - 1] - PieceSquareTables::MidgameScores[static_cast<int>(PieceTypes::PAWN) - 1]);
-            endgame_scores[static_cast<int>(side)] += (PieceSquareTables::EndgameScores[static_cast<int>(promoted_piece.get_type()) - 1] - PieceSquareTables::EndgameScores[static_cast<int>(PieceTypes::PAWN) - 1]);
+            mg_scores[static_cast<int>(side)] += (MidgameScores[static_cast<int>(promoted_piece.get_type()) - 1] - MidgameScores[static_cast<int>(PAWN) - 1]);
+            eg_scores[static_cast<int>(side)] += (EndgameScores[static_cast<int>(promoted_piece.get_type()) - 1] - EndgameScores[static_cast<int>(PAWN) - 1]);
 
-            midgame_phase += MidgamePhaseArray[static_cast<int>(promoted_piece.get_type()) - 1];
+            mg_phase += mg_phase_vals[static_cast<int>(promoted_piece.get_type()) - 1];
         } else {
-            set_bit(this->bitboards[moved.to_bitboard_idx()], to_make.get_dest_square());
+            set_bit(this->bbs[moved.to_bitboard_idx()], to_make.get_dest_square());
             zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, to_make.get_dest_square())];
             this->pieces[to_make.get_dest_square()] = moved;
-            midgame_scores[static_cast<int>(side)] += PieceSquareTables::get_psqt_score<false>(Piece(side, moved.get_type()), to_make.get_dest_square());
-            endgame_scores[static_cast<int>(side)] += PieceSquareTables::get_psqt_score<true>(Piece(side, moved.get_type()), to_make.get_dest_square());
+            mg_scores[static_cast<int>(side)] += get_psqt_score<false>(Piece(side, moved.get_type()), to_make.get_dest_square());
+            eg_scores[static_cast<int>(side)] += get_psqt_score<true>(Piece(side, moved.get_type()), to_make.get_dest_square());
             // otherwise sets pieces if moved normally
         }
 
@@ -299,16 +302,16 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
         // set where the last en passant happened, else clear it
 
         if (to_make.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) [[unlikely]] {
-            Side enemy_side = ENEMY_SIDE(side);
+            Side enemy = enemy_side(side);
             int enemy_pawn_idx = /*to_make.get_dest_square() - 8 + (16 * static_cast<int>(side));*/ get_position(to_make.get_src_rank(), to_make.get_dest_file());
-            clear_bit(this->bitboards[bitboard_offset<PieceTypes::PAWN> + static_cast<int>(enemy_side)], enemy_pawn_idx);
+            clear_bit(this->bbs[bb_idx<PAWN> + static_cast<int>(enemy)], enemy_pawn_idx);
             this->pieces[enemy_pawn_idx] = 0;
-            this->zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(enemy_side, PieceTypes::PAWN), enemy_pawn_idx)];
-            midgame_scores[static_cast<int>(enemy_side)] -= PieceSquareTables::get_psqt_score<false>(Piece(enemy_side, PieceTypes::PAWN), enemy_pawn_idx);
-            endgame_scores[static_cast<int>(enemy_side)] -= PieceSquareTables::get_psqt_score<true>(Piece(enemy_side, PieceTypes::PAWN), enemy_pawn_idx);
+            this->zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(enemy, PAWN), enemy_pawn_idx)];
+            mg_scores[static_cast<int>(enemy)] -= get_psqt_score<false>(Piece(enemy, PAWN), enemy_pawn_idx);
+            eg_scores[static_cast<int>(enemy)] -= get_psqt_score<true>(Piece(enemy, PAWN), enemy_pawn_idx);
 
-            midgame_scores[static_cast<int>(ENEMY_SIDE(side))] -= PieceSquareTables::MidgameScores[static_cast<int>(PieceTypes::PAWN) - 1];
-            endgame_scores[static_cast<int>(ENEMY_SIDE(side))] -= PieceSquareTables::EndgameScores[static_cast<int>(PieceTypes::PAWN) - 1];
+            mg_scores[static_cast<int>(enemy_side(side))] -= MidgameScores[static_cast<int>(PAWN) - 1];
+            eg_scores[static_cast<int>(enemy_side(side))] -= EndgameScores[static_cast<int>(PAWN) - 1];
         }
 
         if (to_make.get_move_flags() == MoveFlags::KINGSIDE_CASTLE) {
@@ -316,33 +319,33 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
             this->pieces[to_make.get_dest_square() - 1] = this->pieces[to_make.get_dest_square() + 1];
             this->pieces[to_make.get_dest_square() + 1] = 0;
 
-            clear_bit(this->bitboards[bitboard_offset<PieceTypes::ROOK> + static_cast<int>(side)], to_make.get_dest_square() + 1);
-            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, PieceTypes::ROOK), to_make.get_dest_square() + 1)];
-            midgame_scores[static_cast<int>(side)] -= PieceSquareTables::get_psqt_score<false>(Piece(side, PieceTypes::ROOK), to_make.get_dest_square() + 1);
-            endgame_scores[static_cast<int>(side)] -= PieceSquareTables::get_psqt_score<true>(Piece(side, PieceTypes::ROOK), to_make.get_dest_square() + 1);
+            clear_bit(this->bbs[bb_idx<ROOK> + static_cast<int>(side)], to_make.get_dest_square() + 1);
+            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, ROOK), to_make.get_dest_square() + 1)];
+            mg_scores[static_cast<int>(side)] -= get_psqt_score<false>(Piece(side, ROOK), to_make.get_dest_square() + 1);
+            eg_scores[static_cast<int>(side)] -= get_psqt_score<true>(Piece(side, ROOK), to_make.get_dest_square() + 1);
 
 
-            set_bit(this->bitboards[bitboard_offset<PieceTypes::ROOK> + static_cast<int>(side)], to_make.get_dest_square() - 1);
-            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, PieceTypes::ROOK), to_make.get_dest_square() - 1)];
-            midgame_scores[static_cast<int>(side)] += PieceSquareTables::get_psqt_score<false>(Piece(side, PieceTypes::ROOK), to_make.get_dest_square() - 1);
-            endgame_scores[static_cast<int>(side)] += PieceSquareTables::get_psqt_score<true>(Piece(side, PieceTypes::ROOK), to_make.get_dest_square() - 1);
+            set_bit(this->bbs[bb_idx<ROOK> + static_cast<int>(side)], to_make.get_dest_square() - 1);
+            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, ROOK), to_make.get_dest_square() - 1)];
+            mg_scores[static_cast<int>(side)] += get_psqt_score<false>(Piece(side, ROOK), to_make.get_dest_square() - 1);
+            eg_scores[static_cast<int>(side)] += get_psqt_score<true>(Piece(side, ROOK), to_make.get_dest_square() - 1);
         }
         if (to_make.get_move_flags() == MoveFlags::QUEENSIDE_CASTLE) {
             this->pieces[to_make.get_dest_square() + 1] = this->pieces[to_make.get_dest_square() - 2];
             this->pieces[to_make.get_dest_square() - 2] = 0;
 
-            clear_bit(this->bitboards[bitboard_offset<PieceTypes::ROOK> + static_cast<int>(side)], to_make.get_dest_square() - 2);
-            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, PieceTypes::ROOK), to_make.get_dest_square() - 2)];
-            midgame_scores[static_cast<int>(side)] -= PieceSquareTables::get_psqt_score<false>(Piece(side, PieceTypes::ROOK), to_make.get_dest_square() - 2);
-            endgame_scores[static_cast<int>(side)] -= PieceSquareTables::get_psqt_score<true>(Piece(side, PieceTypes::ROOK), to_make.get_dest_square() - 2);
+            clear_bit(this->bbs[bb_idx<ROOK> + static_cast<int>(side)], to_make.get_dest_square() - 2);
+            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, ROOK), to_make.get_dest_square() - 2)];
+            mg_scores[static_cast<int>(side)] -= get_psqt_score<false>(Piece(side, ROOK), to_make.get_dest_square() - 2);
+            eg_scores[static_cast<int>(side)] -= get_psqt_score<true>(Piece(side, ROOK), to_make.get_dest_square() - 2);
 
-            set_bit(this->bitboards[bitboard_offset<PieceTypes::ROOK> + static_cast<int>(side)], to_make.get_dest_square() + 1);
-            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, PieceTypes::ROOK), to_make.get_dest_square() + 1)];
-            midgame_scores[static_cast<int>(side)] += PieceSquareTables::get_psqt_score<false>(Piece(side, PieceTypes::ROOK), to_make.get_dest_square() + 1);
-            endgame_scores[static_cast<int>(side)] += PieceSquareTables::get_psqt_score<true>(Piece(side, PieceTypes::ROOK), to_make.get_dest_square() + 1);
+            set_bit(this->bbs[bb_idx<ROOK> + static_cast<int>(side)], to_make.get_dest_square() + 1);
+            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, ROOK), to_make.get_dest_square() + 1)];
+            mg_scores[static_cast<int>(side)] += get_psqt_score<false>(Piece(side, ROOK), to_make.get_dest_square() + 1);
+            eg_scores[static_cast<int>(side)] += get_psqt_score<true>(Piece(side, ROOK), to_make.get_dest_square() + 1);
         }
 
-        if (moved.get_type() == PieceTypes::KING) {
+        if (moved.get_type() == KING) {
             set_kingside_castling(side, false);
             set_queenside_castling(side, false);
         }
@@ -361,133 +364,135 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
         }
     }
     fullmove_counter += static_cast<int>(side_to_move);
-    side_to_move = ENEMY_SIDE(side_to_move);
+    side_to_move = enemy_side(side_to_move);
     zobrist_key ^= ZobristKeys::SideToMove;
     recompute_blockers_and_checkers(side_to_move);
 }
 
 void ChessBoard::unmake_move(MoveHistory& move_history) {
-    const auto previous_move_info = move_history.pop_move();
-    halfmove_clock = previous_move_info.get_halfmove_clock();
-    Piece moved = pieces[previous_move_info.get_move().get_dest_square()];
-    const Side moved_piece_side = moved.get_side();
-    if (!previous_move_info.get_move().is_null_move()) {
-        clear_bit(this->bitboards[moved.to_bitboard_idx()], previous_move_info.get_move().get_dest_square());
-        zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, previous_move_info.get_move().get_dest_square())];
-        midgame_scores[static_cast<int>(moved_piece_side)] -= PieceSquareTables::get_psqt_score<false>(moved, previous_move_info.get_move().get_dest_square());
-        endgame_scores[static_cast<int>(moved_piece_side)] -= PieceSquareTables::get_psqt_score<true>(moved, previous_move_info.get_move().get_dest_square());
+    const auto unmake_info = move_history.pop_move();
+    halfmove_clock = unmake_info.get_halfmove_clock();
+    Piece moved = pieces[unmake_info.get_move().get_dest_square()];
+    const Side moved_side = moved.get_side();
+    if (!unmake_info.get_move().is_null_move()) {
+        clear_bit(this->bbs[moved.to_bitboard_idx()], unmake_info.get_move().get_dest_square());
+        zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, unmake_info.get_move().get_dest_square())];
+        mg_scores[static_cast<int>(moved_side)] -= get_psqt_score<false>(moved, unmake_info.get_move().get_dest_square());
+        eg_scores[static_cast<int>(moved_side)] -= get_psqt_score<true>(moved, unmake_info.get_move().get_dest_square());
         // this unsets the target piece
-        pieces[previous_move_info.get_move().get_dest_square()] = previous_move_info.get_piece();
+        pieces[unmake_info.get_move().get_dest_square()] = unmake_info.get_piece();
 
-        if (static_cast<int>(previous_move_info.get_move().get_move_flags()) >= 8) {
+        if (static_cast<int>(unmake_info.get_move().get_move_flags()) >= 8) {
             // if it's a promotion
-            Piece new_piece = Piece(moved.get_side(), PieceTypes::PAWN);
-            pieces[previous_move_info.get_move().get_src_square()] = new_piece;
-            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(new_piece, previous_move_info.get_move().get_src_square())];
-            set_bit(this->bitboards[new_piece.to_bitboard_idx()], previous_move_info.get_move().get_src_square());
-            midgame_scores[static_cast<int>(moved_piece_side)] += PieceSquareTables::get_psqt_score<false>(new_piece, previous_move_info.get_move().get_src_square());
-            endgame_scores[static_cast<int>(moved_piece_side)] += PieceSquareTables::get_psqt_score<true>(new_piece, previous_move_info.get_move().get_src_square());
+            Piece new_piece = Piece(moved.get_side(), PAWN);
+            pieces[unmake_info.get_move().get_src_square()] = new_piece;
+            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(new_piece, unmake_info.get_move().get_src_square())];
+            set_bit(this->bbs[new_piece.to_bitboard_idx()], unmake_info.get_move().get_src_square());
+            mg_scores[static_cast<int>(moved_side)] += get_psqt_score<false>(new_piece, unmake_info.get_move().get_src_square());
+            eg_scores[static_cast<int>(moved_side)] += get_psqt_score<true>(new_piece, unmake_info.get_move().get_src_square());
 
-            midgame_scores[static_cast<int>(moved_piece_side)] -= (PieceSquareTables::MidgameScores[static_cast<int>(moved.get_type()) - 1] - PieceSquareTables::MidgameScores[static_cast<int>(PieceTypes::PAWN) - 1]);
-            endgame_scores[static_cast<int>(moved_piece_side)] -= (PieceSquareTables::EndgameScores[static_cast<int>(moved.get_type()) - 1] - PieceSquareTables::EndgameScores[static_cast<int>(PieceTypes::PAWN) - 1]);
+            mg_scores[static_cast<int>(moved_side)] -= (MidgameScores[static_cast<int>(moved.get_type()) - 1] 
+                                                       - MidgameScores[static_cast<int>(PAWN) - 1]);
+            eg_scores[static_cast<int>(moved_side)] -= (EndgameScores[static_cast<int>(moved.get_type()) - 1]
+                                                       - EndgameScores[static_cast<int>(PAWN) - 1]);
 
-            midgame_phase -= MidgamePhaseArray[static_cast<int>(moved.get_type()) - 1];
+            mg_phase -= mg_phase_vals[static_cast<int>(moved.get_type()) - 1];
         } else {
-            pieces[previous_move_info.get_move().get_src_square()] = moved;
-            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, previous_move_info.get_move().get_src_square())];
-            set_bit(this->bitboards[moved.to_bitboard_idx()], previous_move_info.get_move().get_src_square());
-            midgame_scores[static_cast<int>(moved_piece_side)] += PieceSquareTables::get_psqt_score<false>(moved, previous_move_info.get_move().get_src_square());
-            endgame_scores[static_cast<int>(moved_piece_side)] += PieceSquareTables::get_psqt_score<true>(moved, previous_move_info.get_move().get_src_square());
+            pieces[unmake_info.get_move().get_src_square()] = moved;
+            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, unmake_info.get_move().get_src_square())];
+            set_bit(this->bbs[moved.to_bitboard_idx()], unmake_info.get_move().get_src_square());
+            mg_scores[static_cast<int>(moved_side)] += get_psqt_score<false>(moved, unmake_info.get_move().get_src_square());
+            eg_scores[static_cast<int>(moved_side)] += get_psqt_score<true>(moved, unmake_info.get_move().get_src_square());
         }
 
-        if (previous_move_info.get_move().is_capture()) {
-            if (previous_move_info.get_move().get_move_flags() != MoveFlags::EN_PASSANT_CAPTURE) {
+        if (unmake_info.get_move().is_capture()) {
+            if (unmake_info.get_move().get_move_flags() != MoveFlags::EN_PASSANT_CAPTURE) {
                 // if it is _not_ an ep capture
-                set_bit(this->bitboards[previous_move_info.get_piece().to_bitboard_idx()], previous_move_info.get_move().get_dest_square());
+                set_bit(this->bbs[unmake_info.get_piece().to_bitboard_idx()], unmake_info.get_move().get_dest_square());
                 zobrist_key ^=
-                    ZobristKeys::PositionKeys[calculate_zobrist_key(previous_move_info.get_piece(), previous_move_info.get_move().get_dest_square())];
-                midgame_scores[static_cast<int>(ENEMY_SIDE(moved_piece_side))] += PieceSquareTables::get_psqt_score<false>(previous_move_info.get_piece(), previous_move_info.get_move().get_dest_square());
-                endgame_scores[static_cast<int>(ENEMY_SIDE(moved_piece_side))] += PieceSquareTables::get_psqt_score<true>(previous_move_info.get_piece(), previous_move_info.get_move().get_dest_square());
+                    ZobristKeys::PositionKeys[calculate_zobrist_key(unmake_info.get_piece(), unmake_info.get_move().get_dest_square())];
+                mg_scores[static_cast<int>(enemy_side(moved_side))] += get_psqt_score<false>(unmake_info.get_piece(), unmake_info.get_move().get_dest_square());
+                eg_scores[static_cast<int>(enemy_side(moved_side))] += get_psqt_score<true>(unmake_info.get_piece(), unmake_info.get_move().get_dest_square());
 
-                midgame_scores[static_cast<int>(ENEMY_SIDE(moved_piece_side))] += PieceSquareTables::MidgameScores[static_cast<int>(previous_move_info.get_piece().get_type()) - 1];
-                endgame_scores[static_cast<int>(ENEMY_SIDE(moved_piece_side))] += PieceSquareTables::EndgameScores[static_cast<int>(previous_move_info.get_piece().get_type()) - 1];
+                mg_scores[static_cast<int>(enemy_side(moved_side))] += MidgameScores[static_cast<int>(unmake_info.get_piece().get_type()) - 1];
+                eg_scores[static_cast<int>(enemy_side(moved_side))] += EndgameScores[static_cast<int>(unmake_info.get_piece().get_type()) - 1];
 
-                midgame_phase += MidgamePhaseArray[static_cast<int>(previous_move_info.get_piece().get_type()) - 1];
+                mg_phase += mg_phase_vals[static_cast<int>(unmake_info.get_piece().get_type()) - 1];
             } else {
-                const Side enemy_side = ENEMY_SIDE(moved_piece_side);
-                const int enemy_pawn_idx = previous_move_info.get_move().get_dest_square() - 8 + (16 * static_cast<int>(moved_piece_side));
-                this->pieces[enemy_pawn_idx] = Piece(enemy_side, PieceTypes::PAWN);
+                const Side enemy = enemy_side(moved_side);
+                const int enemy_pawn_idx = unmake_info.get_move().get_dest_square() - 8 + (16 * static_cast<int>(moved_side));
+                this->pieces[enemy_pawn_idx] = Piece(enemy, PAWN);
                 zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(this->pieces[enemy_pawn_idx], enemy_pawn_idx)];
-                set_bit(this->bitboards[bitboard_offset<PieceTypes::PAWN> + static_cast<int>(enemy_side)], enemy_pawn_idx);
-                midgame_scores[static_cast<int>(ENEMY_SIDE(moved_piece_side))] += PieceSquareTables::get_psqt_score<false>(Piece(ENEMY_SIDE(moved_piece_side), PieceTypes::PAWN), enemy_pawn_idx);
-                endgame_scores[static_cast<int>(ENEMY_SIDE(moved_piece_side))] += PieceSquareTables::get_psqt_score<true>(Piece(ENEMY_SIDE(moved_piece_side), PieceTypes::PAWN), enemy_pawn_idx);
+                set_bit(this->bbs[bb_idx<PAWN> + static_cast<int>(enemy)], enemy_pawn_idx);
+                mg_scores[static_cast<int>(enemy_side(moved_side))] += get_psqt_score<false>(Piece(enemy_side(moved_side), PAWN), enemy_pawn_idx);
+                eg_scores[static_cast<int>(enemy_side(moved_side))] += get_psqt_score<true>(Piece(enemy_side(moved_side), PAWN), enemy_pawn_idx);
 
-                midgame_scores[static_cast<int>(ENEMY_SIDE(moved_piece_side))] += PieceSquareTables::MidgameScores[static_cast<int>(PieceTypes::PAWN) - 1];
-                endgame_scores[static_cast<int>(ENEMY_SIDE(moved_piece_side))] += PieceSquareTables::EndgameScores[static_cast<int>(PieceTypes::PAWN) - 1];
+                mg_scores[static_cast<int>(enemy_side(moved_side))] += MidgameScores[static_cast<int>(PAWN) - 1];
+                eg_scores[static_cast<int>(enemy_side(moved_side))] += EndgameScores[static_cast<int>(PAWN) - 1];
             }
         }
 
-        if (previous_move_info.get_move().get_move_flags() == MoveFlags::KINGSIDE_CASTLE) {
+        if (unmake_info.get_move().get_move_flags() == MoveFlags::KINGSIDE_CASTLE) {
             // We need to unmove the rook
-            const int origin_square = previous_move_info.get_move().get_dest_square();
+            const int origin = unmake_info.get_move().get_dest_square();
 
-            this->pieces[origin_square - 1] = 0;
-            clear_bit(this->bitboards[bitboard_offset<PieceTypes::ROOK> + static_cast<int>(moved_piece_side)], origin_square - 1);
-            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(moved_piece_side, PieceTypes::ROOK), origin_square - 1)];
-            midgame_scores[static_cast<int>(moved_piece_side)] -= PieceSquareTables::get_psqt_score<false>(Piece(moved_piece_side, PieceTypes::ROOK), origin_square - 1);
-            endgame_scores[static_cast<int>(moved_piece_side)] -= PieceSquareTables::get_psqt_score<true>(Piece(moved_piece_side, PieceTypes::ROOK), origin_square - 1);
+            this->pieces[origin - 1] = 0;
+            clear_bit(this->bbs[bb_idx<ROOK> + static_cast<int>(moved_side)], origin - 1);
+            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(moved_side, ROOK), origin - 1)];
+            mg_scores[static_cast<int>(moved_side)] -= get_psqt_score<false>(Piece(moved_side, ROOK), origin - 1);
+            eg_scores[static_cast<int>(moved_side)] -= get_psqt_score<true>(Piece(moved_side, ROOK), origin - 1);
 
-            this->pieces[origin_square + 1] = Piece(moved_piece_side, PieceTypes::ROOK);
-            set_bit(this->bitboards[bitboard_offset<PieceTypes::ROOK> + static_cast<int>(moved_piece_side)], origin_square + 1);
-            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(moved_piece_side, PieceTypes::ROOK), origin_square + 1)];
-            midgame_scores[static_cast<int>(moved_piece_side)] += PieceSquareTables::get_psqt_score<false>(Piece(moved_piece_side, PieceTypes::ROOK), origin_square + 1);
-            endgame_scores[static_cast<int>(moved_piece_side)] += PieceSquareTables::get_psqt_score<true>(Piece(moved_piece_side, PieceTypes::ROOK), origin_square + 1);
+            this->pieces[origin + 1] = Piece(moved_side, ROOK);
+            set_bit(this->bbs[bb_idx<ROOK> + static_cast<int>(moved_side)], origin + 1);
+            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(moved_side, ROOK), origin + 1)];
+            mg_scores[static_cast<int>(moved_side)] += get_psqt_score<false>(Piece(moved_side, ROOK), origin + 1);
+            eg_scores[static_cast<int>(moved_side)] += get_psqt_score<true>(Piece(moved_side, ROOK), origin + 1);
 
-        } else if (previous_move_info.get_move().get_move_flags() == MoveFlags::QUEENSIDE_CASTLE) {
-            const int origin_square = previous_move_info.get_move().get_dest_square();
+        } else if (unmake_info.get_move().get_move_flags() == MoveFlags::QUEENSIDE_CASTLE) {
+            const int origin = unmake_info.get_move().get_dest_square();
 
-            this->pieces[origin_square + 1] = 0;
-            clear_bit(this->bitboards[bitboard_offset<PieceTypes::ROOK> + static_cast<int>(moved_piece_side)], origin_square + 1);
-            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(moved_piece_side, PieceTypes::ROOK), origin_square + 1)];
-            midgame_scores[static_cast<int>(moved_piece_side)] -= PieceSquareTables::get_psqt_score<false>(Piece(moved_piece_side, PieceTypes::ROOK), origin_square + 1);
-            endgame_scores[static_cast<int>(moved_piece_side)] -= PieceSquareTables::get_psqt_score<true>(Piece(moved_piece_side, PieceTypes::ROOK), origin_square + 1);
+            this->pieces[origin + 1] = 0;
+            clear_bit(this->bbs[bb_idx<ROOK> + static_cast<int>(moved_side)], origin + 1);
+            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(moved_side, ROOK), origin + 1)];
+            mg_scores[static_cast<int>(moved_side)] -= get_psqt_score<false>(Piece(moved_side, ROOK), origin + 1);
+            eg_scores[static_cast<int>(moved_side)] -= get_psqt_score<true>(Piece(moved_side, ROOK), origin + 1);
 
-            this->pieces[origin_square - 2] = Piece(moved_piece_side, PieceTypes::ROOK);
-            set_bit(this->bitboards[bitboard_offset<PieceTypes::ROOK> + static_cast<int>(moved_piece_side)], origin_square - 2);
-            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(moved_piece_side, PieceTypes::ROOK), origin_square - 2)];
-            midgame_scores[static_cast<int>(moved_piece_side)] += PieceSquareTables::get_psqt_score<false>(Piece(moved_piece_side, PieceTypes::ROOK), origin_square - 2);
-            endgame_scores[static_cast<int>(moved_piece_side)] += PieceSquareTables::get_psqt_score<true>(Piece(moved_piece_side, PieceTypes::ROOK), origin_square - 2);
+            this->pieces[origin - 2] = Piece(moved_side, ROOK);
+            set_bit(this->bbs[bb_idx<ROOK> + static_cast<int>(moved_side)], origin - 2);
+            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(moved_side, ROOK), origin - 2)];
+            mg_scores[static_cast<int>(moved_side)] += get_psqt_score<false>(Piece(moved_side, ROOK), origin - 2);
+            eg_scores[static_cast<int>(moved_side)] += get_psqt_score<true>(Piece(moved_side, ROOK), origin - 2);
         }
     }
 
-    set_en_passant_file(previous_move_info.get_previous_en_passant_file());
-    set_kingside_castling(Side::WHITE, previous_move_info.get_white_kingside_castle());
-    set_queenside_castling(Side::WHITE, previous_move_info.get_white_queenside_castle());
-    set_kingside_castling(Side::BLACK, previous_move_info.get_black_kingside_castle());
-    set_queenside_castling(Side::BLACK, previous_move_info.get_black_queenside_castle());
+    set_en_passant_file(unmake_info.get_previous_en_passant_file());
+    set_kingside_castling(Side::WHITE, unmake_info.get_white_kingside_castle());
+    set_queenside_castling(Side::WHITE, unmake_info.get_white_queenside_castle());
+    set_kingside_castling(Side::BLACK, unmake_info.get_black_kingside_castle());
+    set_queenside_castling(Side::BLACK, unmake_info.get_black_queenside_castle());
 
-    side_to_move = ENEMY_SIDE(side_to_move);
+    side_to_move = enemy_side(side_to_move);
     fullmove_counter -= static_cast<int>(side_to_move);
     zobrist_key ^= ZobristKeys::SideToMove;
     recompute_blockers_and_checkers(side_to_move);
 }
 
 void ChessBoard::recompute_blockers_and_checkers(const Side side) {
-    const int king_idx = get_lsb(this->get_king_occupancy(side));
-    const Side enemy_side = ENEMY_SIDE(side);
+    const int king_idx = get_lsb(this->kings(side));
+    const Side enemy = enemy_side(side);
     checkers[static_cast<int>(side)] = MoveGenerator::get_checkers(*this, side);
 
     pinned_pieces[static_cast<int>(side)] = 0;
 
     Bitboard potential_checks =
-        ((MoveGenerator::generate_bishop_movemask(0, king_idx) & (get_bishop_occupancy(enemy_side) | get_queen_occupancy(enemy_side))) |
-         (MoveGenerator::generate_rook_movemask(0, king_idx) & (get_rook_occupancy(enemy_side) | get_queen_occupancy(enemy_side)))) ^
+        ((MoveGenerator::generate_bishop_mm(0, king_idx) & (bishops(enemy) | queens(enemy))) |
+         (MoveGenerator::generate_rook_mm(0, king_idx) & (rooks(enemy) | queens(enemy)))) ^
         checkers[static_cast<int>(side)];
-    const Bitboard check_blockers = get_occupancy() ^ potential_checks;
+    const Bitboard check_blockers = occupancy() ^ potential_checks;
     // don't evaluate ones where we already check the king
 
     while (potential_checks) {
-        const Bitboard line_to_king = MagicNumbers::ConnectingSquares[(64 * king_idx) + pop_min_bit(potential_checks)];
+        const Bitboard line_to_king = MagicNumbers::ConnectingSquares[(64 * king_idx) + pop_lsb(potential_checks)];
         if (std::popcount(line_to_king & check_blockers) <= 1) {
             pinned_pieces[static_cast<int>(side)] |= line_to_king & check_blockers;
         }
@@ -522,7 +527,7 @@ std::optional<Move> ChessBoard::generate_move_from_string(const std::string& s) 
     int end_square = get_position(s.at(3) - 49, s.at(2) - 97);
     // Side move_side = this->get_side_to_move();
     PieceTypes moving_type = this->get_piece(start_square).get_type();
-    if (moving_type == PieceTypes::PAWN && (std::abs(start_square - end_square) == 7 || std::abs(start_square - end_square) == 9)) {
+    if (moving_type == PAWN && (std::abs(start_square - end_square) == 7 || std::abs(start_square - end_square) == 9)) {
         // so a capture
         if (this->get_piece(end_square) == 0) {
             // if there's no piece at the target square it must be en passant
@@ -531,10 +536,10 @@ std::optional<Move> ChessBoard::generate_move_from_string(const std::string& s) 
             m = MoveFlags(static_cast<int>(m) | static_cast<int>(MoveFlags::CAPTURE));
             // We or, not set, in case the promotion flags were set earlier
         }
-    } else if (moving_type == PieceTypes::PAWN && (std::abs(start_square - end_square) == 16)) {
+    } else if (moving_type == PAWN && (std::abs(start_square - end_square) == 16)) {
         // A 16-space gap is a double pawn push
         m = MoveFlags::DOUBLE_PAWN_PUSH;
-    } else if (moving_type == PieceTypes::KING) {
+    } else if (moving_type == KING) {
         if (start_square - end_square == 2) {
             // this is a queenside castle
             m = MoveFlags::QUEENSIDE_CASTLE;
@@ -556,7 +561,7 @@ bool operator==(const ChessBoard& lhs, const ChessBoard& rhs) {
     }
 
     for (int i = 0; i < 12; i++) {
-        is_equal &= (lhs.get_bitboard(i) == rhs.get_bitboard(i));
+        is_equal &= (lhs.get_bb(i) == rhs.get_bb(i));
         // this just makes it a bit nicer to use
     }
 

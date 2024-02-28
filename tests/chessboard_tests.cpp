@@ -10,29 +10,29 @@ TEST(ChessBoardTests, SetFenStartPos) {
     ChessBoard c;
     ASSERT_TRUE(c.set_from_fen("startpos").has_value());
 
-    ASSERT_EQ(c.get_occupancy(), (uint64_t) 0xFFFF00000000FFFF);
-    ASSERT_EQ(c.get_pawn_occupancy(), (uint64_t) 0x00FF00000000FF00);
-    ASSERT_EQ(c.get_rook_occupancy(), (uint64_t) 0x8100000000000081);
-    ASSERT_EQ(c.get_knight_occupancy(), (uint64_t) 0x4200000000000042);
-    ASSERT_EQ(c.get_bishop_occupancy(), (uint64_t) 0x2400000000000024);
-    ASSERT_EQ(c.get_queen_occupancy(), (uint64_t) 0x0800000000000008);
-    ASSERT_EQ(c.get_king_occupancy(), (uint64_t) 0x1000000000000010);
+    ASSERT_EQ(c.occupancy(), (uint64_t) 0xFFFF00000000FFFF);
+    ASSERT_EQ(c.pawns(), (uint64_t) 0x00FF00000000FF00);
+    ASSERT_EQ(c.rooks(), (uint64_t) 0x8100000000000081);
+    ASSERT_EQ(c.knights(), (uint64_t) 0x4200000000000042);
+    ASSERT_EQ(c.bishops(), (uint64_t) 0x2400000000000024);
+    ASSERT_EQ(c.queens(), (uint64_t) 0x0800000000000008);
+    ASSERT_EQ(c.kings(), (uint64_t) 0x1000000000000010);
 
-    ASSERT_EQ(c.get_side_occupancy(Side::WHITE), (uint64_t) 0x000000000000FFFF);
-    ASSERT_EQ(c.get_pawn_occupancy(Side::WHITE), (uint64_t) 0x000000000000FF00);
-    ASSERT_EQ(c.get_rook_occupancy(Side::WHITE), (uint64_t) 0x0000000000000081);
-    ASSERT_EQ(c.get_knight_occupancy(Side::WHITE), (uint64_t) 0x0000000000000042);
-    ASSERT_EQ(c.get_bishop_occupancy(Side::WHITE), (uint64_t) 0x0000000000000024);
-    ASSERT_EQ(c.get_queen_occupancy(Side::WHITE), (uint64_t) 0x0000000000000008);
-    ASSERT_EQ(c.get_king_occupancy(Side::WHITE), (uint64_t) 0x0000000000000010);
+    ASSERT_EQ(c.occupancy(Side::WHITE), (uint64_t) 0x000000000000FFFF);
+    ASSERT_EQ(c.get_pawns(Side::WHITE), (uint64_t) 0x000000000000FF00);
+    ASSERT_EQ(c.rooks(Side::WHITE), (uint64_t) 0x0000000000000081);
+    ASSERT_EQ(c.knights(Side::WHITE), (uint64_t) 0x0000000000000042);
+    ASSERT_EQ(c.bishops(Side::WHITE), (uint64_t) 0x0000000000000024);
+    ASSERT_EQ(c.queens(Side::WHITE), (uint64_t) 0x0000000000000008);
+    ASSERT_EQ(c.kings(Side::WHITE), (uint64_t) 0x0000000000000010);
 
-    ASSERT_EQ(c.get_side_occupancy(Side::BLACK), (uint64_t) 0xFFFF000000000000);
-    ASSERT_EQ(c.get_pawn_occupancy(Side::BLACK), (uint64_t) 0x00FF000000000000);
-    ASSERT_EQ(c.get_rook_occupancy(Side::BLACK), (uint64_t) 0x8100000000000000);
-    ASSERT_EQ(c.get_knight_occupancy(Side::BLACK), (uint64_t) 0x4200000000000000);
-    ASSERT_EQ(c.get_bishop_occupancy(Side::BLACK), (uint64_t) 0x2400000000000000);
-    ASSERT_EQ(c.get_queen_occupancy(Side::BLACK), (uint64_t) 0x0800000000000000);
-    ASSERT_EQ(c.get_king_occupancy(Side::BLACK), (uint64_t) 0x1000000000000000);
+    ASSERT_EQ(c.occupancy(Side::BLACK), (uint64_t) 0xFFFF000000000000);
+    ASSERT_EQ(c.get_pawns(Side::BLACK), (uint64_t) 0x00FF000000000000);
+    ASSERT_EQ(c.rooks(Side::BLACK), (uint64_t) 0x8100000000000000);
+    ASSERT_EQ(c.knights(Side::BLACK), (uint64_t) 0x4200000000000000);
+    ASSERT_EQ(c.bishops(Side::BLACK), (uint64_t) 0x2400000000000000);
+    ASSERT_EQ(c.queens(Side::BLACK), (uint64_t) 0x0800000000000000);
+    ASSERT_EQ(c.kings(Side::BLACK), (uint64_t) 0x1000000000000000);
 
     ASSERT_EQ(c.get_side_to_move(), Side::WHITE);
     ASSERT_EQ(c.get_en_passant_file(), 9);
@@ -42,29 +42,29 @@ TEST(ChessBoardTests, SetFenExplicitStartPos) {
     ChessBoard c;
     ASSERT_TRUE(c.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"));
 
-    ASSERT_EQ(c.get_occupancy(), (uint64_t) 0xFFFF00000000FFFF);
-    ASSERT_EQ(c.get_pawn_occupancy(), (uint64_t) 0x00FF00000000FF00);
-    ASSERT_EQ(c.get_rook_occupancy(), (uint64_t) 0x8100000000000081);
-    ASSERT_EQ(c.get_knight_occupancy(), (uint64_t) 0x4200000000000042);
-    ASSERT_EQ(c.get_bishop_occupancy(), (uint64_t) 0x2400000000000024);
-    ASSERT_EQ(c.get_queen_occupancy(), (uint64_t) 0x0800000000000008);
-    ASSERT_EQ(c.get_king_occupancy(), (uint64_t) 0x1000000000000010);
+    ASSERT_EQ(c.occupancy(), (uint64_t) 0xFFFF00000000FFFF);
+    ASSERT_EQ(c.pawns(), (uint64_t) 0x00FF00000000FF00);
+    ASSERT_EQ(c.rooks(), (uint64_t) 0x8100000000000081);
+    ASSERT_EQ(c.knights(), (uint64_t) 0x4200000000000042);
+    ASSERT_EQ(c.bishops(), (uint64_t) 0x2400000000000024);
+    ASSERT_EQ(c.queens(), (uint64_t) 0x0800000000000008);
+    ASSERT_EQ(c.kings(), (uint64_t) 0x1000000000000010);
 
-    ASSERT_EQ(c.get_side_occupancy(Side::WHITE), (uint64_t) 0x000000000000FFFF);
-    ASSERT_EQ(c.get_pawn_occupancy(Side::WHITE), (uint64_t) 0x000000000000FF00);
-    ASSERT_EQ(c.get_rook_occupancy(Side::WHITE), (uint64_t) 0x0000000000000081);
-    ASSERT_EQ(c.get_knight_occupancy(Side::WHITE), (uint64_t) 0x0000000000000042);
-    ASSERT_EQ(c.get_bishop_occupancy(Side::WHITE), (uint64_t) 0x0000000000000024);
-    ASSERT_EQ(c.get_queen_occupancy(Side::WHITE), (uint64_t) 0x0000000000000008);
-    ASSERT_EQ(c.get_king_occupancy(Side::WHITE), (uint64_t) 0x0000000000000010);
+    ASSERT_EQ(c.occupancy(Side::WHITE), (uint64_t) 0x000000000000FFFF);
+    ASSERT_EQ(c.get_pawns(Side::WHITE), (uint64_t) 0x000000000000FF00);
+    ASSERT_EQ(c.rooks(Side::WHITE), (uint64_t) 0x0000000000000081);
+    ASSERT_EQ(c.knights(Side::WHITE), (uint64_t) 0x0000000000000042);
+    ASSERT_EQ(c.bishops(Side::WHITE), (uint64_t) 0x0000000000000024);
+    ASSERT_EQ(c.queens(Side::WHITE), (uint64_t) 0x0000000000000008);
+    ASSERT_EQ(c.kings(Side::WHITE), (uint64_t) 0x0000000000000010);
 
-    ASSERT_EQ(c.get_side_occupancy(Side::BLACK), (uint64_t) 0xFFFF000000000000);
-    ASSERT_EQ(c.get_pawn_occupancy(Side::BLACK), (uint64_t) 0x00FF000000000000);
-    ASSERT_EQ(c.get_rook_occupancy(Side::BLACK), (uint64_t) 0x8100000000000000);
-    ASSERT_EQ(c.get_knight_occupancy(Side::BLACK), (uint64_t) 0x4200000000000000);
-    ASSERT_EQ(c.get_bishop_occupancy(Side::BLACK), (uint64_t) 0x2400000000000000);
-    ASSERT_EQ(c.get_queen_occupancy(Side::BLACK), (uint64_t) 0x0800000000000000);
-    ASSERT_EQ(c.get_king_occupancy(Side::BLACK), (uint64_t) 0x1000000000000000);
+    ASSERT_EQ(c.occupancy(Side::BLACK), (uint64_t) 0xFFFF000000000000);
+    ASSERT_EQ(c.get_pawns(Side::BLACK), (uint64_t) 0x00FF000000000000);
+    ASSERT_EQ(c.rooks(Side::BLACK), (uint64_t) 0x8100000000000000);
+    ASSERT_EQ(c.knights(Side::BLACK), (uint64_t) 0x4200000000000000);
+    ASSERT_EQ(c.bishops(Side::BLACK), (uint64_t) 0x2400000000000000);
+    ASSERT_EQ(c.queens(Side::BLACK), (uint64_t) 0x0800000000000000);
+    ASSERT_EQ(c.kings(Side::BLACK), (uint64_t) 0x1000000000000000);
 
     ASSERT_EQ(c.get_side_to_move(), Side::WHITE);
     ASSERT_EQ(c.get_en_passant_file(), 9);
@@ -74,37 +74,37 @@ TEST(ChessBoardTests, SetFenExplicitStartPosShort) {
     ChessBoard c;
     ASSERT_FALSE(c.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR "));
 
-    ASSERT_EQ(c.get_occupancy(), (uint64_t) 0xFFFF00000000FFFF);
-    ASSERT_EQ(c.get_pawn_occupancy(), (uint64_t) 0x00FF00000000FF00);
-    ASSERT_EQ(c.get_rook_occupancy(), (uint64_t) 0x8100000000000081);
-    ASSERT_EQ(c.get_knight_occupancy(), (uint64_t) 0x4200000000000042);
-    ASSERT_EQ(c.get_bishop_occupancy(), (uint64_t) 0x2400000000000024);
-    ASSERT_EQ(c.get_queen_occupancy(), (uint64_t) 0x0800000000000008);
-    ASSERT_EQ(c.get_king_occupancy(), (uint64_t) 0x1000000000000010);
+    ASSERT_EQ(c.occupancy(), (uint64_t) 0xFFFF00000000FFFF);
+    ASSERT_EQ(c.pawns(), (uint64_t) 0x00FF00000000FF00);
+    ASSERT_EQ(c.rooks(), (uint64_t) 0x8100000000000081);
+    ASSERT_EQ(c.knights(), (uint64_t) 0x4200000000000042);
+    ASSERT_EQ(c.bishops(), (uint64_t) 0x2400000000000024);
+    ASSERT_EQ(c.queens(), (uint64_t) 0x0800000000000008);
+    ASSERT_EQ(c.kings(), (uint64_t) 0x1000000000000010);
 
-    ASSERT_EQ(c.get_side_occupancy(Side::WHITE), (uint64_t) 0x000000000000FFFF);
-    ASSERT_EQ(c.get_pawn_occupancy(Side::WHITE), (uint64_t) 0x000000000000FF00);
-    ASSERT_EQ(c.get_rook_occupancy(Side::WHITE), (uint64_t) 0x0000000000000081);
-    ASSERT_EQ(c.get_knight_occupancy(Side::WHITE), (uint64_t) 0x0000000000000042);
-    ASSERT_EQ(c.get_bishop_occupancy(Side::WHITE), (uint64_t) 0x0000000000000024);
-    ASSERT_EQ(c.get_queen_occupancy(Side::WHITE), (uint64_t) 0x0000000000000008);
-    ASSERT_EQ(c.get_king_occupancy(Side::WHITE), (uint64_t) 0x0000000000000010);
+    ASSERT_EQ(c.occupancy(Side::WHITE), (uint64_t) 0x000000000000FFFF);
+    ASSERT_EQ(c.get_pawns(Side::WHITE), (uint64_t) 0x000000000000FF00);
+    ASSERT_EQ(c.rooks(Side::WHITE), (uint64_t) 0x0000000000000081);
+    ASSERT_EQ(c.knights(Side::WHITE), (uint64_t) 0x0000000000000042);
+    ASSERT_EQ(c.bishops(Side::WHITE), (uint64_t) 0x0000000000000024);
+    ASSERT_EQ(c.queens(Side::WHITE), (uint64_t) 0x0000000000000008);
+    ASSERT_EQ(c.kings(Side::WHITE), (uint64_t) 0x0000000000000010);
 
-    ASSERT_EQ(c.get_side_occupancy(Side::BLACK), (uint64_t) 0xFFFF000000000000);
-    ASSERT_EQ(c.get_pawn_occupancy(Side::BLACK), (uint64_t) 0x00FF000000000000);
-    ASSERT_EQ(c.get_rook_occupancy(Side::BLACK), (uint64_t) 0x8100000000000000);
-    ASSERT_EQ(c.get_knight_occupancy(Side::BLACK), (uint64_t) 0x4200000000000000);
-    ASSERT_EQ(c.get_bishop_occupancy(Side::BLACK), (uint64_t) 0x2400000000000000);
-    ASSERT_EQ(c.get_queen_occupancy(Side::BLACK), (uint64_t) 0x0800000000000000);
-    ASSERT_EQ(c.get_king_occupancy(Side::BLACK), (uint64_t) 0x1000000000000000);
+    ASSERT_EQ(c.occupancy(Side::BLACK), (uint64_t) 0xFFFF000000000000);
+    ASSERT_EQ(c.get_pawns(Side::BLACK), (uint64_t) 0x00FF000000000000);
+    ASSERT_EQ(c.rooks(Side::BLACK), (uint64_t) 0x8100000000000000);
+    ASSERT_EQ(c.knights(Side::BLACK), (uint64_t) 0x4200000000000000);
+    ASSERT_EQ(c.bishops(Side::BLACK), (uint64_t) 0x2400000000000000);
+    ASSERT_EQ(c.queens(Side::BLACK), (uint64_t) 0x0800000000000000);
+    ASSERT_EQ(c.kings(Side::BLACK), (uint64_t) 0x1000000000000000);
 }
 
 TEST(ChessBoardTests, TestMakeUnmakeMove) {
     ChessBoard c, o;
     c.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");
     o.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");
-    const auto original_midgame_score = c.get_midgame_score(Side::WHITE);
-    const auto original_endgame_score = c.get_endgame_score(Side::WHITE);
+    const auto original_midgame_score = c.get_mg_score(Side::WHITE);
+    const auto original_endgame_score = c.get_eg_score(Side::WHITE);
     auto BishopMoves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE);
     MoveHistory h;
     for (size_t j = 0; j < BishopMoves.len(); j++) {
@@ -113,8 +113,8 @@ TEST(ChessBoardTests, TestMakeUnmakeMove) {
         c.make_move(m, h);
         ASSERT_EQ(h.len(), 1);
         c.unmake_move(h);
-        ASSERT_EQ(original_midgame_score, c.get_midgame_score(Side::WHITE)) << "Midgame score mismatch after move " << m.to_string();
-        ASSERT_EQ(original_endgame_score, c.get_endgame_score(Side::WHITE)) << "Endgame score mismatch after move " << m.to_string();
+        ASSERT_EQ(original_midgame_score, c.get_mg_score(Side::WHITE)) << "Midgame score mismatch after move " << m.to_string();
+        ASSERT_EQ(original_endgame_score, c.get_eg_score(Side::WHITE)) << "Endgame score mismatch after move " << m.to_string();
         for (int i = 0; i < 64; i++) {
             ASSERT_EQ(c.get_piece(i).get_value(), o.get_piece(i).get_value())
                 << "Mismatch at piece " << std::to_string(i) << " after move " << m.to_string() << " with flags "
@@ -180,7 +180,7 @@ TEST(ChessBoardTests, TestClearBoard) {
     c.set_from_fen("startpos");
     c.clear_board();
     for (int i = 0; i < 12; i++) {
-        ASSERT_EQ(c.get_bitboard(i), 0);
+        ASSERT_EQ(c.get_bb(i), 0);
     }
     for (int i = 0; i < 64; i++) {
         ASSERT_EQ(c.get_piece(i), Piece(0));
@@ -319,15 +319,15 @@ TEST(ChessBoardTests, TestHalfmoveClock) {
 
     c.set_from_fen("8/4k3/8/6K1/2p5/8/1P6/8 w - - 24 48");
     ASSERT_EQ(c.get_halfmove_clock(), 24);
-    const auto original_midgame_score = c.get_midgame_score(Side::WHITE);
-    const auto original_endgame_score = c.get_endgame_score(Side::WHITE);
+    const auto original_midgame_score = c.get_mg_score(Side::WHITE);
+    const auto original_endgame_score = c.get_eg_score(Side::WHITE);
     c.make_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, 25, 9), m);
     c.make_move(Move(MoveFlags::EN_PASSANT_CAPTURE, 17, 26), m);
     ASSERT_EQ(c.get_halfmove_clock(), 0);
     c.unmake_move(m);
     c.unmake_move(m);
-    ASSERT_EQ(original_midgame_score, c.get_midgame_score(Side::WHITE));
-    ASSERT_EQ(original_endgame_score, c.get_endgame_score(Side::WHITE));
+    ASSERT_EQ(original_midgame_score, c.get_mg_score(Side::WHITE));
+    ASSERT_EQ(original_endgame_score, c.get_eg_score(Side::WHITE));
     ASSERT_EQ(c.get_halfmove_clock(), 24);
     // en passant captures are correctly handled
 
@@ -345,12 +345,12 @@ TEST(ChessBoardTests, TestUnmakeScores) {
     MoveHistory m;
     c.set_from_fen("1r4k1/P7/8/3Pp3/8/1b6/P7/R3K2R w KQ e6 0 1");
     const auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE);
-    const auto mg_score = c.get_midgame_score(Side::WHITE);
-    const auto eg_score = c.get_endgame_score(Side::WHITE);
+    const auto mg_score = c.get_mg_score(Side::WHITE);
+    const auto eg_score = c.get_eg_score(Side::WHITE);
     for (size_t i = 0; i < moves.len(); i++) {
         c.make_move(moves[i].move, m);
         c.unmake_move(m);
-        ASSERT_EQ(c.get_midgame_score(Side::WHITE), mg_score) << "Midgame score mismatch on move " << moves[i].move.to_string();
-        ASSERT_EQ(c.get_endgame_score(Side::WHITE), eg_score) << "Endgame score mismatch on move " << moves[i].move.to_string();
+        ASSERT_EQ(c.get_mg_score(Side::WHITE), mg_score) << "Midgame score mismatch on move " << moves[i].move.to_string();
+        ASSERT_EQ(c.get_eg_score(Side::WHITE), eg_score) << "Endgame score mismatch on move " << moves[i].move.to_string();
     }
 }

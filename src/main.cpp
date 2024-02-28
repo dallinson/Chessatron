@@ -129,7 +129,7 @@ int main(int argc, char** argv) {
     srand(time(NULL));
     SearchHandler s;
 
-    uci_options.insert(std::make_pair("Hash", UCIOption(1, 2048, "16", [](UCIOption& opt){ transposition_table.resize(size_t(opt)); })));
+    uci_options.insert(std::make_pair("Hash", UCIOption(1, 2048, "16", [](UCIOption& opt){ tt.resize(size_t(opt)); })));
     uci_options.insert(std::make_pair("Threads", UCIOption(1, 1, "1", [](UCIOption& opt){ (void) opt; })));
 
     if (argc > 1) {
