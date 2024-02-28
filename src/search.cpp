@@ -9,7 +9,7 @@
 #include "move_generator.hpp"
 #include "move_ordering.hpp"
 
-TranspositionTable transposition_table;
+TranspositionTable tt;
 
 template <bool print_debug> // this could just as easily be done as a parameter but this gives some practice with templates
 uint64_t perft(ChessBoard& c, MoveHistory& m, int depth) {
@@ -99,25 +99,25 @@ bool Search::static_exchange_evaluation(const ChessBoard& board, const Move move
 
     if (balance >= 0) return true;
 
-    const Bitboard bishops = board.get_bishop_occupancy() | board.get_queen_occupancy();
-    const Bitboard rooks = board.get_rook_occupancy() | board.get_queen_occupancy();
+    const Bitboard bishops = board.bishops() | board.queens();
+    const Bitboard rooks = board.rooks() | board.queens();
 
-    Bitboard occupied = board.get_occupancy();
+    Bitboard occupied = board.occupancy();
     occupied ^= bit(move.get_src_square());
     occupied |= bit(move.get_dest_square());
     if (move.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) {
-        const auto ep_target_square = get_position(move.get_src_rank(), move.get_dest_file());
-        occupied ^= bit(ep_target_square);
+        const auto ep_target = get_position(move.get_src_rank(), move.get_dest_file());
+        occupied ^= bit(ep_target);
     }
 
     Bitboard attackers = (MoveGenerator::get_attackers(board, board.get_side_to_move(), move.get_dest_square(), occupied)
-                    | MoveGenerator::get_attackers(board, ENEMY_SIDE(board.get_side_to_move()), move.get_dest_square(), occupied))
+                    | MoveGenerator::get_attackers(board, enemy_side(board.get_side_to_move()), move.get_dest_square(), occupied))
                     & occupied;
     
-    Side moving_side = ENEMY_SIDE(board.get_side_to_move());
+    Side moving_side = enemy_side(board.get_side_to_move());
 
     while (true) {
-        const Bitboard this_side_attackers = attackers & board.get_occupancy(moving_side);
+        const Bitboard this_side_attackers = attackers & board.occupancy(moving_side);
 
         if (this_side_attackers == 0) {
             break;
@@ -126,7 +126,7 @@ bool Search::static_exchange_evaluation(const ChessBoard& board, const Move move
         Bitboard victim_attackers = 0;
 
         for (next_victim = PieceTypes::PAWN; next_victim <= PieceTypes::QUEEN; next_victim = static_cast<PieceTypes>(static_cast<int>(next_victim) + 1)) {
-            victim_attackers = this_side_attackers & board.get_bitboard((2 * (static_cast<int>(next_victim) - 1)) + static_cast<int>(moving_side));
+            victim_attackers = this_side_attackers & board.get_bb((2 * (static_cast<int>(next_victim) - 1)) + static_cast<int>(moving_side));
             if (victim_attackers != 0) {
                 break;
             }
@@ -136,23 +136,23 @@ bool Search::static_exchange_evaluation(const ChessBoard& board, const Move move
 
         if (next_victim == PieceTypes::PAWN || next_victim == PieceTypes::BISHOP || next_victim == PieceTypes::QUEEN) {
             // the pieces that attack diagonally
-            attackers |= MoveGenerator::generate_bishop_movemask(occupied, move.get_dest_square()) & bishops;
+            attackers |= MoveGenerator::generate_bishop_mm(occupied, move.get_dest_square()) & bishops;
         }
 
         if (next_victim == PieceTypes::ROOK || next_victim == PieceTypes::QUEEN) {
             // the pieces that attack orthogonally
-            attackers |= MoveGenerator::generate_rook_movemask(occupied, move.get_dest_square()) & rooks;
+            attackers |= MoveGenerator::generate_rook_mm(occupied, move.get_dest_square()) & rooks;
         }
 
         attackers &= occupied;
 
-        moving_side = ENEMY_SIDE(moving_side);
+        moving_side = enemy_side(moving_side);
 
         balance = -balance - 1 - Search::SEEScores[static_cast<int>(next_victim)];
 
         if (balance >= 0) {
-            if (next_victim == PieceTypes::KING && (attackers & board.get_occupancy(moving_side))) {
-                moving_side = ENEMY_SIDE(moving_side);
+            if (next_victim == PieceTypes::KING && (attackers & board.occupancy(moving_side))) {
+                moving_side = enemy_side(moving_side);
             }
             break;
         }
@@ -162,14 +162,14 @@ bool Search::static_exchange_evaluation(const ChessBoard& board, const Move move
 }
 
 bool Search::detect_insufficient_material(const ChessBoard& board, const Side side) {
-    const Side enemy_side = ENEMY_SIDE(side);
-    if (board.get_occupancy(enemy_side) == board.get_king_occupancy(enemy_side)) {
+    const Side enemy = enemy_side(side);
+    if (board.occupancy(enemy) == board.kings(enemy)) {
         // if the enemy side only has the king
-        const Bitboard pieces = board.get_queen_occupancy(side) | board.get_rook_occupancy(side) | board.get_bishop_occupancy(side) | board.get_knight_occupancy(side) | board.get_pawn_occupancy(side);
+        const Bitboard pieces = board.queens(side) | board.rooks(side) | board.bishops(side) | board.knights(side) | board.get_pawns(side);
         if (pieces == 0) {
             return true;
         }
-        if (pieces == board.get_bishop_occupancy(side) || pieces == board.get_knight_occupancy(side)) {
+        if (pieces == board.bishops(side) || pieces == board.knights(side)) {
             return std::popcount(pieces) == 1;
         }
     }
@@ -187,7 +187,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
     const auto child_cutnode_type = is_pv_node(node_type) ? true : !is_cut_node;
     int extensions = 0;
 
-    const auto tt_entry = transposition_table[board];
+    const auto tt_entry = tt[board];
     if constexpr (!is_pv_node(node_type)) {
         const bool should_cutoff = tt_entry.key() == board.get_zobrist_key() 
                                    && tt_entry.depth() >= depth
@@ -325,7 +325,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
             }
         }
         if (score >= beta) {
-            transposition_table.store(TranspositionTableEntry(best_move, depth, BoundTypes::LOWER_BOUND, score, board.get_zobrist_key()), board);
+            tt.store(TranspositionTableEntry(best_move, depth, BoundTypes::LOWER_BOUND, score, board.get_zobrist_key()), board);
             search_stack[ply].killer_move = move.move;
             for (size_t j = 0; j < evaluated_moves; j++) {
                 if (moves[j].move.is_quiet()) {
@@ -343,7 +343,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
         evaluated_quiets += static_cast<int>(move.move.is_quiet());
     }
     const BoundTypes bound_type = alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND;
-    transposition_table.store(TranspositionTableEntry(best_move, depth, bound_type, best_score, board.get_zobrist_key()), board);
+    tt.store(TranspositionTableEntry(best_move, depth, bound_type, best_score, board.get_zobrist_key()), board);
     return alpha;
 }
 

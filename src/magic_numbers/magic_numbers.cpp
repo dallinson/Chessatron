@@ -21,20 +21,20 @@ consteval std::array<Bitboard, 64 * 64> compute_connecting_squares() {
     std::array<Bitboard, 64 * 64> to_return;
     for (int first_square = 0; first_square < 64; first_square++) {
         for (int second_square = 0; second_square < 64; second_square++) {
-            Bitboard b = idx_to_bitboard(second_square);
+            Bitboard b = idx_to_bb(second_square);
             int rank_diff = get_rank(first_square) - get_rank(second_square);
             int file_diff = get_file(first_square) - get_file(second_square);
 
             if (first_square == second_square) {
-                b = idx_to_bitboard(second_square);
+                b = idx_to_bb(second_square);
             } else if (get_rank(first_square) == get_rank(second_square)) {
                 for (int8_t i = get_file(first_square) - GET_SIGN(file_diff); i != ((int8_t) get_file(second_square)); i -= GET_SIGN(file_diff)) {
                     // use int8_t to satisfy the compiler re loop iteration count
-                    b |= idx_to_bitboard(get_position(get_rank(first_square), i));
+                    b |= idx_to_bb(get_position(get_rank(first_square), i));
                 }
             } else if (get_file(first_square) == get_file(second_square)) {
                 for (int8_t i = get_rank(first_square) - GET_SIGN(rank_diff); i != ((int8_t) get_rank(second_square)); i -= GET_SIGN(rank_diff)) {
-                    b |= idx_to_bitboard(get_position(i, get_file(first_square)));
+                    b |= idx_to_bb(get_position(i, get_file(first_square)));
                 }
             } else {
                 int min_square = MIN(first_square, second_square);
@@ -80,11 +80,11 @@ consteval std::array<Bitboard, 64 * 64> compute_aligned_squares() {
                 b = 0;
             } else if (rank_diff == 0) {
                 for (int i = 0; i < 8; i++) {
-                    b |= idx_to_bitboard(get_position(get_rank(first_square), i));
+                    b |= idx_to_bb(get_position(get_rank(first_square), i));
                 }
             } else if (file_diff == 0) {
                 for (int i = 0; i < 8; i++) {
-                    b |= idx_to_bitboard(get_position(i, get_file(first_square)));
+                    b |= idx_to_bb(get_position(i, get_file(first_square)));
                 }
             } else if (ABS(rank_diff) == ABS(file_diff)) {
                 for (int i = 0; i < 64; i++) {
@@ -112,7 +112,7 @@ consteval std::array<Bitboard, 64> generate_king_moves() {
                     int r_rk = rk + r;
                     int f_fl = fl + f;
                     if (!((r == 0 && f == 0) || r_rk < 0 || f_fl < 0 || r_rk >= 8 || f_fl >= 8)) {
-                        b |= idx_to_bitboard(get_position(r_rk, f_fl));
+                        b |= idx_to_bb(get_position(r_rk, f_fl));
                     }
                 }
             }

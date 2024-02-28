@@ -14,11 +14,11 @@ namespace Evaluation {
 
     template <bool is_endgame>
     constexpr Score get_piece_score(PieceTypes p) { 
-        const auto piece_idx = static_cast<uint8_t>(p) - 1;
+        const auto pc_idx = static_cast<uint8_t>(p) - 1;
         if constexpr (is_endgame) {
-            return PieceSquareTables::EndgameScores[piece_idx];
+            return PieceSquareTables::EndgameScores[pc_idx];
         } else {
-            return PieceSquareTables::MidgameScores[piece_idx];
+            return PieceSquareTables::MidgameScores[pc_idx];
         }
     };
 
