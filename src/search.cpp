@@ -218,7 +218,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
         extensions += 1;
     } 
 
-    const auto static_eval = tt_hit ? tt_entry.score() : Evaluation::evaluate_board(board);
+    const auto static_eval = board.in_check() ? MagicNumbers::NegativeInfinity : (tt_hit ? tt_entry.score() : Evaluation::evaluate_board(board));
     if (ply >= MAX_PLY) {
         return static_eval;
     }
