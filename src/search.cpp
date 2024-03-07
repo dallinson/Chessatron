@@ -187,6 +187,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
         return 0;
     }
 
+    pv_table.pv_length[ply] = ply;
     constexpr auto pv_node_type = is_pv_node(node_type) ? NodeTypes::PV_NODE : NodeTypes::NON_PV_NODE;
     const auto child_cutnode_type = is_pv_node(node_type) ? true : !is_cut_node;
     int extensions = 0;
@@ -343,6 +344,13 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
         }
         if (score > alpha) {
             alpha = score;
+            if constexpr (is_pv_node(node_type)) {
+                pv_table.pv_array[ply][ply] = best_move;
+                for (int next_ply = ply + 1; next_ply < pv_table.pv_length[ply + 1]; next_ply++) {
+                    pv_table.pv_array[ply][next_ply] = pv_table.pv_array[ply + 1][next_ply];
+                }
+                pv_table.pv_length[ply] = pv_table.pv_length[ply + 1];
+            }
         }
         evaluated_quiets += static_cast<int>(move.move.is_quiet());
     }
@@ -464,6 +472,10 @@ Move SearchHandler::run_iterative_deepening_search() {
 
     history_table.fill(0);
     node_spent_table.fill(0);
+    pv_table.pv_length.fill(0);
+    for (unsigned int i = 0; i < pv_table.pv_array[0].size(); i++) {
+        pv_table.pv_array[i].fill(Move::NULL_MOVE);
+    }
 
     Score current_score = 0;
     for (int depth = 1; depth <= TimeManagement::get_search_depth(tc) && !search_cancelled; depth++) {
@@ -478,7 +490,11 @@ Move SearchHandler::run_iterative_deepening_search() {
             std::cout << "info depth " << depth << " nodes " << node_count << " nps " << nps << " score " << 
                 ((std::abs(current_score) >= (MagicNumbers::PositiveInfinity - MAX_PLY)) ? 
                 ("mate " + std::to_string(((current_score / std::abs(current_score)) * (depth + 1)) / 2)) : 
-                ("cp " + std::to_string(current_score))) << " time " << time_so_far << " pv " << pv_move.to_string() << std::endl;
+                ("cp " + std::to_string(current_score))) << " time " << time_so_far << " pv ";
+            for (int i = 0; i < pv_table.pv_length[0]; i++) {
+                std::cout << pv_table.pv_array[0][i].to_string() << " ";
+            }
+            std::cout << std::endl;
         }
 
         if (current_score >= (MagicNumbers::PositiveInfinity - MAX_PLY)) {
