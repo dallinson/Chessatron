@@ -226,7 +226,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
     // Reverse futility pruning
     if constexpr (!is_pv_node(node_type)) {
         if (board.get_checkers(board.get_side_to_move()) == 0 && depth < 7 && (static_eval - (70 * depth)) >= beta) {
-            return beta;
+            return static_eval;
         }
     }
 
@@ -237,7 +237,11 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
         auto null_score = -negamax_step<pv_node_type>(-beta, -alpha, depth - 2 - (depth >= 8 ? 3 : 2), ply + 1, node_count, child_cutnode_type);
         board.unmake_move(history);
         if (null_score >= beta) {
-            return beta;
+            if (null_score > MagicNumbers::PositiveInfinity - MAX_PLY) {
+                return beta;
+            } else {
+                return null_score;
+            }
         }
     }
 
@@ -329,7 +333,6 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
                     pv_move = best_move;
                 }
                 if (score >= beta) {
-                    tt.store(TranspositionTableEntry(best_move, depth, BoundTypes::LOWER_BOUND, score, board.get_zobrist_key()), board);
                     search_stack[ply].killer_move = move.move;
                     for (size_t j = 0; j < evaluated_moves; j++) {
                         if (moves[j].move.is_quiet()) {
@@ -339,16 +342,16 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
                     if (!move.move.is_capture()) {
                         history_table[move.move.get_history_idx(board.get_side_to_move())] += (depth * depth);
                     }
-                    return beta;
+                    break;
                 }
                 alpha = score;
             }
         }
         evaluated_quiets += static_cast<int>(move.move.is_quiet());
     }
-    const BoundTypes bound_type = alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND;
+    const BoundTypes bound_type = (best_score >= beta ? BoundTypes::LOWER_BOUND : (alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND));
     tt.store(TranspositionTableEntry(best_move, depth, bound_type, best_score, board.get_zobrist_key()), board);
-    return alpha;
+    return best_score;
 }
 
 template <NodeTypes node_type>
@@ -361,7 +364,7 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, int ply, uint64_t
         return static_eval;
     }
     if (static_eval >= beta) {
-        return beta;
+        return static_eval;
     }
     alpha = std::max(static_eval, alpha);
     auto moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIESCENCE>(board, board.get_side_to_move());
@@ -375,6 +378,7 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, int ply, uint64_t
     }
 
     bool found_pv_move = false;
+    Score best_score = static_eval;
     MoveOrdering::reorder_moves(moves, board, Move::NULL_MOVE, history_table, search_stack[ply].killer_move, found_pv_move);
     int evaluated_moves = 0;
     for (size_t i = 0; i < moves.len(); i++) {
@@ -411,13 +415,16 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, int ply, uint64_t
 
         board.unmake_move(history);
         evaluated_moves += 1;
-        if (score >= beta) {
-            search_stack[ply].killer_move = move.move;
-            return beta;
+        if (score > best_score) {
+            best_score = score;
+            if (score >= beta) {
+                search_stack[ply].killer_move = move.move;
+                break;
+            }
+            alpha = std::max(score, alpha);
         }
-        alpha = std::max(score, alpha);
     }
-    return alpha;
+    return best_score;
 }
 
 Score SearchHandler::run_aspiration_window_search(int depth, Score previous_score) {
