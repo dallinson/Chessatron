@@ -473,7 +473,7 @@ Move SearchHandler::run_iterative_deepening_search() {
     history_table.fill(0);
     node_spent_table.fill(0);
     pv_table.pv_length.fill(0);
-    for (unsigned int i = 0; i < pv_table.pv_array[0].size(); i++) {
+    for (unsigned int i = 0; i < pv_table.pv_array.size(); i++) {
         pv_table.pv_array[i].fill(Move::NULL_MOVE);
     }
 
