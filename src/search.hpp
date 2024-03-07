@@ -61,6 +61,7 @@ class TranspositionTableEntry {
         uint8_t depth() const { return this->_depth; };
         BoundTypes bound_type() const { return this->_bound; };
         void set_score(Score new_score) { this->_score = new_score; };
+        void set_move(Move new_move) { this->pv_move = new_move; };
         Score score() const { return this->_score; };
         ZobristKey key() const { return this->_key; };
 };
@@ -84,6 +85,9 @@ class TranspositionTable {
                     entry.set_score(MagicNumbers::NegativeInfinity);
                 } else if (entry.score() >= MagicNumbers::PositiveInfinity - MAX_PLY) {
                     entry.set_score(MagicNumbers::PositiveInfinity);
+                }
+                if (entry.move() == Move::NULL_MOVE) {
+                    entry.set_move(table[tt_key].move());
                 }
                 table[tt_key] = entry;
             }
