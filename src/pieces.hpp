@@ -2,11 +2,6 @@
 
 #include "utils.hpp"
 
-#define SIDE_MASK BIT(3)
-#define PIECE_MASK BITS(2, 0)
-
-#define BLACK_PIECE BIT(3)
-
 #define WHITE_IDX 0
 #define BLACK_IDX 1
 
