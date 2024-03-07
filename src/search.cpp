@@ -44,13 +44,17 @@ uint64_t perft(ChessBoard& c, MoveHistory& m, int depth) {
 uint64_t Perft::run_perft(ChessBoard& c, int depth, bool print_debug) {
     MoveHistory m;
     uint64_t nodes = 0;
+    const auto perft_start_point = std::chrono::steady_clock::now();
     if (print_debug) {
         nodes = perft<true>(c, m, depth);
     } else {
         nodes = perft<false>(c, m, depth);
     }
     if (print_debug) {
+        const auto perft_time = std::max(
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - perft_start_point).count(), (int64_t) 1);
         std::cout << std::endl << "Nodes searched: " << nodes << std::endl;
+        std::cout << "NPS: " << static_cast<uint64_t>(nodes / (static_cast<float>(perft_time) / 1000)) << std::endl;
     }
     return nodes;
 }
