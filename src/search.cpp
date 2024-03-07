@@ -323,26 +323,26 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
         }
         if (score > best_score) {
             best_score = score;
-            best_move = move.move;
-            if constexpr (node_type == NodeTypes::ROOT_NODE) {
-                pv_move = best_move;
-            }
-        }
-        if (score >= beta) {
-            tt.store(TranspositionTableEntry(best_move, depth, BoundTypes::LOWER_BOUND, score, board.get_zobrist_key()), board);
-            search_stack[ply].killer_move = move.move;
-            for (size_t j = 0; j < evaluated_moves; j++) {
-                if (moves[j].move.is_quiet()) {
-                    history_table[moves[j].move.get_history_idx(board.get_side_to_move())] -= (depth * depth);
+            if (score > alpha) {
+                best_move = move.move;
+                if constexpr (node_type == NodeTypes::ROOT_NODE) {
+                    pv_move = best_move;
                 }
+                if (score >= beta) {
+                    tt.store(TranspositionTableEntry(best_move, depth, BoundTypes::LOWER_BOUND, score, board.get_zobrist_key()), board);
+                    search_stack[ply].killer_move = move.move;
+                    for (size_t j = 0; j < evaluated_moves; j++) {
+                        if (moves[j].move.is_quiet()) {
+                            history_table[moves[j].move.get_history_idx(board.get_side_to_move())] -= (depth * depth);
+                        }
+                    }
+                    if (!move.move.is_capture()) {
+                        history_table[move.move.get_history_idx(board.get_side_to_move())] += (depth * depth);
+                    }
+                    return beta;
+                }
+                alpha = score;
             }
-            if (!move.move.is_capture()) {
-                history_table[move.move.get_history_idx(board.get_side_to_move())] += (depth * depth);
-            }
-            return beta;
-        }
-        if (score > alpha) {
-            alpha = score;
         }
         evaluated_quiets += static_cast<int>(move.move.is_quiet());
     }
