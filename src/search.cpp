@@ -183,11 +183,11 @@ bool Search::detect_insufficient_material(const ChessBoard& board, const Side si
 template <NodeTypes node_type>
 Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, uint64_t& node_count, bool is_cut_node) {
 
+    pv_table.pv_length[ply] = ply;
     if (Search::is_draw(board, history)) {
         return 0;
     }
 
-    pv_table.pv_length[ply] = ply;
     constexpr auto pv_node_type = is_pv_node(node_type) ? NodeTypes::PV_NODE : NodeTypes::NON_PV_NODE;
     const auto child_cutnode_type = is_pv_node(node_type) ? true : !is_cut_node;
     int extensions = 0;
