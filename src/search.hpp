@@ -61,6 +61,7 @@ class TranspositionTableEntry {
         uint8_t depth() const { return this->_depth; };
         BoundTypes bound_type() const { return this->_bound; };
         void set_score(Score new_score) { this->_score = new_score; };
+        void set_move(Move new_move) { this->pv_move = new_move; };
         Score score() const { return this->_score; };
         ZobristKey key() const { return this->_key; };
 };
@@ -85,6 +86,9 @@ class TranspositionTable {
                 } else if (entry.score() >= MagicNumbers::PositiveInfinity - MAX_PLY) {
                     entry.set_score(MagicNumbers::PositiveInfinity);
                 }
+                if (entry.move() == Move::NULL_MOVE) {
+                    entry.set_move(table[tt_key].move());
+                }
                 table[tt_key] = entry;
             }
         }
@@ -101,6 +105,11 @@ struct SearchStackFrame {
     Move killer_move;
 };
 
+struct PvTable {
+    std::array<int, MAX_PLY + 1> pv_length;
+    std::array<std::array<Move, MAX_PLY + 1>, MAX_PLY + 1> pv_array;
+};
+
 class SearchHandler {
     private:
         std::thread search_thread;
@@ -113,6 +122,7 @@ class SearchHandler {
         std::array<int32_t, 8192> history_table;
         std::array<uint64_t, 4096> node_spent_table;
         std::array<SearchStackFrame, MAX_PLY + 2> search_stack;
+        PvTable pv_table;
 
         std::atomic<bool> in_search, search_cancelled, shutting_down, should_perft, infinite_search = false;
         std::atomic<int> current_search_id = 0;
