@@ -7,11 +7,11 @@
 #include "search.hpp"
 
 int32_t get_eg_score(int32_t score) {
-    return (score + 0x8000) >> 16;
+    return std::bit_cast<int16_t>(static_cast<uint16_t>(std::bit_cast<uint32_t>(score + 0x8000) >> 16));
 }
 
 int32_t get_mg_score(int32_t score) {
-    return score & 0xFFFF;
+    return std::bit_cast<int16_t>(static_cast<uint16_t>(score));
 }
 
 Score Evaluation::evaluate_board(ChessBoard& board) { 
