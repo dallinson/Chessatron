@@ -29,8 +29,7 @@ class ChessBoard {
         std::array<Bitboard, 2> checkers = {0};
         std::array<Bitboard, 2> pinned_pieces = {0};
 
-        std::array<Score, 2> mg_scores = {0};
-        std::array<Score, 2> eg_scores = {0};
+        std::array<int32_t, 2> scores = {0};
         uint8_t mg_phase = 0;
 
         ZobristKey zobrist_key = 0;
@@ -139,8 +138,7 @@ class ChessBoard {
         bool in_check(const Side side) const { return get_checkers(side) != 0; };
         bool in_check() const { return in_check(get_side_to_move()); }; 
 
-        Score get_mg_score(Side side) const { return mg_scores[static_cast<int>(side)]; };
-        Score get_eg_score(Side side) const { return eg_scores[static_cast<int>(side)]; };
+        int32_t get_score(Side side) const { return scores[static_cast<int>(side)]; };
         uint8_t get_mg_phase() const { return mg_phase; };
 
         inline ZobristKey get_zobrist_key() const { return zobrist_key; };
