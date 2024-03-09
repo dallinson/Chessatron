@@ -121,10 +121,9 @@ class MoveHistoryEntry {
     public:
         MoveHistoryEntry(){};
         MoveHistoryEntry(const ZobristKey key, const Move move, const Piece target_piece, const uint8_t en_passant, uint8_t previous_halfmove_clock,
-                         const bool white_kingside_castle, const bool black_kingside_castle, const bool white_queenside_castle,
-                         const bool black_queenside_castle)
+                         const uint8_t castling)
             : z(key), m(move), p(target_piece),
-              castling(white_kingside_castle << 3 | black_kingside_castle << 2 | white_queenside_castle << 1 | black_queenside_castle),
+              castling(castling),
               previous_en_passant(en_passant), previous_halfmove_clock(previous_halfmove_clock){};
         Piece get_piece() const { return p; };
         Move get_move() const { return m; };
@@ -133,6 +132,7 @@ class MoveHistoryEntry {
         bool get_white_queenside_castle() const { return get_bit(castling, 1); };
         bool get_black_kingside_castle() const { return get_bit(castling, 2); };
         bool get_black_queenside_castle() const { return get_bit(castling, 0); };
+        uint8_t get_castling() const { return castling; };
 
         uint8_t get_halfmove_clock() const { return previous_halfmove_clock; };
 
