@@ -105,6 +105,11 @@ struct SearchStackFrame {
     Move killer_move;
 };
 
+struct PvTable {
+    std::array<int, MAX_PLY + 1> pv_length;
+    std::array<std::array<Move, MAX_PLY + 1>, MAX_PLY + 1> pv_array;
+};
+
 class SearchHandler {
     private:
         std::thread search_thread;
@@ -117,6 +122,7 @@ class SearchHandler {
         std::array<int32_t, 8192> history_table;
         std::array<uint64_t, 4096> node_spent_table;
         std::array<SearchStackFrame, MAX_PLY + 2> search_stack;
+        PvTable pv_table;
 
         std::atomic<bool> in_search, search_cancelled, shutting_down, should_perft, infinite_search = false;
         std::atomic<int> current_search_id = 0;

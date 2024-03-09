@@ -183,6 +183,7 @@ bool Search::detect_insufficient_material(const ChessBoard& board, const Side si
 template <NodeTypes node_type>
 Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, uint64_t& node_count, bool is_cut_node) {
 
+    pv_table.pv_length[ply] = ply;
     if (Search::is_draw(board, history)) {
         return 0;
     }
@@ -332,6 +333,13 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
                 if constexpr (node_type == NodeTypes::ROOT_NODE) {
                     pv_move = best_move;
                 }
+                if constexpr (is_pv_node(node_type)) {
+                    pv_table.pv_array[ply][ply] = best_move;
+                    for (int next_ply = ply + 1; next_ply < pv_table.pv_length[ply + 1]; next_ply++) {
+                        pv_table.pv_array[ply][next_ply] = pv_table.pv_array[ply + 1][next_ply];
+                    }
+                    pv_table.pv_length[ply] = pv_table.pv_length[ply + 1];
+                }
                 if (score >= beta) {
                     search_stack[ply].killer_move = move.move;
                     for (size_t j = 0; j < evaluated_moves; j++) {
@@ -471,6 +479,10 @@ Move SearchHandler::run_iterative_deepening_search() {
 
     history_table.fill(0);
     node_spent_table.fill(0);
+    pv_table.pv_length.fill(0);
+    for (unsigned int i = 0; i < pv_table.pv_array.size(); i++) {
+        pv_table.pv_array[i].fill(Move::NULL_MOVE);
+    }
 
     Score current_score = 0;
     for (int depth = 1; depth <= TimeManagement::get_search_depth(tc) && !search_cancelled; depth++) {
@@ -485,7 +497,11 @@ Move SearchHandler::run_iterative_deepening_search() {
             std::cout << "info depth " << depth << " nodes " << node_count << " nps " << nps << " score " << 
                 ((std::abs(current_score) >= (MagicNumbers::PositiveInfinity - MAX_PLY)) ? 
                 ("mate " + std::to_string(((current_score / std::abs(current_score)) * (depth + 1)) / 2)) : 
-                ("cp " + std::to_string(current_score))) << " time " << time_so_far << " pv " << pv_move.to_string() << std::endl;
+                ("cp " + std::to_string(current_score))) << " time " << time_so_far << " pv ";
+            for (int i = 0; i < pv_table.pv_length[0]; i++) {
+                std::cout << pv_table.pv_array[0][i].to_string() << " ";
+            }
+            std::cout << std::endl;
         }
 
         if (current_score >= (MagicNumbers::PositiveInfinity - MAX_PLY)) {
