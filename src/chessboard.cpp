@@ -178,14 +178,9 @@ std::optional<int> ChessBoard::set_from_fen(const std::string input) {
             }
         }
         char_idx += 1;
-        if (kings(Side::WHITE) && kings(Side::BLACK)) {
-            // prevents array index out of range exception
-            recompute_blockers_and_checkers();
-        }
         RETURN_NONE_IF_PAST_END;
     }
     char_idx += 1;
-    recompute_blockers_and_checkers();
     RETURN_NONE_IF_PAST_END;
     // set whose turn it is
     if (input[char_idx] == 'w') {
@@ -197,6 +192,8 @@ std::optional<int> ChessBoard::set_from_fen(const std::string input) {
     } else {
         return std::optional<int>();
     }
+    recompute_blockers_and_checkers(side_to_move);
+    RETURN_NONE_IF_PAST_END;
     char_idx += 2;
     // set castling
     while (input[char_idx] != ' ') {
@@ -264,7 +261,7 @@ std::optional<int> ChessBoard::set_from_fen(const std::string input) {
 void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
     Piece moved = this->pieces[to_make.get_src_square()];
     Piece at_target = this->pieces[to_make.get_dest_square()];
-    auto to_add = MoveHistoryEntry(this->zobrist_key, to_make, at_target, this->en_passant_file, this->halfmove_clock,
+    auto to_add = MoveHistoryEntry(this->zobrist_key, checkers, pinned_pieces, to_make, at_target, this->en_passant_file, this->halfmove_clock,
                                    castling);
     move_history.push_move(to_add);
     this->zobrist_key ^= ZobristKeys::EnPassantKeys[en_passant_file];
@@ -430,27 +427,28 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
     side_to_move = enemy_side(side_to_move);
     fullmove_counter -= static_cast<int>(side_to_move);
     zobrist_key ^= ZobristKeys::SideToMove;
-    recompute_blockers_and_checkers(side_to_move);
+    checkers = unmake_info.get_checkers();
+    pinned_pieces = unmake_info.get_pins();
 }
 
 void ChessBoard::recompute_blockers_and_checkers(const Side side) {
     const int king_idx = get_lsb(this->kings(side));
     const Side enemy = enemy_side(side);
-    checkers[static_cast<int>(side)] = MoveGenerator::get_checkers(*this, side);
+    checkers = MoveGenerator::get_checkers(*this, side);
 
-    pinned_pieces[static_cast<int>(side)] = 0;
+    pinned_pieces = 0;
 
     Bitboard potential_checks =
         ((MoveGenerator::generate_bishop_mm(0, king_idx) & (bishops(enemy) | queens(enemy))) |
          (MoveGenerator::generate_rook_mm(0, king_idx) & (rooks(enemy) | queens(enemy)))) ^
-        checkers[static_cast<int>(side)];
+        checkers;
     const Bitboard check_blockers = occupancy() ^ potential_checks;
     // don't evaluate ones where we already check the king
 
     while (potential_checks) {
         const Bitboard line_to_king = MagicNumbers::ConnectingSquares[(64 * king_idx) + pop_lsb(potential_checks)];
         if (std::popcount(line_to_king & check_blockers) <= 1) {
-            pinned_pieces[static_cast<int>(side)] |= line_to_king & check_blockers;
+            pinned_pieces |= line_to_king & check_blockers;
         }
     }
 }

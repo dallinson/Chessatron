@@ -105,6 +105,10 @@ class MoveHistoryEntry {
     private:
         ZobristKey z;
         // 8 bytes
+        Bitboard checkers;
+        // 8 bytes
+        Bitboard pins;
+        // 8 bytes
         Move m;
         // 2 bytes
         Piece p;
@@ -116,15 +120,15 @@ class MoveHistoryEntry {
         uint8_t previous_halfmove_clock;
         // 1 byte
         uint16_t padding;
-        // pad to 16 bytes; 64 bytes (cache line size) is easily divisible by 16
+        // pad to 32 bytes; 64 bytes (cache line size) is easily divisible by 16
 
     public:
         MoveHistoryEntry(){};
-        MoveHistoryEntry(const ZobristKey key, const Move move, const Piece target_piece, const uint8_t en_passant, uint8_t previous_halfmove_clock,
+        MoveHistoryEntry(const ZobristKey key, const Bitboard checkers, const Bitboard pins, const Move move, const Piece target_piece, const uint8_t en_passant, uint8_t previous_halfmove_clock,
                          const uint8_t castling)
-            : z(key), m(move), p(target_piece),
+            : z(key), checkers(checkers), pins(pins), m(move), p(target_piece),
               castling(castling),
-              previous_en_passant(en_passant), previous_halfmove_clock(previous_halfmove_clock){};
+              previous_en_passant(en_passant), previous_halfmove_clock(previous_halfmove_clock) {};
         Piece get_piece() const { return p; };
         Move get_move() const { return m; };
         uint_fast8_t get_previous_en_passant_file() const { return previous_en_passant; };
@@ -137,6 +141,8 @@ class MoveHistoryEntry {
         uint8_t get_halfmove_clock() const { return previous_halfmove_clock; };
 
         ZobristKey get_zobrist_key() const { return z; };
+        Bitboard get_pins() const { return pins; };
+        Bitboard get_checkers() const { return checkers; };
 };
 
 class MoveHistory {
