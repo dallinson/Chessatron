@@ -26,8 +26,8 @@ class ChessBoard {
 
         inline Bitboard get_pair_occupancy(int offset) const { return bbs[offset] | bbs[offset + 1]; };
 
-        std::array<Bitboard, 2> checkers = {0};
-        std::array<Bitboard, 2> pinned_pieces = {0};
+        Bitboard checkers = 0;
+        Bitboard pinned_pieces = 0;
 
         std::array<int32_t, 2> scores = {0};
         uint8_t mg_phase = 0;
@@ -127,16 +127,11 @@ class ChessBoard {
         int get_fullmove_counter() const { return this->fullmove_counter; };
         int get_halfmove_clock() const { return this->halfmove_clock; };
 
-        void recompute_blockers_and_checkers() {
-            recompute_blockers_and_checkers(Side::WHITE);
-            recompute_blockers_and_checkers(Side::BLACK);
-        };
         void recompute_blockers_and_checkers(const Side side);
 
-        inline Bitboard get_checkers(const Side side) const { return checkers[static_cast<int>(side)]; };
-        inline Bitboard get_pinned_pieces(const Side side) const { return pinned_pieces[static_cast<int>(side)]; };
-        bool in_check(const Side side) const { return get_checkers(side) != 0; };
-        bool in_check() const { return in_check(get_side_to_move()); }; 
+        inline Bitboard get_checkers() const { return checkers; };
+        inline Bitboard get_pinned_pieces() const { return pinned_pieces; };
+        bool in_check() const { return checkers != 0; }; 
 
         int32_t get_score(Side side) const { return scores[static_cast<int>(side)]; };
         uint8_t get_mg_phase() const { return mg_phase; };

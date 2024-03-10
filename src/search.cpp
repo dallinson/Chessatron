@@ -215,7 +215,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
         // return c.evaluate();
     }
 
-    if (board.get_checkers(board.get_side_to_move()) != 0) {
+    if (board.in_check()) {
         extensions += 1;
     } 
 
@@ -226,12 +226,12 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
 
     // Reverse futility pruning
     if constexpr (!is_pv_node(node_type)) {
-        if (board.get_checkers(board.get_side_to_move()) == 0 && depth < 7 && (static_eval - (70 * depth)) >= beta) {
+        if (!board.in_check() && depth < 7 && (static_eval - (70 * depth)) >= beta) {
             return static_eval;
         }
     }
 
-    if (static_eval >= beta && board.get_checkers(board.get_side_to_move()) == 0 && (history.len() == 0 || (history[history.len() - 1].get_move() != Move::NULL_MOVE))) {
+    if (static_eval >= beta && !board.in_check() && (history.len() == 0 || (history[history.len() - 1].get_move() != Move::NULL_MOVE))) {
         // Try null move pruning if we aren't in check
         board.make_move(Move::NULL_MOVE, history);
         // First we make the null move
@@ -248,7 +248,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
 
     auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(board, board.get_side_to_move());
     if (moves.len() == 0) {
-        if (board.get_checkers(board.get_side_to_move()) != 0) {
+        if (board.in_check()) {
             // if in check
             return ply + MagicNumbers::NegativeInfinity;
         } else {
@@ -377,7 +377,7 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, int ply, uint64_t
     alpha = std::max(static_eval, alpha);
     auto moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIESCENCE>(board, board.get_side_to_move());
     if (moves.len() == 0 && MoveGenerator::generate_legal_moves<MoveGenType::NON_QUIESCENCE>(board, board.get_side_to_move()).len() == 0) {
-        if (board.get_checkers(board.get_side_to_move()) != 0) {
+        if (board.in_check()) {
             // if in check
             return ply + MagicNumbers::NegativeInfinity;
         } else {
