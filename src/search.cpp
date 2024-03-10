@@ -227,7 +227,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
     // Reverse futility pruning
     if constexpr (!is_pv_node(node_type)) {
         if (!board.in_check() && depth < 7 && (static_eval - (70 * depth)) >= beta) {
-            return static_eval;
+            return (static_eval + beta) / 2;
         }
     }
 
