@@ -20,7 +20,7 @@ class ChessBoard {
         uint8_t en_passant_file = 9;
 
         // first 2 elems are kingside, second two queenside
-        std::array<bool, 4> castling = {false, false, false, false};
+        uint8_t castling = 0;
 
         Side side_to_move = Side(0);
 
@@ -95,21 +95,21 @@ class ChessBoard {
             zobrist_key ^= ZobristKeys::EnPassantKeys[file];
         };
 
-        inline bool get_queenside_castling(const Side side) const { return castling[2 + static_cast<int>(side)]; };
-        inline bool get_kingside_castling(const Side side) const { return castling[static_cast<int>(side)]; };
+        inline bool get_queenside_castling(const Side side) const { return get_bit(castling, 2 + static_cast<uint8_t>(side)); };
+        inline bool get_kingside_castling(const Side side) const { return get_bit(castling, static_cast<uint8_t>(side)); };
         inline void set_kingside_castling(const Side side, const bool val) {
             const int offset = static_cast<int>(side);
-            if (castling[offset] != val) {
+            if (get_bit(castling, offset) != val) {
                 zobrist_key ^= ZobristKeys::CastlingKeys[offset];
+                toggle_bit(castling, offset);
             }
-            castling[offset] = val;
         };
         inline void set_queenside_castling(const Side side, const bool val) {
             const int offset = 2 + static_cast<int>(side);
-            if (castling[offset] != val) {
+            if (get_bit(castling, offset) != val) {
                 zobrist_key ^= ZobristKeys::CastlingKeys[offset];
+                toggle_bit(castling, offset);
             }
-            castling[offset] = val;
         };
 
         void set_piece(Piece piece, uint8_t pos);

@@ -13,6 +13,42 @@ using namespace PieceSquareTables;
 using enum PieceTypes;
 
 constexpr static std::array<uint8_t, 6> mg_phase_vals = { 0, 1, 1, 2, 4, 0 };
+const static std::array<ZobristKey, 16> castling_keys = {
+    0, // 0000
+    ZobristKeys::CastlingKeys[0], // 0001
+    ZobristKeys::CastlingKeys[1], // 0010
+    ZobristKeys::CastlingKeys[0] ^ ZobristKeys::CastlingKeys[1], // 0011
+
+    ZobristKeys::CastlingKeys[2], // 0100
+    ZobristKeys::CastlingKeys[2] ^ ZobristKeys::CastlingKeys[0], // 0101
+    ZobristKeys::CastlingKeys[2] ^ ZobristKeys::CastlingKeys[1], // 0110
+    ZobristKeys::CastlingKeys[2] ^ ZobristKeys::CastlingKeys[0] ^ ZobristKeys::CastlingKeys[1], // 0111
+
+    ZobristKeys::CastlingKeys[3], // 1000
+	ZobristKeys::CastlingKeys[3] ^ ZobristKeys::CastlingKeys[0], // 1001
+    ZobristKeys::CastlingKeys[3] ^ ZobristKeys::CastlingKeys[1], // 1010
+    ZobristKeys::CastlingKeys[3] ^ ZobristKeys::CastlingKeys[0] ^ ZobristKeys::CastlingKeys[1], // 1011
+
+    ZobristKeys::CastlingKeys[3] ^ ZobristKeys::CastlingKeys[2], // 1100
+    ZobristKeys::CastlingKeys[3] ^ ZobristKeys::CastlingKeys[2] ^ ZobristKeys::CastlingKeys[0], // 1101
+    ZobristKeys::CastlingKeys[3] ^ ZobristKeys::CastlingKeys[2] ^ ZobristKeys::CastlingKeys[1], // 1110
+    ZobristKeys::CastlingKeys[3] ^ ZobristKeys::CastlingKeys[2] ^ ZobristKeys::CastlingKeys[0] ^ ZobristKeys::CastlingKeys[1], // 1111
+};
+// Bit 0 is white kingside castling
+// Bit 1 is black kingside castling
+// Bit 2 is white queenside castling
+// Bit 3 is black kingside castline
+
+constexpr int castling_rights[64] = {
+    0b1011, 15, 15, 15, 0b1010,  15, 15,  0b1110,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    0b0111, 15, 15, 15, 0b0101, 15, 15, 0b1101
+};
 
 void ChessBoard::set_piece(Piece piece, uint8_t pos) {
     pieces[pos] = piece;
@@ -41,9 +77,7 @@ void ChessBoard::clear_board() {
 
     side_to_move = Side::WHITE;
     en_passant_file = 9;
-    for (int i = 0; i < 4; i++) {
-        castling[i] = false;
-    }
+    castling = 0;
 
     zobrist_key = ZobristKeys::SideToMove;
 
@@ -231,8 +265,7 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
     Piece moved = this->pieces[to_make.get_src_square()];
     Piece at_target = this->pieces[to_make.get_dest_square()];
     auto to_add = MoveHistoryEntry(this->zobrist_key, to_make, at_target, this->en_passant_file, this->halfmove_clock,
-                                   this->get_kingside_castling(Side::WHITE), this->get_kingside_castling(Side::BLACK),
-                                   this->get_queenside_castling(Side::WHITE), this->get_queenside_castling(Side::BLACK));
+                                   castling);
     move_history.push_move(to_add);
     this->zobrist_key ^= ZobristKeys::EnPassantKeys[en_passant_file];
     halfmove_clock += 1;
@@ -313,23 +346,10 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
             scores[static_cast<int>(side)] += get_psqt_score(Piece(side, ROOK), rook_dest);
         }
 
-        if (moved.get_type() == KING) {
-            set_kingside_castling(side, false);
-            set_queenside_castling(side, false);
-        }
-        if (to_make.get_src_square() == 0 || to_make.get_dest_square() == 0) {
-            set_queenside_castling(Side::WHITE, false);
-        }
-        if (to_make.get_src_square() == 7 || to_make.get_dest_square() == 7) {
-            set_kingside_castling(Side::WHITE, false);
-        }
-
-        if (to_make.get_src_square() == 56 || to_make.get_dest_square() == 56) {
-            set_queenside_castling(Side::BLACK, false);
-        }
-        if (to_make.get_src_square() == 63 || to_make.get_dest_square() == 63) {
-            set_kingside_castling(Side::BLACK, false);
-        }
+        const auto offset_diff = castling_rights[to_make.get_src_square()] & castling_rights[to_make.get_dest_square()];
+        const auto new_castling = castling & offset_diff;
+        zobrist_key ^= castling_keys[new_castling ^ castling];
+        castling = new_castling;
     }
     fullmove_counter += static_cast<int>(side_to_move);
     side_to_move = enemy_side(side_to_move);
@@ -403,10 +423,9 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
     }
 
     set_en_passant_file(unmake_info.get_previous_en_passant_file());
-    set_kingside_castling(Side::WHITE, unmake_info.get_white_kingside_castle());
-    set_queenside_castling(Side::WHITE, unmake_info.get_white_queenside_castle());
-    set_kingside_castling(Side::BLACK, unmake_info.get_black_kingside_castle());
-    set_queenside_castling(Side::BLACK, unmake_info.get_black_queenside_castle());
+    const auto diff = castling ^ unmake_info.get_castling();
+    zobrist_key ^= castling_keys[diff];
+    castling = unmake_info.get_castling();
 
     side_to_move = enemy_side(side_to_move);
     fullmove_counter -= static_cast<int>(side_to_move);
