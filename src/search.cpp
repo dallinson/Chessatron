@@ -435,16 +435,17 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, int ply, uint64_t
     return best_score;
 }
 
-Score SearchHandler::run_aspiration_window_search(int depth, Score previous_score) {
-    Score window = 40;
+Score SearchHandler::run_aspiration_window_search(const int depth, Score previous_score) {
+    Score alpha_window = 40;
+    Score beta_window = 40;
     Score alpha, beta;
     while (true) {
         if (depth <= 4) {
             alpha = MagicNumbers::NegativeInfinity;
             beta = MagicNumbers::PositiveInfinity;
         } else {
-            alpha = previous_score - window;
-            beta = previous_score + window;
+            alpha = previous_score - alpha_window;
+            beta = previous_score + beta_window;
         }
 
         previous_score = negamax_step<NodeTypes::ROOT_NODE>(alpha, beta, depth, 0, node_count, false);
@@ -457,7 +458,11 @@ Score SearchHandler::run_aspiration_window_search(int depth, Score previous_scor
             break;
         }
 
-        window *= 2;
+        if (previous_score < alpha) {
+            alpha_window *= 2;
+        } else if (previous_score > beta) {
+            beta_window *= 2;
+        }
     }
 
     return previous_score;
