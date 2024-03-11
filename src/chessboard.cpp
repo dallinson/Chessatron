@@ -361,7 +361,6 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
     const Side moved_side = moved.get_side();
     if (!unmake_info.get_move().is_null_move()) {
         clear_bit(this->bbs[moved.to_bitboard_idx()], unmake_info.get_move().get_dest_square());
-        zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, unmake_info.get_move().get_dest_square())];
         scores[static_cast<int>(moved_side)] -= get_psqt_score(moved, unmake_info.get_move().get_dest_square());
         // this unsets the target piece
         pieces[unmake_info.get_move().get_dest_square()] = unmake_info.get_piece();
@@ -370,14 +369,12 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
             // if it's a promotion
             Piece new_piece = Piece(moved.get_side(), PAWN);
             pieces[unmake_info.get_move().get_src_square()] = new_piece;
-            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(new_piece, unmake_info.get_move().get_src_square())];
             set_bit(this->bbs[new_piece.to_bitboard_idx()], unmake_info.get_move().get_src_square());
             scores[static_cast<int>(moved_side)] += get_psqt_score(new_piece, unmake_info.get_move().get_src_square());
 
             mg_phase -= mg_phase_vals[static_cast<int>(moved.get_type()) - 1];
         } else {
             pieces[unmake_info.get_move().get_src_square()] = moved;
-            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, unmake_info.get_move().get_src_square())];
             set_bit(this->bbs[moved.to_bitboard_idx()], unmake_info.get_move().get_src_square());
             scores[static_cast<int>(moved_side)] += get_psqt_score(moved, unmake_info.get_move().get_src_square());
         }
@@ -386,8 +383,6 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
             if (unmake_info.get_move().get_move_flags() != MoveFlags::EN_PASSANT_CAPTURE) {
                 // if it is _not_ an ep capture
                 set_bit(this->bbs[unmake_info.get_piece().to_bitboard_idx()], unmake_info.get_move().get_dest_square());
-                zobrist_key ^=
-                    ZobristKeys::PositionKeys[calculate_zobrist_key(unmake_info.get_piece(), unmake_info.get_move().get_dest_square())];
                 scores[static_cast<int>(enemy_side(moved_side))] += get_psqt_score(unmake_info.get_piece(), unmake_info.get_move().get_dest_square());
 
                 mg_phase += mg_phase_vals[static_cast<int>(unmake_info.get_piece().get_type()) - 1];
@@ -395,7 +390,6 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
                 const Side enemy = enemy_side(moved_side);
                 const int enemy_pawn_idx = unmake_info.get_move().get_dest_square() - 8 + (16 * static_cast<int>(moved_side));
                 this->pieces[enemy_pawn_idx] = Piece(enemy, PAWN);
-                zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(this->pieces[enemy_pawn_idx], enemy_pawn_idx)];
                 set_bit(this->bbs[bb_idx<PAWN> + static_cast<int>(enemy)], enemy_pawn_idx);
                 scores[static_cast<int>(enemy_side(moved_side))] += get_psqt_score(Piece(enemy_side(moved_side), PAWN), enemy_pawn_idx);
             }
@@ -410,23 +404,19 @@ void ChessBoard::unmake_move(MoveHistory& move_history) {
             this->pieces[rook_dest] = 0;
 
             clear_bit(this->bbs[bb_idx<ROOK> + static_cast<int>(moved_side)], rook_dest);
-            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(moved_side, ROOK), rook_dest)];
             scores[static_cast<int>(moved_side)] -= get_psqt_score(Piece(moved_side, ROOK), rook_dest);
 
             set_bit(this->bbs[bb_idx<ROOK> + static_cast<int>(moved_side)], rook_origin);
-            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(moved_side, ROOK), rook_origin)];
             scores[static_cast<int>(moved_side)] += get_psqt_score(Piece(moved_side, ROOK), rook_origin);
         }
     }
 
     set_en_passant_file(unmake_info.get_previous_en_passant_file());
-    const auto diff = castling ^ unmake_info.get_castling();
-    zobrist_key ^= castling_keys[diff];
     castling = unmake_info.get_castling();
 
     side_to_move = enemy_side(side_to_move);
     fullmove_counter -= static_cast<int>(side_to_move);
-    zobrist_key ^= ZobristKeys::SideToMove;
+    zobrist_key = unmake_info.get_zobrist_key();
     checkers = unmake_info.get_checkers();
     pinned_pieces = unmake_info.get_pins();
 }
