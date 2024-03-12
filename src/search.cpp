@@ -68,7 +68,7 @@ bool Search::is_threefold_repetition(const BoardHistory& history, const int half
     int counter = 1;
     const int history_len = history.len();
     const auto castling_rights = history[history_len - 1].get_castling();
-    for (int i = history_len - 1; i > 0 && i > history_len - halfmove_clock; i--) {
+    for (int i = history_len - 2; i > 0 && i > history_len - halfmove_clock - 1; i--) {
         if (history[i].get_zobrist_key() == z) {
             counter += 1;
             if (counter >= 3) {
@@ -170,7 +170,7 @@ bool Search::detect_insufficient_material(const ChessBoard& board, const Side si
     const Side enemy = enemy_side(side);
     if (board.occupancy(enemy) == board.kings(enemy)) {
         // if the enemy side only has the king
-        const Bitboard pieces = board.queens(side) | board.rooks(side) | board.bishops(side) | board.knights(side) | board.get_pawns(side);
+        const Bitboard pieces = board.queens(side) | board.rooks(side) | board.bishops(side) | board.knights(side) | board.pawns(side);
         if (pieces == 0) {
             return true;
         }
@@ -232,17 +232,35 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
         }
     }
 
-    if (static_eval >= beta && !old_board.in_check() && (history.len() == 0 || (history[history.len() - 1] != history[history.len() - 2]))) {
-        // Try null move pruning if we aren't in check
-        auto& board = old_board.make_move(Move::NULL_MOVE, history);
-        // First we make the null move
-        auto null_score = -negamax_step<pv_node_type>(board, -beta, -alpha, depth - 2 - (depth >= 8 ? 3 : 2), ply + 1, node_count, child_cutnode_type);
-        history.pop_board();
-        if (null_score >= beta) {
-            if (null_score > MagicNumbers::PositiveInfinity - MAX_PLY) {
-                return beta;
-            } else {
-                return null_score;
+    if constexpr (node_type != NodeTypes::ROOT_NODE) {
+        if (static_eval >= beta && !old_board.in_check()) {
+            // Try null move pruning if we aren't in check
+            const auto& older_board = history[history.len() - 2];
+            const bool nmp_stopped = old_board.pawns(Side::WHITE) == older_board.pawns(Side::WHITE) 
+                && old_board.pawns(Side::BLACK) == older_board.pawns(Side::BLACK) 
+                && old_board.knights(Side::WHITE) == older_board.knights(Side::WHITE) 
+                && old_board.knights(Side::BLACK) == older_board.knights(Side::BLACK) 
+                && old_board.bishops(Side::WHITE) == older_board.bishops(Side::WHITE) 
+                && old_board.bishops(Side::BLACK) == older_board.bishops(Side::BLACK) 
+                && old_board.rooks(Side::WHITE) == older_board.rooks(Side::WHITE) 
+                && old_board.rooks(Side::BLACK) == older_board.rooks(Side::BLACK) 
+                && old_board.queens(Side::WHITE) == older_board.queens(Side::WHITE) 
+                && old_board.queens(Side::BLACK) == older_board.queens(Side::BLACK) 
+                && old_board.kings(Side::WHITE) == older_board.kings(Side::WHITE) 
+                && old_board.kings(Side::BLACK) == older_board.kings(Side::BLACK);
+
+            if (!nmp_stopped) {
+                auto& board = old_board.make_move(Move::NULL_MOVE, history);
+                // First we make the null move
+                auto null_score = -negamax_step<pv_node_type>(board, -beta, -alpha, depth - 2 - (depth >= 8 ? 3 : 2), ply + 1, node_count, child_cutnode_type);
+                history.pop_board();
+                if (null_score >= beta) {
+                    if (null_score > MagicNumbers::PositiveInfinity - MAX_PLY) {
+                        return beta;
+                    } else {
+                        return null_score;
+                    }
+                }
             }
         }
     }

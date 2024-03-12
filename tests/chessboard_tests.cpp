@@ -19,7 +19,7 @@ TEST(ChessBoardTests, SetFenStartPos) {
     ASSERT_EQ(c.kings(), (uint64_t) 0x1000000000000010);
 
     ASSERT_EQ(c.occupancy(Side::WHITE), (uint64_t) 0x000000000000FFFF);
-    ASSERT_EQ(c.get_pawns(Side::WHITE), (uint64_t) 0x000000000000FF00);
+    ASSERT_EQ(c.pawns(Side::WHITE), (uint64_t) 0x000000000000FF00);
     ASSERT_EQ(c.rooks(Side::WHITE), (uint64_t) 0x0000000000000081);
     ASSERT_EQ(c.knights(Side::WHITE), (uint64_t) 0x0000000000000042);
     ASSERT_EQ(c.bishops(Side::WHITE), (uint64_t) 0x0000000000000024);
@@ -27,7 +27,7 @@ TEST(ChessBoardTests, SetFenStartPos) {
     ASSERT_EQ(c.kings(Side::WHITE), (uint64_t) 0x0000000000000010);
 
     ASSERT_EQ(c.occupancy(Side::BLACK), (uint64_t) 0xFFFF000000000000);
-    ASSERT_EQ(c.get_pawns(Side::BLACK), (uint64_t) 0x00FF000000000000);
+    ASSERT_EQ(c.pawns(Side::BLACK), (uint64_t) 0x00FF000000000000);
     ASSERT_EQ(c.rooks(Side::BLACK), (uint64_t) 0x8100000000000000);
     ASSERT_EQ(c.knights(Side::BLACK), (uint64_t) 0x4200000000000000);
     ASSERT_EQ(c.bishops(Side::BLACK), (uint64_t) 0x2400000000000000);
@@ -51,7 +51,7 @@ TEST(ChessBoardTests, SetFenExplicitStartPos) {
     ASSERT_EQ(c.kings(), (uint64_t) 0x1000000000000010);
 
     ASSERT_EQ(c.occupancy(Side::WHITE), (uint64_t) 0x000000000000FFFF);
-    ASSERT_EQ(c.get_pawns(Side::WHITE), (uint64_t) 0x000000000000FF00);
+    ASSERT_EQ(c.pawns(Side::WHITE), (uint64_t) 0x000000000000FF00);
     ASSERT_EQ(c.rooks(Side::WHITE), (uint64_t) 0x0000000000000081);
     ASSERT_EQ(c.knights(Side::WHITE), (uint64_t) 0x0000000000000042);
     ASSERT_EQ(c.bishops(Side::WHITE), (uint64_t) 0x0000000000000024);
@@ -59,7 +59,7 @@ TEST(ChessBoardTests, SetFenExplicitStartPos) {
     ASSERT_EQ(c.kings(Side::WHITE), (uint64_t) 0x0000000000000010);
 
     ASSERT_EQ(c.occupancy(Side::BLACK), (uint64_t) 0xFFFF000000000000);
-    ASSERT_EQ(c.get_pawns(Side::BLACK), (uint64_t) 0x00FF000000000000);
+    ASSERT_EQ(c.pawns(Side::BLACK), (uint64_t) 0x00FF000000000000);
     ASSERT_EQ(c.rooks(Side::BLACK), (uint64_t) 0x8100000000000000);
     ASSERT_EQ(c.knights(Side::BLACK), (uint64_t) 0x4200000000000000);
     ASSERT_EQ(c.bishops(Side::BLACK), (uint64_t) 0x2400000000000000);
@@ -83,7 +83,7 @@ TEST(ChessBoardTests, SetFenExplicitStartPosShort) {
     ASSERT_EQ(c.kings(), (uint64_t) 0x1000000000000010);
 
     ASSERT_EQ(c.occupancy(Side::WHITE), (uint64_t) 0x000000000000FFFF);
-    ASSERT_EQ(c.get_pawns(Side::WHITE), (uint64_t) 0x000000000000FF00);
+    ASSERT_EQ(c.pawns(Side::WHITE), (uint64_t) 0x000000000000FF00);
     ASSERT_EQ(c.rooks(Side::WHITE), (uint64_t) 0x0000000000000081);
     ASSERT_EQ(c.knights(Side::WHITE), (uint64_t) 0x0000000000000042);
     ASSERT_EQ(c.bishops(Side::WHITE), (uint64_t) 0x0000000000000024);
@@ -91,7 +91,7 @@ TEST(ChessBoardTests, SetFenExplicitStartPosShort) {
     ASSERT_EQ(c.kings(Side::WHITE), (uint64_t) 0x0000000000000010);
 
     ASSERT_EQ(c.occupancy(Side::BLACK), (uint64_t) 0xFFFF000000000000);
-    ASSERT_EQ(c.get_pawns(Side::BLACK), (uint64_t) 0x00FF000000000000);
+    ASSERT_EQ(c.pawns(Side::BLACK), (uint64_t) 0x00FF000000000000);
     ASSERT_EQ(c.rooks(Side::BLACK), (uint64_t) 0x8100000000000000);
     ASSERT_EQ(c.knights(Side::BLACK), (uint64_t) 0x4200000000000000);
     ASSERT_EQ(c.bishops(Side::BLACK), (uint64_t) 0x2400000000000000);

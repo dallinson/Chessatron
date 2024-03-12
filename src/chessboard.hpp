@@ -81,7 +81,7 @@ class ChessBoard {
         inline Bitboard rooks(const Side side) const {
             return bbs[bb_idx<PieceTypes::ROOK> + static_cast<uint8_t>(side)];
         };
-        inline Bitboard get_pawns(const Side side) const {
+        inline Bitboard pawns(const Side side) const {
             return bbs[bb_idx<PieceTypes::PAWN> + static_cast<uint8_t>(side)];
         };
         template <PieceTypes piece_type> inline Bitboard occupancy_of(const Side side) const {
@@ -148,7 +148,7 @@ class ChessBoard {
             if (en_passant_file != 9) {
                 const Side enemy = enemy_side(side_to_move);
                 const size_t offset = en_passant_file + 8 * static_cast<int>(enemy);
-                if ((get_pawns(side_to_move) & ZobristKeys::EnPassantCheckBitboards[offset]) == 0) {
+                if ((pawns(side_to_move) & ZobristKeys::EnPassantCheckBitboards[offset]) == 0) {
                     default_key ^= ZobristKeys::EnPassantKeys[en_passant_file];
                 }
             }

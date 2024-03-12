@@ -34,7 +34,7 @@ Bitboard MoveGenerator::get_attackers(const ChessBoard& board, const Side side, 
     to_return |= board.bishops(side) & bishop_mask;
     to_return |= board.rooks(side) & rook_mask;
     to_return |= board.knights(side) & MagicNumbers::KnightMoves[target_idx];
-    to_return |= board.get_pawns(side) & MagicNumbers::PawnAttacks[(64 * static_cast<int>(enemy)) + target_idx];
+    to_return |= board.pawns(side) & MagicNumbers::PawnAttacks[(64 * static_cast<int>(enemy)) + target_idx];
     to_return |= board.kings(side) & MagicNumbers::KingMoves[target_idx];
 
     return to_return;
@@ -104,7 +104,7 @@ bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
         return !((generate_bishop_mm(cleared_bitboard, target_idx) & potential_diagonal_sliders) ||
                  (generate_rook_mm(cleared_bitboard, target_idx) & potential_orthogonal_sliders) ||
                  (c.knights(enemy) & MagicNumbers::KnightMoves[target_idx]) ||
-                 (c.get_pawns(enemy) & MagicNumbers::PawnAttacks[(64 * static_cast<int>(move_side)) + target_idx]) ||
+                 (c.pawns(enemy) & MagicNumbers::PawnAttacks[(64 * static_cast<int>(move_side)) + target_idx]) ||
                  (c.kings(enemy) & MagicNumbers::KingMoves[target_idx]));
     } else [[likely]] {
 

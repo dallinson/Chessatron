@@ -131,7 +131,7 @@ template <PieceTypes piece_type, MoveGenType gen_type> void MoveGenerator::gener
 }
 
 template <MoveGenType gen_type> void MoveGenerator::generate_pawn_moves(const ChessBoard& c, const Side side, MoveList& move_list) {
-    Bitboard pawn_mask = c.get_pawns(side);
+    Bitboard pawn_mask = c.pawns(side);
     const Side enemy = enemy_side(side);
     const Bitboard enemy_bb = c.occupancy(enemy);
     const Bitboard all_bb = enemy_bb | c.occupancy(side);
