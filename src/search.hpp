@@ -140,6 +140,7 @@ class SearchHandler {
 
     public:
         SearchHandler();
+        ~SearchHandler() { this->shutdown(); };
 
         bool is_searching() { return this->in_search; };
         int get_current_search_id() { return this->current_search_id; };
@@ -147,9 +148,11 @@ class SearchHandler {
         BoardHistory& get_history() { return this->history; };
 
         void set_board(const ChessBoard& c) { 
-            this->history = BoardHistory();
-            this->history.push_board(c);
+            this->history = BoardHistory(c);
         };
+        void set_history(const BoardHistory& h) {
+            this->history = h;
+        }
         uint64_t get_node_count() { return node_count; };
         void set_print_info(bool print) { print_info = print; };
         void reset();

@@ -162,13 +162,16 @@ bool operator==(const ChessBoard& lhs, const ChessBoard& rhs);
 
 class BoardHistory {
     private:
-        std::array<ChessBoard, MAX_GAME_MOVE_COUNT> data;
+        std::vector<ChessBoard> data;
         size_t idx;
 
     public:
-        BoardHistory() : idx(0) {};
+        BoardHistory() : idx(0) {
+            data.resize(MAX_GAME_MOVE_COUNT);
+        };
         BoardHistory(const ChessBoard& board) {
             idx = 0;
+            data.resize(MAX_GAME_MOVE_COUNT);
             push_board(board);
         }
 
