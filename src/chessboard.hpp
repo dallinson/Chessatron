@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <array>
 #include <cstdint>
 #include <optional>
@@ -11,13 +12,15 @@
 
 template <PieceTypes p> uint8_t bb_idx = 2 * (static_cast<int>(p) - 1);
 
+class BoardHistory;
+
 class ChessBoard {
     private:
         std::array<Bitboard, 12> bbs = {0};
 
         std::array<Piece, 64> pieces = {0};
 
-        uint8_t en_passant_file = 9;
+        uint8_t en_passant_file = 9; 
 
         // first 2 elems are kingside, second two queenside
         uint8_t castling = 0;
@@ -37,6 +40,10 @@ class ChessBoard {
         int fullmove_counter = 0;
 
     public:
+        ChessBoard() = default;
+        ChessBoard(const ChessBoard& origin, const Move to_make);
+        ChessBoard& make_move(const Move to_make, BoardHistory& move_history) const;
+
         inline Bitboard occupancy() const {
             return kings() | queens() | bishops() | knights() | rooks() |
                    pawns();
@@ -97,6 +104,7 @@ class ChessBoard {
 
         inline bool get_queenside_castling(const Side side) const { return get_bit(castling, 2 + static_cast<uint8_t>(side)); };
         inline bool get_kingside_castling(const Side side) const { return get_bit(castling, static_cast<uint8_t>(side)); };
+        inline uint8_t get_castling() const { return castling; };
         inline void set_kingside_castling(const Side side, const bool val) {
             const int offset = static_cast<int>(side);
             if (get_bit(castling, offset) != val) {
@@ -121,8 +129,6 @@ class ChessBoard {
 
         Side get_side_to_move() const { return this->side_to_move; };
 
-        void make_move(const Move to_make, MoveHistory& move_history);
-        void unmake_move(MoveHistory& move_history);
 
         int get_fullmove_counter() const { return this->fullmove_counter; };
         int get_halfmove_clock() const { return this->halfmove_clock; };
@@ -153,3 +159,32 @@ class ChessBoard {
 };
 
 bool operator==(const ChessBoard& lhs, const ChessBoard& rhs);
+
+class BoardHistory {
+    private:
+        std::array<ChessBoard, MAX_GAME_MOVE_COUNT> data;
+        size_t idx;
+
+    public:
+        BoardHistory() : idx(0) {};
+        BoardHistory(const ChessBoard& board) {
+            idx = 0;
+            push_board(board);
+        }
+
+        ChessBoard& push_board(const ChessBoard new_board) {
+            this->data[idx] = new_board;
+            idx += 1;
+            return this->data[idx - 1];
+        }
+
+        ChessBoard& pop_board() {
+            assert(idx >= 2);
+            idx -= 1;
+            return this->data[idx - 1];
+        }
+
+        size_t len() const { return idx; };
+        const ChessBoard& operator[](size_t idx) const { return data[idx]; };
+        ChessBoard& operator[](size_t idx) { return data[idx]; };
+};

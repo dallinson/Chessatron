@@ -258,12 +258,10 @@ std::optional<int> ChessBoard::set_from_fen(const std::string input) {
     return std::optional<int>(char_idx);
 }
 
-void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
+ChessBoard::ChessBoard(const ChessBoard& origin, const Move to_make) {
+    *this = origin;
     Piece moved = this->pieces[to_make.get_src_square()];
     Piece at_target = this->pieces[to_make.get_dest_square()];
-    auto to_add = MoveHistoryEntry(this->zobrist_key, checkers, pinned_pieces, to_make, at_target, this->en_passant_file, this->halfmove_clock,
-                                   castling);
-    move_history.push_move(to_add);
     this->zobrist_key ^= ZobristKeys::EnPassantKeys[en_passant_file];
     halfmove_clock += 1;
     this->en_passant_file = 9;
@@ -354,71 +352,8 @@ void ChessBoard::make_move(const Move to_make, MoveHistory& move_history) {
     recompute_blockers_and_checkers(side_to_move);
 }
 
-void ChessBoard::unmake_move(MoveHistory& move_history) {
-    const auto unmake_info = move_history.pop_move();
-    halfmove_clock = unmake_info.get_halfmove_clock();
-    Piece moved = pieces[unmake_info.get_move().get_dest_square()];
-    const Side moved_side = moved.get_side();
-    if (!unmake_info.get_move().is_null_move()) {
-        clear_bit(this->bbs[moved.to_bitboard_idx()], unmake_info.get_move().get_dest_square());
-        scores[static_cast<int>(moved_side)] -= get_psqt_score(moved, unmake_info.get_move().get_dest_square());
-        // this unsets the target piece
-        pieces[unmake_info.get_move().get_dest_square()] = unmake_info.get_piece();
-
-        if (static_cast<int>(unmake_info.get_move().get_move_flags()) >= 8) {
-            // if it's a promotion
-            Piece new_piece = Piece(moved.get_side(), PAWN);
-            pieces[unmake_info.get_move().get_src_square()] = new_piece;
-            set_bit(this->bbs[new_piece.to_bitboard_idx()], unmake_info.get_move().get_src_square());
-            scores[static_cast<int>(moved_side)] += get_psqt_score(new_piece, unmake_info.get_move().get_src_square());
-
-            mg_phase -= mg_phase_vals[static_cast<int>(moved.get_type()) - 1];
-        } else {
-            pieces[unmake_info.get_move().get_src_square()] = moved;
-            set_bit(this->bbs[moved.to_bitboard_idx()], unmake_info.get_move().get_src_square());
-            scores[static_cast<int>(moved_side)] += get_psqt_score(moved, unmake_info.get_move().get_src_square());
-        }
-
-        if (unmake_info.get_move().is_capture()) {
-            if (unmake_info.get_move().get_move_flags() != MoveFlags::EN_PASSANT_CAPTURE) {
-                // if it is _not_ an ep capture
-                set_bit(this->bbs[unmake_info.get_piece().to_bitboard_idx()], unmake_info.get_move().get_dest_square());
-                scores[static_cast<int>(enemy_side(moved_side))] += get_psqt_score(unmake_info.get_piece(), unmake_info.get_move().get_dest_square());
-
-                mg_phase += mg_phase_vals[static_cast<int>(unmake_info.get_piece().get_type()) - 1];
-            } else {
-                const Side enemy = enemy_side(moved_side);
-                const int enemy_pawn_idx = unmake_info.get_move().get_dest_square() - 8 + (16 * static_cast<int>(moved_side));
-                this->pieces[enemy_pawn_idx] = Piece(enemy, PAWN);
-                set_bit(this->bbs[bb_idx<PAWN> + static_cast<int>(enemy)], enemy_pawn_idx);
-                scores[static_cast<int>(enemy_side(moved_side))] += get_psqt_score(Piece(enemy_side(moved_side), PAWN), enemy_pawn_idx);
-            }
-        }
-
-        if (unmake_info.get_move().is_castling_move()) {
-            const auto king_dest = unmake_info.get_move().get_dest_square();
-            const auto rook_dest = king_dest + (unmake_info.get_move().get_move_flags() == MoveFlags::KINGSIDE_CASTLE ? -1 : 1);
-            const auto rook_origin = king_dest + (unmake_info.get_move().get_move_flags() == MoveFlags::KINGSIDE_CASTLE ? 1 : -2);
-
-            this->pieces[rook_origin] = this->pieces[rook_dest];
-            this->pieces[rook_dest] = 0;
-
-            clear_bit(this->bbs[bb_idx<ROOK> + static_cast<int>(moved_side)], rook_dest);
-            scores[static_cast<int>(moved_side)] -= get_psqt_score(Piece(moved_side, ROOK), rook_dest);
-
-            set_bit(this->bbs[bb_idx<ROOK> + static_cast<int>(moved_side)], rook_origin);
-            scores[static_cast<int>(moved_side)] += get_psqt_score(Piece(moved_side, ROOK), rook_origin);
-        }
-    }
-
-    set_en_passant_file(unmake_info.get_previous_en_passant_file());
-    castling = unmake_info.get_castling();
-
-    side_to_move = enemy_side(side_to_move);
-    fullmove_counter -= static_cast<int>(side_to_move);
-    zobrist_key = unmake_info.get_zobrist_key();
-    checkers = unmake_info.get_checkers();
-    pinned_pieces = unmake_info.get_pins();
+ChessBoard& ChessBoard::make_move(const Move to_make, BoardHistory& history) const {
+    return history.push_board(ChessBoard(*this, to_make));
 }
 
 void ChessBoard::recompute_blockers_and_checkers(const Side side) {

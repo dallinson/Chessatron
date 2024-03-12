@@ -35,7 +35,7 @@ std::vector<std::string> split_on_whitespace(const std::string& data) {
     return to_return;
 }
 
-void process_position_command(const std::string& line, ChessBoard& c, MoveHistory& m) {
+void process_position_command(const std::string& line, ChessBoard& c, BoardHistory& history) {
     auto parsed_line = split_on_whitespace(line);
     int fen_idx;
     if (parsed_line[1] == "fen") {
@@ -50,7 +50,7 @@ void process_position_command(const std::string& line, ChessBoard& c, MoveHistor
     }
     auto sub_line = line.substr(fen_idx);
     auto idx = c.set_from_fen(sub_line);
-    m = MoveHistory();
+    history = BoardHistory();
     if (idx.has_value()) {
         auto moves = sub_line.substr(idx.value());
         // moves is the substring starting at the end of the FEN string
@@ -60,7 +60,7 @@ void process_position_command(const std::string& line, ChessBoard& c, MoveHistor
             for (auto& move : split_moves) {
                 auto parsed_move = c.generate_move_from_string(move);
                 if (parsed_move.has_value()) {
-                    c.make_move(parsed_move.value(), m);
+                    c.make_move(parsed_move.value(), history);
                 }
             }
         }
