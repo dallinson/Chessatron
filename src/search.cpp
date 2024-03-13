@@ -265,7 +265,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
     // move reordering
 
     if (depth >= 5 && !found_pv_move) {
-        depth -= 1;
+        extensions -= 1;
     }
     // iir
 
@@ -279,7 +279,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
         }
         const auto& move = moves[evaluated_moves];
 
-        if constexpr(!is_pv_node(node_type)) {
+        if constexpr (!is_pv_node(node_type)) {
             if (depth <= 6 && !board.in_check() && move.move.is_quiet() && evaluated_quiets >= depth * depth) {
                 continue;
             }
