@@ -231,17 +231,19 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
         }
     }
 
-    if (static_eval >= beta && !board.in_check() && (history.len() == 0 || (history[history.len() - 1].get_move() != Move::NULL_MOVE))) {
-        // Try null move pruning if we aren't in check
-        board.make_move(Move::NULL_MOVE, history);
-        // First we make the null move
-        auto null_score = -negamax_step<pv_node_type>(-beta, -alpha, depth - 2 - (depth >= 8 ? 3 : 2), ply + 1, node_count, child_cutnode_type);
-        board.unmake_move(history);
-        if (null_score >= beta) {
-            if (null_score > MagicNumbers::PositiveInfinity - MAX_PLY) {
-                return beta;
-            } else {
-                return null_score;
+    if constexpr (!is_pv_node(node_type)) {
+        if (static_eval >= beta && !board.in_check() && (history.len() == 0 || (history[history.len() - 1].get_move() != Move::NULL_MOVE))) {
+            // Try null move pruning if we aren't in check
+            board.make_move(Move::NULL_MOVE, history);
+            // First we make the null move
+            auto null_score = -negamax_step<pv_node_type>(-beta, -alpha, depth - 2 - (depth >= 8 ? 3 : 2), ply + 1, node_count, child_cutnode_type);
+            board.unmake_move(history);
+            if (null_score >= beta) {
+                if (null_score > MagicNumbers::PositiveInfinity - MAX_PLY) {
+                    return beta;
+                } else {
+                    return null_score;
+                }
             }
         }
     }
