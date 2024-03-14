@@ -12,12 +12,12 @@
 TranspositionTable tt;
 
 template <bool print_debug> // this could just as easily be done as a parameter but this gives some practice with templates
-uint64_t perft(ChessBoard& c, MoveHistory& m, int depth) {
+uint64_t perft(const ChessBoard& old_board, BoardHistory& history, int depth) {
 
     MoveList moves;
     uint64_t to_return = 0;
 
-    moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, c.get_side_to_move());
+    moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(old_board, old_board.get_side_to_move());
 
     if (depth == 1) {
         if constexpr (print_debug) {
@@ -30,25 +30,25 @@ uint64_t perft(ChessBoard& c, MoveHistory& m, int depth) {
 
     for (size_t i = 0; i < moves.len(); i++) {
         uint64_t val;
-        c.make_move(moves[i].move, m);
-        val = perft<false>(c, m, depth - 1);
+        auto& board = old_board.make_move(moves[i].move, history);
+        val = perft<false>(board, history, depth - 1);
         if constexpr (print_debug) {
             std::cout << moves[i].move.to_string() << ": " << val << std::endl;
         }
         to_return += val;
-        c.unmake_move(m);
+        history.pop_board();
     }
     return to_return;
 }
 
-uint64_t Perft::run_perft(ChessBoard& c, int depth, bool print_debug) {
-    MoveHistory m;
+uint64_t Perft::run_perft(ChessBoard& board, int depth, bool print_debug) {
+    BoardHistory history(board);
     uint64_t nodes = 0;
     const auto perft_start_point = std::chrono::steady_clock::now();
     if (print_debug) {
-        nodes = perft<true>(c, m, depth);
+        nodes = perft<true>(board, history, depth);
     } else {
-        nodes = perft<false>(c, m, depth);
+        nodes = perft<false>(board, history, depth);
     }
     if (print_debug) {
         const auto perft_time = std::max(
@@ -64,31 +64,32 @@ Move Search::select_random_move(const ChessBoard& c) {
     return moves[rand() % moves.len()].move;
 }
 
-bool Search::is_threefold_repetition(const MoveHistory& m, const int halfmove_clock, const ZobristKey z) {
+bool Search::is_threefold_repetition(const BoardHistory& history, const int halfmove_clock, const ZobristKey z) {
     int counter = 1;
-    const int mh_len = m.len();
-    for (int i = mh_len - 1; i > 0 && i > mh_len - halfmove_clock; i--) {
-        if (m[i].get_zobrist_key() == z) {
+    const int history_len = history.len();
+    const auto castling_rights = history[history_len - 1].get_castling();
+    for (int i = history_len - 2; i > 0 && i > history_len - halfmove_clock - 1; i--) {
+        if (history[i].get_zobrist_key() == z) {
             counter += 1;
             if (counter >= 3) {
                 return true;
             }
         }
-        if (m[i].get_move().is_castling_move()) {
+        if (history[i].get_castling() != castling_rights) {
             break;
         }
     }
     return false;
 }
 
-bool Search::is_draw(const ChessBoard& c, const MoveHistory& m) {
-    return c.get_halfmove_clock() > 100 || is_threefold_repetition(m, c.get_halfmove_clock(), c.get_zobrist_key()) || Search::detect_insufficient_material(c, c.get_side_to_move());
+bool Search::is_draw(const ChessBoard& board, const BoardHistory& history) {
+    return board.get_halfmove_clock() > 100 || is_threefold_repetition(history, board.get_halfmove_clock(), board.get_zobrist_key()) || Search::detect_insufficient_material(board, board.get_side_to_move());
 }
 
 bool Search::static_exchange_evaluation(const ChessBoard& board, const Move move, const int threshold) {
-    PieceTypes next_victim = move.is_promotion() ? move.get_promotion_piece_type() : board.get_piece(move.get_src_square()).get_type();
+    PieceTypes next_victim = move.is_promotion() ? move.get_promotion_piece_type() : board.piece_at(move.get_src_square()).get_type();
 
-    Score balance = Search::SEEScores[static_cast<int>(board.get_piece(move.get_dest_square()).get_type())];
+    Score balance = Search::SEEScores[static_cast<int>(board.piece_at(move.get_dest_square()).get_type())];
     if (move.is_promotion()) {
         balance += (Search::SEEScores[static_cast<int>(move.get_promotion_piece_type())] - Search::SEEScores[static_cast<int>(PieceTypes::PAWN)]);
     } else if (move.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) {
@@ -130,7 +131,7 @@ bool Search::static_exchange_evaluation(const ChessBoard& board, const Move move
         Bitboard victim_attackers = 0;
 
         for (next_victim = PieceTypes::PAWN; next_victim <= PieceTypes::QUEEN; next_victim = static_cast<PieceTypes>(static_cast<int>(next_victim) + 1)) {
-            victim_attackers = this_side_attackers & board.get_bb((2 * (static_cast<int>(next_victim) - 1)) + static_cast<int>(moving_side));
+            victim_attackers = this_side_attackers & board.get_bb(static_cast<int>(next_victim) - 1, static_cast<int>(moving_side));
             if (victim_attackers != 0) {
                 break;
             }
@@ -169,7 +170,7 @@ bool Search::detect_insufficient_material(const ChessBoard& board, const Side si
     const Side enemy = enemy_side(side);
     if (board.occupancy(enemy) == board.kings(enemy)) {
         // if the enemy side only has the king
-        const Bitboard pieces = board.queens(side) | board.rooks(side) | board.bishops(side) | board.knights(side) | board.get_pawns(side);
+        const Bitboard pieces = board.queens(side) | board.rooks(side) | board.bishops(side) | board.knights(side) | board.pawns(side);
         if (pieces == 0) {
             return true;
         }
@@ -181,10 +182,10 @@ bool Search::detect_insufficient_material(const ChessBoard& board, const Side si
 }
 
 template <NodeTypes node_type>
-Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, uint64_t& node_count, bool is_cut_node) {
+Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Score beta, int depth, int ply, uint64_t& node_count, bool is_cut_node) {
 
     pv_table.pv_length[ply] = ply;
-    if (Search::is_draw(board, history)) {
+    if (Search::is_draw(old_board, history)) {
         return 0;
     }
 
@@ -192,9 +193,9 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
     const auto child_cutnode_type = is_pv_node(node_type) ? true : !is_cut_node;
     int extensions = 0;
 
-    const auto tt_entry = tt[board];
+    const auto tt_entry = tt[old_board];
     if constexpr (!is_pv_node(node_type)) {
-        const bool should_cutoff = tt_entry.key() == board.get_zobrist_key() 
+        const bool should_cutoff = tt_entry.key() == old_board.get_zobrist_key() 
                                    && tt_entry.depth() >= depth
                                    && (tt_entry.bound_type() == BoundTypes::EXACT_BOUND
                                    || (tt_entry.bound_type() == BoundTypes::LOWER_BOUND && tt_entry.score() >= beta)
@@ -208,47 +209,65 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
             return tt_entry.score();
         }
     }
-    const bool tt_hit = tt_entry.key() == board.get_zobrist_key();
+    const bool tt_hit = tt_entry.key() == old_board.get_zobrist_key();
 
     if (depth <= 0) {
-        return quiescent_search<pv_node_type>(alpha, beta, ply, node_count);
+        return quiescent_search<pv_node_type>(old_board, alpha, beta, ply, node_count);
         // return c.evaluate();
     }
 
-    if (board.in_check()) {
+    if (old_board.in_check()) {
         extensions += 1;
     } 
 
-    const auto static_eval = tt_hit ? tt_entry.score() : Evaluation::evaluate_board(board);
+    const auto static_eval = tt_hit ? tt_entry.score() : Evaluation::evaluate_board(old_board);
     if (ply >= MAX_PLY) {
         return static_eval;
     }
 
     // Reverse futility pruning
     if constexpr (!is_pv_node(node_type)) {
-        if (!board.in_check() && depth < 7 && (static_eval - (70 * depth)) >= beta) {
+        if (!old_board.in_check() && depth < 7 && (static_eval - (70 * depth)) >= beta) {
             return static_eval;
         }
     }
 
-    if (static_eval >= beta && !board.in_check() && (history.len() == 0 || (history[history.len() - 1].get_move() != Move::NULL_MOVE))) {
-        // Try null move pruning if we aren't in check
-        board.make_move(Move::NULL_MOVE, history);
-        // First we make the null move
-        auto null_score = -negamax_step<pv_node_type>(-beta, -alpha, depth - 2 - (depth >= 8 ? 3 : 2), ply + 1, node_count, child_cutnode_type);
-        board.unmake_move(history);
-        if (null_score >= beta) {
-            if (null_score > MagicNumbers::PositiveInfinity - MAX_PLY) {
-                return beta;
-            } else {
-                return null_score;
+    if constexpr (node_type != NodeTypes::ROOT_NODE) {
+        if (static_eval >= beta && !old_board.in_check()) {
+            // Try null move pruning if we aren't in check
+            const auto& older_board = history[history.len() - 2];
+            const bool nmp_stopped = old_board.pawns(Side::WHITE) == older_board.pawns(Side::WHITE) 
+                && old_board.pawns(Side::BLACK) == older_board.pawns(Side::BLACK) 
+                && old_board.knights(Side::WHITE) == older_board.knights(Side::WHITE) 
+                && old_board.knights(Side::BLACK) == older_board.knights(Side::BLACK) 
+                && old_board.bishops(Side::WHITE) == older_board.bishops(Side::WHITE) 
+                && old_board.bishops(Side::BLACK) == older_board.bishops(Side::BLACK) 
+                && old_board.rooks(Side::WHITE) == older_board.rooks(Side::WHITE) 
+                && old_board.rooks(Side::BLACK) == older_board.rooks(Side::BLACK) 
+                && old_board.queens(Side::WHITE) == older_board.queens(Side::WHITE) 
+                && old_board.queens(Side::BLACK) == older_board.queens(Side::BLACK) 
+                && old_board.kings(Side::WHITE) == older_board.kings(Side::WHITE) 
+                && old_board.kings(Side::BLACK) == older_board.kings(Side::BLACK);
+
+            if (!nmp_stopped) {
+                auto& board = old_board.make_move(Move::NULL_MOVE, history);
+                // First we make the null move
+                auto null_score = -negamax_step<pv_node_type>(board, -beta, -alpha, depth - 2 - (depth >= 8 ? 3 : 2), ply + 1, node_count, child_cutnode_type);
+                history.pop_board();
+                if (null_score >= beta) {
+                    if (null_score > MagicNumbers::PositiveInfinity - MAX_PLY) {
+                        return beta;
+                    } else {
+                        return null_score;
+                    }
+                }
             }
         }
     }
 
-    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(board, board.get_side_to_move());
+    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(old_board, old_board.get_side_to_move());
     if (moves.len() == 0) {
-        if (board.in_check()) {
+        if (old_board.in_check()) {
             // if in check
             return ply + MagicNumbers::NegativeInfinity;
         } else {
@@ -260,7 +279,7 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
     // mate and draw detection
 
     bool found_pv_move = false;
-    MoveOrdering::reorder_moves(moves, board, tt_entry.key() == board.get_zobrist_key() ? tt_entry.move() : Move::NULL_MOVE, history_table, search_stack[ply].killer_move, found_pv_move);
+    MoveOrdering::reorder_moves(moves, old_board, tt_entry.key() == old_board.get_zobrist_key() ? tt_entry.move() : Move::NULL_MOVE, history_table, search_stack[ply].killer_move, found_pv_move);
     const bool tt_move = found_pv_move && tt_hit;
     // move reordering
 
@@ -280,21 +299,21 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
         const auto& move = moves[evaluated_moves];
 
         if constexpr(!is_pv_node(node_type)) {
-            if (depth <= 6 && !board.in_check() && move.move.is_quiet() && evaluated_quiets >= depth * depth) {
+            if (depth <= 6 && !old_board.in_check() && move.move.is_quiet() && evaluated_quiets >= depth * depth) {
                 continue;
             }
         }
 
-        if (!board.in_check() && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && !move.move.is_capture() && depth <= 6 && static_eval + 200 * depth < alpha) {
+        if (!old_board.in_check() && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && !move.move.is_capture() && depth <= 6 && static_eval + 200 * depth < alpha) {
             continue;
         }
 
-        if (depth <= 10 && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && !Search::static_exchange_evaluation(board, move.move, move.move.is_capture() ? (-20 * depth * depth) : (-65 * depth))) {
+        if (depth <= 10 && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && !Search::static_exchange_evaluation(old_board, move.move, move.move.is_capture() ? (-20 * depth * depth) : (-65 * depth))) {
             continue;
         }
 
         const auto pre_move_node_count = node_count;
-        board.make_move(move.move, history);
+        auto& board = old_board.make_move(move.move, history);
         node_count += 1;
         Score score;
         
@@ -306,23 +325,23 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
                 static_cast<size_t>(move.move.is_capture() || move.move.is_promotion()))) {
             const auto lmr_reduction = static_cast<int>(std::round(1.30 + ((MagicNumbers::LnValues[depth] * MagicNumbers::LnValues[evaluated_moves]) / 2.80)))
                 + static_cast<int>(!is_pv_node(node_type) && is_cut_node);
-            score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - lmr_reduction + extensions, ply + 1, node_count, child_cutnode_type);
+            score = -negamax_step<NodeTypes::NON_PV_NODE>(board, -(alpha + 1), -alpha, depth - lmr_reduction + extensions, ply + 1, node_count, child_cutnode_type);
 
             // it's possible the LMR score will raise alpha; in this case we re-search with the full depth
             if (score > alpha) {
-                score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - 1 + extensions, ply + 1, node_count, child_cutnode_type);
+                score = -negamax_step<NodeTypes::NON_PV_NODE>(board, -(alpha + 1), -alpha, depth - 1 + extensions, ply + 1, node_count, child_cutnode_type);
             }
         }
         // if we didn't perform LMR
         else if (!is_pv_node(node_type) || evaluated_moves >= 1) {
-            score = -negamax_step<NodeTypes::NON_PV_NODE>(-(alpha + 1), -alpha, depth - 1 + extensions, ply + 1, node_count, child_cutnode_type);
+            score = -negamax_step<NodeTypes::NON_PV_NODE>(board, -(alpha + 1), -alpha, depth - 1 + extensions, ply + 1, node_count, child_cutnode_type);
         }
 
         if (is_pv_node(node_type) && (evaluated_moves == 0 || score > alpha)) {
-            score = -negamax_step<NodeTypes::PV_NODE>(-beta, -alpha, depth - 1 + extensions, ply + 1, node_count, child_cutnode_type);
+            score = -negamax_step<NodeTypes::PV_NODE>(board, -beta, -alpha, depth - 1 + extensions, ply + 1, node_count, child_cutnode_type);
         }
 
-        board.unmake_move(history);
+        history.pop_board();
         if constexpr (node_type == NodeTypes::ROOT_NODE) {
             node_spent_table[move.move.get_value() & 0x0FFF] += (node_count - pre_move_node_count);
         }
@@ -344,11 +363,11 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
                     search_stack[ply].killer_move = move.move;
                     for (size_t j = 0; j < evaluated_moves; j++) {
                         if (moves[j].move.is_quiet()) {
-                            history_table[moves[j].move.get_history_idx(board.get_side_to_move())] -= (depth * depth);
+                            history_table[moves[j].move.get_history_idx(old_board.get_side_to_move())] -= (depth * depth);
                         }
                     }
                     if (!move.move.is_capture()) {
-                        history_table[move.move.get_history_idx(board.get_side_to_move())] += (depth * depth);
+                        history_table[move.move.get_history_idx(old_board.get_side_to_move())] += (depth * depth);
                     }
                     break;
                 }
@@ -358,16 +377,16 @@ Score SearchHandler::negamax_step(Score alpha, Score beta, int depth, int ply, u
         evaluated_quiets += static_cast<int>(move.move.is_quiet());
     }
     const BoundTypes bound_type = (best_score >= beta ? BoundTypes::LOWER_BOUND : (alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND));
-    tt.store(TranspositionTableEntry(best_move, depth, bound_type, best_score, board.get_zobrist_key()), board);
+    tt.store(TranspositionTableEntry(best_move, depth, bound_type, best_score, old_board.get_zobrist_key()), old_board);
     return best_score;
 }
 
 template <NodeTypes node_type>
-Score SearchHandler::quiescent_search(Score alpha, Score beta, int ply, uint64_t& node_count) {
-    if (Search::is_draw(board, history)) {
+Score SearchHandler::quiescent_search(const ChessBoard& old_board, Score alpha, Score beta, int ply, uint64_t& node_count) {
+    if (Search::is_draw(old_board, history)) {
         return 0;
     }
-    Score static_eval = Evaluation::evaluate_board(board);
+    Score static_eval = Evaluation::evaluate_board(old_board);
     if (ply >= MAX_PLY) {
         return static_eval;
     }
@@ -375,9 +394,9 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, int ply, uint64_t
         return static_eval;
     }
     alpha = std::max(static_eval, alpha);
-    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIESCENCE>(board, board.get_side_to_move());
-    if (moves.len() == 0 && MoveGenerator::generate_legal_moves<MoveGenType::NON_QUIESCENCE>(board, board.get_side_to_move()).len() == 0) {
-        if (board.in_check()) {
+    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIESCENCE>(old_board, old_board.get_side_to_move());
+    if (moves.len() == 0 && MoveGenerator::generate_legal_moves<MoveGenType::NON_QUIESCENCE>(old_board, old_board.get_side_to_move()).len() == 0) {
+        if (old_board.in_check()) {
             // if in check
             return ply + MagicNumbers::NegativeInfinity;
         } else {
@@ -387,7 +406,7 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, int ply, uint64_t
 
     bool found_pv_move = false;
     Score best_score = static_eval;
-    MoveOrdering::reorder_moves(moves, board, Move::NULL_MOVE, history_table, search_stack[ply].killer_move, found_pv_move);
+    MoveOrdering::reorder_moves(moves, old_board, Move::NULL_MOVE, history_table, search_stack[ply].killer_move, found_pv_move);
     int evaluated_moves = 0;
     for (size_t i = 0; i < moves.len(); i++) {
         if (search_cancelled) {
@@ -400,28 +419,28 @@ Score SearchHandler::quiescent_search(Score alpha, Score beta, int ply, uint64_t
                 continue;
             }
         } else {
-            if (!Search::static_exchange_evaluation(board, move.move, -65)) {
+            if (!Search::static_exchange_evaluation(old_board, move.move, -65)) {
                 continue;
             }
         }
 
-        board.make_move(move.move, history);
+        auto& board = old_board.make_move(move.move, history);
         node_count += 1;
         Score score;
         if constexpr (is_pv_node(node_type)) {
             if (evaluated_moves == 0) {
-                score = -quiescent_search<NodeTypes::PV_NODE>(-beta, -alpha, ply + 1, node_count);
+                score = -quiescent_search<NodeTypes::PV_NODE>(board, -beta, -alpha, ply + 1, node_count);
             } else {
-                score = -quiescent_search<NodeTypes::NON_PV_NODE>(-alpha - 1, -alpha, ply + 1, node_count);
+                score = -quiescent_search<NodeTypes::NON_PV_NODE>(board, -alpha - 1, -alpha, ply + 1, node_count);
                 if (score > alpha) {
-                    score = -quiescent_search<NodeTypes::PV_NODE>(-beta, -alpha, ply + 1, node_count);
+                    score = -quiescent_search<NodeTypes::PV_NODE>(board, -beta, -alpha, ply + 1, node_count);
                 }
             }
         } else {
-            score = -quiescent_search<NodeTypes::NON_PV_NODE>(-alpha - 1, -alpha, ply + 1, node_count);
+            score = -quiescent_search<NodeTypes::NON_PV_NODE>(board, -alpha - 1, -alpha, ply + 1, node_count);
         }
 
-        board.unmake_move(history);
+        history.pop_board();
         evaluated_moves += 1;
         if (score > best_score) {
             best_score = score;
@@ -447,7 +466,7 @@ Score SearchHandler::run_aspiration_window_search(int depth, Score previous_scor
             beta = previous_score + window;
         }
 
-        previous_score = negamax_step<NodeTypes::ROOT_NODE>(alpha, beta, depth, 0, node_count, false);
+        previous_score = negamax_step<NodeTypes::ROOT_NODE>(history[history.len() - 1], alpha, beta, depth, 0, node_count, false);
 
         if (search_cancelled) {
             return previous_score;
@@ -469,7 +488,7 @@ Move SearchHandler::run_iterative_deepening_search() {
     // reset pv move so we don't accidentally play an illegal one from a previous search
     const auto search_start_point = std::chrono::steady_clock::now();
     // TranspositionTable transpositions;
-    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(board, board.get_side_to_move());
+    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(history[history.len() - 1], history[history.len() - 1].get_side_to_move());
     // We generate legal moves only as it saves us having to continually rerun legality checks
     if (moves.len() == 1) {
         return moves[0].move;

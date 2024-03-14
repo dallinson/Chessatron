@@ -35,7 +35,7 @@ std::vector<std::string> split_on_whitespace(const std::string& data) {
     return to_return;
 }
 
-void process_position_command(const std::string& line, ChessBoard& c, MoveHistory& m) {
+void process_position_command(const std::string& line, SearchHandler& s) {
     auto parsed_line = split_on_whitespace(line);
     int fen_idx;
     if (parsed_line[1] == "fen") {
@@ -49,20 +49,24 @@ void process_position_command(const std::string& line, ChessBoard& c, MoveHistor
         return; // not a valid position
     }
     auto sub_line = line.substr(fen_idx);
+    ChessBoard c;
     auto idx = c.set_from_fen(sub_line);
-    m = MoveHistory();
     if (idx.has_value()) {
         auto moves = sub_line.substr(idx.value());
         // moves is the substring starting at the end of the FEN string
         if (moves.find("moves") != std::string::npos) {
             // if there _are_ moves to add
             auto split_moves = split_on_whitespace(moves.substr(moves.find(moves) + 5));
+            auto history = BoardHistory(c);
             for (auto& move : split_moves) {
                 auto parsed_move = c.generate_move_from_string(move);
                 if (parsed_move.has_value()) {
-                    c.make_move(parsed_move.value(), m);
+                    c = c.make_move(parsed_move.value(), history);
                 }
             }
+            s.set_history(history);
+        } else {
+            s.set_board(c);
         }
     }
 }
@@ -139,7 +143,6 @@ int main(int argc, char** argv) {
             } else {
                 s.run_bench();
             }
-            s.shutdown();
             return 0;
         }
     }
@@ -156,7 +159,6 @@ int main(int argc, char** argv) {
         } else if (line == "ucinewgame") {
             s.reset();
         } else if (line == "quit") {
-            s.shutdown();
             break;
         } else if (line == "stop") {
             s.EndSearch();
@@ -168,7 +170,7 @@ int main(int argc, char** argv) {
                 if (parsed_line[0] == std::string("go")) {
                     process_go_command(parsed_line, s);
                 } else if (parsed_line[0] == "position") {
-                    process_position_command(line, s.get_board(), s.get_history());
+                    process_position_command(line, s);
                 } else if (parsed_line[0] == "setoption") {
                     std::istringstream iss(line);
                     std::string token, value, option_name;

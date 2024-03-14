@@ -31,8 +31,8 @@ namespace Search {
     constexpr std::array<Score, 7> SEEScores = { 0, 100, 300, 300, 500, 900, 0 };
 
     Move select_random_move(const ChessBoard& c);
-    bool is_threefold_repetition(const MoveHistory& m, const int halfmove_clock, const ZobristKey z);
-    bool is_draw(const ChessBoard& c, const MoveHistory& m);
+    bool is_threefold_repetition(const BoardHistory& m, const int halfmove_clock, const ZobristKey z);
+    bool is_draw(const ChessBoard& c, const BoardHistory& m);
     bool static_exchange_evaluation(const ChessBoard& board, const Move move, const int threshold);
     bool detect_insufficient_material(const ChessBoard& board, const Side side);
 } // namespace Search
@@ -117,8 +117,7 @@ class SearchHandler {
         std::mutex search_mutex;
         std::condition_variable cv;
         
-        ChessBoard board;
-        MoveHistory history;
+        BoardHistory history;
         std::array<int32_t, 8192> history_table;
         std::array<uint64_t, 4096> node_spent_table;
         std::array<SearchStackFrame, MAX_PLY + 2> search_stack;
@@ -135,19 +134,25 @@ class SearchHandler {
 
         void search_thread_function();
         Score run_aspiration_window_search(int depth, Score previous_score);
-        template <NodeTypes node_type> Score negamax_step(Score alpha, Score beta, int depth, int ply, uint64_t& node_count, bool is_cut_node);
-        template <NodeTypes node_type> Score quiescent_search(Score alpha, Score beta, int ply, uint64_t& node_count);
+        template <NodeTypes node_type> Score negamax_step(const ChessBoard& board, Score alpha, Score beta, int depth, int ply, uint64_t& node_count, bool is_cut_node);
+        template <NodeTypes node_type> Score quiescent_search(const ChessBoard& board, Score alpha, Score beta, int ply, uint64_t& node_count);
         Move run_iterative_deepening_search();
 
     public:
         SearchHandler();
+        ~SearchHandler() { this->shutdown(); };
 
         bool is_searching() { return this->in_search; };
         int get_current_search_id() { return this->current_search_id; };
-        ChessBoard& get_board() { return this->board; };
-        MoveHistory& get_history() { return this->history; };
+        ChessBoard& get_board() { return this->history[history.len() - 1]; };
+        BoardHistory& get_history() { return this->history; };
 
-        void set_board(const ChessBoard& c) { this->board = c; };
+        void set_board(const ChessBoard& c) { 
+            this->history = BoardHistory(c);
+        };
+        void set_history(const BoardHistory& h) {
+            this->history = h;
+        }
         uint64_t get_node_count() { return node_count; };
         void set_print_info(bool print) { print_info = print; };
         void reset();
