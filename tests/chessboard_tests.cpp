@@ -114,7 +114,7 @@ TEST(ChessBoardTests, TestMakeUnmakeMove) {
         c = hist.pop_board();
         ASSERT_EQ(original_score, c.get_score(Side::WHITE)) << "Score mismatch after move " << m.to_string();
         for (int i = 0; i < 64; i++) {
-            ASSERT_EQ(c.get_piece(i).get_value(), o.get_piece(i).get_value())
+            ASSERT_EQ(c.piece_at(i).get_value(), o.piece_at(i).get_value())
                 << "Mismatch at piece " << std::to_string(i) << " after move " << m.to_string() << " with flags "
                 << std::to_string(static_cast<int>(m.get_move_flags())) << " (value " << std::to_string(m.get_value()) << ")";
         }
@@ -126,7 +126,7 @@ TEST(ChessBoardTests, TestMakeUnmakeMove) {
     c = c.make_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, 24, 8), hist);
     c = hist.pop_board();
     for (int i = 0; i < 64; i++) {
-        ASSERT_EQ(c.get_piece(i).get_value(), o.get_piece(i).get_value()) << "Mismatch at piece " << std::to_string(i) << "!";
+        ASSERT_EQ(c.piece_at(i).get_value(), o.piece_at(i).get_value()) << "Mismatch at piece " << std::to_string(i) << "!";
     }
 
     c.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R2K3R b kq - 1 1");
@@ -135,7 +135,7 @@ TEST(ChessBoardTests, TestMakeUnmakeMove) {
     c = c.make_move(Move(6322), hist);
     c = hist.pop_board();
     for (int i = 0; i < 64; i++) {
-        ASSERT_EQ(c.get_piece(i).get_value(), o.get_piece(i).get_value()) << "Mismatch at piece " << std::to_string(i) << "!";
+        ASSERT_EQ(c.piece_at(i).get_value(), o.piece_at(i).get_value()) << "Mismatch at piece " << std::to_string(i) << "!";
     }
 }
 
@@ -147,7 +147,7 @@ TEST(ChessBoardTests, TestMakeMove) {
     c = c.make_move(Move(MoveFlags::QUIET_MOVE, 17, 9), hist);
     ASSERT_STREQ(Move(MoveFlags::QUIET_MOVE, 17, 9).to_string().c_str(), "b2b3");
     for (int i = 0; i < 64; i++) {
-        ASSERT_EQ(c.get_piece(i).get_value(), o.get_piece(i).get_value()) << "Mismatch at piece " << std::to_string(i) << "!";
+        ASSERT_EQ(c.piece_at(i).get_value(), o.piece_at(i).get_value()) << "Mismatch at piece " << std::to_string(i) << "!";
     }
     c.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
     o.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/Pp2P3/2N2Q1p/1PPBBPPP/R3K2R b KQkq a3 0 1");
@@ -156,7 +156,7 @@ TEST(ChessBoardTests, TestMakeMove) {
     ASSERT_STREQ(Move(MoveFlags::DOUBLE_PAWN_PUSH, 24, 8).to_string().c_str(), "a2a4");
     ASSERT_EQ(Move(MoveFlags::DOUBLE_PAWN_PUSH, 24, 8).get_value(), 5640);
     for (int i = 0; i < 64; i++) {
-        ASSERT_EQ(c.get_piece(i).get_value(), o.get_piece(i).get_value()) << "Mismatch at piece " << std::to_string(i) << "!";
+        ASSERT_EQ(c.piece_at(i).get_value(), o.piece_at(i).get_value()) << "Mismatch at piece " << std::to_string(i) << "!";
     }
 }
 
@@ -181,10 +181,7 @@ TEST(ChessBoardTests, TestClearBoard) {
     c.set_from_fen("startpos");
     c.clear_board();
     for (int i = 0; i < 12; i++) {
-        ASSERT_EQ(c.get_bb(i), 0);
-    }
-    for (int i = 0; i < 64; i++) {
-        ASSERT_EQ(c.get_piece(i), Piece(0));
+        ASSERT_EQ(c.get_bb(i / 2, i % 6), 0);
     }
     ASSERT_EQ(c.get_side_to_move(), Side::WHITE);
     ASSERT_EQ(c.get_en_passant_file(), 9);

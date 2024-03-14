@@ -79,7 +79,7 @@ void MoveGenerator::generate_castling_moves(const ChessBoard& c, const Side side
 
 bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
     int king_idx = get_lsb(c.kings(c.get_side_to_move()));
-    const auto move_side = c.get_piece(m.get_src_square()).get_side();
+    const auto move_side = static_cast<Side>(get_bit(c.occupancy(Side::BLACK), m.get_src_square()));
     const Side enemy = enemy_side(move_side);
     if (m.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) {
         // with en passant knights and pawns _cannot_ capture as the previous
@@ -96,7 +96,7 @@ bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
                   (c.bishops(enemy) | c.queens(enemy))) ||
                  (MoveGenerator::generate_rook_mm(cleared_occupancy, king_idx) &
                   (c.rooks(enemy) | c.queens(enemy))));
-    } else if (c.get_piece(m.get_src_square()).get_type() == PieceTypes::KING) {
+    } else if (get_bit(c.kings(), m.get_src_square()) != 0) {
         Bitboard cleared_bitboard = c.occupancy() ^ idx_to_bb(m.get_src_square());
         int target_idx = m.get_dest_square();
         const auto potential_diagonal_sliders = (c.bishops(enemy) | c.queens(enemy));
@@ -126,7 +126,7 @@ bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
 
 bool MoveGenerator::is_move_pseudolegal(const ChessBoard& c, const Move to_test) {
     auto src_idx = to_test.get_src_square();
-    auto moved_piece = c.get_piece(src_idx);
+    auto moved_piece = c.piece_at(src_idx);
     if (moved_piece.get_value() == 0) {
         return false;
     }

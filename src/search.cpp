@@ -87,9 +87,9 @@ bool Search::is_draw(const ChessBoard& board, const BoardHistory& history) {
 }
 
 bool Search::static_exchange_evaluation(const ChessBoard& board, const Move move, const int threshold) {
-    PieceTypes next_victim = move.is_promotion() ? move.get_promotion_piece_type() : board.get_piece(move.get_src_square()).get_type();
+    PieceTypes next_victim = move.is_promotion() ? move.get_promotion_piece_type() : board.piece_at(move.get_src_square()).get_type();
 
-    Score balance = Search::SEEScores[static_cast<int>(board.get_piece(move.get_dest_square()).get_type())];
+    Score balance = Search::SEEScores[static_cast<int>(board.piece_at(move.get_dest_square()).get_type())];
     if (move.is_promotion()) {
         balance += (Search::SEEScores[static_cast<int>(move.get_promotion_piece_type())] - Search::SEEScores[static_cast<int>(PieceTypes::PAWN)]);
     } else if (move.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) {
@@ -131,7 +131,7 @@ bool Search::static_exchange_evaluation(const ChessBoard& board, const Move move
         Bitboard victim_attackers = 0;
 
         for (next_victim = PieceTypes::PAWN; next_victim <= PieceTypes::QUEEN; next_victim = static_cast<PieceTypes>(static_cast<int>(next_victim) + 1)) {
-            victim_attackers = this_side_attackers & board.get_bb((2 * (static_cast<int>(next_victim) - 1)) + static_cast<int>(moving_side));
+            victim_attackers = this_side_attackers & board.get_bb(static_cast<int>(next_victim) - 1, static_cast<int>(moving_side));
             if (victim_attackers != 0) {
                 break;
             }

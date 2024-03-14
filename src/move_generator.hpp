@@ -93,7 +93,7 @@ template <PieceTypes piece_type, MoveGenType gen_type> void MoveGenerator::gener
     const Bitboard all_bb = enemy_bb | friendly_bb;
     const auto checking_idx = get_lsb(c.get_checkers());
     const auto enemy = enemy_side(stm);
-    Bitboard pieces = c.occupancy_of<piece_type>(stm);
+    Bitboard pieces = c.pieces<piece_type>(stm);
     while (pieces) {
         const auto piece_idx = pop_lsb(pieces);
         auto potential_moves = generate_mm<piece_type>(all_bb, piece_idx) & ~friendly_bb;
@@ -122,7 +122,7 @@ template <PieceTypes piece_type, MoveGenType gen_type> void MoveGenerator::gener
                     continue;
                 }
             }
-            const auto flag = (c.get_piece(target_idx).get_value() != 0)
+            const auto flag = (get_bit(c.occupancy(), target_idx) != 0)
                 ? MoveFlags::CAPTURE
                 : MoveFlags::QUIET_MOVE;
             output.add_move(Move(flag, target_idx, piece_idx));
