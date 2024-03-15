@@ -11,3 +11,4 @@ PointerAlignment: Left
 SpacesInAngles: Never
 SpaceAfterTemplateKeyword: true
 AllowShortEnumsOnASingleLine: false
+BreakBeforeBinaryOperators: NonAssignment

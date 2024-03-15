@@ -12,26 +12,26 @@
 using namespace PieceSquareTables;
 using enum PieceTypes;
 
-constexpr static std::array<uint8_t, 6> mg_phase_vals = { 0, 1, 1, 2, 4, 0 };
+constexpr static std::array<uint8_t, 6> mg_phase_vals = {0, 1, 1, 2, 4, 0};
 const static std::array<ZobristKey, 16> castling_keys = {
-    0, // 0000
-    ZobristKeys::CastlingKeys[0], // 0001
-    ZobristKeys::CastlingKeys[1], // 0010
+    0,                                                           // 0000
+    ZobristKeys::CastlingKeys[0],                                // 0001
+    ZobristKeys::CastlingKeys[1],                                // 0010
     ZobristKeys::CastlingKeys[0] ^ ZobristKeys::CastlingKeys[1], // 0011
 
-    ZobristKeys::CastlingKeys[2], // 0100
-    ZobristKeys::CastlingKeys[2] ^ ZobristKeys::CastlingKeys[0], // 0101
-    ZobristKeys::CastlingKeys[2] ^ ZobristKeys::CastlingKeys[1], // 0110
+    ZobristKeys::CastlingKeys[2],                                                               // 0100
+    ZobristKeys::CastlingKeys[2] ^ ZobristKeys::CastlingKeys[0],                                // 0101
+    ZobristKeys::CastlingKeys[2] ^ ZobristKeys::CastlingKeys[1],                                // 0110
     ZobristKeys::CastlingKeys[2] ^ ZobristKeys::CastlingKeys[0] ^ ZobristKeys::CastlingKeys[1], // 0111
 
-    ZobristKeys::CastlingKeys[3], // 1000
-	ZobristKeys::CastlingKeys[3] ^ ZobristKeys::CastlingKeys[0], // 1001
-    ZobristKeys::CastlingKeys[3] ^ ZobristKeys::CastlingKeys[1], // 1010
+    ZobristKeys::CastlingKeys[3],                                                               // 1000
+    ZobristKeys::CastlingKeys[3] ^ ZobristKeys::CastlingKeys[0],                                // 1001
+    ZobristKeys::CastlingKeys[3] ^ ZobristKeys::CastlingKeys[1],                                // 1010
     ZobristKeys::CastlingKeys[3] ^ ZobristKeys::CastlingKeys[0] ^ ZobristKeys::CastlingKeys[1], // 1011
 
-    ZobristKeys::CastlingKeys[3] ^ ZobristKeys::CastlingKeys[2], // 1100
-    ZobristKeys::CastlingKeys[3] ^ ZobristKeys::CastlingKeys[2] ^ ZobristKeys::CastlingKeys[0], // 1101
-    ZobristKeys::CastlingKeys[3] ^ ZobristKeys::CastlingKeys[2] ^ ZobristKeys::CastlingKeys[1], // 1110
+    ZobristKeys::CastlingKeys[3] ^ ZobristKeys::CastlingKeys[2],                                                               // 1100
+    ZobristKeys::CastlingKeys[3] ^ ZobristKeys::CastlingKeys[2] ^ ZobristKeys::CastlingKeys[0],                                // 1101
+    ZobristKeys::CastlingKeys[3] ^ ZobristKeys::CastlingKeys[2] ^ ZobristKeys::CastlingKeys[1],                                // 1110
     ZobristKeys::CastlingKeys[3] ^ ZobristKeys::CastlingKeys[2] ^ ZobristKeys::CastlingKeys[0] ^ ZobristKeys::CastlingKeys[1], // 1111
 };
 // Bit 0 is white kingside castling
@@ -39,16 +39,9 @@ const static std::array<ZobristKey, 16> castling_keys = {
 // Bit 2 is white queenside castling
 // Bit 3 is black kingside castline
 
-constexpr int castling_rights[64] = {
-    0b1011, 15, 15, 15, 0b1010,  15, 15,  0b1110,
-    15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15,
-    0b0111, 15, 15, 15, 0b0101, 15, 15, 0b1101
-};
+constexpr int castling_rights[64] = {0b1011, 15, 15, 15, 0b1010, 15, 15, 0b1110, 15, 15, 15, 15, 15,     15, 15, 15, 15,     15, 15, 15,    15, 15,
+                                     15,     15, 15, 15, 15,     15, 15, 15,     15, 15, 15, 15, 15,     15, 15, 15, 15,     15, 15, 15,    15, 15,
+                                     15,     15, 15, 15, 15,     15, 15, 15,     15, 15, 15, 15, 0b0111, 15, 15, 15, 0b0101, 15, 15, 0b1101};
 
 void ChessBoard::set_piece(Piece piece, uint8_t pos) {
     set_bit(piece_bbs[static_cast<int>(piece.get_type()) - 1], pos);
@@ -356,9 +349,7 @@ ChessBoard::ChessBoard(const ChessBoard& origin, const Move to_make) {
     recompute_blockers_and_checkers(side_to_move);
 }
 
-ChessBoard& ChessBoard::make_move(const Move to_make, BoardHistory& history) const {
-    return history.push_board(ChessBoard(*this, to_make));
-}
+ChessBoard& ChessBoard::make_move(const Move to_make, BoardHistory& history) const { return history.push_board(ChessBoard(*this, to_make)); }
 
 void ChessBoard::recompute_blockers_and_checkers(const Side side) {
     const int king_idx = get_lsb(this->kings(side));
@@ -367,10 +358,9 @@ void ChessBoard::recompute_blockers_and_checkers(const Side side) {
 
     pinned_pieces = 0;
 
-    Bitboard potential_checks =
-        ((MoveGenerator::generate_bishop_mm(0, king_idx) & (bishops(enemy) | queens(enemy))) |
-         (MoveGenerator::generate_rook_mm(0, king_idx) & (rooks(enemy) | queens(enemy)))) ^
-        checkers;
+    Bitboard potential_checks = ((MoveGenerator::generate_bishop_mm(0, king_idx) & (bishops(enemy) | queens(enemy)))
+                                 | (MoveGenerator::generate_rook_mm(0, king_idx) & (rooks(enemy) | queens(enemy))))
+                                ^ checkers;
     const Bitboard check_blockers = occupancy() ^ potential_checks;
     // don't evaluate ones where we already check the king
 
@@ -429,7 +419,7 @@ std::optional<Move> ChessBoard::generate_move_from_string(const std::string& s) 
         } else if (end_sq - start_sq == 2) {
             m = MoveFlags::KINGSIDE_CASTLE;
         }
-    } 
+    }
     if (get_bit(occupancy(), end_sq) != 0) {
         m = MoveFlags(static_cast<int>(m) | static_cast<int>(MoveFlags::CAPTURE));
     }

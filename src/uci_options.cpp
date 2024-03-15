@@ -28,12 +28,14 @@ void UCIOption::set_value(std::string new_value) {
 
 std::ostream& operator<<(std::ostream& out, const UCIOption& opt) {
     out << std::string(" type ");
-    out << std::string(opt.get_type() == UCIOptionTypes::CHECK ? "check" :
-    opt.get_type() == UCIOptionTypes::COMBO ? "combo" :
-    opt.get_type() == UCIOptionTypes::BUTTON ? "button" :
-    opt.get_type() == UCIOptionTypes::STRING ? "string" : "");
+    out << std::string(opt.get_type() == UCIOptionTypes::CHECK    ? "check"
+                       : opt.get_type() == UCIOptionTypes::COMBO  ? "combo"
+                       : opt.get_type() == UCIOptionTypes::BUTTON ? "button"
+                       : opt.get_type() == UCIOptionTypes::STRING ? "string"
+                                                                  : "");
     if (opt.get_type() == UCIOptionTypes::SPIN) {
-        out << std::string("spin default ") << opt.get_default_value() << std::string(" min ") << std::to_string(opt.get_min()) << std::string(" max ") << std::to_string(opt.get_max());
+        out << std::string("spin default ") << opt.get_default_value() << std::string(" min ") << std::to_string(opt.get_min())
+            << std::string(" max ") << std::to_string(opt.get_max());
     }
 
     return out;

@@ -1,20 +1,20 @@
 #include <cstdio>
 #include <iostream>
-#include <string>
 #include <sstream>
+#include <string>
 #include <vector>
 
 #ifdef IS_TESTING
 #include <gtest/gtest.h>
 #endif
 
-#include "common.hpp"
 #include "chessboard.hpp"
+#include "common.hpp"
 #include "magic_numbers.hpp"
 #include "pieces.hpp"
 #include "search.hpp"
-#include "utils.hpp"
 #include "uci_options.hpp"
+#include "utils.hpp"
 
 #include "move_generator.hpp"
 
@@ -76,13 +76,13 @@ void process_go_command(const std::vector<std::string>& line, SearchHandler& s) 
     uint32_t movestogo = 1;
     uint16_t depth = std::numeric_limits<uint16_t>::max();
     if (line.size() == 0) {
-        s.search(InfiniteTC {});
+        s.search(InfiniteTC{});
         return;
     }
     for (size_t i = 0; i < line.size(); i++) {
         auto& this_elem = line[i];
         if (this_elem == "infinite") {
-            s.search(InfiniteTC {});
+            s.search(InfiniteTC{});
             return;
         } else if (i != (line.size() - 1)) {
             if (this_elem == "wtime") {
@@ -102,19 +102,19 @@ void process_go_command(const std::vector<std::string>& line, SearchHandler& s) 
                 movestogo = std::stoi(line[i + 1]);
             } else if (this_elem == "depth") {
                 depth = std::stoi(line[i + 1]);
-                s.search(DepthTC { depth });
+                s.search(DepthTC{depth});
                 return;
             }
         }
     }
     if (movetime != 0) {
-        s.search(FixedTimeTC { movetime });
+        s.search(FixedTimeTC{movetime});
         return;
     }
-    auto current_side = s.get_board().get_side_to_move();
+    const auto current_side = s.get_board().get_side_to_move();
     // auto halfmoves_so_far = (2 * s.get_board().get_fullmove_counter()) + static_cast<int>(current_side);
-    auto remaining_time = (current_side == Side::WHITE) ? wtime : btime;
-    auto increment = ((current_side == Side::WHITE) ? winc : binc) / movestogo;
+    const auto remaining_time = (current_side == Side::WHITE) ? wtime : btime;
+    const auto increment = ((current_side == Side::WHITE) ? winc : binc) / movestogo;
     // next we determine how to use our allocated time using the formula
     // 59.3 + (72830 - 2330 k)/(2644 + k (10 + k)), where k is the number of halfmoves
     // so far.  This formula is taken from https://chess.stackexchange.com/questions/2506/what-is-the-average-length-of-a-game-of-chess.
@@ -122,7 +122,7 @@ void process_go_command(const std::vector<std::string>& line, SearchHandler& s) 
     //    59.3 + (static_cast<float>(72830 - (2330 * halfmoves_so_far)) / static_cast<float>(2644 + (halfmoves_so_far * (10 + halfmoves_so_far))));
 
     // s.search((remaining_time / static_cast<int>(remaining_halfmoves)) + increment, depth);
-    s.search(VariableTimeTC {TimeManagement::calculate_hard_limit(remaining_time, increment), remaining_time, increment});
+    s.search(VariableTimeTC{TimeManagement::calculate_hard_limit(remaining_time, increment), remaining_time, increment});
 }
 
 int main(int argc, char** argv) {
@@ -133,8 +133,8 @@ int main(int argc, char** argv) {
     srand(time(NULL));
     SearchHandler s;
 
-    uci_options.insert(std::make_pair("Hash", UCIOption(1, 2048, "16", [](UCIOption& opt){ tt.resize(size_t(opt)); })));
-    uci_options.insert(std::make_pair("Threads", UCIOption(1, 1, "1", [](UCIOption& opt){ (void) opt; })));
+    uci_options.insert(std::make_pair("Hash", UCIOption(1, 2048, "16", [](UCIOption& opt) { tt.resize(size_t(opt)); })));
+    uci_options.insert(std::make_pair("Threads", UCIOption(1, 1, "1", [](UCIOption& opt) { (void) opt; })));
 
     if (argc > 1) {
         if (std::string(argv[1]) == "bench") {

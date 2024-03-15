@@ -83,7 +83,8 @@ bool Search::is_threefold_repetition(const BoardHistory& history, const int half
 }
 
 bool Search::is_draw(const ChessBoard& board, const BoardHistory& history) {
-    return board.get_halfmove_clock() > 100 || is_threefold_repetition(history, board.get_halfmove_clock(), board.get_zobrist_key()) || Search::detect_insufficient_material(board, board.get_side_to_move());
+    return board.get_halfmove_clock() > 100 || is_threefold_repetition(history, board.get_halfmove_clock(), board.get_zobrist_key())
+           || Search::detect_insufficient_material(board, board.get_side_to_move());
 }
 
 bool Search::static_exchange_evaluation(const ChessBoard& board, const Move move, const int threshold) {
@@ -98,11 +99,13 @@ bool Search::static_exchange_evaluation(const ChessBoard& board, const Move move
 
     balance -= threshold;
 
-    if (balance < 0) return false;
+    if (balance < 0)
+        return false;
 
     balance -= Search::SEEScores[static_cast<int>(next_victim)];
 
-    if (balance >= 0) return true;
+    if (balance >= 0)
+        return true;
 
     const Bitboard bishops = board.bishops() | board.queens();
     const Bitboard rooks = board.rooks() | board.queens();
@@ -116,9 +119,9 @@ bool Search::static_exchange_evaluation(const ChessBoard& board, const Move move
     }
 
     Bitboard attackers = (MoveGenerator::get_attackers(board, board.get_side_to_move(), move.get_dest_square(), occupied)
-                    | MoveGenerator::get_attackers(board, enemy_side(board.get_side_to_move()), move.get_dest_square(), occupied))
-                    & occupied;
-    
+                          | MoveGenerator::get_attackers(board, enemy_side(board.get_side_to_move()), move.get_dest_square(), occupied))
+                         & occupied;
+
     Side moving_side = enemy_side(board.get_side_to_move());
 
     while (true) {
@@ -130,7 +133,8 @@ bool Search::static_exchange_evaluation(const ChessBoard& board, const Move move
 
         Bitboard victim_attackers = 0;
 
-        for (next_victim = PieceTypes::PAWN; next_victim <= PieceTypes::QUEEN; next_victim = static_cast<PieceTypes>(static_cast<int>(next_victim) + 1)) {
+        for (next_victim = PieceTypes::PAWN; next_victim <= PieceTypes::QUEEN;
+             next_victim = static_cast<PieceTypes>(static_cast<int>(next_victim) + 1)) {
             victim_attackers = this_side_attackers & board.get_bb(static_cast<int>(next_victim) - 1, static_cast<int>(moving_side));
             if (victim_attackers != 0) {
                 break;
@@ -195,11 +199,10 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
 
     const auto tt_entry = tt[old_board];
     if constexpr (!is_pv_node(node_type)) {
-        const bool should_cutoff = tt_entry.key() == old_board.get_zobrist_key() 
-                                   && tt_entry.depth() >= depth
-                                   && (tt_entry.bound_type() == BoundTypes::EXACT_BOUND
-                                   || (tt_entry.bound_type() == BoundTypes::LOWER_BOUND && tt_entry.score() >= beta)
-                                   || (tt_entry.bound_type() == BoundTypes::UPPER_BOUND && tt_entry.score() <= alpha));
+        const bool should_cutoff =
+            tt_entry.key() == old_board.get_zobrist_key() && tt_entry.depth() >= depth
+            && (tt_entry.bound_type() == BoundTypes::EXACT_BOUND || (tt_entry.bound_type() == BoundTypes::LOWER_BOUND && tt_entry.score() >= beta)
+                || (tt_entry.bound_type() == BoundTypes::UPPER_BOUND && tt_entry.score() <= alpha));
         if (should_cutoff) {
             if (tt_entry.score() == MagicNumbers::PositiveInfinity) {
                 return MagicNumbers::PositiveInfinity - ply;
@@ -218,7 +221,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
 
     if (old_board.in_check()) {
         extensions += 1;
-    } 
+    }
 
     const auto static_eval = tt_hit ? tt_entry.score() : Evaluation::evaluate_board(old_board);
     if (ply >= MAX_PLY) {
@@ -236,23 +239,22 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
         if (static_eval >= beta && !old_board.in_check()) {
             // Try null move pruning if we aren't in check
             const auto& older_board = history[history.len() - 2];
-            const bool nmp_stopped = old_board.pawns(Side::WHITE) == older_board.pawns(Side::WHITE) 
-                && old_board.pawns(Side::BLACK) == older_board.pawns(Side::BLACK) 
-                && old_board.knights(Side::WHITE) == older_board.knights(Side::WHITE) 
-                && old_board.knights(Side::BLACK) == older_board.knights(Side::BLACK) 
-                && old_board.bishops(Side::WHITE) == older_board.bishops(Side::WHITE) 
-                && old_board.bishops(Side::BLACK) == older_board.bishops(Side::BLACK) 
-                && old_board.rooks(Side::WHITE) == older_board.rooks(Side::WHITE) 
-                && old_board.rooks(Side::BLACK) == older_board.rooks(Side::BLACK) 
-                && old_board.queens(Side::WHITE) == older_board.queens(Side::WHITE) 
-                && old_board.queens(Side::BLACK) == older_board.queens(Side::BLACK) 
-                && old_board.kings(Side::WHITE) == older_board.kings(Side::WHITE) 
+            const bool nmp_stopped =
+                old_board.pawns(Side::WHITE) == older_board.pawns(Side::WHITE) && old_board.pawns(Side::BLACK) == older_board.pawns(Side::BLACK)
+                && old_board.knights(Side::WHITE) == older_board.knights(Side::WHITE)
+                && old_board.knights(Side::BLACK) == older_board.knights(Side::BLACK)
+                && old_board.bishops(Side::WHITE) == older_board.bishops(Side::WHITE)
+                && old_board.bishops(Side::BLACK) == older_board.bishops(Side::BLACK)
+                && old_board.rooks(Side::WHITE) == older_board.rooks(Side::WHITE) && old_board.rooks(Side::BLACK) == older_board.rooks(Side::BLACK)
+                && old_board.queens(Side::WHITE) == older_board.queens(Side::WHITE)
+                && old_board.queens(Side::BLACK) == older_board.queens(Side::BLACK) && old_board.kings(Side::WHITE) == older_board.kings(Side::WHITE)
                 && old_board.kings(Side::BLACK) == older_board.kings(Side::BLACK);
 
             if (!nmp_stopped) {
                 auto& board = old_board.make_move(Move::NULL_MOVE, history);
                 // First we make the null move
-                auto null_score = -negamax_step<pv_node_type>(board, -beta, -alpha, depth - 2 - (depth >= 8 ? 3 : 2), ply + 1, node_count, child_cutnode_type);
+                auto null_score =
+                    -negamax_step<pv_node_type>(board, -beta, -alpha, depth - 2 - (depth >= 8 ? 3 : 2), ply + 1, node_count, child_cutnode_type);
                 history.pop_board();
                 if (null_score >= beta) {
                     if (null_score > MagicNumbers::PositiveInfinity - MAX_PLY) {
@@ -279,7 +281,8 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
     // mate and draw detection
 
     bool found_pv_move = false;
-    MoveOrdering::reorder_moves(moves, old_board, tt_entry.key() == old_board.get_zobrist_key() ? tt_entry.move() : Move::NULL_MOVE, history_table, search_stack[ply].killer_move, found_pv_move);
+    MoveOrdering::reorder_moves(moves, old_board, tt_entry.key() == old_board.get_zobrist_key() ? tt_entry.move() : Move::NULL_MOVE, history_table,
+                                search_stack[ply].killer_move, found_pv_move);
     const bool tt_move = found_pv_move && tt_hit;
     // move reordering
 
@@ -304,11 +307,13 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
             }
         }
 
-        if (!old_board.in_check() && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && !move.move.is_capture() && depth <= 6 && static_eval + 200 * depth < alpha) {
+        if (!old_board.in_check() && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && !move.move.is_capture() && depth <= 6
+            && static_eval + 200 * depth < alpha) {
             continue;
         }
 
-        if (depth <= 10 && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && !Search::static_exchange_evaluation(old_board, move.move, move.move.is_capture() ? (-20 * depth * depth) : (-65 * depth))) {
+        if (depth <= 10 && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY)
+            && !Search::static_exchange_evaluation(old_board, move.move, move.move.is_capture() ? (-20 * depth * depth) : (-65 * depth))) {
             continue;
         }
 
@@ -316,25 +321,28 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
         auto& board = old_board.make_move(move.move, history);
         node_count += 1;
         Score score;
-        
+
         // See if we can perform LMR
-        if (depth > 2 && evaluated_moves >= std::max((size_t) 1,
-                static_cast<size_t>(is_pv_node(node_type)) +
-                static_cast<size_t>(!tt_move) +
-                static_cast<size_t>(node_type == NodeTypes::ROOT_NODE) +
-                static_cast<size_t>(move.move.is_capture() || move.move.is_promotion()))) {
-            const auto lmr_reduction = static_cast<int>(std::round(1.30 + ((MagicNumbers::LnValues[depth] * MagicNumbers::LnValues[evaluated_moves]) / 2.80)))
+        if (depth > 2
+            && evaluated_moves >= std::max((size_t) 1, static_cast<size_t>(is_pv_node(node_type)) + static_cast<size_t>(!tt_move)
+                                                           + static_cast<size_t>(node_type == NodeTypes::ROOT_NODE)
+                                                           + static_cast<size_t>(move.move.is_capture() || move.move.is_promotion()))) {
+            const auto lmr_reduction =
+                static_cast<int>(std::round(1.30 + ((MagicNumbers::LnValues[depth] * MagicNumbers::LnValues[evaluated_moves]) / 2.80)))
                 + static_cast<int>(!is_pv_node(node_type) && is_cut_node);
-            score = -negamax_step<NodeTypes::NON_PV_NODE>(board, -(alpha + 1), -alpha, depth - lmr_reduction + extensions, ply + 1, node_count, child_cutnode_type);
+            score = -negamax_step<NodeTypes::NON_PV_NODE>(board, -(alpha + 1), -alpha, depth - lmr_reduction + extensions, ply + 1, node_count,
+                                                          child_cutnode_type);
 
             // it's possible the LMR score will raise alpha; in this case we re-search with the full depth
             if (score > alpha) {
-                score = -negamax_step<NodeTypes::NON_PV_NODE>(board, -(alpha + 1), -alpha, depth - 1 + extensions, ply + 1, node_count, child_cutnode_type);
+                score = -negamax_step<NodeTypes::NON_PV_NODE>(board, -(alpha + 1), -alpha, depth - 1 + extensions, ply + 1, node_count,
+                                                              child_cutnode_type);
             }
         }
         // if we didn't perform LMR
         else if (!is_pv_node(node_type) || evaluated_moves >= 1) {
-            score = -negamax_step<NodeTypes::NON_PV_NODE>(board, -(alpha + 1), -alpha, depth - 1 + extensions, ply + 1, node_count, child_cutnode_type);
+            score =
+                -negamax_step<NodeTypes::NON_PV_NODE>(board, -(alpha + 1), -alpha, depth - 1 + extensions, ply + 1, node_count, child_cutnode_type);
         }
 
         if (is_pv_node(node_type) && (evaluated_moves == 0 || score > alpha)) {
@@ -376,7 +384,8 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
         }
         evaluated_quiets += static_cast<int>(move.move.is_quiet());
     }
-    const BoundTypes bound_type = (best_score >= beta ? BoundTypes::LOWER_BOUND : (alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND));
+    const BoundTypes bound_type =
+        (best_score >= beta ? BoundTypes::LOWER_BOUND : (alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND));
     tt.store(TranspositionTableEntry(best_move, depth, bound_type, best_score, old_board.get_zobrist_key()), old_board);
     return best_score;
 }
@@ -488,7 +497,8 @@ Move SearchHandler::run_iterative_deepening_search() {
     // reset pv move so we don't accidentally play an illegal one from a previous search
     const auto search_start_point = std::chrono::steady_clock::now();
     // TranspositionTable transpositions;
-    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(history[history.len() - 1], history[history.len() - 1].get_side_to_move());
+    auto moves =
+        MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(history[history.len() - 1], history[history.len() - 1].get_side_to_move());
     // We generate legal moves only as it saves us having to continually rerun legality checks
     if (moves.len() == 1) {
         return moves[0].move;
@@ -505,7 +515,7 @@ Move SearchHandler::run_iterative_deepening_search() {
 
     Score current_score = 0;
     for (int depth = 1; depth <= TimeManagement::get_search_depth(tc) && !search_cancelled; depth++) {
-        
+
         current_score = run_aspiration_window_search(depth, current_score);
         const auto time_so_far = std::max(
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - search_start_point).count(), (int64_t) 1);
@@ -513,10 +523,11 @@ Move SearchHandler::run_iterative_deepening_search() {
 
         if (!search_cancelled && print_info) {
             const auto nps = static_cast<uint64_t>(node_count / (static_cast<float>(time_so_far) / 1000));
-            std::cout << "info depth " << depth << " nodes " << node_count << " nps " << nps << " score " << 
-                ((std::abs(current_score) >= (MagicNumbers::PositiveInfinity - MAX_PLY)) ? 
-                ("mate " + std::to_string(((current_score / std::abs(current_score)) * (depth + 1)) / 2)) : 
-                ("cp " + std::to_string(current_score))) << " time " << time_so_far << " pv ";
+            std::cout << "info depth " << depth << " nodes " << node_count << " nps " << nps << " score "
+                      << ((std::abs(current_score) >= (MagicNumbers::PositiveInfinity - MAX_PLY))
+                              ? ("mate " + std::to_string(((current_score / std::abs(current_score)) * (depth + 1)) / 2))
+                              : ("cp " + std::to_string(current_score)))
+                      << " time " << time_so_far << " pv ";
             for (int i = 0; i < pv_table.pv_length[0]; i++) {
                 std::cout << pv_table.pv_array[0][i].to_string() << " ";
             }
