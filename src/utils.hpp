@@ -9,6 +9,11 @@ typedef uint64_t Bitboard;
 typedef uint64_t ZobristKey;
 typedef int16_t Score;
 
+constexpr int MAX_TURN_MOVE_COUNT = 218;
+constexpr int MAX_GAME_MOVE_COUNT = 5899;
+// the maximum possible number of moves, currently 218 on position R6R/3Q4/1Q4Q1/4Q3/2Q4Q/Q4Q2/pp1Q4/kBNN1KB1
+
+
 enum class Side : uint8_t {
     WHITE = 0,
     BLACK = 1,

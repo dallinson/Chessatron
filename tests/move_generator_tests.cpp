@@ -231,9 +231,9 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountKiwipeteB2B3) {
 
 TEST(MoveGeneratorTests, TestCorrectMoveCountKiwipeteE1D1C7C6) {
     ChessBoard c;
-    MoveHistory m;
+    BoardHistory history;
     c.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R2K3R b kq - 1 1");
-    c.make_move(Move(2738), m);
+    c = c.make_move(Move(2738), history);
 
     auto legal_moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE);
 

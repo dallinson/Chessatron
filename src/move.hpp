@@ -8,10 +8,6 @@
 #include "pieces.hpp"
 #include "utils.hpp"
 
-#define MAX_TURN_MOVE_COUNT 218
-#define MAX_GAME_MOVE_COUNT 5899
-// the maximum possible number of moves, currently 218 on position R6R/3Q4/1Q4Q1/4Q3/2Q4Q/Q4Q2/pp1Q4/kBNN1KB1
-
 enum class MoveFlags : uint8_t {
     QUIET_MOVE = 0,
     DOUBLE_PAWN_PUSH = 1,
@@ -101,68 +97,3 @@ class MoveList {
         void clear() { this->idx = 0; };
 };
 
-class MoveHistoryEntry {
-    private:
-        ZobristKey z;
-        // 8 bytes
-        Bitboard checkers;
-        // 8 bytes
-        Bitboard pins;
-        // 8 bytes
-        Move m;
-        // 2 bytes
-        Piece p;
-        // 1 byte
-        uint8_t castling;
-        // 1 byte
-        uint8_t previous_en_passant;
-        // 1 byte
-        uint8_t previous_halfmove_clock;
-        // 1 byte
-        uint16_t padding;
-        // pad to 32 bytes; 64 bytes (cache line size) is easily divisible by 16
-
-    public:
-        MoveHistoryEntry(){};
-        MoveHistoryEntry(const ZobristKey key, const Bitboard checkers, const Bitboard pins, const Move move, const Piece target_piece, const uint8_t en_passant, uint8_t previous_halfmove_clock,
-                         const uint8_t castling)
-            : z(key), checkers(checkers), pins(pins), m(move), p(target_piece),
-              castling(castling),
-              previous_en_passant(en_passant), previous_halfmove_clock(previous_halfmove_clock) {};
-        Piece get_piece() const { return p; };
-        Move get_move() const { return m; };
-        uint_fast8_t get_previous_en_passant_file() const { return previous_en_passant; };
-        bool get_white_kingside_castle() const { return get_bit(castling, 3); };
-        bool get_white_queenside_castle() const { return get_bit(castling, 1); };
-        bool get_black_kingside_castle() const { return get_bit(castling, 2); };
-        bool get_black_queenside_castle() const { return get_bit(castling, 0); };
-        uint8_t get_castling() const { return castling; };
-
-        uint8_t get_halfmove_clock() const { return previous_halfmove_clock; };
-
-        ZobristKey get_zobrist_key() const { return z; };
-        Bitboard get_pins() const { return pins; };
-        Bitboard get_checkers() const { return checkers; };
-};
-
-class MoveHistory {
-    private:
-        size_t idx;
-        MoveHistoryEntry data[MAX_GAME_MOVE_COUNT];
-
-    public:
-        MoveHistory() : idx(0){};
-        size_t len() const { return idx; };
-
-        void push_move(const MoveHistoryEntry& to_add) {
-            this->data[idx] = to_add;
-            idx += 1;
-        };
-
-        MoveHistoryEntry pop_move() {
-            idx -= 1;
-            return this->data[idx];
-        };
-
-        const MoveHistoryEntry& operator[](size_t idx) const { return data[idx]; }
-};

@@ -18,13 +18,13 @@ void SearchHandler::search_thread_function() {
         {
             std::lock_guard<std::mutex> lock(search_mutex);
             if (should_perft) {
-                Perft::run_perft(board, perft_depth, true);
+                Perft::run_perft(history[history.len() - 1], perft_depth, true);
                 should_perft = false;
             } else {
                 auto move = run_iterative_deepening_search();
                 if (move.is_null_move()) {
                     // Unlikely, but possible!
-                    move = Search::select_random_move(board);
+                    move = Search::select_random_move(history[history.len() - 1]);
                     // Just choose a random move
                 }
                 if (this_search_id == current_search_id && print_info) {
@@ -81,8 +81,7 @@ void SearchHandler::run_perft(uint16_t depth) {
 
 void SearchHandler::reset() {
     this->EndSearch();
-    history = MoveHistory();
-    board = ChessBoard();
+    history = BoardHistory();
     tt.clear();
 }
 
@@ -147,7 +146,9 @@ void SearchHandler::run_bench(uint16_t depth) {
     for (const auto& fen : fens) {
         std::unique_lock<std::mutex> lock(search_mutex);
         this->reset();
-        this->board.set_from_fen(fen);
+        ChessBoard board;
+        board.set_from_fen(fen);
+        this->set_board(board);
         this->search(DepthTC { depth });
         cv.wait(lock, [this] { return !this->is_searching(); });
         // loop until search completes
