@@ -14,7 +14,7 @@ int32_t get_mg_score(int32_t score) {
     return std::bit_cast<int16_t>(static_cast<uint16_t>(score));
 }
 
-Score Evaluation::evaluate_board(ChessBoard& board) { 
+Score Evaluation::evaluate_board(const ChessBoard& board) { 
     const Side stm = board.get_side_to_move();
     const Side enemy = enemy_side(board.get_side_to_move()); 
     const auto mg_score = get_mg_score(board.get_score(stm)) - get_mg_score(board.get_score(enemy));
