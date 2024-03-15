@@ -232,7 +232,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
         }
     }
 
-    if constexpr (node_type != NodeTypes::ROOT_NODE) {
+    if constexpr (!is_pv_node(node_type)) {
         if (static_eval >= beta && !old_board.in_check()) {
             // Try null move pruning if we aren't in check
             const auto& older_board = history[history.len() - 2];
