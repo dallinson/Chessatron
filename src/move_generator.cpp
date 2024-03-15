@@ -4,9 +4,7 @@
 
 #include "magic_numbers.hpp"
 
-int MoveGenerator::get_checking_piece_count(const ChessBoard& c, const Side side) {
-    return std::popcount(MoveGenerator::get_checkers(c, side));
-}
+int MoveGenerator::get_checking_piece_count(const ChessBoard& c, const Side side) { return std::popcount(MoveGenerator::get_checkers(c, side)); }
 
 Bitboard MoveGenerator::get_checkers(const ChessBoard& c, const Side side) {
     const Side enemy = enemy_side(side);
@@ -16,12 +14,12 @@ Bitboard MoveGenerator::get_checkers(const ChessBoard& c, const Side side) {
 
 /**
  * @brief Gets the pieces on side side that attack the piece at position target_idx
- * 
- * @param board 
- * @param side 
- * @param target_idx 
- * @param occupancy 
- * @return Bitboard 
+ *
+ * @param board
+ * @param side
+ * @param target_idx
+ * @param occupancy
+ * @return Bitboard
  */
 Bitboard MoveGenerator::get_attackers(const ChessBoard& board, const Side side, const int target_idx, const Bitboard occupancy) {
     const Side enemy = enemy_side(side);
@@ -87,25 +85,23 @@ bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
         // position to capture-they'd have needed to be moved two moves ago,
         // and we would have moved out of check
         Bitboard occupancy = c.occupancy();
-        Bitboard cleared_occupancy = occupancy ^ (idx_to_bb(m.get_src_square()) |
-                                                  idx_to_bb(m.get_dest_square() - 8 + (16 * static_cast<int>(c.get_side_to_move()))));
+        Bitboard cleared_occupancy =
+            occupancy ^ (idx_to_bb(m.get_src_square()) | idx_to_bb(m.get_dest_square() - 8 + (16 * static_cast<int>(c.get_side_to_move()))));
         // clear the origin and capture spaces
         // then set the destination square
         cleared_occupancy |= idx_to_bb(m.get_dest_square());
-        return !((MoveGenerator::generate_bishop_mm(cleared_occupancy, king_idx) &
-                  (c.bishops(enemy) | c.queens(enemy))) ||
-                 (MoveGenerator::generate_rook_mm(cleared_occupancy, king_idx) &
-                  (c.rooks(enemy) | c.queens(enemy))));
+        return !((MoveGenerator::generate_bishop_mm(cleared_occupancy, king_idx) & (c.bishops(enemy) | c.queens(enemy)))
+                 || (MoveGenerator::generate_rook_mm(cleared_occupancy, king_idx) & (c.rooks(enemy) | c.queens(enemy))));
     } else if (get_bit(c.kings(), m.get_src_square()) != 0) {
         Bitboard cleared_bitboard = c.occupancy() ^ idx_to_bb(m.get_src_square());
         int target_idx = m.get_dest_square();
         const auto potential_diagonal_sliders = (c.bishops(enemy) | c.queens(enemy));
         const auto potential_orthogonal_sliders = (c.rooks(enemy) | c.queens(enemy));
-        return !((generate_bishop_mm(cleared_bitboard, target_idx) & potential_diagonal_sliders) ||
-                 (generate_rook_mm(cleared_bitboard, target_idx) & potential_orthogonal_sliders) ||
-                 (c.knights(enemy) & MagicNumbers::KnightMoves[target_idx]) ||
-                 (c.pawns(enemy) & MagicNumbers::PawnAttacks[(64 * static_cast<int>(move_side)) + target_idx]) ||
-                 (c.kings(enemy) & MagicNumbers::KingMoves[target_idx]));
+        return !((generate_bishop_mm(cleared_bitboard, target_idx) & potential_diagonal_sliders)
+                 || (generate_rook_mm(cleared_bitboard, target_idx) & potential_orthogonal_sliders)
+                 || (c.knights(enemy) & MagicNumbers::KnightMoves[target_idx])
+                 || (c.pawns(enemy) & MagicNumbers::PawnAttacks[(64 * static_cast<int>(move_side)) + target_idx])
+                 || (c.kings(enemy) & MagicNumbers::KingMoves[target_idx]));
     } else [[likely]] {
 
         Bitboard checking_pieces = c.get_checkers();
