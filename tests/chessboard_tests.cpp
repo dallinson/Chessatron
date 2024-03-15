@@ -105,7 +105,7 @@ TEST(ChessBoardTests, TestMakeUnmakeMove) {
     o.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");
     const auto original_score = c.get_score(Side::WHITE);
     auto BishopMoves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE);
-    BoardHistory hist(c);
+    BoardHistory hist(std::move(c));
     for (size_t j = 0; j < BishopMoves.len(); j++) {
         Move m = BishopMoves[j].move;
         ASSERT_EQ(hist.len(), 1);
@@ -122,7 +122,7 @@ TEST(ChessBoardTests, TestMakeUnmakeMove) {
 
     c.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
     o.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
-    hist = BoardHistory(c);
+    hist = BoardHistory(std::move(c));
     c = c.make_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, 24, 8), hist);
     c = hist.pop_board();
     for (int i = 0; i < 64; i++) {
@@ -131,7 +131,7 @@ TEST(ChessBoardTests, TestMakeUnmakeMove) {
 
     c.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R2K3R b kq - 1 1");
     o.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R2K3R b kq - 1 1");
-    hist = BoardHistory(c);
+    hist = BoardHistory(std::move(c));
     c = c.make_move(Move(6322), hist);
     c = hist.pop_board();
     for (int i = 0; i < 64; i++) {
@@ -143,7 +143,7 @@ TEST(ChessBoardTests, TestMakeMove) {
     ChessBoard c, o;
     c.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
     o.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/1PN2Q1p/P1PBBPPP/R3K2R b KQkq - 0 1");
-    BoardHistory hist(c);
+    BoardHistory hist(std::move(c));
     c = c.make_move(Move(MoveFlags::QUIET_MOVE, 17, 9), hist);
     ASSERT_STREQ(Move(MoveFlags::QUIET_MOVE, 17, 9).to_string().c_str(), "b2b3");
     for (int i = 0; i < 64; i++) {
@@ -151,7 +151,7 @@ TEST(ChessBoardTests, TestMakeMove) {
     }
     c.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
     o.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/Pp2P3/2N2Q1p/1PPBBPPP/R3K2R b KQkq a3 0 1");
-    hist = BoardHistory(c);
+    hist = BoardHistory(std::move(c));
     c = c.make_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, 24, 8), hist);
     ASSERT_STREQ(Move(MoveFlags::DOUBLE_PAWN_PUSH, 24, 8).to_string().c_str(), "a2a4");
     ASSERT_EQ(Move(MoveFlags::DOUBLE_PAWN_PUSH, 24, 8).get_value(), 5640);
@@ -164,7 +164,7 @@ TEST(ChessBoardTests, TestMakePromotion) {
     ChessBoard c, o;
     c.set_from_fen("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1R1K b kq - 1 1");
     o.set_from_fen("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/P2P2PP/b2Q1R1K w kq - 0 2");
-    BoardHistory hist(c);
+    BoardHistory hist(std::move(c));
     c = c.make_move(Move(MoveFlags::BISHOP_PROMOTION_CAPTURE, 0, 9), hist);
     ASSERT_EQ(c, o);
 }
@@ -241,19 +241,19 @@ TEST(ChessBoardTests, TestMakeNullMove) {
     ChessBoard c, o;
     c.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     o.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 2");
-    BoardHistory hist(c);
+    BoardHistory hist(std::move(c));
     c = c.make_move(0, hist);
     ASSERT_EQ(c, o);
 
     c.set_from_fen("rnbqkbnr/ppp1pppp/8/8/3pP3/8/PPPP1PPP/RNBQKBNR w KQkq e3 0 1");
     o.set_from_fen("rnbqkbnr/ppp1pppp/8/8/3pP3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2");
-    hist = BoardHistory(c);
+    hist = BoardHistory(std::move(c));
     c = c.make_move(0, hist);
     ASSERT_EQ(c, o);
 
     c.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/1NBQKBNR w Kkq - 0 1");
     o.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/1NBQKBNR b Kkq - 0 2");
-    hist = BoardHistory(c);
+    hist = BoardHistory(std::move(c));
     c = c.make_move(0, hist);
     ASSERT_EQ(c, o);
 }
@@ -262,21 +262,21 @@ TEST(ChessBoardTests, TestUnmakeNullMove) {
     ChessBoard c, o;
     c.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     o.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-    BoardHistory hist(c);
+    BoardHistory hist(std::move(c));
     c = c.make_move(0, hist);
     c = hist.pop_board();
     ASSERT_EQ(c, o);
 
     c.set_from_fen("rnbqkbnr/ppp1pppp/8/8/3pP3/8/PPPP1PPP/RNBQKBNR w KQkq e3 0 1");
     o.set_from_fen("rnbqkbnr/ppp1pppp/8/8/3pP3/8/PPPP1PPP/RNBQKBNR w KQkq e3 0 1");
-    hist = BoardHistory(c);
+    hist = BoardHistory(std::move(c));
     c = c.make_move(0, hist);
     c = hist.pop_board();
     ASSERT_EQ(c, o);
 
     c.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/1NBQKBNR w Kkq - 0 1");
     o.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/1NBQKBNR w Kkq - 0 1");
-    hist = BoardHistory(c);
+    hist = BoardHistory(std::move(c));
     c = c.make_move(0, hist);
     c = hist.pop_board();
     ASSERT_EQ(c, o);
@@ -287,7 +287,7 @@ TEST(ChessBoardTests, TestHalfmoveClock) {
     c.set_from_fen("startpos");
     ASSERT_EQ(c.get_halfmove_clock(), 0);
 
-    BoardHistory hist(c);
+    BoardHistory hist(std::move(c));
     c = c.make_move(Move::NULL_MOVE, hist);
     ASSERT_EQ(c.get_halfmove_clock(), 1);
     c = hist.pop_board();
@@ -308,7 +308,7 @@ TEST(ChessBoardTests, TestHalfmoveClock) {
     // Both pawn moves reset it
 
     c.set_from_fen("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1R1K b kq - 24 48");
-    hist = BoardHistory(c);
+    hist = BoardHistory(std::move(c));
     ASSERT_EQ(c.get_halfmove_clock(), 24);
     c = c.make_move(Move(MoveFlags::BISHOP_PROMOTION_CAPTURE, 0, 9), hist);
     ASSERT_EQ(c.get_halfmove_clock(), 0);
@@ -321,7 +321,7 @@ TEST(ChessBoardTests, TestHalfmoveClock) {
     // Test promotions reset clock
 
     c.set_from_fen("8/4k3/8/6K1/2p5/8/1P6/8 w - - 24 48");
-    hist = BoardHistory(c);
+    hist = BoardHistory(std::move(c));
     ASSERT_EQ(c.get_halfmove_clock(), 24);
     const auto original_score = c.get_score(Side::WHITE);
     c = c.make_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, 25, 9), hist);
@@ -334,7 +334,7 @@ TEST(ChessBoardTests, TestHalfmoveClock) {
     // en passant captures are correctly handled
 
     c.set_from_fen("2r5/6k1/8/6K1/8/8/2Q5/8 w - - 12 24");
-    hist = BoardHistory(c);
+    hist = BoardHistory(std::move(c));
     ASSERT_EQ(c.get_halfmove_clock(), 12);
     c = c.make_move(Move(MoveFlags::CAPTURE, 58, 10), hist);
     ASSERT_EQ(c.get_halfmove_clock(), 0);
@@ -346,7 +346,7 @@ TEST(ChessBoardTests, TestHalfmoveClock) {
 TEST(ChessBoardTests, TestUnmakeScores) {
     ChessBoard c;
     c.set_from_fen("1r4k1/P7/8/3Pp3/8/1b6/P7/R3K2R w KQ e6 0 1");
-    BoardHistory hist(c);
+    BoardHistory hist(std::move(c));
     const auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE);
     const auto mg_score = c.get_score(Side::WHITE);
     for (size_t i = 0; i < moves.len(); i++) {

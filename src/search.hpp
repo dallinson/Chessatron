@@ -148,7 +148,7 @@ class SearchHandler {
         BoardHistory& get_history() { return this->history; };
 
         void set_board(const ChessBoard& c) { 
-            this->history = BoardHistory(c);
+            this->history = BoardHistory(std::move(c));
         };
         void set_history(const BoardHistory& h) {
             this->history = h;

@@ -57,7 +57,7 @@ void process_position_command(const std::string& line, SearchHandler& s) {
         if (moves.find("moves") != std::string::npos) {
             // if there _are_ moves to add
             auto split_moves = split_on_whitespace(moves.substr(moves.find(moves) + 5));
-            auto history = BoardHistory(c);
+            auto history = BoardHistory(std::move(c));
             for (auto& move : split_moves) {
                 auto parsed_move = c.generate_move_from_string(move);
                 if (parsed_move.has_value()) {

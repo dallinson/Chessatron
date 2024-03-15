@@ -42,7 +42,7 @@ uint64_t perft(const ChessBoard& old_board, BoardHistory& history, int depth) {
 }
 
 uint64_t Perft::run_perft(ChessBoard& board, int depth, bool print_debug) {
-    BoardHistory history(board);
+    BoardHistory history(std::move(board));
     uint64_t nodes = 0;
     const auto perft_start_point = std::chrono::steady_clock::now();
     if (print_debug) {

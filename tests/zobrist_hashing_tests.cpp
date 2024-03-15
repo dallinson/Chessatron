@@ -10,7 +10,7 @@ TEST(ZobristHashingTests, TestSimplePosition) {
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::KING), 38)] ^
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::BLACK, PieceTypes::KING), 52)] ^
                                        ZobristKeys::SideToMove);
-    BoardHistory hist(c);
+    BoardHistory hist(std::move(c));
     c = c.make_move(Move(MoveFlags::QUIET_MOVE, 17, 9), hist);
     ASSERT_EQ(c.get_zobrist_key(), ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::PAWN), 17)] ^
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::KING), 38)] ^
@@ -40,7 +40,7 @@ TEST(ZobristHashingTests, TestEnPassant) {
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::BLACK, PieceTypes::KING), 52)] ^
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::BLACK, PieceTypes::PAWN), 26)] ^
                                        ZobristKeys::SideToMove);
-    BoardHistory hist(c);
+    BoardHistory hist(std::move(c));
     c = c.make_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, 25, 9), hist);
     ASSERT_EQ(c.get_zobrist_key(), ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::PAWN), 25)] ^
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::KING), 38)] ^
@@ -68,7 +68,7 @@ TEST(ZobristHashingTests, TestPawnPromotionAndCapture) {
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::BLACK, PieceTypes::PAWN), 57)] ^
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::PAWN), 48)] ^
                                        ZobristKeys::SideToMove);
-    BoardHistory hist(c);
+    BoardHistory hist(std::move(c));
     c = c.make_move(Move(MoveFlags::ROOK_PROMOTION, 56, 48), hist);
     ASSERT_EQ(c.get_zobrist_key(), ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::KING), 38)] ^
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::BLACK, PieceTypes::KING), 52)] ^
@@ -111,7 +111,7 @@ TEST(ZobristHashingTests, TestPawnPromotionCapture) {
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::BLACK, PieceTypes::PAWN), 57)] ^
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::PAWN), 48)] ^
                                        ZobristKeys::SideToMove);
-    BoardHistory hist(c);
+    BoardHistory hist(std::move(c));
     c = c.make_move(Move(MoveFlags::ROOK_PROMOTION_CAPTURE, 57, 48), hist);
     ASSERT_EQ(c.get_zobrist_key(), ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::KING), 38)] ^
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::BLACK, PieceTypes::KING), 52)] ^
@@ -132,7 +132,7 @@ TEST(ZobristHashingTests, TestCastling) {
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::ROOK), 7)] ^
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::BLACK, PieceTypes::KING), 45)] ^
                                        ZobristKeys::CastlingKeys[0] ^ ZobristKeys::CastlingKeys[2] ^ ZobristKeys::SideToMove);
-    BoardHistory hist(c);
+    BoardHistory hist(std::move(c));
     c = c.make_move(Move(MoveFlags::QUIET_MOVE, 12, 4), hist);
     ASSERT_EQ(c.get_zobrist_key(), ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::ROOK), 0)] ^
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::KING), 12)] ^

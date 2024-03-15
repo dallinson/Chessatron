@@ -18,24 +18,19 @@ class ChessBoard {
     private:
         std::array<Bitboard, 6> piece_bbs = {0};
         std::array<Bitboard, 2> side_bbs = {0};
-
-        uint8_t en_passant_file = 9; 
-
-        // first 2 elems are kingside, second two queenside
-        uint8_t castling = 0;
-
-        Side side_to_move = Side(0);
-
-
         Bitboard checkers = 0;
         Bitboard pinned_pieces = 0;
+        ZobristKey zobrist_key = 0;
 
         std::array<int32_t, 2> scores = {0};
-        uint8_t mg_phase = 0;
-
-        ZobristKey zobrist_key = 0;
         int halfmove_clock = 0;
         int fullmove_counter = 0;
+
+        uint8_t en_passant_file = 9; 
+        // first 2 elems are kingside, second two queenside
+        uint8_t castling = 0;
+        Side side_to_move = Side(0);
+        uint8_t mg_phase = 0;
 
     public:
         ChessBoard() = default;
@@ -172,13 +167,13 @@ class BoardHistory {
         BoardHistory() : idx(0) {
             data.resize(MAX_GAME_MOVE_COUNT);
         };
-        BoardHistory(const ChessBoard& board) {
+        BoardHistory(const ChessBoard&& board) {
             idx = 0;
             data.resize(MAX_GAME_MOVE_COUNT);
-            push_board(board);
+            push_board(std::move(board));
         }
 
-        ChessBoard& push_board(const ChessBoard new_board) {
+        ChessBoard& push_board(const ChessBoard&& new_board) {
             this->data[idx] = new_board;
             idx += 1;
             return this->data[idx - 1];
