@@ -197,7 +197,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
     const auto child_cutnode_type = is_pv_node(node_type) ? true : !is_cut_node;
     int extensions = 0;
 
-    const auto tt_entry = tt[old_board];
+    auto tt_entry = tt[old_board];
     if constexpr (!is_pv_node(node_type)) {
         const bool should_cutoff =
             tt_entry.key() == old_board.get_zobrist_key() && tt_entry.depth() >= depth
@@ -279,6 +279,14 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
         extensions += 1;
     }
     // mate and draw detection
+
+    if constexpr (is_pv_node(node_type)) {
+        if (depth > 3 && !tt_hit) {
+            const auto iid_depth = depth - 2;
+            negamax_step<node_type>(old_board, alpha, beta, iid_depth, ply + 1, node_count, is_cut_node);
+            tt_entry = tt[old_board];
+        }
+    }
 
     bool found_pv_move = false;
     MoveOrdering::reorder_moves(moves, old_board, tt_entry.key() == old_board.get_zobrist_key() ? tt_entry.move() : Move::NULL_MOVE, history_table,
