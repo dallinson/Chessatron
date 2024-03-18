@@ -236,6 +236,15 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
     }
 
     if constexpr (!is_pv_node(node_type)) {
+        if (!old_board.in_check() && static_eval < alpha - 400 - 250 * depth * depth) {
+            const auto razoring_score = quiescent_search<NodeTypes::NON_PV_NODE>(old_board, alpha - 1, alpha, ply + 1, node_count);
+            if (razoring_score < alpha) {
+                return razoring_score;
+            }
+        }
+    }
+
+    if constexpr (!is_pv_node(node_type)) {
         if (static_eval >= beta && !old_board.in_check()) {
             // Try null move pruning if we aren't in check
             const auto& older_board = history[history.len() - 2];
