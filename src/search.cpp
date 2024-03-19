@@ -200,8 +200,10 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
     const auto tt_entry = tt[old_board];
     if constexpr (!is_pv_node(node_type)) {
         const bool should_cutoff =
-            tt_entry.key() == old_board.get_zobrist_key() && tt_entry.depth() >= depth
-            && (tt_entry.bound_type() == BoundTypes::EXACT_BOUND || (tt_entry.bound_type() == BoundTypes::LOWER_BOUND && tt_entry.score() >= beta)
+            tt_entry.key() == old_board.get_zobrist_key() 
+            && tt_entry.depth() >= depth
+            && (tt_entry.bound_type() == BoundTypes::EXACT_BOUND 
+                || (tt_entry.bound_type() == BoundTypes::LOWER_BOUND && tt_entry.score() >= beta)
                 || (tt_entry.bound_type() == BoundTypes::UPPER_BOUND && tt_entry.score() <= alpha));
         if (should_cutoff) {
             if (tt_entry.score() == MagicNumbers::PositiveInfinity) {
@@ -223,20 +225,25 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
         extensions += 1;
     }
 
-    const auto static_eval = tt_hit ? tt_entry.score() : Evaluation::evaluate_board(old_board);
+    const auto static_eval = Evaluation::evaluate_board(old_board);
+    const auto node_eval = (tt_hit && (tt_entry.bound_type() == BoundTypes::EXACT_BOUND 
+                || (tt_entry.bound_type() == BoundTypes::LOWER_BOUND && tt_entry.score() >= beta)
+                || (tt_entry.bound_type() == BoundTypes::UPPER_BOUND && tt_entry.score() <= alpha)))
+            ? tt_entry.score() : static_eval;
+
     if (ply >= MAX_PLY) {
-        return static_eval;
+        return node_eval;
     }
 
     // Reverse futility pruning
     if constexpr (!is_pv_node(node_type)) {
-        if (!old_board.in_check() && depth < 7 && (static_eval - (70 * depth)) >= beta) {
-            return static_eval;
+        if (!old_board.in_check() && depth < 7 && (node_eval - (70 * depth)) >= beta) {
+            return node_eval;
         }
     }
 
     if constexpr (!is_pv_node(node_type)) {
-        if (static_eval >= beta && !old_board.in_check()) {
+        if (node_eval >= beta && !old_board.in_check()) {
             // Try null move pruning if we aren't in check
             const auto& older_board = history[history.len() - 2];
             const bool nmp_stopped =
@@ -308,7 +315,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
         }
 
         if (!old_board.in_check() && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && !move.move.is_capture() && depth <= 6
-            && static_eval + 200 * depth < alpha) {
+            && node_eval + 200 * depth < alpha) {
             continue;
         }
 
