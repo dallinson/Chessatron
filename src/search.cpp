@@ -227,8 +227,8 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
 
     const auto static_eval = Evaluation::evaluate_board(old_board);
     const auto node_eval = (tt_hit && (tt_entry.bound_type() == BoundTypes::EXACT_BOUND 
-                || (tt_entry.bound_type() == BoundTypes::LOWER_BOUND && tt_entry.score() >= beta)
-                || (tt_entry.bound_type() == BoundTypes::UPPER_BOUND && tt_entry.score() <= alpha)))
+                || (tt_entry.bound_type() == BoundTypes::LOWER_BOUND && tt_entry.score() > static_eval)
+                || (tt_entry.bound_type() == BoundTypes::UPPER_BOUND && tt_entry.score() < static_eval)))
             ? tt_entry.score() : static_eval;
 
     if (ply >= MAX_PLY) {
