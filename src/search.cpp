@@ -228,6 +228,19 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
         return static_eval;
     }
 
+    const auto improving = [&] {
+        if (old_board.in_check()) {
+            return false;
+        }
+        if (ply >= 2 && !history[history.len() - 2].in_check()) {
+            return static_eval > Evaluation::evaluate_board(history[history.len() - 2]);
+        }
+        if (ply >= 4 && !history[history.len() - 4].in_check()) {
+            return static_eval > Evaluation::evaluate_board(history[history.len() - 4]);
+        }
+        return true;
+    }();
+
     // Reverse futility pruning
     if constexpr (!is_pv_node(node_type)) {
         if (!old_board.in_check() && depth < 7 && (static_eval - (70 * depth)) >= beta) {
@@ -338,10 +351,11 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
             && evaluated_moves >= std::max((size_t) 1, static_cast<size_t>(is_pv_node(node_type)) + static_cast<size_t>(!tt_move)
                                                            + static_cast<size_t>(node_type == NodeTypes::ROOT_NODE)
                                                            + static_cast<size_t>(move.move.is_capture() || move.move.is_promotion()))) {
-            const auto lmr_reduction =
+            const auto lmr_reduction = std::max(0, 
                 static_cast<int>(std::round(1.30 + ((MagicNumbers::LnValues[depth] * MagicNumbers::LnValues[evaluated_moves]) / 2.80)))
                 + static_cast<int>(!is_pv_node(node_type) && is_cut_node)
-                - static_cast<int>(board.in_check()); // Reduce less if the board is in check
+                - static_cast<int>(board.in_check()) // Reduce less if the board is in check
+                + static_cast<int>(!improving));
             score = -negamax_step<NodeTypes::NON_PV_NODE>(board, -(alpha + 1), -alpha, depth - lmr_reduction + extensions, ply + 1, node_count,
                                                           child_cutnode_type);
 
