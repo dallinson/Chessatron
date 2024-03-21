@@ -342,7 +342,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
                 static_cast<int>(std::round(1.30 + ((MagicNumbers::LnValues[depth] * MagicNumbers::LnValues[evaluated_moves]) / 2.80)))
                 + static_cast<int>(!is_pv_node(node_type) && is_cut_node)
                 - static_cast<int>(board.in_check()); // Reduce less if the board is in check
-            score = -negamax_step<NodeTypes::NON_PV_NODE>(board, -(alpha + 1), -alpha, depth - lmr_reduction + extensions, ply + 1, node_count,
+            score = -negamax_step<NodeTypes::NON_PV_NODE>(board, -(alpha + 1), -alpha, std::clamp(depth - lmr_reduction + extensions, 1, depth - 1), ply + 1, node_count,
                                                           child_cutnode_type);
 
             // it's possible the LMR score will raise alpha; in this case we re-search with the full depth
