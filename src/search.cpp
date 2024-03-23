@@ -214,7 +214,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
     }
     const bool tt_hit = tt_entry.key() == old_board.get_zobrist_key();
 
-    if (depth <= 0) {
+    if (depth <= 0 && !old_board.in_check()) {
         return quiescent_search<pv_node_type>(old_board, alpha, beta, ply, node_count);
         // return c.evaluate();
     }
