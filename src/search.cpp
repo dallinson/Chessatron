@@ -335,6 +335,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
 
         // See if we can perform LMR
         if (depth > 2
+            && !old_board.in_check() // only perform lmr if we are not in check
             && evaluated_moves >= std::max((size_t) 1, static_cast<size_t>(is_pv_node(node_type)) + static_cast<size_t>(!tt_move)
                                                            + static_cast<size_t>(node_type == NodeTypes::ROOT_NODE)
                                                            + static_cast<size_t>(move.move.is_capture() || move.move.is_promotion()))) {
