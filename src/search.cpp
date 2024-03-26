@@ -333,6 +333,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
         const auto pre_move_node_count = node_count;
         auto& board = old_board.make_move(move.move, history);
         node_count += 1;
+        tt.prefetch(board.get_zobrist_key());
         Score score;
 
         // See if we can perform LMR
