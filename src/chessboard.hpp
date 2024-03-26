@@ -157,6 +157,7 @@ class ChessBoard {
             }
             return default_key;
         }
+        ZobristKey key_after(const Move move) const;
 
         std::optional<Move> generate_move_from_string(const std::string& m) const;
 };

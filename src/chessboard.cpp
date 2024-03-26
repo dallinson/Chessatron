@@ -251,8 +251,8 @@ std::optional<int> ChessBoard::set_from_fen(const std::string input) {
 
 ChessBoard::ChessBoard(const ChessBoard& origin, const Move to_make) {
     *this = origin;
-    const auto src_sq = to_make.get_src_square();
-    const auto dest_sq = to_make.get_dest_square();
+    const auto src_sq = to_make.src_sq();
+    const auto dest_sq = to_make.dst_sq();
     const auto moved = piece_at(src_sq);
     Piece at_target = static_cast<Piece>(0);
     if (get_bit(occupancy(), dest_sq) != 0) {
@@ -280,8 +280,8 @@ ChessBoard::ChessBoard(const ChessBoard& origin, const Move to_make) {
             clear_bit(piece_bbs[static_cast<int>(at_target.get_type()) - 1], dest_sq);
             clear_bit(side_bbs[static_cast<int>(at_target.get_side())], dest_sq);
 
-            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(at_target, to_make.get_dest_square())];
-            scores[static_cast<int>(enemy_side(side))] -= get_psqt_score(Piece(enemy_side(side), at_target.get_type()), to_make.get_dest_square());
+            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(at_target, to_make.dst_sq())];
+            scores[static_cast<int>(enemy_side(side))] -= get_psqt_score(Piece(enemy_side(side), at_target.get_type()), to_make.dst_sq());
 
             mg_phase -= mg_phase_vals[static_cast<int>(at_target.get_type()) - 1];
         }
@@ -289,23 +289,23 @@ ChessBoard::ChessBoard(const ChessBoard& origin, const Move to_make) {
         if (static_cast<int>(to_make.get_move_flags()) >= 8) {
             // Any value >= 8 is a promotion
             Piece promoted_piece = Piece(side, PieceTypes((static_cast<int>(to_make.get_move_flags()) & 0b0011) + 2));
-            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(promoted_piece, to_make.get_dest_square())];
+            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(promoted_piece, dest_sq)];
             // promoted_piece += side;
             set_bit(this->piece_bbs[static_cast<int>(promoted_piece.get_type()) - 1], dest_sq);
             // This handles pawn promotions
-            scores[static_cast<int>(side)] += get_psqt_score(Piece(side, promoted_piece.get_type()), to_make.get_dest_square());
+            scores[static_cast<int>(side)] += get_psqt_score(Piece(side, promoted_piece.get_type()), dest_sq);
 
             mg_phase += mg_phase_vals[static_cast<int>(promoted_piece.get_type()) - 1];
         } else {
             set_bit(this->piece_bbs[static_cast<int>(moved.get_type()) - 1], dest_sq);
-            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, to_make.get_dest_square())];
-            scores[static_cast<int>(side)] += get_psqt_score(Piece(side, moved.get_type()), to_make.get_dest_square());
+            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, to_make.dst_sq())];
+            scores[static_cast<int>(side)] += get_psqt_score(Piece(side, moved.get_type()), dest_sq);
             // otherwise sets pieces if moved normally
         }
         set_bit(this->side_bbs[static_cast<int>(moved.get_side())], dest_sq);
 
         if (to_make.get_move_flags() == MoveFlags::DOUBLE_PAWN_PUSH) [[unlikely]] {
-            this->en_passant_file = to_make.get_dest_file();
+            this->en_passant_file = to_make.dst_fle();
             this->zobrist_key ^= ZobristKeys::EnPassantKeys[en_passant_file];
         }
         // the en passant zobrist key for 9 is 0 so no need to XOR (would be a no-op)
@@ -313,7 +313,7 @@ ChessBoard::ChessBoard(const ChessBoard& origin, const Move to_make) {
 
         if (to_make.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) [[unlikely]] {
             Side enemy = enemy_side(side);
-            int enemy_pawn_idx = get_position(to_make.get_src_rank(), to_make.get_dest_file());
+            int enemy_pawn_idx = get_position(to_make.src_rnk(), to_make.dst_fle());
             clear_bit(this->piece_bbs[bb_idx<PAWN>], enemy_pawn_idx);
             clear_bit(this->side_bbs[static_cast<int>(enemy_side(side))], enemy_pawn_idx);
             this->zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(enemy, PAWN), enemy_pawn_idx)];
@@ -321,7 +321,7 @@ ChessBoard::ChessBoard(const ChessBoard& origin, const Move to_make) {
         }
 
         if (to_make.is_castling_move()) {
-            const auto king_dest = to_make.get_dest_square();
+            const auto king_dest = to_make.dst_sq();
             const auto rook_dest = king_dest + (to_make.get_move_flags() == MoveFlags::KINGSIDE_CASTLE ? -1 : 1);
             const auto rook_origin = king_dest + (to_make.get_move_flags() == MoveFlags::KINGSIDE_CASTLE ? 1 : -2);
 
@@ -338,7 +338,7 @@ ChessBoard::ChessBoard(const ChessBoard& origin, const Move to_make) {
             scores[static_cast<int>(side)] += get_psqt_score(Piece(side, ROOK), rook_dest);
         }
 
-        const auto offset_diff = castling_rights[to_make.get_src_square()] & castling_rights[to_make.get_dest_square()];
+        const auto offset_diff = castling_rights[to_make.src_sq()] & castling_rights[to_make.dst_sq()];
         const auto new_castling = castling & offset_diff;
         zobrist_key ^= castling_keys[new_castling ^ castling];
         castling = new_castling;
@@ -370,6 +370,53 @@ void ChessBoard::recompute_blockers_and_checkers(const Side side) {
             pinned_pieces |= line_to_king & check_blockers;
         }
     }
+}
+
+ZobristKey ChessBoard::key_after(const Move move) const {
+    assert(!move.is_null_move());
+    auto to_return = zobrist_key;
+    const auto src_sq = move.src_sq();
+    const auto dest_sq = move.dst_sq();
+    const auto moved = piece_at(src_sq);
+    const Side side = moved.get_side();
+
+    Piece at_target = static_cast<Piece>(0);
+    if (get_bit(occupancy(), dest_sq) != 0) {
+        at_target = piece_at(dest_sq);
+    }
+
+    to_return ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, src_sq)];
+    if (at_target.get_value()) {
+        to_return ^= ZobristKeys::PositionKeys[calculate_zobrist_key(at_target, dest_sq)];
+    }
+
+    if (move.is_promotion()) {
+        Piece promoted_piece = Piece(side, PieceTypes((static_cast<int>(move.get_move_flags()) & 0b0011) + 2));
+        to_return ^= ZobristKeys::PositionKeys[calculate_zobrist_key(promoted_piece, dest_sq)];
+    } else {
+        to_return ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, dest_sq)];
+    }
+
+    if (move.get_move_flags() == MoveFlags::DOUBLE_PAWN_PUSH) {
+        to_return ^= ZobristKeys::EnPassantKeys[move.dst_fle()];
+    }
+
+    if (move.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) {
+        const auto enemy = enemy_side(side);
+        int enemy_pawn_idx = get_position(move.src_rnk(), move.dst_fle());
+        to_return ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(enemy, PAWN), enemy_pawn_idx)];
+    }
+
+    if (move.is_castling_move()) {
+        const auto king_dest = move.dst_sq();
+        const auto rook_dest = king_dest + (move.get_move_flags() == MoveFlags::KINGSIDE_CASTLE ? -1 : 1);
+        const auto rook_origin = king_dest + (move.get_move_flags() == MoveFlags::KINGSIDE_CASTLE ? 1 : -2);
+
+        to_return ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, ROOK), rook_origin)];
+        to_return ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, ROOK), rook_dest)];
+    }
+
+    return to_return ^ ZobristKeys::SideToMove;
 }
 
 std::optional<Move> ChessBoard::generate_move_from_string(const std::string& s) const {

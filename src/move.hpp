@@ -35,15 +35,15 @@ class Move {
         Move(MoveFlags flags, uint_fast8_t dest, uint_fast8_t src) : move((((uint16_t) flags) << 12) | (((uint16_t) dest) << 6) | src){};
         static const Move NULL_MOVE;
 
-        uint16_t get_value() const { return move; };
-        uint8_t get_src_square() const { return get_bits(move, 5, 0); };
-        uint8_t get_dest_square() const { return get_bits(move, 11, 6); };
+        uint16_t value() const { return move; };
+        uint8_t src_sq() const { return get_bits(move, 5, 0); };
+        uint8_t dst_sq() const { return get_bits(move, 11, 6); };
 
-        uint8_t get_src_rank() const { return get_bits(move, 5, 3); };
-        uint8_t get_src_file() const { return get_bits(move, 2, 0); };
+        uint8_t src_rnk() const { return get_bits(move, 5, 3); };
+        uint8_t src_fle() const { return get_bits(move, 2, 0); };
 
-        uint8_t get_dest_rank() const { return get_bits(move, 11, 9); };
-        uint8_t get_dest_file() const { return get_bits(move, 8, 6); };
+        uint8_t dst_rnk() const { return get_bits(move, 11, 9); };
+        uint8_t dst_fle() const { return get_bits(move, 8, 6); };
 
         MoveFlags get_move_flags() const { return (MoveFlags) get_bits(move, 15, 12); };
         PieceTypes get_promotion_piece_type() const { return static_cast<PieceTypes>((static_cast<int>(get_move_flags()) & 0b0011) + 2); };
