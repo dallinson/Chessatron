@@ -262,7 +262,9 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
             if (!nmp_stopped) {
                 auto& board = old_board.make_move(Move::NULL_MOVE, history);
                 
-                const auto nmp_reduction = 4 + (depth / 4);
+                const auto nmp_reduction = 4
+                    + (depth / 4)
+                    + std::min((static_eval - beta) / 200, 2);
                 auto null_score =
                     -negamax_step<pv_node_type>(board, -beta, -alpha, depth - nmp_reduction, ply + 1, node_count, child_cutnode_type);
 
