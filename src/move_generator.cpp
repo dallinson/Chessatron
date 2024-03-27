@@ -77,7 +77,7 @@ void MoveGenerator::generate_castling_moves(const ChessBoard& c, const Side side
 
 bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
     int king_idx = get_lsb(c.kings(c.get_side_to_move()));
-    const auto move_side = static_cast<Side>(get_bit(c.occupancy(Side::BLACK), m.get_src_square()));
+    const auto move_side = static_cast<Side>(get_bit(c.occupancy(Side::BLACK), m.src_sq()));
     const Side enemy = enemy_side(move_side);
     if (m.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) {
         // with en passant knights and pawns _cannot_ capture as the previous
@@ -86,15 +86,15 @@ bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
         // and we would have moved out of check
         Bitboard occupancy = c.occupancy();
         Bitboard cleared_occupancy =
-            occupancy ^ (idx_to_bb(m.get_src_square()) | idx_to_bb(m.get_dest_square() - 8 + (16 * static_cast<int>(c.get_side_to_move()))));
+            occupancy ^ (idx_to_bb(m.src_sq()) | idx_to_bb(m.dst_sq() - 8 + (16 * static_cast<int>(c.get_side_to_move()))));
         // clear the origin and capture spaces
         // then set the destination square
-        cleared_occupancy |= idx_to_bb(m.get_dest_square());
+        cleared_occupancy |= idx_to_bb(m.dst_sq());
         return !((MoveGenerator::generate_bishop_mm(cleared_occupancy, king_idx) & (c.bishops(enemy) | c.queens(enemy)))
                  || (MoveGenerator::generate_rook_mm(cleared_occupancy, king_idx) & (c.rooks(enemy) | c.queens(enemy))));
-    } else if (get_bit(c.kings(), m.get_src_square()) != 0) {
-        Bitboard cleared_bitboard = c.occupancy() ^ idx_to_bb(m.get_src_square());
-        int target_idx = m.get_dest_square();
+    } else if (get_bit(c.kings(), m.src_sq()) != 0) {
+        Bitboard cleared_bitboard = c.occupancy() ^ idx_to_bb(m.src_sq());
+        int target_idx = m.dst_sq();
         const auto potential_diagonal_sliders = (c.bishops(enemy) | c.queens(enemy));
         const auto potential_orthogonal_sliders = (c.rooks(enemy) | c.queens(enemy));
         return !((generate_bishop_mm(cleared_bitboard, target_idx) & potential_diagonal_sliders)
@@ -107,13 +107,13 @@ bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
         Bitboard checking_pieces = c.get_checkers();
         if (checking_pieces) {
             // if there's a piece checking our king - we know at most one piece can be checking as double checks are king moves only
-            if (!(MagicNumbers::ConnectingSquares[(64 * king_idx) + get_lsb(checking_pieces)] & idx_to_bb(m.get_dest_square()))) {
+            if (!(MagicNumbers::ConnectingSquares[(64 * king_idx) + get_lsb(checking_pieces)] & idx_to_bb(m.dst_sq()))) {
                 return false;
             }
         }
 
-        if (idx_to_bb(m.get_src_square()) & c.get_pinned_pieces()) {
-            return MagicNumbers::AlignedSquares[(64 * king_idx) + m.get_src_square()] & idx_to_bb(m.get_dest_square());
+        if (idx_to_bb(m.src_sq()) & c.get_pinned_pieces()) {
+            return MagicNumbers::AlignedSquares[(64 * king_idx) + m.src_sq()] & idx_to_bb(m.dst_sq());
         }
     }
 
@@ -121,7 +121,7 @@ bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
 }
 
 bool MoveGenerator::is_move_pseudolegal(const ChessBoard& c, const Move to_test) {
-    auto src_idx = to_test.get_src_square();
+    auto src_idx = to_test.src_sq();
     auto moved_piece = c.piece_at(src_idx);
     if (moved_piece.get_value() == 0) {
         return false;
