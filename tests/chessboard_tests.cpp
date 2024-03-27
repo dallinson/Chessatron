@@ -116,7 +116,7 @@ TEST(ChessBoardTests, TestMakeUnmakeMove) {
         for (int i = 0; i < 64; i++) {
             ASSERT_EQ(c.piece_at(i).get_value(), o.piece_at(i).get_value())
                 << "Mismatch at piece " << std::to_string(i) << " after move " << m.to_string() << " with flags "
-                << std::to_string(static_cast<int>(m.get_move_flags())) << " (value " << std::to_string(m.get_value()) << ")";
+                << std::to_string(static_cast<int>(m.get_move_flags())) << " (value " << std::to_string(m.value()) << ")";
         }
     }
 
@@ -154,7 +154,7 @@ TEST(ChessBoardTests, TestMakeMove) {
     hist = BoardHistory(c);
     c = c.make_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, 24, 8), hist);
     ASSERT_STREQ(Move(MoveFlags::DOUBLE_PAWN_PUSH, 24, 8).to_string().c_str(), "a2a4");
-    ASSERT_EQ(Move(MoveFlags::DOUBLE_PAWN_PUSH, 24, 8).get_value(), 5640);
+    ASSERT_EQ(Move(MoveFlags::DOUBLE_PAWN_PUSH, 24, 8).value(), 5640);
     for (int i = 0; i < 64; i++) {
         ASSERT_EQ(c.piece_at(i).get_value(), o.piece_at(i).get_value()) << "Mismatch at piece " << std::to_string(i) << "!";
     }
