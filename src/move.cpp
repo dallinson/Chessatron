@@ -5,16 +5,16 @@
 const Move Move::NULL_MOVE(0);
 
 std::string Move::to_string() const {
-    if (this->get_src_square() == 0 && this->get_dest_square() == 0) {
+    if (this->src_sq() == 0 && this->dst_sq() == 0) {
         // if this is a null move
         return "0000";
     }
     std::string to_return;
-    to_return.push_back(this->get_src_file() + 97);
-    to_return.push_back(this->get_src_rank() + 49);
+    to_return.push_back(this->src_fle() + 97);
+    to_return.push_back(this->src_rnk() + 49);
 
-    to_return.push_back(this->get_dest_file() + 97);
-    to_return.push_back(this->get_dest_rank() + 49);
+    to_return.push_back(this->dst_fle() + 97);
+    to_return.push_back(this->dst_rnk() + 49);
 
     if (this->is_promotion()) {
         switch (this->get_promotion_piece_type()) {
@@ -38,4 +38,4 @@ std::string Move::to_string() const {
     return to_return;
 }
 
-bool operator==(const Move& lhs, const Move& rhs) { return lhs.get_value() == rhs.get_value(); }
+bool operator==(const Move& lhs, const Move& rhs) { return lhs.value() == rhs.value(); }

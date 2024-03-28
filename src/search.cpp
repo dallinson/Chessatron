@@ -88,9 +88,9 @@ bool Search::is_draw(const ChessBoard& board, const BoardHistory& history) {
 }
 
 bool Search::static_exchange_evaluation(const ChessBoard& board, const Move move, const int threshold) {
-    PieceTypes next_victim = move.is_promotion() ? move.get_promotion_piece_type() : board.piece_at(move.get_src_square()).get_type();
+    PieceTypes next_victim = move.is_promotion() ? move.get_promotion_piece_type() : board.piece_at(move.src_sq()).get_type();
 
-    Score balance = Search::SEEScores[static_cast<int>(board.piece_at(move.get_dest_square()).get_type())];
+    Score balance = Search::SEEScores[static_cast<int>(board.piece_at(move.dst_sq()).get_type())];
     if (move.is_promotion()) {
         balance += (Search::SEEScores[static_cast<int>(move.get_promotion_piece_type())] - Search::SEEScores[static_cast<int>(PieceTypes::PAWN)]);
     } else if (move.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) {
@@ -111,15 +111,15 @@ bool Search::static_exchange_evaluation(const ChessBoard& board, const Move move
     const Bitboard rooks = board.rooks() | board.queens();
 
     Bitboard occupied = board.occupancy();
-    occupied ^= bit(move.get_src_square());
-    occupied |= bit(move.get_dest_square());
+    occupied ^= bit(move.src_sq());
+    occupied |= bit(move.dst_sq());
     if (move.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) {
-        const auto ep_target = get_position(move.get_src_rank(), move.get_dest_file());
+        const auto ep_target = get_position(move.src_rnk(), move.dst_fle());
         occupied ^= bit(ep_target);
     }
 
-    Bitboard attackers = (MoveGenerator::get_attackers(board, board.get_side_to_move(), move.get_dest_square(), occupied)
-                          | MoveGenerator::get_attackers(board, enemy_side(board.get_side_to_move()), move.get_dest_square(), occupied))
+    Bitboard attackers = (MoveGenerator::get_attackers(board, board.get_side_to_move(), move.dst_sq(), occupied)
+                          | MoveGenerator::get_attackers(board, enemy_side(board.get_side_to_move()), move.dst_sq(), occupied))
                          & occupied;
 
     Side moving_side = enemy_side(board.get_side_to_move());
@@ -145,12 +145,12 @@ bool Search::static_exchange_evaluation(const ChessBoard& board, const Move move
 
         if (next_victim == PieceTypes::PAWN || next_victim == PieceTypes::BISHOP || next_victim == PieceTypes::QUEEN) {
             // the pieces that attack diagonally
-            attackers |= MoveGenerator::generate_bishop_mm(occupied, move.get_dest_square()) & bishops;
+            attackers |= MoveGenerator::generate_bishop_mm(occupied, move.dst_sq()) & bishops;
         }
 
         if (next_victim == PieceTypes::ROOK || next_victim == PieceTypes::QUEEN) {
             // the pieces that attack orthogonally
-            attackers |= MoveGenerator::generate_rook_mm(occupied, move.get_dest_square()) & rooks;
+            attackers |= MoveGenerator::generate_rook_mm(occupied, move.dst_sq()) & rooks;
         }
 
         attackers &= occupied;
@@ -330,6 +330,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
             continue;
         }
 
+        tt.prefetch(old_board.key_after(move.move));
         const auto pre_move_node_count = node_count;
         auto& board = old_board.make_move(move.move, history);
         node_count += 1;
@@ -366,7 +367,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
 
         history.pop_board();
         if constexpr (node_type == NodeTypes::ROOT_NODE) {
-            node_spent_table[move.move.get_value() & 0x0FFF] += (node_count - pre_move_node_count);
+            node_spent_table[move.move.value() & 0x0FFF] += (node_count - pre_move_node_count);
         }
         if (score > best_score) {
             best_score = score;

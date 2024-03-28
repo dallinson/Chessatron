@@ -113,6 +113,9 @@ class TranspositionTable {
             table.resize((mb_size * 1024 * 1024) / sizeof(TranspositionTableEntry));
             clear();
         }
+        void prefetch(const ZobristKey key) const {
+            __builtin_prefetch(&table[tt_index(key)]);
+        }
 };
 
 struct SearchStackFrame {
