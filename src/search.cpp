@@ -334,6 +334,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
         auto& board = old_board.make_move(move.move, history);
         node_count += 1;
         Score score;
+        const auto new_depth = depth - 1 + extensions;
 
         // See if we can perform LMR
         if (depth > 2
@@ -341,26 +342,26 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
                                                            + static_cast<size_t>(node_type == NodeTypes::ROOT_NODE)
                                                            + static_cast<size_t>(move.move.is_capture() || move.move.is_promotion()))) {
             const auto lmr_reduction =
-                static_cast<int>(std::round(1.30 + ((MagicNumbers::LnValues[depth] * MagicNumbers::LnValues[evaluated_moves]) / 2.80)))
+                static_cast<int>(LmrTable[depth][evaluated_moves])
                 + static_cast<int>(!is_pv_node(node_type) && is_cut_node)
                 - static_cast<int>(board.in_check()); // Reduce less if the board is in check
-            score = -negamax_step<NodeTypes::NON_PV_NODE>(board, -(alpha + 1), -alpha, depth - lmr_reduction + extensions, ply + 1, node_count,
+            score = -negamax_step<NodeTypes::NON_PV_NODE>(board, -(alpha + 1), -alpha, new_depth - lmr_reduction, ply + 1, node_count,
                                                           child_cutnode_type);
 
             // it's possible the LMR score will raise alpha; in this case we re-search with the full depth
             if (score > alpha) {
-                score = -negamax_step<NodeTypes::NON_PV_NODE>(board, -(alpha + 1), -alpha, depth - 1 + extensions, ply + 1, node_count,
+                score = -negamax_step<NodeTypes::NON_PV_NODE>(board, -(alpha + 1), -alpha, new_depth, ply + 1, node_count,
                                                               child_cutnode_type);
             }
         }
         // if we didn't perform LMR
         else if (!is_pv_node(node_type) || evaluated_moves >= 1) {
             score =
-                -negamax_step<NodeTypes::NON_PV_NODE>(board, -(alpha + 1), -alpha, depth - 1 + extensions, ply + 1, node_count, child_cutnode_type);
+                -negamax_step<NodeTypes::NON_PV_NODE>(board, -(alpha + 1), -alpha, new_depth, ply + 1, node_count, child_cutnode_type);
         }
 
         if (is_pv_node(node_type) && (evaluated_moves == 0 || score > alpha)) {
-            score = -negamax_step<NodeTypes::PV_NODE>(board, -beta, -alpha, depth - 1 + extensions, ply + 1, node_count, child_cutnode_type);
+            score = -negamax_step<NodeTypes::PV_NODE>(board, -beta, -alpha, new_depth, ply + 1, node_count, child_cutnode_type);
         }
 
         history.pop_board();

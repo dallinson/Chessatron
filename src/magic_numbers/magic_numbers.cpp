@@ -124,14 +124,6 @@ consteval std::array<Bitboard, 64> generate_king_moves() {
 
 constexpr std::array<Bitboard, 64> MagicNumbers::KingMoves = generate_king_moves();
 
-std::array<double, 256> generate_ln_values() {
-    std::array<double, 256> to_return = {};
-    for (int i = 0; i < 256; i++) {
-        to_return[i] = std::log(i);
-    }
-    return to_return;
-}
-std::array<double, 256> MagicNumbers::LnValues = generate_ln_values();
 
 
 constexpr Bitboard MagicNumbers::KnightMoves[64] = {
