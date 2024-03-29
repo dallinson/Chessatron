@@ -44,6 +44,20 @@ enum class BoundTypes : uint8_t {
     EXACT_BOUND = 3,
 };
 
+inline const std::array<std::array<double, MAX_TURN_MOVE_COUNT>, MAX_PLY> generate_lmr_table() {
+    std::array<std::array<double, MAX_TURN_MOVE_COUNT>, MAX_PLY> to_return = {};
+    for (int i = 0; i < MAX_PLY; i++) {
+        std::array<double, MAX_TURN_MOVE_COUNT> data;
+        for (int j = 0; j < MAX_TURN_MOVE_COUNT; j++) {
+            data[j] = 0.39 + std::log(i) * std::log(j) / 2.11;
+        }
+        to_return[i] = data;
+    }
+    return to_return;
+}
+const std::array<std::array<double, MAX_TURN_MOVE_COUNT>, MAX_PLY> LmrTable = generate_lmr_table();
+
+
 class TranspositionTableEntry {
     private:
         ZobristKey _key;
