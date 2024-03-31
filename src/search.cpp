@@ -315,7 +315,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
         const auto& move = moves[evaluated_moves];
 
         if constexpr (!is_pv_node(node_type)) {
-            if (depth <= 6 && !old_board.in_check() && move.move.is_quiet() && evaluated_quiets >= depth * depth) {
+            if (depth <= 6 && !old_board.in_check() && move.move.is_quiet() && evaluated_moves >= static_cast<size_t>((depth * depth) + 3)) {
                 continue;
             }
         }
