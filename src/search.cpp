@@ -307,7 +307,6 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
     Move best_move = Move::NULL_MOVE;
     Score best_score = MagicNumbers::NegativeInfinity;
     const Score original_alpha = alpha;
-    int evaluated_quiets = 0;
     for (size_t evaluated_moves = 0; evaluated_moves < moves.len(); evaluated_moves++) {
         if (search_cancelled) {
             break;
