@@ -397,7 +397,6 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
                 alpha = score;
             }
         }
-        evaluated_quiets += static_cast<int>(move.move.is_quiet());
     }
     const BoundTypes bound_type =
         (best_score >= beta ? BoundTypes::LOWER_BOUND : (alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND));
