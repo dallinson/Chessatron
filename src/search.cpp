@@ -307,7 +307,6 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
     Move best_move = Move::NULL_MOVE;
     Score best_score = MagicNumbers::NegativeInfinity;
     const Score original_alpha = alpha;
-    int evaluated_quiets = 0;
     for (size_t evaluated_moves = 0; evaluated_moves < moves.len(); evaluated_moves++) {
         if (search_cancelled) {
             break;
@@ -315,7 +314,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
         const auto& move = moves[evaluated_moves];
 
         if constexpr (!is_pv_node(node_type)) {
-            if (depth <= 6 && !old_board.in_check() && move.move.is_quiet() && evaluated_quiets >= depth * depth) {
+            if (depth <= 6 && !old_board.in_check() && move.move.is_quiet() && evaluated_moves >= static_cast<size_t>((depth * depth) + 3)) {
                 continue;
             }
         }
@@ -398,7 +397,6 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
                 alpha = score;
             }
         }
-        evaluated_quiets += static_cast<int>(move.move.is_quiet());
     }
     const BoundTypes bound_type =
         (best_score >= beta ? BoundTypes::LOWER_BOUND : (alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND));
