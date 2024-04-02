@@ -27,8 +27,8 @@ class ChessBoard {
         Side side_to_move = Side(0);
 
 
-        Bitboard checkers = 0;
-        Bitboard pinned_pieces = 0;
+        Bitboard _checkers = 0;
+        Bitboard _pinned_pieces = 0;
 
         std::array<int32_t, 2> scores = {0};
         uint8_t mg_phase = 0;
@@ -138,9 +138,9 @@ class ChessBoard {
 
         void recompute_blockers_and_checkers(const Side side);
 
-        inline Bitboard get_checkers() const { return checkers; };
-        inline Bitboard get_pinned_pieces() const { return pinned_pieces; };
-        bool in_check() const { return checkers != 0; }; 
+        inline Bitboard checkers() const { return _checkers; };
+        inline Bitboard pinned_pieces() const { return _pinned_pieces; };
+        bool in_check() const { return _checkers != 0; }; 
 
         int32_t get_score(Side side) const { return scores[static_cast<int>(side)]; };
         uint8_t get_mg_phase() const { return mg_phase; };

@@ -38,7 +38,7 @@ template <MoveGenType gen_type> MoveList MoveGenerator::generate_legal_moves(con
 
     MoveGenerator::generate_moves<PieceTypes::KING, gen_type>(c, side, to_return);
 
-    int checking_piece_count = std::popcount(c.get_checkers());
+    int checking_piece_count = std::popcount(c.checkers());
 
     if (checking_piece_count >= 2) {
         return to_return;
@@ -91,23 +91,31 @@ template <PieceTypes piece_type, MoveGenType gen_type> void MoveGenerator::gener
     const Bitboard friendly_bb = c.occupancy(stm);
     const Bitboard enemy_bb = c.occupancy(enemy_side(stm));
     const Bitboard all_bb = enemy_bb | friendly_bb;
-    const auto checking_idx = get_lsb(c.get_checkers());
+    const auto checking_idx = get_lsb(c.checkers());
     const auto enemy = enemy_side(stm);
-    Bitboard pieces = c.pieces<piece_type>(stm);
-    while (pieces) {
-        const auto piece_idx = pop_lsb(pieces);
-        auto potential_moves = generate_mm<piece_type>(all_bb, piece_idx) & ~friendly_bb;
-        if constexpr (gen_type == MoveGenType::QUIESCENCE) {
-            potential_moves &= enemy_bb;
-        } else if constexpr (gen_type == MoveGenType::NON_QUIESCENCE) {
-            potential_moves &= ~enemy_bb;
+    auto pieces = c.pieces<piece_type>(stm);
+    auto pinned_pieces = pieces & c.pinned_pieces();
+    auto unpinned_pieces = pieces ^ pinned_pieces;
+    auto legal_moves = 0xFFFFFFFFFFFFFFFF & ~friendly_bb;
+    if constexpr (gen_type == MoveGenType::QUIESCENCE) {
+        legal_moves &= enemy_bb;
+    } else if constexpr (gen_type == MoveGenType::NON_QUIESCENCE) {
+        legal_moves &= ~enemy_bb;
+    }
+    if constexpr (piece_type != PieceTypes::KING) {
+        if (c.checkers()) {
+            legal_moves &= MagicNumbers::ConnectingSquares[(64 * king_idx) + checking_idx];
         }
+    }
+    while (unpinned_pieces) {
+        const auto piece_idx = pop_lsb(unpinned_pieces);
+        auto potential_moves = generate_mm<piece_type>(all_bb, piece_idx) & legal_moves;
         if constexpr (piece_type != PieceTypes::KING) {
             if (checking_idx != 64) {
                 // no checking pieces implies the checking idx is 64
                 potential_moves &= MagicNumbers::ConnectingSquares[(64 * king_idx) + checking_idx];
             }
-            if ((idx_to_bb(piece_idx) & c.get_pinned_pieces()) != 0) {
+            if ((idx_to_bb(piece_idx) & c.pinned_pieces()) != 0) {
                 // if we are pinned
                 potential_moves &= MagicNumbers::AlignedSquares[(64 * king_idx) + piece_idx];
             }
@@ -128,6 +136,23 @@ template <PieceTypes piece_type, MoveGenType gen_type> void MoveGenerator::gener
             output.add_move(Move(flag, target_idx, piece_idx));
         }
     }
+
+    if constexpr (piece_type != PieceTypes::KING) {
+        // the king can never be pinned
+        while (pinned_pieces) {
+            const auto piece_idx = pop_lsb(pinned_pieces);
+            auto potential_moves = generate_mm<piece_type>(all_bb, piece_idx) & legal_moves;
+            potential_moves &= MagicNumbers::AlignedSquares[(64 * king_idx) + piece_idx];
+
+            while (potential_moves) {
+                const auto target_idx = pop_lsb(potential_moves);
+                const auto flag = (get_bit(c.occupancy(), target_idx) != 0)
+                    ? MoveFlags::CAPTURE
+                    : MoveFlags::QUIET_MOVE;
+                output.add_move(Move(flag, target_idx, piece_idx));
+            }
+        }
+    }
 }
 
 template <MoveGenType gen_type> void MoveGenerator::generate_pawn_moves(const ChessBoard& c, const Side side, MoveList& move_list) {
@@ -142,7 +167,7 @@ template <MoveGenType gen_type> void MoveGenerator::generate_pawn_moves(const Ch
     const auto left_wall = side == Side::WHITE ? 0u : 7u;
     const auto right_wall = side == Side::WHITE ? 7u : 0u;
 
-    const auto checking_idx = get_lsb(c.get_checkers());
+    const auto checking_idx = get_lsb(c.checkers());
 
     const auto start_rank = side == Side::WHITE ? 1u : 6u;
     const auto penultimate_rank = side == Side::WHITE ? 6u : 1u;
@@ -150,7 +175,7 @@ template <MoveGenType gen_type> void MoveGenerator::generate_pawn_moves(const Ch
     while (pawn_mask) {
         int pawn_idx = pop_lsb(pawn_mask);
         if (get_bit(all_bb, pawn_idx + ahead_offset) == 0 &&
-            (get_bit(c.get_pinned_pieces(), pawn_idx) == 0 || get_file(pawn_idx) == get_file(king_idx))) {
+            (get_bit(c.pinned_pieces(), pawn_idx) == 0 || get_file(pawn_idx) == get_file(king_idx))) {
             // if not pinned, or the pawn motion is aligned with the king
             if constexpr (gen_type != MoveGenType::QUIESCENCE) {
                 if ((get_rank(pawn_idx) == start_rank && get_bit(all_bb, pawn_idx + ahead_offset + ahead_offset) == 0) &&
@@ -179,7 +204,7 @@ template <MoveGenType gen_type> void MoveGenerator::generate_pawn_moves(const Ch
         if constexpr (gen_type != MoveGenType::NON_QUIESCENCE) {
             if ((get_file(pawn_idx) != left_wall && get_bit(enemy_bb, pawn_idx + capture_front_left)) &&
                 // if there is a piece we _can_ capture
-                (get_bit(c.get_pinned_pieces(), pawn_idx) == 0 || is_aligned(king_idx, pawn_idx, pawn_idx + capture_front_left)) &&
+                (get_bit(c.pinned_pieces(), pawn_idx) == 0 || is_aligned(king_idx, pawn_idx, pawn_idx + capture_front_left)) &&
                 // and we're not pinned/are moving in the capture direction
                 (checking_idx == 64 || checking_idx == pawn_idx + capture_front_left)) {
                 // or we want are capturing the checking piece
@@ -195,7 +220,7 @@ template <MoveGenType gen_type> void MoveGenerator::generate_pawn_moves(const Ch
 
             if ((get_file(pawn_idx) != right_wall && get_bit(enemy_bb, pawn_idx + capture_front_right)) &&
                 // if there is a piece we _can_ capture
-                (get_bit(c.get_pinned_pieces(), pawn_idx) == 0 || is_aligned(king_idx, pawn_idx, pawn_idx + capture_front_right)) &&
+                (get_bit(c.pinned_pieces(), pawn_idx) == 0 || is_aligned(king_idx, pawn_idx, pawn_idx + capture_front_right)) &&
                 // and we're not pinned/are moving in the capture direction
                 (checking_idx == 64 || checking_idx == pawn_idx + capture_front_right)) {
                 // or we want are capturing the checking piece

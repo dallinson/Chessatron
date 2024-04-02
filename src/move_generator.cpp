@@ -104,7 +104,7 @@ bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
                  || (c.kings(enemy) & MagicNumbers::KingMoves[target_idx]));
     } else [[likely]] {
 
-        Bitboard checking_pieces = c.get_checkers();
+        Bitboard checking_pieces = c.checkers();
         if (checking_pieces) {
             // if there's a piece checking our king - we know at most one piece can be checking as double checks are king moves only
             if (!(MagicNumbers::ConnectingSquares[(64 * king_idx) + get_lsb(checking_pieces)] & idx_to_bb(m.dst_sq()))) {
@@ -112,7 +112,7 @@ bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
             }
         }
 
-        if (idx_to_bb(m.src_sq()) & c.get_pinned_pieces()) {
+        if (idx_to_bb(m.src_sq()) & c.pinned_pieces()) {
             return MagicNumbers::AlignedSquares[(64 * king_idx) + m.src_sq()] & idx_to_bb(m.dst_sq());
         }
     }

@@ -354,20 +354,20 @@ ChessBoard& ChessBoard::make_move(const Move to_make, BoardHistory& history) con
 void ChessBoard::recompute_blockers_and_checkers(const Side side) {
     const int king_idx = get_lsb(this->kings(side));
     const Side enemy = enemy_side(side);
-    checkers = MoveGenerator::get_checkers(*this, side);
+    _checkers = MoveGenerator::get_checkers(*this, side);
 
-    pinned_pieces = 0;
+    _pinned_pieces = 0;
 
     Bitboard potential_checks = ((MoveGenerator::generate_bishop_mm(0, king_idx) & (bishops(enemy) | queens(enemy)))
                                  | (MoveGenerator::generate_rook_mm(0, king_idx) & (rooks(enemy) | queens(enemy))))
-                                ^ checkers;
+                                ^ _checkers;
     const Bitboard check_blockers = occupancy() ^ potential_checks;
     // don't evaluate ones where we already check the king
 
     while (potential_checks) {
         const Bitboard line_to_king = MagicNumbers::ConnectingSquares[(64 * king_idx) + pop_lsb(potential_checks)];
         if (std::popcount(line_to_king & check_blockers) <= 1) {
-            pinned_pieces |= line_to_king & check_blockers;
+            _pinned_pieces |= line_to_king & check_blockers;
         }
     }
 }
