@@ -119,7 +119,7 @@ class TranspositionTable {
 };
 
 struct SearchStackFrame {
-    Move killer_move;
+    Move killer_move = Move::NULL_MOVE;
 };
 
 struct PvTable {
