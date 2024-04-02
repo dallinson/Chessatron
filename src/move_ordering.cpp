@@ -48,5 +48,5 @@ void MoveOrdering::reorder_moves(MoveList& moves, const ChessBoard& board, const
             moves[i].score += history_table[moves[i].move.get_history_idx(board.get_side_to_move())];
         }
     }
-    std::sort(&moves[0], &moves[moves.len()], [](const ScoredMove a, const ScoredMove b) { return a.score > b.score; });
+    std::stable_sort(&moves[0], &moves[moves.len()], [](const ScoredMove a, const ScoredMove b) { return a.score > b.score; });
 }
