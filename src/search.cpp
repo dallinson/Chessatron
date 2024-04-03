@@ -307,14 +307,17 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
     Move best_move = Move::NULL_MOVE;
     Score best_score = MagicNumbers::NegativeInfinity;
     const Score original_alpha = alpha;
-    for (size_t evaluated_moves = 0; evaluated_moves < moves.len(); evaluated_moves++) {
+    size_t total_moves = 0;
+    for (size_t i = 0; i < moves.len(); i++) {
         if (search_cancelled) {
             break;
         }
-        const auto& move = moves[evaluated_moves];
+        const auto& move = moves[total_moves];
+        total_moves += 1;
 
         if constexpr (!is_pv_node(node_type)) {
-            if (depth <= 6 && !old_board.in_check() && move.move.is_quiet() && evaluated_moves >= static_cast<size_t>((depth * depth) + 3)) {
+            // late move pruning
+            if (depth <= 6 && !old_board.in_check() && move.move.is_quiet() && total_moves >= static_cast<size_t>((depth * depth) + 4)) {
                 continue;
             }
         }
@@ -338,11 +341,11 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
 
         // See if we can perform LMR
         if (depth > 2
-            && evaluated_moves >= std::max((size_t) 1, static_cast<size_t>(is_pv_node(node_type)) + static_cast<size_t>(!tt_move)
+            && total_moves >= std::max((size_t) 2, 1 + static_cast<size_t>(is_pv_node(node_type)) + static_cast<size_t>(!tt_move)
                                                            + static_cast<size_t>(node_type == NodeTypes::ROOT_NODE)
                                                            + static_cast<size_t>(move.move.is_capture() || move.move.is_promotion()))) {
             const auto lmr_reduction =
-                static_cast<int>(LmrTable[depth][evaluated_moves])
+                static_cast<int>(LmrTable[depth][total_moves - 1])
                 + static_cast<int>(!is_pv_node(node_type) && is_cut_node)
                 - static_cast<int>(board.in_check()); // Reduce less if the board is in check
             score = -negamax_step<NodeTypes::NON_PV_NODE>(board, -(alpha + 1), -alpha, new_depth - lmr_reduction, ply + 1, node_count,
@@ -355,12 +358,12 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
             }
         }
         // if we didn't perform LMR
-        else if (!is_pv_node(node_type) || evaluated_moves >= 1) {
+        else if (!is_pv_node(node_type) || total_moves >= 2) {
             score =
                 -negamax_step<NodeTypes::NON_PV_NODE>(board, -(alpha + 1), -alpha, new_depth, ply + 1, node_count, child_cutnode_type);
         }
 
-        if (is_pv_node(node_type) && (evaluated_moves == 0 || score > alpha)) {
+        if (is_pv_node(node_type) && (total_moves == 1 || score > alpha)) {
             score = -negamax_step<NodeTypes::PV_NODE>(board, -beta, -alpha, new_depth, ply + 1, node_count, child_cutnode_type);
         }
 
@@ -384,7 +387,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
                 }
                 if (score >= beta) {
                     search_stack[ply].killer_move = move.move;
-                    for (size_t j = 0; j < evaluated_moves; j++) {
+                    for (size_t j = 0; j < (total_moves - 1); j++) {
                         if (moves[j].move.is_quiet()) {
                             history_table[moves[j].move.get_history_idx(old_board.get_side_to_move())] -= (depth * depth);
                         }
