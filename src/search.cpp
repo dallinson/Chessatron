@@ -514,14 +514,6 @@ Move SearchHandler::run_iterative_deepening_search() {
     // reset pv move so we don't accidentally play an illegal one from a previous search
     const auto search_start_point = std::chrono::steady_clock::now();
     // TranspositionTable transpositions;
-    auto moves =
-        MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(history[history.len() - 1], history[history.len() - 1].get_side_to_move());
-    // We generate legal moves only as it saves us having to continually rerun legality checks
-    if (moves.len() == 1) {
-        return moves[0].move;
-        // If only one move is legal in this position we don't need to search; we can just return the one legal move
-        // in order to save some time
-    }
 
     history_table.fill(0);
     node_spent_table.fill(0);
