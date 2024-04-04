@@ -9,6 +9,12 @@
 
 constexpr std::array<uint8_t, 6> ordering_scores = {1, 2, 3, 4, 5, 6};
 
+void MovePicker::swap_shift(size_t from, size_t to) {
+    const auto at_end = moves[from];
+    std::memmove(&moves[to+1], &moves[to], (from - to) * sizeof(ScoredMove));
+    moves[to] = at_end;
+}
+
 MovePicker::MovePicker(MoveList&& input_moves, const ChessBoard& board, const Move pv_move, std::array<int32_t, 8192>& history_table, Move killer, bool& found_pv_move) {
     this->moves = input_moves;
     this->idx = 0;
@@ -55,7 +61,8 @@ MovePicker::MovePicker(MoveList&& input_moves, const ChessBoard& board, const Mo
             best_idx = i;
         }
     }
-    std::swap(moves[0], moves[best_idx]);
+    //std::swap(moves[0], moves[best_idx]);
+    swap_shift(best_idx, 0);
 }
 
 
@@ -74,7 +81,8 @@ std::optional<ScoredMove> MovePicker::next() {
             best_idx = i;
         }
     }
-    std::swap(moves[best_idx], moves[idx]);
+    //std::swap(moves[best_idx], moves[idx]);
+    swap_shift(best_idx, idx);
 
     const auto best_move = moves[idx];
     idx += 1;

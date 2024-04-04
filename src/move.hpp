@@ -90,7 +90,7 @@ class MoveList {
         ScoredMove& operator[](size_t arg_idx) { return data[arg_idx]; }
         const ScoredMove& operator[](size_t arg_idx) const { return data[arg_idx]; }
 
-        const ScoredMove* get_data_addr() const { return data.begin(); }
+        const ScoredMove* get_data_addr() const { return data.data(); }
 
         size_t size() const { return this->idx; };
 

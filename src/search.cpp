@@ -389,8 +389,8 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
                 if (score >= beta) {
                     search_stack[ply].killer_move = move.move;
                     for (size_t j = 0; j < (total_moves - 1); j++) {
-                        if (moves[j].move.is_quiet()) {
-                            history_table[moves[j].move.get_history_idx(old_board.get_side_to_move())] -= (depth * depth);
+                        if (mp[j].move.is_quiet()) {
+                            history_table[mp[j].move.get_history_idx(old_board.get_side_to_move())] -= (depth * depth);
                         }
                     }
                     if (!move.move.is_capture()) {
