@@ -29,14 +29,13 @@ jobs:
       - name: Create build dir
         run: mkdir build
       - name: Set up Clang
-        uses: egor-tensin/setup-clang@v1
-        with:
-          version: 17
-          platform: x64
+        run: |
+          sudo apt update
+          sudo apt install clang-17
       - name: Build tests
         working-directory: build
         run: |
-          cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_C_COMPILER=clang-17 -DCMAKE_CXX_COMPILER=clang++-17
+          cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
           make chessatron_tests
       - name: Install gcovr
         run: |
