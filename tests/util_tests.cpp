@@ -32,3 +32,7 @@ TEST(UtilTests, TestPrintBitboard) {
     from_stdout = testing::internal::GetCapturedStdout();
     ASSERT_STREQ("########\n########\n........\n........\n........\n........\n########\n########\n", from_stdout.c_str());
 }
+
+TEST(UtilTests, FalseTest) {
+    ASSERT_TRUE(false);
+}
