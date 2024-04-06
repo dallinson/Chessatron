@@ -29,7 +29,7 @@ target_include_directories(Chessatron PRIVATE src)
 include(FetchContent)
 FetchContent_Declare(
   googletest
-  URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+  URL https://github.com/google/googletest/archive/61db1e1740a828d9df94fd167a9eb4137cd6def2.zip
 )
 
 # For Windows: Prevent overriding the parent project's compiler/linker settings
