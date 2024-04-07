@@ -328,12 +328,13 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
             continue;
         }
 
+        tt.prefetch(old_board.key_after(move.move));
+
         if (depth <= 10 && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY)
             && !Search::static_exchange_evaluation(old_board, move.move, move.move.is_capture() ? (-20 * depth * depth) : (-65 * depth))) {
             continue;
         }
 
-        tt.prefetch(old_board.key_after(move.move));
         const auto pre_move_node_count = node_count;
         auto& board = old_board.make_move(move.move, history);
         node_count += 1;
