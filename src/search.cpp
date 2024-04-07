@@ -21,14 +21,14 @@ uint64_t perft(const ChessBoard& old_board, BoardHistory& history, int depth) {
 
     if (depth == 1) {
         if constexpr (print_debug) {
-            for (size_t i = 0; i < moves.len(); i++) {
+            for (size_t i = 0; i < moves.size(); i++) {
                 printf("%s: 1\n", moves[i].move.to_string().c_str());
             }
         }
-        return moves.len();
+        return moves.size();
     }
 
-    for (size_t i = 0; i < moves.len(); i++) {
+    for (size_t i = 0; i < moves.size(); i++) {
         uint64_t val;
         auto& board = old_board.make_move(moves[i].move, history);
         val = perft<false>(board, history, depth - 1);
@@ -61,7 +61,7 @@ uint64_t Perft::run_perft(ChessBoard& board, int depth, bool print_debug) {
 
 Move Search::select_random_move(const ChessBoard& c) {
     auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, c.get_side_to_move());
-    return moves[rand() % moves.len()].move;
+    return moves[rand() % moves.size()].move;
 }
 
 bool Search::is_threefold_repetition(const BoardHistory& history, const int halfmove_clock, const ZobristKey z) {
@@ -281,20 +281,20 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
     }
 
     auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(old_board, old_board.get_side_to_move());
-    if (moves.len() == 0) {
+    if (moves.size() == 0) {
         if (old_board.in_check()) {
             // if in check
             return ply + MagicNumbers::NegativeInfinity;
         } else {
             return 0;
         }
-    } else if (moves.len() == 1) {
+    } else if (moves.size() == 1) {
         extensions += 1;
     }
     // mate and draw detection
 
     bool found_pv_move = false;
-    MoveOrdering::reorder_moves(moves, old_board, tt_entry.key() == old_board.get_zobrist_key() ? tt_entry.move() : Move::NULL_MOVE, history_table,
+    auto mp = MovePicker(std::move(moves), old_board, tt_hit ? tt_entry.move() : Move::NULL_MOVE, history_table,
                                 search_stack[ply].killer_move, found_pv_move);
     const bool tt_move = found_pv_move && tt_hit;
     // move reordering
@@ -307,12 +307,13 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
     Move best_move = Move::NULL_MOVE;
     Score best_score = MagicNumbers::NegativeInfinity;
     const Score original_alpha = alpha;
+    std::optional<ScoredMove> opt_move;
     size_t total_moves = 0;
-    for (size_t i = 0; i < moves.len(); i++) {
+    while ((opt_move = mp.next()).has_value()) {
         if (search_cancelled) {
             break;
         }
-        const auto& move = moves[total_moves];
+        const auto move = opt_move.value();
         total_moves += 1;
 
         if constexpr (!is_pv_node(node_type)) {
@@ -388,8 +389,8 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
                 if (score >= beta) {
                     search_stack[ply].killer_move = move.move;
                     for (size_t j = 0; j < (total_moves - 1); j++) {
-                        if (moves[j].move.is_quiet()) {
-                            history_table[moves[j].move.get_history_idx(old_board.get_side_to_move())] -= (depth * depth);
+                        if (mp[j].move.is_quiet()) {
+                            history_table[mp[j].move.get_history_idx(old_board.get_side_to_move())] -= (depth * depth);
                         }
                     }
                     if (!move.move.is_capture()) {
@@ -421,7 +422,7 @@ Score SearchHandler::quiescent_search(const ChessBoard& old_board, Score alpha, 
     }
     alpha = std::max(static_eval, alpha);
     auto moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIESCENCE>(old_board, old_board.get_side_to_move());
-    if (moves.len() == 0 && MoveGenerator::generate_legal_moves<MoveGenType::NON_QUIESCENCE>(old_board, old_board.get_side_to_move()).len() == 0) {
+    if (moves.size() == 0 && MoveGenerator::generate_legal_moves<MoveGenType::NON_QUIESCENCE>(old_board, old_board.get_side_to_move()).size() == 0) {
         if (old_board.in_check()) {
             // if in check
             return ply + MagicNumbers::NegativeInfinity;
@@ -432,13 +433,14 @@ Score SearchHandler::quiescent_search(const ChessBoard& old_board, Score alpha, 
 
     bool found_pv_move = false;
     Score best_score = static_eval;
-    MoveOrdering::reorder_moves(moves, old_board, Move::NULL_MOVE, history_table, search_stack[ply].killer_move, found_pv_move);
+    auto mp = MovePicker(std::move(moves), old_board, Move::NULL_MOVE, history_table, search_stack[ply].killer_move, found_pv_move);
     int evaluated_moves = 0;
-    for (size_t i = 0; i < moves.len(); i++) {
+    std::optional<ScoredMove> opt_move;
+    while ((opt_move = mp.next()).has_value()) {
         if (search_cancelled) {
             break;
         }
-        const auto& move = moves[i];
+        const auto& move = opt_move.value();
 
         if (move.move.is_capture() && !move.move.is_promotion()) {
             if (!move.see_ordering_result) {

@@ -71,7 +71,7 @@ bool operator==(const Move& lhs, const Move& rhs);
 class MoveList {
     private:
         size_t idx;
-        ScoredMove data[MAX_TURN_MOVE_COUNT];
+        std::array<ScoredMove, MAX_TURN_MOVE_COUNT> data;
 
     public:
         MoveList() : idx(0){};
@@ -82,7 +82,7 @@ class MoveList {
         };
 
         void add_moves(const MoveList& other_list) {
-            size_t other_len = other_list.len();
+            size_t other_len = other_list.size();
             memcpy(&this->data[idx], other_list.get_data_addr(), other_len * sizeof(Move));
             idx += other_len;
         };
@@ -90,9 +90,14 @@ class MoveList {
         ScoredMove& operator[](size_t arg_idx) { return data[arg_idx]; }
         const ScoredMove& operator[](size_t arg_idx) const { return data[arg_idx]; }
 
-        const ScoredMove* get_data_addr() const { return data; }
+        const ScoredMove* get_data_addr() const { return data.data(); }
 
-        size_t len() const { return this->idx; };
+        size_t size() const { return this->idx; };
+
+        auto begin() const { return data.begin(); };
+        auto begin() { return data.begin(); };
+        auto end() const { return data.end(); };
+        auto end() { return data.end(); };
 
         void clear() { this->idx = 0; };
 };

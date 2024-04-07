@@ -106,7 +106,7 @@ TEST(ChessBoardTests, TestMakeUnmakeMove) {
     const auto original_score = c.get_score(Side::WHITE);
     auto BishopMoves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE);
     BoardHistory hist(c);
-    for (size_t j = 0; j < BishopMoves.len(); j++) {
+    for (size_t j = 0; j < BishopMoves.size(); j++) {
         Move m = BishopMoves[j].move;
         ASSERT_EQ(hist.len(), 1);
         c = c.make_move(m, hist);
@@ -349,7 +349,7 @@ TEST(ChessBoardTests, TestUnmakeScores) {
     BoardHistory hist(c);
     const auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE);
     const auto mg_score = c.get_score(Side::WHITE);
-    for (size_t i = 0; i < moves.len(); i++) {
+    for (size_t i = 0; i < moves.size(); i++) {
         c.make_move(moves[i].move, hist);
         hist.pop_board();
         ASSERT_EQ(c.get_score(Side::WHITE), mg_score) << "Score mismatch on move " << moves[i].move.to_string();
