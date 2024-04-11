@@ -245,7 +245,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
     }
 
     if constexpr (!is_pv_node(node_type)) {
-        if (static_eval >= beta && !old_board.in_check()) {
+        if (static_eval >= beta && !old_board.in_check() && depth >= 3) {
             // Try null move pruning if we aren't in check
             const auto& older_board = history[history.len() - 2];
             const bool nmp_stopped =
