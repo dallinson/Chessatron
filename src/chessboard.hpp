@@ -19,6 +19,8 @@ class ChessBoard {
         std::array<Bitboard, 6> piece_bbs = {0};
         std::array<Bitboard, 2> side_bbs = {0};
 
+        std::array<Piece, 64> piece_mb = {0};
+
         uint8_t en_passant_file = 9; 
 
         // first 2 elems are kingside, second two queenside
@@ -82,16 +84,7 @@ class ChessBoard {
         };
 
         inline Piece piece_at(const int sq) const {
-            if (get_bit(occupancy(), sq) == 0) {
-                return 0;
-            }
-            int pc_val = 0;
-            for (pc_val = 0; pc_val < 6; pc_val++) {
-                if (get_bit(piece_bbs[pc_val], sq) != 0) {
-                    break;
-                }
-            }
-            return Piece(static_cast<Side>(get_bit(side_bbs[1], sq)), static_cast<PieceTypes>(pc_val + 1));
+            return piece_mb[sq];
         }
 
         /**
