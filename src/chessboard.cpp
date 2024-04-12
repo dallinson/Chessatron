@@ -46,6 +46,7 @@ constexpr int castling_rights[64] = {0b1011, 15, 15, 15, 0b1010, 15, 15, 0b1110,
 void ChessBoard::set_piece(Piece piece, uint8_t pos) {
     set_bit(piece_bbs[static_cast<int>(piece.get_type()) - 1], pos);
     set_bit(side_bbs[static_cast<int>(piece.get_side())], pos);
+    piece_mb[pos] = piece;
     zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(piece, pos)];
 
     const auto piece_side = piece.get_side();
@@ -65,6 +66,7 @@ void ChessBoard::clear_board() {
     }
     side_bbs[0] = 0;
     side_bbs[1] = 0;
+    piece_mb.fill(0);
 
     side_to_move = Side::WHITE;
     en_passant_file = 9;
@@ -274,6 +276,7 @@ ChessBoard::ChessBoard(const ChessBoard& origin, const Move to_make) {
 
         clear_bit(piece_bbs[static_cast<int>(moved.get_type()) - 1], src_sq);
         clear_bit(side_bbs[static_cast<int>(moved.get_side())], src_sq);
+        piece_mb[src_sq] = 0;
         if (at_target.get_value()) {
             // If there _was_ a piece there
             // we do this as en passant captures without a piece at the position
@@ -292,12 +295,14 @@ ChessBoard::ChessBoard(const ChessBoard& origin, const Move to_make) {
             zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(promoted_piece, dest_sq)];
             // promoted_piece += side;
             set_bit(this->piece_bbs[static_cast<int>(promoted_piece.get_type()) - 1], dest_sq);
+            piece_mb[dest_sq] = promoted_piece;
             // This handles pawn promotions
             scores[static_cast<int>(side)] += get_psqt_score(Piece(side, promoted_piece.get_type()), dest_sq);
 
             mg_phase += mg_phase_vals[static_cast<int>(promoted_piece.get_type()) - 1];
         } else {
             set_bit(this->piece_bbs[static_cast<int>(moved.get_type()) - 1], dest_sq);
+            piece_mb[dest_sq] = moved;
             zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, to_make.dst_sq())];
             scores[static_cast<int>(side)] += get_psqt_score(Piece(side, moved.get_type()), dest_sq);
             // otherwise sets pieces if moved normally
@@ -316,6 +321,7 @@ ChessBoard::ChessBoard(const ChessBoard& origin, const Move to_make) {
             int enemy_pawn_idx = get_position(to_make.src_rnk(), to_make.dst_fle());
             clear_bit(this->piece_bbs[bb_idx<PAWN>], enemy_pawn_idx);
             clear_bit(this->side_bbs[static_cast<int>(enemy_side(side))], enemy_pawn_idx);
+            piece_mb[enemy_pawn_idx] = 0;
             this->zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(enemy, PAWN), enemy_pawn_idx)];
             scores[static_cast<int>(enemy)] -= get_psqt_score(Piece(enemy, PAWN), enemy_pawn_idx);
         }
@@ -329,11 +335,13 @@ ChessBoard::ChessBoard(const ChessBoard& origin, const Move to_make) {
 
             clear_bit(this->piece_bbs[bb_idx<ROOK>], rook_origin);
             clear_bit(this->side_bbs[static_cast<int>(side)], rook_origin);
+            piece_mb[rook_origin] = 0;
             zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, ROOK), rook_origin)];
             scores[static_cast<int>(side)] -= get_psqt_score(Piece(side, ROOK), rook_origin);
 
             set_bit(this->piece_bbs[bb_idx<ROOK>], rook_dest);
             set_bit(this->side_bbs[static_cast<int>(side)], rook_dest);
+            piece_mb[rook_dest] = Piece(side, PieceTypes::ROOK);
             zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, ROOK), rook_dest)];
             scores[static_cast<int>(side)] += get_psqt_score(Piece(side, ROOK), rook_dest);
         }
