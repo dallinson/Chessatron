@@ -159,34 +159,37 @@ bool operator==(const ChessBoard& lhs, const ChessBoard& rhs);
 
 class BoardHistory {
     private:
-        std::vector<ChessBoard> data;
+        std::vector<ChessBoard> board_hist;
+        std::array<Move, MAX_GAME_MOVE_COUNT> move_hist;
         size_t idx;
 
     public:
         BoardHistory() : idx(0) {
-            data.resize(MAX_GAME_MOVE_COUNT);
+            board_hist.resize(MAX_GAME_MOVE_COUNT);
         };
         BoardHistory(const ChessBoard& board) {
             idx = 0;
-            data.resize(MAX_GAME_MOVE_COUNT);
+            board_hist.resize(MAX_GAME_MOVE_COUNT);
             push_board(board);
         }
 
-        ChessBoard& push_board(const ChessBoard new_board) {
-            this->data[idx] = new_board;
+        ChessBoard& push_board(const ChessBoard new_board, const Move move = Move::NULL_MOVE) {
+            this->board_hist[idx] = new_board;
+            this->move_hist[idx] = move;
             idx += 1;
-            return this->data[idx - 1];
+            return this->board_hist[idx - 1];
         }
 
         ChessBoard& pop_board() {
             assert(idx >= 2);
             idx -= 1;
-            return this->data[idx - 1];
+            return this->board_hist[idx - 1];
         }
 
         size_t len() const { return idx; };
-        const ChessBoard& operator[](size_t idx) const { return data[idx]; };
-        ChessBoard& operator[](size_t idx) { return data[idx]; };
+        const ChessBoard& operator[](size_t idx) const { return board_hist[idx]; };
+        ChessBoard& operator[](size_t idx) { return board_hist[idx]; };
+        Move move_at(size_t idx) const { return move_hist[idx]; };
 
         void clear() { idx = 0; };
 };
