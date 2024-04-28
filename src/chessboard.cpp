@@ -357,7 +357,7 @@ ChessBoard::ChessBoard(const ChessBoard& origin, const Move to_make) {
     recompute_blockers_and_checkers(side_to_move);
 }
 
-ChessBoard& ChessBoard::make_move(const Move to_make, BoardHistory& history) const { return history.push_board(ChessBoard(*this, to_make)); }
+ChessBoard& ChessBoard::make_move(const Move to_make, BoardHistory& history) const { return history.push_board(ChessBoard(*this, to_make), to_make); }
 
 void ChessBoard::recompute_blockers_and_checkers(const Side side) {
     const int king_idx = get_lsb(this->kings(side));

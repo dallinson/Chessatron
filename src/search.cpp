@@ -247,19 +247,8 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
     if constexpr (!is_pv_node(node_type)) {
         if (static_eval >= beta && !old_board.in_check() && depth >= 3) {
             // Try null move pruning if we aren't in check
-            const auto& older_board = history[history.len() - 2];
-            const bool nmp_stopped =
-                old_board.pawns(Side::WHITE) == older_board.pawns(Side::WHITE) && old_board.pawns(Side::BLACK) == older_board.pawns(Side::BLACK)
-                && old_board.knights(Side::WHITE) == older_board.knights(Side::WHITE)
-                && old_board.knights(Side::BLACK) == older_board.knights(Side::BLACK)
-                && old_board.bishops(Side::WHITE) == older_board.bishops(Side::WHITE)
-                && old_board.bishops(Side::BLACK) == older_board.bishops(Side::BLACK)
-                && old_board.rooks(Side::WHITE) == older_board.rooks(Side::WHITE) && old_board.rooks(Side::BLACK) == older_board.rooks(Side::BLACK)
-                && old_board.queens(Side::WHITE) == older_board.queens(Side::WHITE)
-                && old_board.queens(Side::BLACK) == older_board.queens(Side::BLACK) && old_board.kings(Side::WHITE) == older_board.kings(Side::WHITE)
-                && old_board.kings(Side::BLACK) == older_board.kings(Side::BLACK);
 
-            if (!nmp_stopped) {
+            if (!history.move_at(history.len() - 1).is_null_move()) {
                 auto& board = old_board.make_move(Move::NULL_MOVE, history);
                 
                 const auto nmp_reduction = 4
