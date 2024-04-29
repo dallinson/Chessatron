@@ -377,14 +377,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
                 }
                 if (score >= beta) {
                     search_stack[ply].killer_move = move.move;
-                    for (size_t j = 0; j < (total_moves - 1); j++) {
-                        if (mp[j].move.is_quiet()) {
-                            history_table[mp[j].move.get_history_idx(old_board.get_side_to_move())] -= (depth * depth);
-                        }
-                    }
-                    if (!move.move.is_capture()) {
-                        history_table[move.move.get_history_idx(old_board.get_side_to_move())] += (depth * depth);
-                    }
+                    history_table.update_scores(mp.evaluated_moves(), move, old_board.get_side_to_move(), depth);
                     break;
                 }
                 alpha = score;
@@ -514,7 +507,7 @@ Move SearchHandler::run_iterative_deepening_search() {
         // in order to save some time
     }
 
-    history_table.fill(0);
+    history_table.reset();
     node_spent_table.fill(0);
     pv_table.pv_length.fill(0);
     for (unsigned int i = 0; i < pv_table.pv_array.size(); i++) {
