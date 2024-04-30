@@ -12,6 +12,7 @@
 
 #include "chessboard.hpp"
 #include "evaluation.hpp"
+#include "history.hpp"
 #include "time_management.hpp"
 
 enum class NodeTypes {
@@ -135,7 +136,7 @@ class SearchHandler {
         std::condition_variable cv;
         
         BoardHistory history;
-        std::array<int32_t, 8192> history_table;
+        HistoryTable history_table;
         std::array<uint64_t, 4096> node_spent_table;
         std::array<SearchStackFrame, MAX_PLY + 2> search_stack;
         PvTable pv_table;
