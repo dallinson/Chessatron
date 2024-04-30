@@ -190,6 +190,10 @@ class BoardHistory {
         const ChessBoard& operator[](size_t idx) const { return board_hist[idx]; };
         ChessBoard& operator[](size_t idx) { return board_hist[idx]; };
         Move move_at(size_t idx) const { return move_hist[idx]; };
+        size_t conthist_idx(size_t idx) const {
+            const auto move = move_hist[idx];
+            return (board_hist[idx - 1].piece_at(move.src_sq()).get_value() << 6) | move.dst_sq();
+        };
 
         void clear() { idx = 0; };
 };

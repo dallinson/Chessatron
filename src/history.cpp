@@ -10,7 +10,7 @@ HistoryValue HistoryTable::score(Move move, Side stm) const {
     }
 }
 
-void HistoryTable::update_scores(std::span<const ScoredMove> moves, ScoredMove current_move, Side stm, int depth) {
+void HistoryTable::update_scores(const BoardHistory& hist, std::span<const ScoredMove> moves, ScoredMove current_move, Side stm, int depth) {
     if (!current_move.move.is_capture()) {
         update_mainhist_score(current_move.move, stm, bonus(depth));
     }
