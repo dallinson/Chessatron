@@ -5,9 +5,9 @@
 #include <cstddef>
 #include <cstdint>
 
-typedef uint64_t Bitboard;
-typedef uint64_t ZobristKey;
-typedef int16_t Score;
+using Bitboard = uint64_t;
+using ZobristKey = uint64_t;
+using Score = int16_t;
 
 constexpr int MAX_TURN_MOVE_COUNT = 218;
 constexpr int MAX_GAME_MOVE_COUNT = 5899;
