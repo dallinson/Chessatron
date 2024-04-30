@@ -507,7 +507,6 @@ Move SearchHandler::run_iterative_deepening_search() {
         // in order to save some time
     }
 
-    history_table.reset();
     node_spent_table.fill(0);
     pv_table.pv_length.fill(0);
     for (unsigned int i = 0; i < pv_table.pv_array.size(); i++) {

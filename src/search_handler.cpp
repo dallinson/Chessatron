@@ -83,6 +83,7 @@ void SearchHandler::reset() {
     this->EndSearch();
     history = BoardHistory();
     tt.clear();
+    history_table.clear();
 }
 
 void SearchHandler::run_bench(uint16_t depth) {
