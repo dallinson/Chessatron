@@ -10,15 +10,15 @@ HistoryValue HistoryTable::score(Move move, Side stm) const {
     }
 }
 
-void HistoryTable::update_scores(std::span<const ScoredMove> moves, ScoredMove current_move, Side stm, int depth) {
-    if (!current_move.move.is_capture()) {
-        update_mainhist_score(current_move.move, stm, bonus(depth));
+void HistoryTable::update_scores(std::span<const ScoredMove> moves, ScoredMove best_move, Side stm, int depth) {
+    if (best_move.move.is_quiet()) {
+        update_mainhist_score(best_move.move, stm, bonus(depth));
+        std::for_each(moves.begin(), moves.end(), [&](ScoredMove move) {
+            if (move.move.is_quiet()) {
+                update_mainhist_score(move.move, stm, malus(depth));
+            }
+        });
     }
-    std::for_each(moves.begin(), moves.end(), [&](ScoredMove move) {
-        if (move.move.is_quiet()) {
-            update_mainhist_score(move.move, stm, malus(depth));
-        }
-    });
 }
 
 void HistoryTable::update_mainhist_score(Move move, Side stm, HistoryValue bonus) {
