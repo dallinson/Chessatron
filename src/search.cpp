@@ -189,7 +189,7 @@ template <NodeTypes node_type>
 Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Score beta, int depth, int ply, uint64_t& node_count, bool is_cut_node) {
 
     pv_table.pv_length[ply] = ply;
-    if (Search::is_draw(old_board, history)) {
+    if (Search::is_draw(old_board, board_hist)) {
         return 0;
     }
 
@@ -248,8 +248,8 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
         if (static_eval >= beta && !old_board.in_check() && depth >= 3) {
             // Try null move pruning if we aren't in check
 
-            if (!history.move_at(history.len() - 1).is_null_move()) {
-                auto& board = old_board.make_move(Move::NULL_MOVE, history);
+            if (!board_hist.move_at(board_hist.len() - 1).is_null_move()) {
+                auto& board = old_board.make_move(Move::NULL_MOVE, board_hist);
                 
                 const auto nmp_reduction = 4
                     + (depth / 4)
@@ -257,7 +257,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
                 auto null_score =
                     -negamax_step<pv_node_type>(board, -beta, -alpha, depth - nmp_reduction, ply + 1, node_count, child_cutnode_type);
 
-                history.pop_board();
+                board_hist.pop_board();
                 if (null_score >= beta) {
                     if (null_score > MagicNumbers::PositiveInfinity - MAX_PLY) {
                         return beta;
@@ -283,7 +283,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
     // mate and draw detection
 
     bool found_pv_move = false;
-    auto mp = MovePicker(std::move(moves), old_board, tt_hit ? tt_entry.move() : Move::NULL_MOVE, history_table,
+    auto mp = MovePicker(std::move(moves), old_board, board_hist, tt_hit ? tt_entry.move() : Move::NULL_MOVE, history_table,
                                 search_stack[ply].killer_move, found_pv_move);
     const bool tt_move = found_pv_move && tt_hit;
     // move reordering
@@ -324,7 +324,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
 
         tt.prefetch(old_board.key_after(move.move));
         const auto pre_move_node_count = node_count;
-        auto& board = old_board.make_move(move.move, history);
+        auto& board = old_board.make_move(move.move, board_hist);
         node_count += 1;
         Score score;
         const auto new_depth = depth - 1 + extensions;
@@ -357,7 +357,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
             score = -negamax_step<NodeTypes::PV_NODE>(board, -beta, -alpha, new_depth, ply + 1, node_count, child_cutnode_type);
         }
 
-        history.pop_board();
+        board_hist.pop_board();
         if constexpr (node_type == NodeTypes::ROOT_NODE) {
             node_spent_table[move.move.value() & 0x0FFF] += (node_count - pre_move_node_count);
         }
@@ -377,7 +377,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
                 }
                 if (score >= beta) {
                     search_stack[ply].killer_move = move.move;
-                    history_table.update_scores(mp.evaluated_moves(), move, old_board.get_side_to_move(), depth);
+                    history_table.update_scores(board_hist, mp.evaluated_moves(), move, old_board.get_side_to_move(), depth);
                     break;
                 }
                 alpha = score;
@@ -392,7 +392,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
 
 template <NodeTypes node_type>
 Score SearchHandler::quiescent_search(const ChessBoard& old_board, Score alpha, Score beta, int ply, uint64_t& node_count) {
-    if (Search::is_draw(old_board, history)) {
+    if (Search::is_draw(old_board, board_hist)) {
         return 0;
     }
     Score static_eval = Evaluation::evaluate_board(old_board);
@@ -415,7 +415,7 @@ Score SearchHandler::quiescent_search(const ChessBoard& old_board, Score alpha, 
 
     bool found_pv_move = false;
     Score best_score = static_eval;
-    auto mp = MovePicker(std::move(moves), old_board, Move::NULL_MOVE, history_table, search_stack[ply].killer_move, found_pv_move);
+    auto mp = MovePicker(std::move(moves), old_board, board_hist, Move::NULL_MOVE, history_table, search_stack[ply].killer_move, found_pv_move);
     int evaluated_moves = 0;
     std::optional<ScoredMove> opt_move;
     while ((opt_move = mp.next()).has_value()) {
@@ -434,7 +434,7 @@ Score SearchHandler::quiescent_search(const ChessBoard& old_board, Score alpha, 
             }
         }
 
-        auto& board = old_board.make_move(move.move, history);
+        auto& board = old_board.make_move(move.move, board_hist);
         node_count += 1;
         Score score;
         if constexpr (is_pv_node(node_type)) {
@@ -450,7 +450,7 @@ Score SearchHandler::quiescent_search(const ChessBoard& old_board, Score alpha, 
             score = -quiescent_search<NodeTypes::NON_PV_NODE>(board, -alpha - 1, -alpha, ply + 1, node_count);
         }
 
-        history.pop_board();
+        board_hist.pop_board();
         evaluated_moves += 1;
         if (score > best_score) {
             best_score = score;
@@ -476,7 +476,7 @@ Score SearchHandler::run_aspiration_window_search(int depth, Score previous_scor
             beta = previous_score + window;
         }
 
-        previous_score = negamax_step<NodeTypes::ROOT_NODE>(history[history.len() - 1], alpha, beta, depth, 0, node_count, false);
+        previous_score = negamax_step<NodeTypes::ROOT_NODE>(board_hist[board_hist.len() - 1], alpha, beta, depth, 0, node_count, false);
 
         if (search_cancelled) {
             return previous_score;
@@ -499,7 +499,7 @@ Move SearchHandler::run_iterative_deepening_search() {
     const auto search_start_point = std::chrono::steady_clock::now();
     // TranspositionTable transpositions;
     auto moves =
-        MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(history[history.len() - 1], history[history.len() - 1].get_side_to_move());
+        MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(board_hist[board_hist.len() - 1], board_hist[board_hist.len() - 1].get_side_to_move());
     // We generate legal moves only as it saves us having to continually rerun legality checks
     if (moves.size() == 1) {
         return moves[0].move;
