@@ -135,7 +135,7 @@ class SearchHandler {
         std::mutex search_mutex;
         std::condition_variable cv;
         
-        BoardHistory history;
+        BoardHistory board_hist;
         HistoryTable history_table;
         std::array<uint64_t, 4096> node_spent_table;
         std::array<SearchStackFrame, MAX_PLY + 2> search_stack;
@@ -162,14 +162,14 @@ class SearchHandler {
 
         bool is_searching() { return this->in_search; };
         int get_current_search_id() { return this->current_search_id; };
-        ChessBoard& get_board() { return this->history[history.len() - 1]; };
-        BoardHistory& get_history() { return this->history; };
+        ChessBoard& get_board() { return this->board_hist[board_hist.len() - 1]; };
+        BoardHistory& get_history() { return this->board_hist; };
 
         void set_board(const ChessBoard& c) { 
-            this->history = BoardHistory(c);
+            this->board_hist = BoardHistory(c);
         };
         void set_history(const BoardHistory& h) {
-            this->history = h;
+            this->board_hist = h;
         }
         uint64_t get_node_count() { return node_count; };
         void set_print_info(bool print) { print_info = print; };

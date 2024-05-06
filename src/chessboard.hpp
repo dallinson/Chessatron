@@ -131,6 +131,8 @@ class ChessBoard {
 
         void recompute_blockers_and_checkers(const Side side);
 
+        int piece_to(Move move) const { return piece_at(move.src_sq()).get_value() << 6 | move.dst_sq(); };
+
         inline Bitboard get_checkers() const { return checkers; };
         inline Bitboard get_pinned_pieces() const { return pinned_pieces; };
         bool in_check() const { return checkers != 0; }; 
@@ -160,6 +162,8 @@ bool operator==(const ChessBoard& lhs, const ChessBoard& rhs);
 class BoardHistory {
     private:
         std::vector<ChessBoard> board_hist;
+        // The move at index i is the move made to reach the board at index i, or
+        // alternatively the move made at index i - 1
         std::array<Move, MAX_GAME_MOVE_COUNT> move_hist;
         size_t idx;
 
@@ -190,6 +194,10 @@ class BoardHistory {
         const ChessBoard& operator[](size_t idx) const { return board_hist[idx]; };
         ChessBoard& operator[](size_t idx) { return board_hist[idx]; };
         Move move_at(size_t idx) const { return move_hist[idx]; };
+        size_t conthist_idx(size_t idx) const {
+            const auto move = move_hist[idx];
+            return (board_hist[idx - 1].piece_at(move.src_sq()).get_value() << 6) | move.dst_sq();
+        };
 
         void clear() { idx = 0; };
 };

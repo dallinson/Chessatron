@@ -9,7 +9,7 @@
 
 constexpr std::array<uint8_t, 6> ordering_scores = {1, 2, 3, 4, 5, 6};
 
-MovePicker::MovePicker(MoveList&& input_moves, const ChessBoard& board, const Move pv_move, HistoryTable& history_table, Move killer, bool& found_pv_move) {
+MovePicker::MovePicker(MoveList&& input_moves, const ChessBoard& board, const BoardHistory& hist, const Move pv_move, HistoryTable& history_table, Move killer, bool& found_pv_move) {
     this->moves = input_moves;
     this->idx = 0;
 
@@ -49,7 +49,7 @@ MovePicker::MovePicker(MoveList&& input_moves, const ChessBoard& board, const Mo
         } else if (move.move == killer) {
             move.score = 800000000;
         } else {
-            move.score += history_table.score(move.move, board.get_side_to_move());
+            move.score += history_table.score(hist, move.move, board.get_side_to_move());
         }
         if (move.score > moves[best_idx].score) {
             best_idx = i;
