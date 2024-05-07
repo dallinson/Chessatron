@@ -452,8 +452,8 @@ Score SearchHandler::quiescent_search(const ChessBoard& old_board, Score alpha, 
     if (evaluated_moves == 0) {
         const auto non_quiescent_moves = MoveGenerator::generate_moves<MoveGenType::NON_QUIESCENCE>(old_board, old_board.get_side_to_move());
         bool found_legal = false;
-        for (const auto move : non_quiescent_moves) {
-            if (MoveGenerator::is_move_legal(old_board, move.move)) {
+        for (const auto quiet_move : non_quiescent_moves) {
+            if (MoveGenerator::is_move_legal(old_board, quiet_move.move)) {
                 found_legal = true;
                 break;
             }
