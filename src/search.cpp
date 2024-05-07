@@ -17,19 +17,17 @@ uint64_t perft(const ChessBoard& old_board, BoardHistory& history, int depth) {
     MoveList moves;
     uint64_t to_return = 0;
 
-    moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(old_board, old_board.get_side_to_move());
-
-    if (depth == 1) {
-        if constexpr (print_debug) {
-            for (size_t i = 0; i < moves.size(); i++) {
-                printf("%s: 1\n", moves[i].move.to_string().c_str());
-            }
-        }
-        return moves.size();
+    if (depth == 0) {
+        return 1;
     }
+
+    moves = MoveGenerator::generate_moves<MoveGenType::ALL_PSEUDOLEGAL>(old_board, old_board.get_side_to_move());
 
     for (size_t i = 0; i < moves.size(); i++) {
         uint64_t val;
+        if (!MoveGenerator::is_move_legal(old_board, moves[i].move)) {
+            continue;
+        }
         auto& board = old_board.make_move(moves[i].move, history);
         val = perft<false>(board, history, depth - 1);
         if constexpr (print_debug) {
@@ -60,7 +58,7 @@ uint64_t Perft::run_perft(ChessBoard& board, int depth, bool print_debug) {
 }
 
 Move Search::select_random_move(const ChessBoard& c) {
-    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, c.get_side_to_move());
+    auto moves = MoveGenerator::generate_moves<MoveGenType::ALL_PSEUDOLEGAL>(c, c.get_side_to_move());
     return moves[rand() % moves.size()].move;
 }
 
@@ -269,17 +267,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
         }
     }
 
-    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(old_board, old_board.get_side_to_move());
-    if (moves.size() == 0) {
-        if (old_board.in_check()) {
-            // if in check
-            return ply + MagicNumbers::NegativeInfinity;
-        } else {
-            return 0;
-        }
-    } else if (moves.size() == 1) {
-        extensions += 1;
-    }
+    auto moves = MoveGenerator::generate_moves<MoveGenType::ALL_PSEUDOLEGAL>(old_board, old_board.get_side_to_move());
     // mate and draw detection
 
     bool found_pv_move = false;
@@ -297,17 +285,17 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
     Score best_score = MagicNumbers::NegativeInfinity;
     const Score original_alpha = alpha;
     std::optional<ScoredMove> opt_move;
-    size_t total_moves = 0;
-    while ((opt_move = mp.next()).has_value()) {
+    size_t evaluated_moves = 0;
+    while ((opt_move = mp.next_legal(old_board)).has_value()) {
         if (search_cancelled) {
             break;
         }
         const auto move = opt_move.value();
-        total_moves += 1;
+        evaluated_moves += 1;
 
         if constexpr (!is_pv_node(node_type)) {
             // late move pruning
-            if (depth <= 6 && !old_board.in_check() && move.move.is_quiet() && total_moves >= static_cast<size_t>((depth * depth) + 4)) {
+            if (depth <= 6 && !old_board.in_check() && move.move.is_quiet() && evaluated_moves >= static_cast<size_t>((depth * depth) + 4)) {
                 continue;
             }
         }
@@ -331,11 +319,11 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
 
         // See if we can perform LMR
         if (depth > 2
-            && total_moves >= std::max((size_t) 2, 1 + static_cast<size_t>(is_pv_node(node_type)) + static_cast<size_t>(!tt_move)
+            && evaluated_moves >= std::max((size_t) 2, 1 + static_cast<size_t>(is_pv_node(node_type)) + static_cast<size_t>(!tt_move)
                                                            + static_cast<size_t>(node_type == NodeTypes::ROOT_NODE)
                                                            + static_cast<size_t>(move.move.is_capture() || move.move.is_promotion()))) {
             const auto lmr_reduction =
-                static_cast<int>(LmrTable[depth][total_moves - 1])
+                static_cast<int>(LmrTable[depth][evaluated_moves - 1])
                 + static_cast<int>(!is_pv_node(node_type) && is_cut_node)
                 - static_cast<int>(board.in_check()); // Reduce less if the board is in check
             score = -negamax_step<NodeTypes::NON_PV_NODE>(board, -(alpha + 1), -alpha, new_depth - lmr_reduction, ply + 1, node_count,
@@ -348,12 +336,12 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
             }
         }
         // if we didn't perform LMR
-        else if (!is_pv_node(node_type) || total_moves >= 2) {
+        else if (!is_pv_node(node_type) || evaluated_moves >= 2) {
             score =
                 -negamax_step<NodeTypes::NON_PV_NODE>(board, -(alpha + 1), -alpha, new_depth, ply + 1, node_count, child_cutnode_type);
         }
 
-        if (is_pv_node(node_type) && (total_moves == 1 || score > alpha)) {
+        if (is_pv_node(node_type) && (evaluated_moves == 1 || score > alpha)) {
             score = -negamax_step<NodeTypes::PV_NODE>(board, -beta, -alpha, new_depth, ply + 1, node_count, child_cutnode_type);
         }
 
@@ -384,6 +372,15 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
             }
         }
     }
+    if (evaluated_moves == 0) {
+        if (old_board.in_check()) {
+            // if in check
+            return ply + MagicNumbers::NegativeInfinity;
+        } else {
+            return 0;
+        }
+    }
+
     const BoundTypes bound_type =
         (best_score >= beta ? BoundTypes::LOWER_BOUND : (alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND));
     tt.store(TranspositionTableEntry(best_move, depth, bound_type, best_score, old_board.get_zobrist_key()), old_board);
@@ -403,22 +400,13 @@ Score SearchHandler::quiescent_search(const ChessBoard& old_board, Score alpha, 
         return static_eval;
     }
     alpha = std::max(static_eval, alpha);
-    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIESCENCE>(old_board, old_board.get_side_to_move());
-    if (moves.size() == 0 && MoveGenerator::generate_legal_moves<MoveGenType::NON_QUIESCENCE>(old_board, old_board.get_side_to_move()).size() == 0) {
-        if (old_board.in_check()) {
-            // if in check
-            return ply + MagicNumbers::NegativeInfinity;
-        } else {
-            return 0;
-        }
-    }
-
+    auto moves = MoveGenerator::generate_moves<MoveGenType::QUIESCENCE>(old_board, old_board.get_side_to_move());
     bool found_pv_move = false;
     Score best_score = static_eval;
     auto mp = MovePicker(std::move(moves), old_board, board_hist, Move::NULL_MOVE, history_table, search_stack[ply].killer_move, found_pv_move);
-    int evaluated_moves = 0;
+    size_t evaluated_moves = 0;
     std::optional<ScoredMove> opt_move;
-    while ((opt_move = mp.next()).has_value()) {
+    while ((opt_move = mp.next_legal(old_board)).has_value()) {
         if (search_cancelled) {
             break;
         }
@@ -461,6 +449,24 @@ Score SearchHandler::quiescent_search(const ChessBoard& old_board, Score alpha, 
             alpha = std::max(score, alpha);
         }
     }
+    if (evaluated_moves == 0) {
+        const auto non_quiescent_moves = MoveGenerator::generate_moves<MoveGenType::NON_QUIESCENCE>(old_board, old_board.get_side_to_move());
+        bool found_legal = false;
+        for (const auto move : non_quiescent_moves) {
+            if (MoveGenerator::is_move_legal(old_board, move.move)) {
+                found_legal = true;
+                break;
+            }
+        }
+        if (!found_legal) {
+            if (old_board.in_check()) {
+                // if in check
+                return ply + MagicNumbers::NegativeInfinity;
+            } else {
+                return 0;
+            }
+        }
+    }
     return best_score;
 }
 
@@ -499,7 +505,7 @@ Move SearchHandler::run_iterative_deepening_search() {
     const auto search_start_point = std::chrono::steady_clock::now();
     // TranspositionTable transpositions;
     auto moves =
-        MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(board_hist[board_hist.len() - 1], board_hist[board_hist.len() - 1].get_side_to_move());
+        MoveGenerator::generate_moves<MoveGenType::ALL_PSEUDOLEGAL>(board_hist[board_hist.len() - 1], board_hist[board_hist.len() - 1].get_side_to_move());
     // We generate legal moves only as it saves us having to continually rerun legality checks
     if (moves.size() == 1) {
         return moves[0].move;

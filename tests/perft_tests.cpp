@@ -19,7 +19,7 @@ TEST(PerftTests, TestStartPos) {
 
 TEST(PerftTests, TestKiwipete) {
     ChessBoard c;
-    c.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");
+    c.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
     ASSERT_EQ(Perft::run_perft(c, 1), 48);
     ASSERT_EQ(Perft::run_perft(c, 2), 2039);
     ASSERT_EQ(Perft::run_perft(c, 3), 97862);

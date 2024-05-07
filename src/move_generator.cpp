@@ -134,22 +134,22 @@ bool MoveGenerator::is_move_pseudolegal(const ChessBoard& c, const Move to_test)
     MoveList moves;
     switch (piece_type) {
     case PieceTypes::PAWN:
-        generate_pawn_moves<MoveGenType::ALL_LEGAL>(c, move_side, moves);
+        generate_pawn_moves<MoveGenType::ALL_PSEUDOLEGAL>(c, move_side, moves);
         break;
     case PieceTypes::KNIGHT:
-        generate_moves<PieceTypes::KNIGHT, MoveGenType::ALL_LEGAL>(c, move_side, moves);
+        generate_moves<PieceTypes::KNIGHT, MoveGenType::ALL_PSEUDOLEGAL>(c, move_side, moves);
         break;
     case PieceTypes::BISHOP:
-        generate_moves<PieceTypes::BISHOP, MoveGenType::ALL_LEGAL>(c, move_side, moves);
+        generate_moves<PieceTypes::BISHOP, MoveGenType::ALL_PSEUDOLEGAL>(c, move_side, moves);
         break;
     case PieceTypes::ROOK:
-        generate_moves<PieceTypes::ROOK, MoveGenType::ALL_LEGAL>(c, move_side, moves);
+        generate_moves<PieceTypes::ROOK, MoveGenType::ALL_PSEUDOLEGAL>(c, move_side, moves);
         break;
     case PieceTypes::QUEEN:
-        generate_moves<PieceTypes::QUEEN, MoveGenType::ALL_LEGAL>(c, move_side, moves);
+        generate_moves<PieceTypes::QUEEN, MoveGenType::ALL_PSEUDOLEGAL>(c, move_side, moves);
         break;
     case PieceTypes::KING:
-        generate_moves<PieceTypes::KING, MoveGenType::ALL_LEGAL>(c, move_side, moves);
+        generate_moves<PieceTypes::KING, MoveGenType::ALL_PSEUDOLEGAL>(c, move_side, moves);
         break;
     }
 

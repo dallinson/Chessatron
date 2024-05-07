@@ -104,7 +104,7 @@ TEST(ChessBoardTests, TestMakeUnmakeMove) {
     c.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");
     o.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");
     const auto original_score = c.get_score(Side::WHITE);
-    auto BishopMoves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE);
+    auto BishopMoves = MoveGenerator::generate_moves<MoveGenType::ALL_PSEUDOLEGAL>(c, Side::WHITE);
     BoardHistory hist(c);
     for (size_t j = 0; j < BishopMoves.size(); j++) {
         Move m = BishopMoves[j].move;
@@ -347,7 +347,7 @@ TEST(ChessBoardTests, TestUnmakeScores) {
     ChessBoard c;
     c.set_from_fen("1r4k1/P7/8/3Pp3/8/1b6/P7/R3K2R w KQ e6 0 1");
     BoardHistory hist(c);
-    const auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE);
+    const auto moves = MoveGenerator::generate_moves<MoveGenType::ALL_PSEUDOLEGAL>(c, Side::WHITE);
     const auto mg_score = c.get_score(Side::WHITE);
     for (size_t i = 0; i < moves.size(); i++) {
         c.make_move(moves[i].move, hist);

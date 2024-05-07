@@ -59,12 +59,9 @@ MovePicker::MovePicker(MoveList&& input_moves, const ChessBoard& board, const Bo
 }
 
 
-std::optional<ScoredMove> MovePicker::next() {
+std::optional<ScoredMove> MovePicker::next_legal(const ChessBoard& board) {
     if (this->idx >= this->moves.size()) {
         return std::nullopt;
-    } else if (this->idx == 0) {
-        this->idx += 1;
-        return std::optional(this->moves[0]);
     }
 
     int best_idx = this->idx;
@@ -78,5 +75,10 @@ std::optional<ScoredMove> MovePicker::next() {
 
     const auto best_move = moves[idx];
     idx += 1;
-    return best_move;
+    if (!MoveGenerator::is_move_legal(board, best_move.move)) {
+        return next_legal(board);
+    } else {
+        legals.add_move(best_move.move);
+        return best_move;
+    }
 }
