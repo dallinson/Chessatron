@@ -298,6 +298,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
     const Score original_alpha = alpha;
     std::optional<ScoredMove> opt_move;
     size_t total_moves = 0;
+    MoveList evaluated_moves;
     while ((opt_move = mp.next()).has_value()) {
         if (search_cancelled) {
             break;
@@ -377,12 +378,13 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
                 }
                 if (score >= beta) {
                     search_stack[ply].killer_move = move.move;
-                    history_table.update_scores(board_hist, mp.evaluated_moves(), move, old_board.get_side_to_move(), depth);
+                    history_table.update_scores(board_hist, evaluated_moves, move, old_board.get_side_to_move(), depth);
                     break;
                 }
                 alpha = score;
             }
         }
+        evaluated_moves.add_move(move.move);
     }
     const BoundTypes bound_type =
         (best_score >= beta ? BoundTypes::LOWER_BOUND : (alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND));
@@ -416,7 +418,7 @@ Score SearchHandler::quiescent_search(const ChessBoard& old_board, Score alpha, 
     bool found_pv_move = false;
     Score best_score = static_eval;
     auto mp = MovePicker(std::move(moves), old_board, board_hist, Move::NULL_MOVE, history_table, search_stack[ply].killer_move, found_pv_move);
-    int evaluated_moves = 0;
+    int total_moves = 0;
     std::optional<ScoredMove> opt_move;
     while ((opt_move = mp.next()).has_value()) {
         if (search_cancelled) {
@@ -438,7 +440,7 @@ Score SearchHandler::quiescent_search(const ChessBoard& old_board, Score alpha, 
         node_count += 1;
         Score score;
         if constexpr (is_pv_node(node_type)) {
-            if (evaluated_moves == 0) {
+            if (total_moves == 0) {
                 score = -quiescent_search<NodeTypes::PV_NODE>(board, -beta, -alpha, ply + 1, node_count);
             } else {
                 score = -quiescent_search<NodeTypes::NON_PV_NODE>(board, -alpha - 1, -alpha, ply + 1, node_count);
@@ -451,7 +453,7 @@ Score SearchHandler::quiescent_search(const ChessBoard& old_board, Score alpha, 
         }
 
         board_hist.pop_board();
-        evaluated_moves += 1;
+        total_moves += 1;
         if (score > best_score) {
             best_score = score;
             if (score >= beta) {
