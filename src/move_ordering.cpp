@@ -67,6 +67,16 @@ std::optional<ScoredMove> MovePicker::next() {
         return std::optional(this->moves[0]);
     }
 
+    /*if (skip_quiets) {
+        while (moves[idx].move.is_quiet()) {
+            idx += 1;
+        }
+    }
+
+    if (idx >= this->moves.size()) {
+        return std::nullopt;
+    }*/
+
     int best_idx = this->idx;
 
     for (size_t i = (this->idx + 1); i < this->moves.size(); i++) {

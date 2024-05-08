@@ -299,22 +299,27 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
     std::optional<ScoredMove> opt_move;
     size_t total_moves = 0;
     MoveList evaluated_moves;
+    bool skip_quiets = false;
     while ((opt_move = mp.next()).has_value()) {
         if (search_cancelled) {
             break;
         }
         const auto move = opt_move.value();
         total_moves += 1;
+        if (skip_quiets && move.move.is_quiet()) continue;
 
         if constexpr (!is_pv_node(node_type)) {
             // late move pruning
             if (depth <= 6 && !old_board.in_check() && move.move.is_quiet() && total_moves >= static_cast<size_t>((depth * depth) + 4)) {
+                skip_quiets = true;
                 continue;
             }
         }
 
+        // futility pruning
         if (!old_board.in_check() && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && !move.move.is_capture() && depth <= 6
             && static_eval + 200 * depth < alpha) {
+            skip_quiets = true;
             continue;
         }
 
