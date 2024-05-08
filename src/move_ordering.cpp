@@ -59,7 +59,7 @@ MovePicker::MovePicker(MoveList&& input_moves, const ChessBoard& board, const Bo
 }
 
 
-std::optional<ScoredMove> MovePicker::next() {
+std::optional<ScoredMove> MovePicker::next(const bool skip_quiets) {
     if (this->idx >= this->moves.size()) {
         return std::nullopt;
     } else if (this->idx == 0) {
@@ -67,7 +67,7 @@ std::optional<ScoredMove> MovePicker::next() {
         return std::optional(this->moves[0]);
     }
 
-    /*if (skip_quiets) {
+    if (skip_quiets) {
         while (moves[idx].move.is_quiet()) {
             idx += 1;
         }
@@ -75,7 +75,7 @@ std::optional<ScoredMove> MovePicker::next() {
 
     if (idx >= this->moves.size()) {
         return std::nullopt;
-    }*/
+    }
 
     int best_idx = this->idx;
 

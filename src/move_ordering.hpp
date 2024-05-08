@@ -13,7 +13,7 @@ class MovePicker {
 
     public:
         MovePicker(MoveList&& input_moves, const ChessBoard& board, const BoardHistory& hist, const Move pv_move, HistoryTable& history_table, Move killer, bool& found_pv_move);
-        std::optional<ScoredMove> next();
+        std::optional<ScoredMove> next(const bool skip_quiets);
 
         const ScoredMove& operator[](size_t idx) { return moves[idx]; };
 };

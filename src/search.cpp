@@ -300,13 +300,12 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
     size_t total_moves = 0;
     MoveList evaluated_moves;
     bool skip_quiets = false;
-    while ((opt_move = mp.next()).has_value()) {
+    while ((opt_move = mp.next(skip_quiets)).has_value()) {
         if (search_cancelled) {
             break;
         }
         const auto move = opt_move.value();
         total_moves += 1;
-        if (skip_quiets && move.move.is_quiet()) continue;
 
         if constexpr (!is_pv_node(node_type)) {
             // late move pruning
@@ -425,7 +424,7 @@ Score SearchHandler::quiescent_search(const ChessBoard& old_board, Score alpha, 
     auto mp = MovePicker(std::move(moves), old_board, board_hist, Move::NULL_MOVE, history_table, search_stack[ply].killer_move, found_pv_move);
     int total_moves = 0;
     std::optional<ScoredMove> opt_move;
-    while ((opt_move = mp.next()).has_value()) {
+    while ((opt_move = mp.next(false)).has_value()) {
         if (search_cancelled) {
             break;
         }
