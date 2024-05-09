@@ -11,7 +11,7 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountStartPos) {
     auto lst = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE);
     ASSERT_EQ(lst.size(), 20);
     MoveList m;
-    MoveGenerator::generate_pawn_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE, m);
+    MoveGenerator::generate_pawn_moves<MoveGenType::ALL_LEGAL, Side::WHITE>(c, m);
     ASSERT_EQ(m.size(), 16);
     m = MoveList();
     MoveGenerator::generate_moves<PieceTypes::KNIGHT, MoveGenType::ALL_LEGAL>(c, Side::WHITE, m);
@@ -20,7 +20,7 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountStartPos) {
     lst = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, Side::BLACK);
     ASSERT_EQ(lst.size(), 20);
     m = MoveList();
-    MoveGenerator::generate_pawn_moves<MoveGenType::ALL_LEGAL>(c, Side::BLACK, m);
+    MoveGenerator::generate_pawn_moves<MoveGenType::ALL_LEGAL, Side::BLACK>(c, m);
     ASSERT_EQ(m.size(), 16);
     m = MoveList();
     m = MoveList();
@@ -45,7 +45,7 @@ TEST(MoveGeneratorTests, TestEnPassant) {
     c.set_en_passant_file(4);
 
     MoveList pawn_moves;
-    MoveGenerator::generate_pawn_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE, pawn_moves);
+    MoveGenerator::generate_pawn_moves<MoveGenType::ALL_LEGAL, Side::WHITE>(c, pawn_moves);
     ASSERT_EQ(pawn_moves.size(), 16);
 }
 
@@ -63,11 +63,11 @@ TEST(MoveGeneratorTests, TestPawnPromotions) {
     MoveList m;
     c.set_from_fen("8/2P2k2/8/8/8/8/5K2/8 w - - 0 1");
     m = MoveList();
-    MoveGenerator::generate_pawn_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE, m);
+    MoveGenerator::generate_pawn_moves<MoveGenType::ALL_LEGAL, Side::WHITE>(c, m);
     ASSERT_EQ(m.size(), 4);
     c.set_from_fen("8/5k2/8/8/8/8/2p2K2/8 w - - 0 1");
     m = MoveList();
-    MoveGenerator::generate_pawn_moves<MoveGenType::ALL_LEGAL>(c, Side::BLACK, m);
+    MoveGenerator::generate_pawn_moves<MoveGenType::ALL_LEGAL, Side::BLACK>(c, m);
     ASSERT_EQ(m.size(), 4);
 }
 
@@ -77,20 +77,20 @@ TEST(MoveGeneratorTests, TestPawnCapturePromotions) {
 
     c.set_from_fen("6r1/5k1P/8/8/8/8/5K2/8 w - - 0 1");
     m = MoveList();
-    MoveGenerator::generate_pawn_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE, m);
+    MoveGenerator::generate_pawn_moves<MoveGenType::ALL_LEGAL, Side::WHITE>(c, m);
     ASSERT_EQ(m.size(), 8);
     c.set_from_fen("1r6/P4k2/8/8/8/8/5K2/8 w - - 0 1");
     m = MoveList();
-    MoveGenerator::generate_pawn_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE, m);
+    MoveGenerator::generate_pawn_moves<MoveGenType::ALL_LEGAL, Side::WHITE>(c, m);
     ASSERT_EQ(m.size(), 8);
 
     c.set_from_fen("8/5k2/8/8/8/8/p4K2/1R6 w - - 0 1");
     m = MoveList();
-    MoveGenerator::generate_pawn_moves<MoveGenType::ALL_LEGAL>(c, Side::BLACK, m);
+    MoveGenerator::generate_pawn_moves<MoveGenType::ALL_LEGAL, Side::BLACK>(c, m);
     ASSERT_EQ(m.size(), 8);
     c.set_from_fen("8/5k2/8/8/8/8/5K1p/6R1 w - - 0 1");
     m = MoveList();
-    MoveGenerator::generate_pawn_moves<MoveGenType::ALL_LEGAL>(c, Side::BLACK, m);
+    MoveGenerator::generate_pawn_moves<MoveGenType::ALL_LEGAL, Side::BLACK>(c, m);
     ASSERT_EQ(m.size(), 8);
 }
 
@@ -100,12 +100,12 @@ TEST(MoveGeneratorTests, TestPawnCaptures) {
 
     c.set_from_fen("8/5k2/1r1r4/2P5/8/8/5K2/8 w - - 0 1");
     m = MoveList();
-    MoveGenerator::generate_pawn_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE, m);
+    MoveGenerator::generate_pawn_moves<MoveGenType::ALL_LEGAL, Side::WHITE>(c, m);
     ASSERT_EQ(m.size(), 3);
 
     c.set_from_fen("8/5k2/8/8/2p5/1R1R4/5K2/8 w - - 0 1");
     m = MoveList();
-    MoveGenerator::generate_pawn_moves<MoveGenType::ALL_LEGAL>(c, Side::BLACK, m);
+    MoveGenerator::generate_pawn_moves<MoveGenType::ALL_LEGAL, Side::BLACK>(c, m);
     ASSERT_EQ(m.size(), 3);
 }
 
@@ -187,7 +187,7 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountKiwipete) {
     ASSERT_EQ(knight_moves.size(), 11);
 
     MoveList pawn_moves;
-    MoveGenerator::generate_pawn_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE, pawn_moves);
+    MoveGenerator::generate_pawn_moves<MoveGenType::ALL_LEGAL, Side::WHITE>(c, pawn_moves);
     ASSERT_EQ(pawn_moves.size(), 8);
 
     ASSERT_EQ(legal_moves.size(), 48);
@@ -223,7 +223,7 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountKiwipeteB2B3) {
     ASSERT_EQ(knight_moves.size(), 10);
 
     MoveList pawn_moves;
-    MoveGenerator::generate_pawn_moves<MoveGenType::ALL_LEGAL>(c, Side::BLACK, pawn_moves);
+    MoveGenerator::generate_pawn_moves<MoveGenType::ALL_LEGAL, Side::BLACK>(c, pawn_moves);
     ASSERT_EQ(pawn_moves.size(), 7);
 
     ASSERT_EQ(legal_moves.size(), 42);
@@ -262,7 +262,7 @@ TEST(MoveGeneratorTests, TestCorrectMoveCountKiwipeteE1D1C7C6) {
     ASSERT_EQ(knight_moves.size(), 10);
 
     MoveList pawn_moves;
-    MoveGenerator::generate_pawn_moves<MoveGenType::ALL_LEGAL>(c, Side::WHITE, pawn_moves);
+    MoveGenerator::generate_pawn_moves<MoveGenType::ALL_LEGAL, Side::WHITE>(c, pawn_moves);
     ASSERT_EQ(pawn_moves.size(), 9);
 
     ASSERT_EQ(legal_moves.size(), 46);

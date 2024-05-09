@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstdint>
+#include <iostream>
+
 
 #include "chessboard.hpp"
 #include "move.hpp"
@@ -222,14 +224,15 @@ template <MoveGenType gen_type, Side stm> void MoveGenerator::generate_pawn_move
             }
         }
 
-        constexpr std::array<Bitboard, 10> ep_masks { 0x303030303030303, 0x707070707070707, 0xe0e0e0e0e0e0e0e, 0x1c1c1c1c1c1c1c1c, 0x3838383838383838, 7070707070707070, 0xe0e0e0e0e0e0e0e0, 0xc0c0c0c0c0c0c0c0, 0, 0 };
+
+        constexpr std::array<Bitboard, 10> ep_masks { 0x202020202020202, 0x505050505050505, 0xa0a0a0a0a0a0a0a, 0x1414141414141414, 0x2828282828282828, 0x5050505050505050, 0xa0a0a0a0a0a0a0a0, 0x4040404040404040, 0, 0 };
         constexpr Bitboard ep_rank_mask = stm == Side::WHITE ? rank_bb(4) : rank_bb(3);
         auto ep_pawns = ep_masks[c.get_en_passant_file()] & ep_rank_mask & c.pawns(stm);
         while (ep_pawns) {
             const auto lsb = pop_lsb(ep_pawns);
             constexpr auto ep_offset = stm == Side::WHITE ? 1 : -1;
-            const auto ep_target_square = get_position(((int) rank(lsb)) + ep_offset, c.get_en_passant_file());
-            const auto cleared_bb = occupied ^ idx_to_bb(lsb) ^ idx_to_bb(ep_target_square) ^ idx_to_bb(ep_target_square - ep_offset);
+            const auto ep_target_square = static_cast<int>(get_position((stm == Side::WHITE ? 4 : 3) + ep_offset, c.get_en_passant_file()));
+            const auto cleared_bb = occupied ^ idx_to_bb(lsb) ^ idx_to_bb(ep_target_square) ^ idx_to_bb(ep_target_square - (8 * ep_offset));
             const Bitboard threatening_bishops =
                 generate_bishop_mm(cleared_bb, ksq) & (c.bishops(enemy_side(stm)) | c.queens(enemy_side(stm)));
             const Bitboard threatening_rooks =
