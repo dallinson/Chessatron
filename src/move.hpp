@@ -25,6 +25,10 @@ enum class MoveFlags : uint8_t {
     QUEEN_PROMOTION_CAPTURE = 15,
 };
 
+inline MoveFlags operator|(const MoveFlags lhs, const MoveFlags rhs) {
+    return static_cast<MoveFlags>(static_cast<uint8_t>(lhs) | static_cast<uint8_t>(rhs));
+}
+
 class Move {
     private:
         uint16_t move;

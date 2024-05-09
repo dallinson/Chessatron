@@ -27,9 +27,11 @@ template <std::integral T> constexpr inline void toggle_bit(T& val, uint8_t x) {
 
 constexpr inline uint64_t bits(uint8_t max, uint8_t min) { return ((0xFFFFFFFFFFFFFFFF << (min)) & (0xFFFFFFFFFFFFFFFF >> (64 - ((max) + 1)))); };
 template <std::integral T> constexpr inline T get_bits(T val, uint8_t max, uint8_t min) { return (val & bits(max, min)) >> min; };
-constexpr inline uint8_t get_rank(uint8_t pos) { return get_bits(pos, 5, 3); };
-constexpr inline uint8_t get_file(uint8_t pos) { return get_bits(pos, 2, 0); };
+constexpr inline uint8_t rank(uint8_t pos) { return get_bits(pos, 5, 3); };
+constexpr inline uint8_t file(uint8_t pos) { return get_bits(pos, 2, 0); };
 // rank is the row and file the column
+constexpr Bitboard rank_bb(uint8_t rnk) { return static_cast<Bitboard>(0x00000000000000FF) << (8 * rnk); };
+constexpr Bitboard file_bb(uint8_t fil) { return 0x0101010101010101 << fil; };
 
 constexpr inline uint8_t get_position(uint8_t rank, uint8_t file) { return ((rank & 0x7) << 3) | (file & 0x7); };
 constexpr inline Side enemy_side(Side stm) { return (stm == Side::WHITE) ? Side::BLACK : Side::WHITE; };
