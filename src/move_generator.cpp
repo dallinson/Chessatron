@@ -104,7 +104,7 @@ bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
                  || (c.kings(enemy) & MagicNumbers::KingMoves[target_idx]));
     } else [[likely]] {
 
-        Bitboard checking_pieces = c.get_checkers();
+        Bitboard checking_pieces = c.checkers();
         if (checking_pieces) {
             // if there's a piece checking our king - we know at most one piece can be checking as double checks are king moves only
             if (!(MagicNumbers::ConnectingSquares[(64 * king_idx) + get_lsb(checking_pieces)] & idx_to_bb(m.dst_sq()))) {
@@ -112,51 +112,10 @@ bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
             }
         }
 
-        if (idx_to_bb(m.src_sq()) & c.get_pinned_pieces()) {
+        if (idx_to_bb(m.src_sq()) & c.pinned_pieces()) {
             return MagicNumbers::AlignedSquares[(64 * king_idx) + m.src_sq()] & idx_to_bb(m.dst_sq());
         }
     }
 
     return true;
-}
-
-bool MoveGenerator::is_move_pseudolegal(const ChessBoard& c, const Move to_test) {
-    auto src_idx = to_test.src_sq();
-    auto moved_piece = c.piece_at(src_idx);
-    if (moved_piece.get_value() == 0) {
-        return false;
-    }
-    auto move_side = moved_piece.get_side();
-    auto piece_type = moved_piece.get_type();
-    if (move_side != c.get_side_to_move()) {
-        return false;
-    }
-    MoveList moves;
-    switch (piece_type) {
-    case PieceTypes::PAWN:
-        generate_pawn_moves<MoveGenType::ALL_LEGAL>(c, move_side, moves);
-        break;
-    case PieceTypes::KNIGHT:
-        generate_moves<PieceTypes::KNIGHT, MoveGenType::ALL_LEGAL>(c, move_side, moves);
-        break;
-    case PieceTypes::BISHOP:
-        generate_moves<PieceTypes::BISHOP, MoveGenType::ALL_LEGAL>(c, move_side, moves);
-        break;
-    case PieceTypes::ROOK:
-        generate_moves<PieceTypes::ROOK, MoveGenType::ALL_LEGAL>(c, move_side, moves);
-        break;
-    case PieceTypes::QUEEN:
-        generate_moves<PieceTypes::QUEEN, MoveGenType::ALL_LEGAL>(c, move_side, moves);
-        break;
-    case PieceTypes::KING:
-        generate_moves<PieceTypes::KING, MoveGenType::ALL_LEGAL>(c, move_side, moves);
-        break;
-    }
-
-    for (size_t i = 0; i < moves.size(); i++) {
-        if (moves[i].move == to_test) {
-            return true;
-        }
-    }
-    return false;
 }
