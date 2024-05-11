@@ -177,7 +177,7 @@ class BoardHistory {
             push_board(board);
         }
 
-        ChessBoard& push_board(const ChessBoard new_board, const Move move = Move::NULL_MOVE) {
+        ChessBoard& push_board(const ChessBoard new_board, const Move move = Move::NULL_MOVE()) {
             this->board_hist[idx] = new_board;
             this->move_hist[idx] = move;
             idx += 1;

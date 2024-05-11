@@ -2,7 +2,6 @@
 
 #include <string>
 
-const Move Move::NULL_MOVE(0);
 
 std::string Move::to_string() const {
     if (this->src_sq() == 0 && this->dst_sq() == 0) {

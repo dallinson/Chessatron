@@ -34,31 +34,31 @@ class Move {
         uint16_t move;
 
     public:
-        Move(){};
-        Move(uint16_t v) : move(v){};
-        Move(MoveFlags flags, uint_fast8_t dest, uint_fast8_t src) : move((((uint16_t) flags) << 12) | (((uint16_t) dest) << 6) | src){};
-        static const Move NULL_MOVE;
+        constexpr Move(){};
+        constexpr Move(uint16_t v) : move(v){};
+        constexpr Move(MoveFlags flags, uint_fast8_t dest, uint_fast8_t src) : move((((uint16_t) flags) << 12) | (((uint16_t) dest) << 6) | src){};
+        constexpr static Move NULL_MOVE() { return Move(0); };
 
-        uint16_t value() const { return move; };
-        uint8_t src_sq() const { return get_bits(move, 5, 0); };
-        uint8_t dst_sq() const { return get_bits(move, 11, 6); };
+        constexpr uint16_t value() const { return move; };
+        constexpr uint8_t src_sq() const { return get_bits(move, 5, 0); };
+        constexpr uint8_t dst_sq() const { return get_bits(move, 11, 6); };
 
-        uint8_t src_rnk() const { return get_bits(move, 5, 3); };
-        uint8_t src_fle() const { return get_bits(move, 2, 0); };
+        constexpr uint8_t src_rnk() const { return get_bits(move, 5, 3); };
+        constexpr uint8_t src_fle() const { return get_bits(move, 2, 0); };
 
-        uint8_t dst_rnk() const { return get_bits(move, 11, 9); };
-        uint8_t dst_fle() const { return get_bits(move, 8, 6); };
+        constexpr uint8_t dst_rnk() const { return get_bits(move, 11, 9); };
+        constexpr uint8_t dst_fle() const { return get_bits(move, 8, 6); };
 
-        MoveFlags get_move_flags() const { return (MoveFlags) get_bits(move, 15, 12); };
-        PieceTypes get_promotion_piece_type() const { return static_cast<PieceTypes>((static_cast<int>(get_move_flags()) & 0b0011) + 2); };
+        constexpr MoveFlags get_move_flags() const { return (MoveFlags) get_bits(move, 15, 12); };
+        constexpr PieceTypes get_promotion_piece_type() const { return static_cast<PieceTypes>((static_cast<int>(get_move_flags()) & 0b0011) + 2); };
 
-        bool is_null_move() const { return move == 0; };
-        bool is_capture() const { return (static_cast<int>(get_move_flags()) & 0x04) != 0; };
-        bool is_promotion() const { return static_cast<int>(get_move_flags()) >= 8; };
-        bool is_castling_move() const { return get_move_flags() == MoveFlags::QUEENSIDE_CASTLE || get_move_flags() == MoveFlags::KINGSIDE_CASTLE; };
-        bool is_quiet() const { return !(is_capture() || is_promotion()); };
+        constexpr bool is_null_move() const { return move == 0; };
+        constexpr bool is_capture() const { return (static_cast<int>(get_move_flags()) & 0x04) != 0; };
+        constexpr bool is_promotion() const { return static_cast<int>(get_move_flags()) >= 8; };
+        constexpr bool is_castling_move() const { return get_move_flags() == MoveFlags::QUEENSIDE_CASTLE || get_move_flags() == MoveFlags::KINGSIDE_CASTLE; };
+        constexpr bool is_quiet() const { return !(is_capture() || is_promotion()); };
 
-        uint16_t hist_idx(Side stm) const { return (static_cast<int>(stm) << 12) + get_bits(move, 11, 0); };
+        constexpr uint16_t hist_idx(Side stm) const { return (static_cast<int>(stm) << 12) + get_bits(move, 11, 0); };
 
         std::string to_string() const;
 };

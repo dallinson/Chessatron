@@ -69,7 +69,7 @@ class TranspositionTableEntry {
         uint16_t padding;
 
     public:
-        TranspositionTableEntry() : _key(0), pv_move(Move::NULL_MOVE), _depth(0), _bound(BoundTypes::NONE) {};
+        TranspositionTableEntry() : _key(0), pv_move(Move::NULL_MOVE()), _depth(0), _bound(BoundTypes::NONE) {};
         TranspositionTableEntry(Move pv_move, uint8_t depth, BoundTypes bound, Score score, ZobristKey key) : _key(key), _score(score), pv_move(pv_move), _depth(depth), _bound(bound) {};
 
         Move move() const { return this->pv_move; };
@@ -101,7 +101,7 @@ class TranspositionTable {
                 } else if (entry.score() >= MagicNumbers::PositiveInfinity - MAX_PLY) {
                     entry.set_score(MagicNumbers::PositiveInfinity);
                 }
-                if (entry.move() == Move::NULL_MOVE) {
+                if (entry.move().is_null_move()) {
                     entry.set_move(table[tt_key].move());
                 }
                 table[tt_key] = entry;
@@ -120,7 +120,7 @@ class TranspositionTable {
 };
 
 struct SearchStackFrame {
-    Move killer_move = Move::NULL_MOVE;
+    Move killer_move = Move::NULL_MOVE();
 };
 
 struct PvTable {
