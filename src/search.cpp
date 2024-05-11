@@ -249,7 +249,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
             // Try null move pruning if we aren't in check
 
             if (!board_hist.move_at(board_hist.len() - 1).is_null_move()) {
-                auto& board = old_board.make_move(Move::NULL_MOVE, board_hist);
+                auto& board = old_board.make_move(Move::NULL_MOVE(), board_hist);
                 
                 const auto nmp_reduction = 4
                     + (depth / 4)
@@ -283,7 +283,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
     // mate and draw detection
 
     bool found_pv_move = false;
-    auto mp = MovePicker(std::move(moves), old_board, board_hist, tt_hit ? tt_entry.move() : Move::NULL_MOVE, history_table,
+    auto mp = MovePicker(std::move(moves), old_board, board_hist, tt_hit ? tt_entry.move() : Move::NULL_MOVE(), history_table,
                                 search_stack[ply].killer_move, found_pv_move);
     const bool tt_move = found_pv_move && tt_hit;
     // move reordering
@@ -293,7 +293,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
     }
     // iir
 
-    Move best_move = Move::NULL_MOVE;
+    Move best_move = Move::NULL_MOVE();
     Score best_score = MagicNumbers::NegativeInfinity;
     const Score original_alpha = alpha;
     std::optional<ScoredMove> opt_move;
@@ -421,7 +421,7 @@ Score SearchHandler::quiescent_search(const ChessBoard& old_board, Score alpha, 
 
     bool found_pv_move = false;
     Score best_score = static_eval;
-    auto mp = MovePicker(std::move(moves), old_board, board_hist, Move::NULL_MOVE, history_table, search_stack[ply].killer_move, found_pv_move);
+    auto mp = MovePicker(std::move(moves), old_board, board_hist, Move::NULL_MOVE(), history_table, search_stack[ply].killer_move, found_pv_move);
     int total_moves = 0;
     std::optional<ScoredMove> opt_move;
     while ((opt_move = mp.next(false)).has_value()) {
@@ -500,7 +500,7 @@ Score SearchHandler::run_aspiration_window_search(int depth, Score previous_scor
 
 Move SearchHandler::run_iterative_deepening_search() {
     node_count = 0;
-    pv_move = Move::NULL_MOVE;
+    pv_move = Move::NULL_MOVE();
     // reset pv move so we don't accidentally play an illegal one from a previous search
     const auto search_start_point = std::chrono::steady_clock::now();
     // TranspositionTable transpositions;
@@ -516,7 +516,7 @@ Move SearchHandler::run_iterative_deepening_search() {
     node_spent_table.fill(0);
     pv_table.pv_length.fill(0);
     for (unsigned int i = 0; i < pv_table.pv_array.size(); i++) {
-        pv_table.pv_array[i].fill(Move::NULL_MOVE);
+        pv_table.pv_array[i].fill(Move::NULL_MOVE());
     }
 
     Score current_score = 0;

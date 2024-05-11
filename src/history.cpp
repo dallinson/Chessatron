@@ -31,14 +31,14 @@ void HistoryTable::update_mainhist_score(Move move, Side stm, HistoryValue bonus
 }
 
 void HistoryTable::update_conthist_score(const BoardHistory& hist, Move move, HistoryValue bonus) {
-    if (hist.move_at(hist.len() - 1) != Move::NULL_MOVE) {
+    if (!hist.move_at(hist.len() - 1).is_null_move()) {
         const auto scaled_bonus = bonus - conthist_score(hist, move) * std::abs(bonus) / 32768;
         cont_hist[hist[hist.len() - 2].piece_to(hist.move_at(hist.len() - 1))][hist[hist.len() - 1].piece_to(move)] += scaled_bonus;
     }
 }
 
 HistoryValue HistoryTable::conthist_score(const BoardHistory& hist, Move move) const {
-    if (hist.move_at(hist.len() - 1) != Move::NULL_MOVE) {
+    if (!hist.move_at(hist.len() - 1).is_null_move()) {
         return cont_hist[hist[hist.len() - 2].piece_to(hist.move_at(hist.len() - 1))][hist[hist.len() - 1].piece_to(move)];
     } else {
         return 0;

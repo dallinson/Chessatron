@@ -288,14 +288,14 @@ TEST(ChessBoardTests, TestHalfmoveClock) {
     ASSERT_EQ(c.get_halfmove_clock(), 0);
 
     BoardHistory hist(c);
-    c = c.make_move(Move::NULL_MOVE, hist);
+    c = c.make_move(Move::NULL_MOVE(), hist);
     ASSERT_EQ(c.get_halfmove_clock(), 1);
     c = hist.pop_board();
     ASSERT_EQ(c.get_halfmove_clock(), 0);
 
-    c = c.make_move(Move::NULL_MOVE, hist);
-    c = c.make_move(Move::NULL_MOVE, hist);
-    c = c.make_move(Move::NULL_MOVE, hist);
+    c = c.make_move(Move::NULL_MOVE(), hist);
+    c = c.make_move(Move::NULL_MOVE(), hist);
+    c = c.make_move(Move::NULL_MOVE(), hist);
     ASSERT_EQ(c.get_halfmove_clock(), 3);
     c = c.make_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, 35, 51), hist);
     ASSERT_EQ(c.get_halfmove_clock(), 0);
