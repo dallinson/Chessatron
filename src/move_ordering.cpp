@@ -68,7 +68,7 @@ std::optional<ScoredMove> MovePicker::next(const bool skip_quiets) {
     }
 
     if (skip_quiets) {
-        while (moves[idx].move.is_quiet()) {
+        while (idx < this->moves.size() && moves[idx].move.is_quiet()) {
             idx += 1;
         }
     }
