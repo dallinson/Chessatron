@@ -252,10 +252,7 @@ std::optional<int> ChessBoard::set_from_fen(const std::string input) {
 }
 
 ChessBoard::ChessBoard(const ChessBoard& origin, const Move to_make) {
-    if (!MoveGenerator::is_move_legal(origin, to_make)) {
-        origin.print_board();
-        assert(MoveGenerator::is_move_legal(origin, to_make));
-    }
+    assert(MoveGenerator::is_move_legal(origin, to_make));
 
     *this = origin;
     const auto src_sq = to_make.src_sq();
