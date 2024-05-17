@@ -309,7 +309,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
 
         if constexpr (!is_pv_node(node_type)) {
             // late move pruning
-            if (depth <= 6 && !old_board.in_check() && move.move.is_quiet() && total_moves >= static_cast<size_t>((depth * depth) + 4)) {
+            if (depth <= 6 && !old_board.in_check() && move.move.is_quiet() && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && total_moves >= static_cast<size_t>((depth * depth) + 4)) {
                 skip_quiets = true;
                 continue;
             }
