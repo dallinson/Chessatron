@@ -119,3 +119,27 @@ bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
 
     return true;
 }
+
+bool MoveGenerator::is_move_pseudolegal(const ChessBoard& board, const Move move) {
+    MoveList to_generate;
+    const auto moved_pc = board.piece_at(move.src_sq());
+    const auto stm = board.get_side_to_move();
+    if (moved_pc.get_type() == PieceTypes::PAWN) {
+        if (stm == Side::WHITE) {
+            generate_pawn_moves<MoveGenType::ALL_LEGAL, Side::WHITE>(board, to_generate);
+        } else {
+            generate_pawn_moves<MoveGenType::ALL_LEGAL, Side::BLACK>(board, to_generate);
+        }
+    } else if (moved_pc.get_type() == PieceTypes::KNIGHT) {
+        generate_moves<PieceTypes::KNIGHT, MoveGenType::ALL_LEGAL>(board, stm, to_generate);
+    } else if (moved_pc.get_type() == PieceTypes::BISHOP) {
+        generate_moves<PieceTypes::BISHOP, MoveGenType::ALL_LEGAL>(board, stm, to_generate);
+    } else if (moved_pc.get_type() == PieceTypes::ROOK) {
+        generate_moves<PieceTypes::ROOK, MoveGenType::ALL_LEGAL>(board, stm, to_generate);
+    } else if (moved_pc.get_type() == PieceTypes::QUEEN) {
+        generate_moves<PieceTypes::QUEEN, MoveGenType::ALL_LEGAL>(board, stm, to_generate);
+    } else if (moved_pc.get_type() == PieceTypes::KING) {
+        generate_moves<PieceTypes::KING, MoveGenType::ALL_LEGAL>(board, stm, to_generate);
+    }
+    return std::find_if(to_generate.begin(), to_generate.end(), [&](ScoredMove s) { return s.move == move; }) != to_generate.end();
+}
