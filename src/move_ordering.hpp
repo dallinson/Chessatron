@@ -8,6 +8,7 @@
 #include "move_generator.hpp"
 
 enum class MovePickerStage {
+    PICK_TT,
     GEN_QSEARCH,
     GEN_ALL,
     PICK_REMAINING,
@@ -45,7 +46,11 @@ class MovePicker {
                 if (is_qsearch) {
                     stage = MovePickerStage::GEN_QSEARCH;
                 } else {
-                    stage = MovePickerStage::GEN_ALL;
+                    if (!tt_move.is_null_move()) {
+                        stage = MovePickerStage::PICK_TT;
+                    } else {
+                        stage = MovePickerStage::GEN_ALL;
+                    }
                 }
                 assert(stage != MovePickerStage::PICK_REMAINING);
             }

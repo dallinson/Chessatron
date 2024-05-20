@@ -49,7 +49,12 @@ void MovePicker::score_moves() {
 
 
 std::optional<ScoredMove> MovePicker::next(const bool skip_quiets) {
-    if (stage == MovePickerStage::GEN_ALL) {
+    if (stage == MovePickerStage::PICK_TT) {
+        ScoredMove to_return;
+        to_return.move = tt_move;
+        stage = MovePickerStage::GEN_ALL;
+        return to_return;
+    } else if (stage == MovePickerStage::GEN_ALL) {
         idx = 0;
         stage = MovePickerStage::PICK_REMAINING;
         moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(board, board.stm());
@@ -88,5 +93,8 @@ std::optional<ScoredMove> MovePicker::next(const bool skip_quiets) {
 
     const auto best_move = moves[idx];
     idx += 1;
+    if (best_move.move == tt_move) {
+        return next(skip_quiets);
+    }
     return best_move;
 }

@@ -124,7 +124,12 @@ bool MoveGenerator::is_move_pseudolegal(const ChessBoard& board, const Move move
     MoveList to_generate;
     const auto moved_pc = board.piece_at(move.src_sq());
     const auto stm = board.stm();
-    if (moved_pc.get_type() == PieceTypes::PAWN) {
+    if (std::popcount(board.checkers()) > 0 && moved_pc.get_type() != PieceTypes::KING) {
+        return false;
+    }
+    if (moved_pc.get_value() == 0 || moved_pc.get_side() != stm) {
+        return false;
+    } else if (moved_pc.get_type() == PieceTypes::PAWN) {
         if (stm == Side::WHITE) {
             generate_pawn_moves<MoveGenType::ALL_LEGAL, Side::WHITE>(board, to_generate);
         } else {
@@ -140,6 +145,8 @@ bool MoveGenerator::is_move_pseudolegal(const ChessBoard& board, const Move move
         generate_moves<PieceTypes::QUEEN, MoveGenType::ALL_LEGAL>(board, stm, to_generate);
     } else if (moved_pc.get_type() == PieceTypes::KING) {
         generate_moves<PieceTypes::KING, MoveGenType::ALL_LEGAL>(board, stm, to_generate);
+    } else {
+        return false;
     }
     return std::find_if(to_generate.begin(), to_generate.end(), [&](ScoredMove s) { return s.move == move; }) != to_generate.end();
 }

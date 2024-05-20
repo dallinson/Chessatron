@@ -253,6 +253,7 @@ std::optional<int> ChessBoard::set_from_fen(const std::string input) {
 
 ChessBoard::ChessBoard(const ChessBoard& origin, const Move to_make) {
     assert(MoveGenerator::is_move_legal(origin, to_make));
+    assert(to_make.is_null_move() || origin.piece_at(to_make.dst_sq()).get_type() != PieceTypes::KING);
 
     *this = origin;
     const auto src_sq = to_make.src_sq();
