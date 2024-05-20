@@ -269,19 +269,6 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
         }
     }
 
-    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(old_board, old_board.stm());
-    if (moves.size() == 0) {
-        if (old_board.in_check()) {
-            // if in check
-            return ply + MagicNumbers::NegativeInfinity;
-        } else {
-            return 0;
-        }
-    } else if (moves.size() == 1) {
-        extensions += 1;
-    }
-    // mate and draw detection
-
     const bool tt_move = tt_hit && MoveGenerator::is_move_legal(old_board, tt_entry.move()) && MoveGenerator::is_move_pseudolegal(old_board, tt_entry.move());
     auto mp = MovePicker(old_board, board_hist, history_table, false, tt_move ? tt_entry.move() : Move::NULL_MOVE(), search_stack[ply].killer_move);
     // move reordering
@@ -298,7 +285,9 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
     size_t total_moves = 0;
     MoveList evaluated_moves;
     bool skip_quiets = false;
+    bool found_move = false;
     while ((opt_move = mp.next(skip_quiets)).has_value()) {
+        found_move = true;
         if (search_cancelled) {
             break;
         }
@@ -388,6 +377,9 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
         }
         evaluated_moves.add_move(move.move);
     }
+    if (!found_move) {
+        return old_board.in_check() ? ply + MagicNumbers::NegativeInfinity : 0;
+    }
     const BoundTypes bound_type =
         (best_score >= beta ? BoundTypes::LOWER_BOUND : (alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND));
     tt.store(TranspositionTableEntry(best_move, depth, bound_type, best_score, old_board.get_zobrist_key()), old_board);
@@ -407,22 +399,15 @@ Score SearchHandler::quiescent_search(const ChessBoard& old_board, Score alpha, 
         return static_eval;
     }
     alpha = std::max(static_eval, alpha);
-    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIESCENCE>(old_board, old_board.stm());
-    if (moves.size() == 0 && MoveGenerator::generate_legal_moves<MoveGenType::NON_QUIESCENCE>(old_board, old_board.stm()).size() == 0) {
-        if (old_board.in_check()) {
-            // if in check
-            return ply + MagicNumbers::NegativeInfinity;
-        } else {
-            return 0;
-        }
-    }
 
     Score best_score = static_eval;
     //auto mp = MovePicker(std::move(moves), old_board, board_hist, Move::NULL_MOVE(), history_table, search_stack[ply].killer_move);
     auto mp = MovePicker(old_board, board_hist, history_table, true, Move::NULL_MOVE(), search_stack[ply].killer_move);
     int total_moves = 0;
     std::optional<ScoredMove> opt_move;
+    bool found_move = false;
     while ((opt_move = mp.next(false)).has_value()) {
+        found_move = true;
         if (search_cancelled) {
             break;
         }
@@ -465,6 +450,15 @@ Score SearchHandler::quiescent_search(const ChessBoard& old_board, Score alpha, 
             alpha = std::max(score, alpha);
         }
     }
+    if (!found_move && MoveGenerator::generate_legal_moves<MoveGenType::NON_QUIESCENCE>(old_board, old_board.stm()).size() == 0) {
+        if (old_board.in_check()) {
+            // if in check
+            return ply + MagicNumbers::NegativeInfinity;
+        } else {
+            return 0;
+        }
+    }
+
     return best_score;
 }
 
