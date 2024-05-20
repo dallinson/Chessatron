@@ -455,7 +455,7 @@ std::optional<Move> ChessBoard::generate_move_from_string(const std::string& s) 
     }
     int start_sq = get_position(s.at(1) - 49, s.at(0) - 97);
     int end_sq = get_position(s.at(3) - 49, s.at(2) - 97);
-    // Side move_side = this->get_side_to_move();
+    // Side move_side = this->stm();
     PieceTypes moving_type = this->piece_at(start_sq).get_type();
     if (moving_type == PAWN && (std::abs(start_sq - end_sq) == 7 || std::abs(start_sq - end_sq) == 9)) {
         // so a capture

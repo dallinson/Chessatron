@@ -19,6 +19,10 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconstexpr-steps=100000000")
 endif()
 
+if(WIN32)
+    set(CMAKE_EXE_LINKER_FLAGS " ${CMAKE_EXE_LINKER_FLAGS} -Xlinker /STACK:8589934592") # 8MB
+endif()
+
 include(CheckIPOSupported)
 check_ipo_supported(RESULT supported OUTPUT error)
 

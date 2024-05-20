@@ -76,7 +76,7 @@ void MoveGenerator::generate_castling_moves(const ChessBoard& c, const Side side
 }
 
 bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
-    int king_idx = get_lsb(c.kings(c.get_side_to_move()));
+    int king_idx = get_lsb(c.kings(c.stm()));
     const auto move_side = static_cast<Side>(get_bit(c.occupancy(Side::BLACK), m.src_sq()));
     const Side enemy = enemy_side(move_side);
     if (m.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) {
@@ -86,7 +86,7 @@ bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
         // and we would have moved out of check
         Bitboard occupancy = c.occupancy();
         Bitboard cleared_occupancy =
-            occupancy ^ (idx_to_bb(m.src_sq()) | idx_to_bb(m.dst_sq() - 8 + (16 * static_cast<int>(c.get_side_to_move()))));
+            occupancy ^ (idx_to_bb(m.src_sq()) | idx_to_bb(m.dst_sq() - 8 + (16 * static_cast<int>(c.stm()))));
         // clear the origin and capture spaces
         // then set the destination square
         cleared_occupancy |= idx_to_bb(m.dst_sq());
@@ -123,7 +123,7 @@ bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
 bool MoveGenerator::is_move_pseudolegal(const ChessBoard& board, const Move move) {
     MoveList to_generate;
     const auto moved_pc = board.piece_at(move.src_sq());
-    const auto stm = board.get_side_to_move();
+    const auto stm = board.stm();
     if (moved_pc.get_type() == PieceTypes::PAWN) {
         if (stm == Side::WHITE) {
             generate_pawn_moves<MoveGenType::ALL_LEGAL, Side::WHITE>(board, to_generate);

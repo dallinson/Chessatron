@@ -111,7 +111,7 @@ void process_go_command(const std::vector<std::string>& line, SearchHandler& s) 
         s.search(FixedTimeTC{movetime});
         return;
     }
-    const auto current_side = s.get_board().get_side_to_move();
+    const auto current_side = s.get_board().stm();
     // auto halfmoves_so_far = (2 * s.get_board().get_fullmove_counter()) + static_cast<int>(current_side);
     const auto remaining_time = (current_side == Side::WHITE) ? wtime : btime;
     const auto increment = ((current_side == Side::WHITE) ? winc : binc) / movestogo;
