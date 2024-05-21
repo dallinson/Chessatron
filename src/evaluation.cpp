@@ -11,8 +11,8 @@ int32_t get_eg_score(int32_t score) { return std::bit_cast<int16_t>(static_cast<
 int32_t get_mg_score(int32_t score) { return std::bit_cast<int16_t>(static_cast<uint16_t>(score)); }
 
 Score Evaluation::evaluate_board(const ChessBoard& board) {
-    const Side stm = board.get_side_to_move();
-    const Side enemy = enemy_side(board.get_side_to_move());
+    const Side stm = board.stm();
+    const Side enemy = enemy_side(board.stm());
     const auto mg_score = get_mg_score(board.get_score(stm)) - get_mg_score(board.get_score(enemy));
     const auto eg_score = get_eg_score(board.get_score(stm)) - get_eg_score(board.get_score(enemy));
 

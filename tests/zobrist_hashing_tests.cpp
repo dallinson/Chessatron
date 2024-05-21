@@ -220,7 +220,7 @@ TEST(ZobristHashingTests, TestEmptyBoard) {
     ChessBoard c;
     c.clear_board();
     ASSERT_EQ(c.occupancy(), 0);
-    ASSERT_EQ(c.get_side_to_move(), Side::WHITE);
+    ASSERT_EQ(c.stm(), Side::WHITE);
     ASSERT_EQ(c.get_zobrist_key(), ZobristKeys::SideToMove);
     ASSERT_EQ(c.get_polyglot_zobrist_key(), ZobristKeys::SideToMove);
 }

@@ -17,7 +17,7 @@ uint64_t perft(const ChessBoard& old_board, BoardHistory& history, int depth) {
     MoveList moves;
     uint64_t to_return = 0;
 
-    moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(old_board, old_board.get_side_to_move());
+    moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(old_board, old_board.stm());
 
     if (depth == 1) {
         if constexpr (print_debug) {
@@ -60,7 +60,7 @@ uint64_t Perft::run_perft(ChessBoard& board, int depth, bool print_debug) {
 }
 
 Move Search::select_random_move(const ChessBoard& c) {
-    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, c.get_side_to_move());
+    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, c.stm());
     return moves[rand() % moves.size()].move;
 }
 
@@ -84,7 +84,7 @@ bool Search::is_threefold_repetition(const BoardHistory& history, const int half
 
 bool Search::is_draw(const ChessBoard& board, const BoardHistory& history) {
     return board.get_halfmove_clock() > 100 || is_threefold_repetition(history, board.get_halfmove_clock(), board.get_zobrist_key())
-           || Search::detect_insufficient_material(board, board.get_side_to_move());
+           || Search::detect_insufficient_material(board, board.stm());
 }
 
 bool Search::static_exchange_evaluation(const ChessBoard& board, const Move move, const int threshold) {
@@ -118,11 +118,11 @@ bool Search::static_exchange_evaluation(const ChessBoard& board, const Move move
         occupied ^= bit(ep_target);
     }
 
-    Bitboard attackers = (MoveGenerator::get_attackers(board, board.get_side_to_move(), move.dst_sq(), occupied)
-                          | MoveGenerator::get_attackers(board, enemy_side(board.get_side_to_move()), move.dst_sq(), occupied))
+    Bitboard attackers = (MoveGenerator::get_attackers(board, board.stm(), move.dst_sq(), occupied)
+                          | MoveGenerator::get_attackers(board, enemy_side(board.stm()), move.dst_sq(), occupied))
                          & occupied;
 
-    Side moving_side = enemy_side(board.get_side_to_move());
+    Side moving_side = enemy_side(board.stm());
 
     while (true) {
         const Bitboard this_side_attackers = attackers & board.occupancy(moving_side);
@@ -167,7 +167,7 @@ bool Search::static_exchange_evaluation(const ChessBoard& board, const Move move
         }
     }
 
-    return board.get_side_to_move() != moving_side;
+    return board.stm() != moving_side;
 }
 
 bool Search::detect_insufficient_material(const ChessBoard& board, const Side side) {
@@ -269,7 +269,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
         }
     }
 
-    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(old_board, old_board.get_side_to_move());
+    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(old_board, old_board.stm());
     if (moves.size() == 0) {
         if (old_board.in_check()) {
             // if in check
@@ -320,6 +320,13 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
             && static_eval + 200 * depth < alpha) {
             skip_quiets = true;
             continue;
+        }
+
+        // history pruning
+        if constexpr (!is_pv_node(node_type)) {
+            if (best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && total_moves > 1 && depth <= 6 && static_eval <= alpha && history_table.score(board_hist, move.move, old_board.stm()) < -(depth * depth) * 14) {
+                continue;
+            }
         }
 
         if (depth <= 10 && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY)
@@ -382,7 +389,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
                 }
                 if (score >= beta) {
                     search_stack[ply].killer_move = move.move;
-                    history_table.update_scores(board_hist, evaluated_moves, move, old_board.get_side_to_move(), depth);
+                    history_table.update_scores(board_hist, evaluated_moves, move, old_board.stm(), depth);
                     break;
                 }
                 alpha = score;
@@ -409,8 +416,8 @@ Score SearchHandler::quiescent_search(const ChessBoard& old_board, Score alpha, 
         return static_eval;
     }
     alpha = std::max(static_eval, alpha);
-    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIESCENCE>(old_board, old_board.get_side_to_move());
-    if (moves.size() == 0 && MoveGenerator::generate_legal_moves<MoveGenType::NON_QUIESCENCE>(old_board, old_board.get_side_to_move()).size() == 0) {
+    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIESCENCE>(old_board, old_board.stm());
+    if (moves.size() == 0 && MoveGenerator::generate_legal_moves<MoveGenType::NON_QUIESCENCE>(old_board, old_board.stm()).size() == 0) {
         if (old_board.in_check()) {
             // if in check
             return ply + MagicNumbers::NegativeInfinity;
@@ -505,7 +512,7 @@ Move SearchHandler::run_iterative_deepening_search() {
     const auto search_start_point = std::chrono::steady_clock::now();
     // TranspositionTable transpositions;
     auto moves =
-        MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(board_hist[board_hist.len() - 1], board_hist[board_hist.len() - 1].get_side_to_move());
+        MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(board_hist[board_hist.len() - 1], board_hist[board_hist.len() - 1].stm());
     // We generate legal moves only as it saves us having to continually rerun legality checks
     if (moves.size() == 1) {
         return moves[0].move;

@@ -296,7 +296,7 @@ TEST(MoveGeneratorTests, TestCorrectCaptureCount) {
     ChessBoard c;
     c.set_from_fen("6kr/pp2r2p/n1p1PB1Q/2q5/2B4P/2N3p1/PPP3P1/7K w - - 1 0");
     // Taken from https://wtharvey.com/m8n4.txt, Serafino Dubois vs Augustus Mongredien, London, 1862
-    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, c.get_side_to_move());
+    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, c.stm());
     int captures = 0;
     for (size_t i = 0; i < moves.size(); i++) {
         if (moves[i].move.is_capture()) {
@@ -310,6 +310,6 @@ TEST(MoveGeneratorTests, TestThreatenedCastle) {
     ChessBoard c;
     c.set_from_fen("3r4/8/2r4p/p2n2p1/6P1/3p3P/P2B2k1/3RK2R w K - 1 39");
     MoveList moves;
-    MoveGenerator::generate_castling_moves(c, c.get_side_to_move(), moves);
+    MoveGenerator::generate_castling_moves(c, c.stm(), moves);
     ASSERT_EQ(moves.size(), 0);
 }
