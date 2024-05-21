@@ -85,10 +85,9 @@ class MoveList {
             idx += 1;
         };
 
-        void add_moves(const MoveList& other_list) {
-            size_t other_len = other_list.size();
-            memcpy(&this->data[idx], other_list.get_data_addr(), other_len * sizeof(Move));
-            idx += other_len;
+        void add_move(const ScoredMove to_add) {
+            this->data[idx] = to_add;
+            idx += 1;
         };
 
         ScoredMove& operator[](size_t arg_idx) { return data[arg_idx]; }

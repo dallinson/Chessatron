@@ -14,12 +14,15 @@ enum class MovePickerStage {
     PICK_GOOD_PROMOS,
 
     GEN_CAPTURES,
-    PICK_CAPTURES,
+    PICK_GOOD_CAPTURES,
+
+    PICK_KILLER,
 
     GEN_QUIETS,
     PICK_QUIETS,
 
-    PICK_KILLER,
+    PICK_BAD_CAPTURES_INIT,
+    PICK_BAD_CAPTURES,
     
     GEN_BAD_PROMOS,
     PICK_BAD_PROMOS,
@@ -41,6 +44,7 @@ class MovePicker {
         MovePickerStage stage = MovePickerStage::NO_MOVES;
 
         MoveList moves;
+        MoveList bad_capture_list;
         size_t idx;
 
         void score_moves();
