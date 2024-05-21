@@ -18,6 +18,8 @@ enum class MovePickerStage {
 
     GEN_QUIETS,
     PICK_QUIETS,
+
+    PICK_KILLER,
     
     GEN_BAD_PROMOS,
     PICK_BAD_PROMOS,
@@ -63,7 +65,7 @@ class MovePicker {
                         stage = MovePickerStage::GEN_GOOD_PROMOS;
                     }
                 }
-                assert(stage != MovePickerStage::PICK_REMAINING);
+                assert(stage != MovePickerStage::NO_MOVES);
             }
 
         MovePicker(MoveList&& input_moves, const ChessBoard& board, const BoardHistory& hist, const Move pv_move, HistoryTable& history_table, Move killer);

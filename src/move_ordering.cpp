@@ -71,6 +71,15 @@ std::optional<ScoredMove> MovePicker::next(const bool skip_quiets) {
         stage = MovePickerStage::PICK_QUIETS;
         moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIETS>(board, board.stm());
         score_moves();
+    } else if (stage == MovePickerStage::PICK_KILLER) {
+        stage = MovePickerStage::GEN_BAD_PROMOS;
+        if (MoveGenerator::is_move_legal(board, killer_move) && MoveGenerator::is_move_pseudolegal(board, killer_move)) {
+            ScoredMove to_return;
+            to_return.move = killer_move;
+            return to_return;
+        } else {
+            return next(skip_quiets);
+        }
     } else if (stage == MovePickerStage::GEN_BAD_PROMOS) {
         idx = 0;
         stage = MovePickerStage::PICK_BAD_PROMOS;
@@ -91,7 +100,7 @@ std::optional<ScoredMove> MovePicker::next(const bool skip_quiets) {
             stage = is_qsearch ? NO_MOVES : GEN_QUIETS;
             return next(skip_quiets);
         } else if (stage == PICK_QUIETS) {
-            stage = GEN_BAD_PROMOS;
+            stage = PICK_KILLER;
             return next(skip_quiets);
         } else if (stage == PICK_BAD_PROMOS) {
             stage = NO_MOVES;
@@ -112,7 +121,7 @@ std::optional<ScoredMove> MovePicker::next(const bool skip_quiets) {
 
     const auto best_move = moves[idx];
     idx += 1;
-    if (best_move.move == tt_move) {
+    if (best_move.move == tt_move || best_move.move == killer_move) {
         return next(skip_quiets);
     }
     return best_move;
