@@ -93,7 +93,7 @@ std::optional<ScoredMove> MovePicker::next(const bool skip_quiets) {
             stage = GEN_CAPTURES;
             return next(skip_quiets);
         } else if (stage == PICK_GOOD_CAPTURES) {
-            stage = is_qsearch ? PICK_BAD_CAPTURES_INIT : PICK_KILLER;
+            stage = is_qsearch ? NO_MOVES : PICK_KILLER;
             return next(skip_quiets);
         } else if (stage == PICK_QUIETS) {
             stage = PICK_BAD_CAPTURES_INIT;
