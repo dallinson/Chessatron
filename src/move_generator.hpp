@@ -14,7 +14,7 @@ enum class MoveGenType {
     NON_QUIESCENCE,
     GOOD_PROMOS,
     BAD_PROMOS,
-    CAPTURES,
+    CAPTURES, // does not gen promo captures
     QUIETS,
 };
 
@@ -214,7 +214,7 @@ template <MoveGenType gen_type, Side stm> void MoveGenerator::generate_pawn_move
             while (capturing_pieces) {
                 const auto lsb = pop_lsb(capturing_pieces);
                 if (rank(lsb) == back_rank) {
-                    gen_promotions<MoveGenType::ALL_LEGAL, MoveFlags::CAPTURE>(move_list, lsb - offset, lsb);
+                    gen_promotions<gen_type, MoveFlags::CAPTURE>(move_list, lsb - offset, lsb);
                 } else if (!gen_only_promos(gen_type)) {
                     move_list.add_move(Move(MoveFlags::CAPTURE, lsb, lsb - offset));
                 }
@@ -233,7 +233,7 @@ template <MoveGenType gen_type, Side stm> void MoveGenerator::generate_pawn_move
             while (capturing_pieces) {
                 const auto lsb = pop_lsb(capturing_pieces);
                 if (rank(lsb) == back_rank) {
-                    gen_promotions<MoveGenType::ALL_LEGAL, MoveFlags::CAPTURE>(move_list, lsb - offset, lsb);
+                    gen_promotions<gen_type, MoveFlags::CAPTURE>(move_list, lsb - offset, lsb);
                 } else if (!gen_only_promos(gen_type)) {
                     move_list.add_move(Move(MoveFlags::CAPTURE, lsb, lsb - offset));
                 }

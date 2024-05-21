@@ -313,3 +313,16 @@ TEST(MoveGeneratorTests, TestThreatenedCastle) {
     MoveGenerator::generate_castling_moves(c, c.stm(), moves);
     ASSERT_EQ(moves.size(), 0);
 }
+
+TEST(MoveGeneratorTests, TestStagedMovegen) {
+    ChessBoard board;
+    board.set_from_fen("5r2/4P3/8/b7/1k6/8/8/R3K2R w KQ - 0 1");
+    // covers all movegen types
+    ASSERT_EQ(MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(board, board.stm()).size(), 28);
+    ASSERT_EQ(MoveGenerator::generate_legal_moves<MoveGenType::QUIESCENCE>(board, board.stm()).size(), 5);
+    ASSERT_EQ(MoveGenerator::generate_legal_moves<MoveGenType::NON_QUIESCENCE>(board, board.stm()).size(), 23);
+    ASSERT_EQ(MoveGenerator::generate_legal_moves<MoveGenType::GOOD_PROMOS>(board, board.stm()).size(), 4);
+    ASSERT_EQ(MoveGenerator::generate_legal_moves<MoveGenType::BAD_PROMOS>(board, board.stm()).size(), 4);
+    ASSERT_EQ(MoveGenerator::generate_legal_moves<MoveGenType::CAPTURES>(board, board.stm()).size(), 1);
+    ASSERT_EQ(MoveGenerator::generate_legal_moves<MoveGenType::QUIETS>(board, board.stm()).size(), 19);
+}

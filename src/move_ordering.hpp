@@ -9,9 +9,20 @@
 
 enum class MovePickerStage {
     PICK_TT,
-    GEN_QSEARCH,
-    GEN_ALL,
-    PICK_REMAINING,
+    
+    GEN_GOOD_PROMOS,
+    PICK_GOOD_PROMOS,
+
+    GEN_CAPTURES,
+    PICK_CAPTURES,
+
+    GEN_QUIETS,
+    PICK_QUIETS,
+    
+    GEN_BAD_PROMOS,
+    PICK_BAD_PROMOS,
+
+    NO_MOVES,
 };
 
 class MovePicker {
@@ -25,7 +36,7 @@ class MovePicker {
         const Move tt_move;
         const Move killer_move;
 
-        MovePickerStage stage = MovePickerStage::PICK_REMAINING;
+        MovePickerStage stage = MovePickerStage::NO_MOVES;
 
         MoveList moves;
         size_t idx;
@@ -44,12 +55,12 @@ class MovePicker {
             killer_move(killer_move) {
                 idx = 0;
                 if (is_qsearch) {
-                    stage = MovePickerStage::GEN_QSEARCH;
+                    stage = MovePickerStage::GEN_GOOD_PROMOS;
                 } else {
                     if (!tt_move.is_null_move()) {
                         stage = MovePickerStage::PICK_TT;
                     } else {
-                        stage = MovePickerStage::GEN_ALL;
+                        stage = MovePickerStage::GEN_GOOD_PROMOS;
                     }
                 }
                 assert(stage != MovePickerStage::PICK_REMAINING);

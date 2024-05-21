@@ -7,6 +7,8 @@
 #include "move_generator.hpp"
 #include "search.hpp"
 
+using enum MovePickerStage;
+
 constexpr std::array<uint8_t, 6> ordering_scores = {1, 2, 3, 4, 5, 6};
 
 void MovePicker::score_moves() {
@@ -52,34 +54,51 @@ std::optional<ScoredMove> MovePicker::next(const bool skip_quiets) {
     if (stage == MovePickerStage::PICK_TT) {
         ScoredMove to_return;
         to_return.move = tt_move;
-        stage = MovePickerStage::GEN_ALL;
+        stage = MovePickerStage::GEN_GOOD_PROMOS;
         return to_return;
-    } else if (stage == MovePickerStage::GEN_ALL) {
+    } else if (stage == MovePickerStage::GEN_GOOD_PROMOS) {
         idx = 0;
-        stage = MovePickerStage::PICK_REMAINING;
-        moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(board, board.stm());
+        stage = MovePickerStage::PICK_GOOD_PROMOS;
+        moves = MoveGenerator::generate_legal_moves<MoveGenType::GOOD_PROMOS>(board, board.stm());
         score_moves();
-    } else if (stage == MovePickerStage::GEN_QSEARCH) {
+    } else if (stage == MovePickerStage::GEN_CAPTURES) {
         idx = 0;
-        stage = MovePickerStage::PICK_REMAINING;
-        moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIESCENCE>(board, board.stm());
+        stage = MovePickerStage::PICK_CAPTURES;
+        moves = MoveGenerator::generate_legal_moves<MoveGenType::CAPTURES>(board, board.stm());
+        score_moves();
+    } else if (stage == MovePickerStage::GEN_QUIETS) {
+        idx = 0;
+        stage = MovePickerStage::PICK_QUIETS;
+        moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIETS>(board, board.stm());
+        score_moves();
+    } else if (stage == MovePickerStage::GEN_BAD_PROMOS) {
+        idx = 0;
+        stage = MovePickerStage::PICK_BAD_PROMOS;
+        moves = MoveGenerator::generate_legal_moves<MoveGenType::BAD_PROMOS>(board, board.stm());
         score_moves();
     }
 
-    assert(stage == MovePickerStage::PICK_REMAINING);
-
-    if (this->idx >= this->moves.size()) {
-        return std::nullopt;
+    if (skip_quiets && (stage == GEN_QUIETS || stage == PICK_QUIETS)) {
+        stage = PICK_BAD_PROMOS;
+        return next(skip_quiets);
     }
 
-    if (skip_quiets) {
-        while (idx < this->moves.size() && moves[idx].move.is_quiet()) {
-            idx += 1;
+    if (idx >= this->moves.size() && stage != PICK_TT) {
+        if (stage == PICK_GOOD_PROMOS) {
+            stage = GEN_CAPTURES;
+            return next(skip_quiets);
+        } else if (stage == PICK_CAPTURES) {
+            stage = is_qsearch ? NO_MOVES : GEN_QUIETS;
+            return next(skip_quiets);
+        } else if (stage == PICK_QUIETS) {
+            stage = GEN_BAD_PROMOS;
+            return next(skip_quiets);
+        } else if (stage == PICK_BAD_PROMOS) {
+            stage = NO_MOVES;
+            return std::nullopt;
+        } else {
+            return std::nullopt;
         }
-    }
-
-    if (idx >= this->moves.size()) {
-        return std::nullopt;
     }
 
     int best_idx = this->idx;
