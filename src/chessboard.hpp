@@ -123,7 +123,7 @@ class ChessBoard {
 
         std::optional<int> set_from_fen(const std::string input);
 
-        Side get_side_to_move() const { return this->side_to_move; };
+        Side stm() const { return this->side_to_move; };
 
 
         int get_fullmove_counter() const { return this->fullmove_counter; };

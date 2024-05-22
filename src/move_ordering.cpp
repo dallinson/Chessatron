@@ -49,7 +49,7 @@ MovePicker::MovePicker(MoveList&& input_moves, const ChessBoard& board, const Bo
         } else if (move.move == killer) {
             move.score = 800000000;
         } else {
-            move.score += history_table.score(hist, move.move, board.get_side_to_move());
+            move.score += history_table.score(hist, move.move, board.stm());
         }
         if (move.score > moves[best_idx].score) {
             best_idx = i;

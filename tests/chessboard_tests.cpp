@@ -34,7 +34,7 @@ TEST(ChessBoardTests, SetFenStartPos) {
     ASSERT_EQ(c.queens(Side::BLACK), (uint64_t) 0x0800000000000000);
     ASSERT_EQ(c.kings(Side::BLACK), (uint64_t) 0x1000000000000000);
 
-    ASSERT_EQ(c.get_side_to_move(), Side::WHITE);
+    ASSERT_EQ(c.stm(), Side::WHITE);
     ASSERT_EQ(c.get_en_passant_file(), 9);
 }
 
@@ -66,7 +66,7 @@ TEST(ChessBoardTests, SetFenExplicitStartPos) {
     ASSERT_EQ(c.queens(Side::BLACK), (uint64_t) 0x0800000000000000);
     ASSERT_EQ(c.kings(Side::BLACK), (uint64_t) 0x1000000000000000);
 
-    ASSERT_EQ(c.get_side_to_move(), Side::WHITE);
+    ASSERT_EQ(c.stm(), Side::WHITE);
     ASSERT_EQ(c.get_en_passant_file(), 9);
 }
 
@@ -183,7 +183,7 @@ TEST(ChessBoardTests, TestClearBoard) {
     for (int i = 0; i < 12; i++) {
         ASSERT_EQ(c.get_bb(i / 2, i % 6), 0);
     }
-    ASSERT_EQ(c.get_side_to_move(), Side::WHITE);
+    ASSERT_EQ(c.stm(), Side::WHITE);
     ASSERT_EQ(c.get_en_passant_file(), 9);
     ASSERT_FALSE(c.get_kingside_castling(Side::WHITE));
     ASSERT_FALSE(c.get_kingside_castling(Side::BLACK));
