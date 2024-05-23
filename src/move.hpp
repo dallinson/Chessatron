@@ -72,6 +72,8 @@ struct ScoredMove {
 
 bool operator==(const Move& lhs, const Move& rhs);
 
+#include <iostream>
+
 class MoveList {
     private:
         size_t idx;
@@ -104,5 +106,18 @@ class MoveList {
         auto end() { return data.end(); };
 
         void clear() { this->idx = 0; };
+
+        MoveList(const MoveList& other) {
+            std::copy(other.begin(), other.end(), begin());
+            idx = other.size();
+        }
+        MoveList& operator=(const MoveList& other) {
+            if (this != &other) {
+                std::copy(other.begin(), other.end(), begin());
+                idx = other.size();
+            }
+            return *this;
+        }
+
 };
 
