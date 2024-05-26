@@ -322,9 +322,11 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
             continue;
         }
 
+        const auto history_score = history_table.score(board_hist, move.move, old_board.stm());
+
         // history pruning
         if constexpr (!is_pv_node(node_type)) {
-            if (best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && total_moves > 1 && depth <= 6 && static_eval <= alpha && history_table.score(board_hist, move.move, old_board.stm()) < -(depth * depth) * 14) {
+            if (best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && total_moves > 1 && depth <= 6 && static_eval <= alpha && history_score < -(depth * depth) * 14) {
                 continue;
             }
         }
@@ -347,9 +349,10 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
                                                            + static_cast<size_t>(node_type == NodeTypes::ROOT_NODE)
                                                            + static_cast<size_t>(move.move.is_capture() || move.move.is_promotion()))) {
             const auto lmr_reduction =
-                static_cast<int>(LmrTable[depth][total_moves - 1])
+                std::max(static_cast<int>(LmrTable[depth][total_moves - 1])
                 + static_cast<int>(!is_pv_node(node_type) && is_cut_node)
-                - static_cast<int>(board.in_check()); // Reduce less if the board is in check
+                - static_cast<int>(board.in_check()) // Reduce less if the board is in check
+                - static_cast<int>(history_score / 110), 0);
             score = -negamax_step<NodeTypes::NON_PV_NODE>(board, -(alpha + 1), -alpha, new_depth - lmr_reduction, ply + 1, node_count,
                                                           child_cutnode_type);
 
