@@ -1,7 +1,11 @@
 # Makefile
 
+# Extract the -j option if present, or default to 1 if not
+J_OPTION=$(filter -j%, $(MAKEFLAGS))
+JOBS=$(if $(J_OPTION), $(patsubst -j%, %, $(J_OPTION)), 1)
+
 all: build
-	cmake --build build/ --target Chessatron
+	cmake --build build/ --target Chessatron -- -j $(JOBS)
 	mv build/Chessatron ${EXE}
 
 build:

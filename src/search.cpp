@@ -347,7 +347,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
                                                            + static_cast<size_t>(node_type == NodeTypes::ROOT_NODE)
                                                            + static_cast<size_t>(move.move.is_capture() || move.move.is_promotion()))) {
             const auto lmr_depth = std::clamp(new_depth - [&]() {
-                int lmr_reduction = static_cast<int>(LmrTable[depth][total_moves - 1]);
+                int lmr_reduction = LmrTable[depth][total_moves - 1];
                 // default log formula for lmr
                 lmr_reduction += static_cast<int>(!is_pv_node(node_type) && is_cut_node);
                 // reduce more if we are not in a pv node and we're in a cut node
