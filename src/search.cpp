@@ -354,7 +354,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
                 lmr_reduction -= static_cast<int>(board.in_check());
                 // reduce less if we're in check
                 return lmr_reduction;
-            }(), 1, MAX_PLY - ply);
+            }(), new_depth <= 0 ? 0 : 1, std::max(new_depth, depth));
             
             score = -negamax_step<NodeTypes::NON_PV_NODE>(board, -(alpha + 1), -alpha, lmr_depth, ply + 1, node_count,
                                                           child_cutnode_type);
