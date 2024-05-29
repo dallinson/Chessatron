@@ -330,7 +330,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
         }
 
         if (depth <= 10 && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY)
-            && !Search::static_exchange_evaluation(old_board, move.move, move.move.is_capture() ? (-20 * depth * depth) : (-65 * depth))) {
+            && !Search::static_exchange_evaluation(old_board, move.move, move.move.is_noisy() ? (-20 * depth * depth) : (-65 * depth))) {
             continue;
         }
 
@@ -448,7 +448,7 @@ Score SearchHandler::quiescent_search(const ChessBoard& old_board, Score alpha, 
                 continue;
             }
         } else {
-            if (!Search::static_exchange_evaluation(old_board, move.move, -65)) {
+            if (!Search::static_exchange_evaluation(old_board, move.move, -20)) {
                 continue;
             }
         }

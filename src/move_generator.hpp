@@ -97,7 +97,6 @@ template <PieceTypes piece_type, MoveGenType gen_type> void MoveGenerator::gener
     const Bitboard friendly_bb = c.occupancy(stm);
     const Bitboard enemy_bb = c.occupancy(enemy_side(stm));
     const Bitboard all_bb = enemy_bb | friendly_bb;
-    const auto checking_idx = get_lsb(c.checkers());
     const auto enemy = enemy_side(stm);
     Bitboard pieces = c.pieces<piece_type>(stm);
     while (pieces) {
@@ -109,9 +108,9 @@ template <PieceTypes piece_type, MoveGenType gen_type> void MoveGenerator::gener
             potential_moves &= ~enemy_bb;
         }
         if constexpr (piece_type != PieceTypes::KING) {
-            if (checking_idx != 64) {
+            if (c.checkers() != 0) {
                 // no checking pieces implies the checking idx is 64
-                potential_moves &= MagicNumbers::ConnectingSquares[(64 * king_idx) + checking_idx];
+                potential_moves &= MagicNumbers::ConnectingSquares[(64 * king_idx) + get_lsb(c.checkers())];
             }
             if ((idx_to_bb(piece_idx) & c.pinned_pieces()) != 0) {
                 // if we are pinned
