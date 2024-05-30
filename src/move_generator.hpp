@@ -15,27 +15,27 @@ enum class MoveGenType {
 };
 
 namespace MoveGenerator {
-    template <MoveGenType gen_type> MoveList generate_legal_moves(const ChessBoard& c, const Side side);
-    int get_checking_piece_count(const ChessBoard& c, const Side side);
-    Bitboard get_checkers(const ChessBoard& c, const Side side);
-    Bitboard get_attackers(const ChessBoard& board, const Side side, const int target_idx, const Bitboard occupancy);
+    template <MoveGenType gen_type> MoveList generate_legal_moves(const Position& c, const Side side);
+    int get_checking_piece_count(const Position& c, const Side side);
+    Bitboard get_checkers(const Position& c, const Side side);
+    Bitboard get_attackers(const Position& board, const Side side, const int target_idx, const Bitboard occupancy);
 
     Bitboard generate_bishop_mm(const Bitboard b, const int idx);
     Bitboard generate_rook_mm(const Bitboard b, const int idx);
     Bitboard generate_queen_mm(const Bitboard b, const int idx);
     template <PieceTypes piece_type> Bitboard generate_mm(const Bitboard b, const int idx);
 
-    template <PieceTypes piece_type, MoveGenType gen_type> void generate_moves(const ChessBoard& c, const Side side, MoveList& move_list);
-    template <MoveGenType gen_type, Side stm> void generate_pawn_moves(const ChessBoard& c, MoveList& move_list);
-    void generate_castling_moves(const ChessBoard& c, const Side side, MoveList& move_list);
+    template <PieceTypes piece_type, MoveGenType gen_type> void generate_moves(const Position& c, const Side side, MoveList& move_list);
+    template <MoveGenType gen_type, Side stm> void generate_pawn_moves(const Position& c, MoveList& move_list);
+    void generate_castling_moves(const Position& c, const Side side, MoveList& move_list);
 
-    bool is_move_legal(const ChessBoard& c, const Move m);
-    bool is_move_pseudolegal(const ChessBoard& c, const Move to_test);
+    bool is_move_legal(const Position& c, const Move m);
+    bool is_move_pseudolegal(const Position& c, const Move to_test);
 
-    template <MoveGenType gen_type> MoveList generate_legal_moves(const ChessBoard& c, const Side side);
+    template <MoveGenType gen_type> MoveList generate_legal_moves(const Position& c, const Side side);
 } // namespace MoveGenerator
 
-template <MoveGenType gen_type> MoveList MoveGenerator::generate_legal_moves(const ChessBoard& c, const Side side) {
+template <MoveGenType gen_type> MoveList MoveGenerator::generate_legal_moves(const Position& c, const Side side) {
     MoveList to_return;
 
     MoveGenerator::generate_moves<PieceTypes::KING, gen_type>(c, side, to_return);
@@ -89,7 +89,7 @@ inline Bitboard MoveGenerator::generate_mm<PieceTypes::KING>(const Bitboard b, c
     return MagicNumbers::KingMoves[idx];
 }
 
-template <PieceTypes piece_type, MoveGenType gen_type> void MoveGenerator::generate_moves(const ChessBoard& c, const Side stm, MoveList& output) {
+template <PieceTypes piece_type, MoveGenType gen_type> void MoveGenerator::generate_moves(const Position& c, const Side stm, MoveList& output) {
     if constexpr (piece_type == PieceTypes::PAWN) {
         return generate_pawn_moves<gen_type>(c, stm, output);
     }
@@ -143,7 +143,7 @@ template <MoveGenType gen_type, MoveFlags base_flags> void gen_promotions(MoveLi
     if constexpr (gen_type != MoveGenType::QUIESCENCE) move_list.add_move(Move(MoveFlags::BISHOP_PROMOTION | base_flags, dst, src));
 }
 
-template <MoveGenType gen_type, Side stm> void MoveGenerator::generate_pawn_moves(const ChessBoard& c, MoveList& move_list) {
+template <MoveGenType gen_type, Side stm> void MoveGenerator::generate_pawn_moves(const Position& c, MoveList& move_list) {
     const auto friendly_pawns = c.pawns(stm);
     const auto occupied = c.occupancy();
     const auto pinned_pawns = friendly_pawns & c.pinned_pieces();

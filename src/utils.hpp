@@ -13,10 +13,20 @@ constexpr int MAX_TURN_MOVE_COUNT = 218;
 constexpr int MAX_GAME_MOVE_COUNT = 5899;
 // the maximum possible number of moves, currently 218 on position R6R/3Q4/1Q4Q1/4Q3/2Q4Q/Q4Q2/pp1Q4/kBNN1KB1
 
-
 enum class Side : uint8_t {
     WHITE = 0,
     BLACK = 1,
+};
+
+enum class Square: uint8_t {
+    A1, B1, C1, D1, E1, F1, G1, H1,
+    A2, B2, C2, D2, E2, F2, G2, H2,
+    A3, B3, C3, D3, E3, F3, G3, H3,
+    A4, B4, C4, D4, E4, F4, G4, H4,
+    A5, B5, C5, D5, E5, F5, G5, H5,
+    A6, B6, C6, D6, E6, F6, G6, H6,
+    A7, B7, C7, D7, E7, F7, G7, H7,
+    A8, B8, C8, D8, E8, F8, G8, H8,
 };
 
 constexpr inline uint64_t bit(uint8_t x) { return ((uint64_t) 1) << x; };

@@ -11,5 +11,5 @@
 // the number of centipawns each possible move is worth
 
 namespace Evaluation {
-    Score evaluate_board(const ChessBoard& c);
+    Score evaluate_board(const Position& c);
 } // namespace Evaluation

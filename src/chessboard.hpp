@@ -14,7 +14,7 @@ template <PieceTypes p> uint8_t bb_idx = static_cast<int>(p) - 1;
 
 class BoardHistory;
 
-class ChessBoard {
+class Position {
     private:
         std::array<Bitboard, 6> piece_bbs = {0};
         std::array<Bitboard, 2> side_bbs = {0};
@@ -40,9 +40,9 @@ class ChessBoard {
         int fullmove_counter = 0;
 
     public:
-        ChessBoard() = default;
-        ChessBoard(const ChessBoard& origin, const Move to_make);
-        ChessBoard& make_move(const Move to_make, BoardHistory& move_history) const;
+        Position() = default;
+        Position(const Position& origin, const Move to_make);
+        Position& make_move(const Move to_make, BoardHistory& move_history) const;
 
         inline Bitboard occupancy() const {
             return side_bbs[0] | side_bbs[1];
@@ -157,11 +157,11 @@ class ChessBoard {
         std::optional<Move> generate_move_from_string(const std::string& m) const;
 };
 
-bool operator==(const ChessBoard& lhs, const ChessBoard& rhs);
+bool operator==(const Position& lhs, const Position& rhs);
 
 class BoardHistory {
     private:
-        std::vector<ChessBoard> board_hist;
+        std::vector<Position> board_hist;
         // The move at index i is the move made to reach the board at index i, or
         // alternatively the move made at index i - 1
         std::array<Move, MAX_GAME_MOVE_COUNT> move_hist;
@@ -171,28 +171,28 @@ class BoardHistory {
         BoardHistory() : idx(0) {
             board_hist.resize(MAX_GAME_MOVE_COUNT);
         };
-        BoardHistory(const ChessBoard& board) {
+        BoardHistory(const Position& board) {
             idx = 0;
             board_hist.resize(MAX_GAME_MOVE_COUNT);
             push_board(board);
         }
 
-        ChessBoard& push_board(const ChessBoard new_board, const Move move = Move::NULL_MOVE()) {
+        Position& push_board(const Position new_board, const Move move = Move::NULL_MOVE()) {
             this->board_hist[idx] = new_board;
             this->move_hist[idx] = move;
             idx += 1;
             return this->board_hist[idx - 1];
         }
 
-        ChessBoard& pop_board() {
+        Position& pop_board() {
             assert(idx >= 2);
             idx -= 1;
             return this->board_hist[idx - 1];
         }
 
         size_t len() const { return idx; };
-        const ChessBoard& operator[](size_t idx) const { return board_hist[idx]; };
-        ChessBoard& operator[](size_t idx) { return board_hist[idx]; };
+        const Position& operator[](size_t idx) const { return board_hist[idx]; };
+        Position& operator[](size_t idx) { return board_hist[idx]; };
         Move move_at(size_t idx) const { return move_hist[idx]; };
         size_t conthist_idx(size_t idx) const {
             const auto move = move_hist[idx];

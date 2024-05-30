@@ -49,7 +49,7 @@ void process_position_command(const std::string& line, SearchHandler& s) {
         return; // not a valid position
     }
     auto sub_line = line.substr(fen_idx);
-    ChessBoard c;
+    Position c;
     auto idx = c.set_from_fen(sub_line);
     if (idx.has_value()) {
         auto moves = sub_line.substr(idx.value());
@@ -66,7 +66,7 @@ void process_position_command(const std::string& line, SearchHandler& s) {
             }
             s.set_history(history);
         } else {
-            s.set_board(c);
+            s.set_pos(c);
         }
     }
 }
@@ -111,8 +111,8 @@ void process_go_command(const std::vector<std::string>& line, SearchHandler& s) 
         s.search(FixedTimeTC{movetime});
         return;
     }
-    const auto current_side = s.get_board().stm();
-    // auto halfmoves_so_far = (2 * s.get_board().get_fullmove_counter()) + static_cast<int>(current_side);
+    const auto current_side = s.get_pos().stm();
+    // auto halfmoves_so_far = (2 * s.get_pos().get_fullmove_counter()) + static_cast<int>(current_side);
     const auto remaining_time = (current_side == Side::WHITE) ? wtime : btime;
     const auto increment = ((current_side == Side::WHITE) ? winc : binc) / movestogo;
     // next we determine how to use our allocated time using the formula
@@ -163,7 +163,7 @@ int main(int argc, char** argv) {
         } else if (line == "stop") {
             s.EndSearch();
         } else if (line == "d") {
-            s.get_board().print_board();
+            s.get_pos().print_board();
         } else {
             auto parsed_line = split_on_whitespace(line);
             if (parsed_line.size() >= 1) {

@@ -43,7 +43,7 @@ constexpr int castling_rights[64] = {0b1011, 15, 15, 15, 0b1010, 15, 15, 0b1110,
                                      15,     15, 15, 15, 15,     15, 15, 15,     15, 15, 15, 15, 15,     15, 15, 15, 15,     15, 15, 15,    15, 15,
                                      15,     15, 15, 15, 15,     15, 15, 15,     15, 15, 15, 15, 0b0111, 15, 15, 15, 0b0101, 15, 15, 0b1101};
 
-void ChessBoard::set_piece(Piece piece, uint8_t pos) {
+void Position::set_piece(Piece piece, uint8_t pos) {
     set_bit(piece_bbs[static_cast<int>(piece.get_type()) - 1], pos);
     set_bit(side_bbs[static_cast<int>(piece.get_side())], pos);
     piece_mb[pos] = piece;
@@ -60,7 +60,7 @@ void ChessBoard::set_piece(Piece piece, uint8_t pos) {
     mg_phase += mg_phase_vals[static_cast<int>(piece_type) - 1];
 }
 
-void ChessBoard::clear_board() {
+void Position::clear_board() {
     for (int i = 0; i < 6; i++) {
         piece_bbs[i] = 0;
     }
@@ -79,7 +79,7 @@ void ChessBoard::clear_board() {
     mg_phase = 0;
 }
 
-void ChessBoard::print_board() const {
+void Position::print_board() const {
     static const char* piece_str = ".PNBRQK..pnbrqk.";
     for (int rank = 7; rank >= 0; rank--) {
         for (int file = 0; file < 8; file++) {
@@ -94,7 +94,7 @@ void ChessBoard::print_board() const {
         return std::optional<int>();                                                                                                                 \
     }
 
-std::optional<int> ChessBoard::set_from_fen(const std::string input) {
+std::optional<int> Position::set_from_fen(const std::string input) {
     if (input.find("startpos") == 0) {
         // this accounts for any additional moves after the startpos
         set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
@@ -251,7 +251,7 @@ std::optional<int> ChessBoard::set_from_fen(const std::string input) {
     return std::optional<int>(char_idx);
 }
 
-ChessBoard::ChessBoard(const ChessBoard& origin, const Move to_make) {
+Position::Position(const Position& origin, const Move to_make) {
     assert(MoveGenerator::is_move_legal(origin, to_make));
 
     *this = origin;
@@ -359,9 +359,9 @@ ChessBoard::ChessBoard(const ChessBoard& origin, const Move to_make) {
     recompute_blockers_and_checkers(side_to_move);
 }
 
-ChessBoard& ChessBoard::make_move(const Move to_make, BoardHistory& history) const { return history.push_board(ChessBoard(*this, to_make), to_make); }
+Position& Position::make_move(const Move to_make, BoardHistory& history) const { return history.push_board(Position(*this, to_make), to_make); }
 
-void ChessBoard::recompute_blockers_and_checkers(const Side side) {
+void Position::recompute_blockers_and_checkers(const Side side) {
     const int king_idx = get_lsb(this->kings(side));
     const Side enemy = enemy_side(side);
     _checkers = MoveGenerator::get_checkers(*this, side);
@@ -382,7 +382,7 @@ void ChessBoard::recompute_blockers_and_checkers(const Side side) {
     }
 }
 
-ZobristKey ChessBoard::key_after(const Move move) const {
+ZobristKey Position::key_after(const Move move) const {
     assert(!move.is_null_move());
     auto to_return = zobrist_key;
     const auto src_sq = move.src_sq();
@@ -429,7 +429,7 @@ ZobristKey ChessBoard::key_after(const Move move) const {
     return to_return ^ ZobristKeys::SideToMove;
 }
 
-std::optional<Move> ChessBoard::generate_move_from_string(const std::string& s) const {
+std::optional<Move> Position::generate_move_from_string(const std::string& s) const {
     if (s.size() != 4 && s.size() != 5) {
         return std::optional<Move>();
     }
@@ -484,7 +484,7 @@ std::optional<Move> ChessBoard::generate_move_from_string(const std::string& s) 
     return std::optional<Move>(Move(m, end_sq, start_sq));
 }
 
-bool operator==(const ChessBoard& lhs, const ChessBoard& rhs) {
+bool operator==(const Position& lhs, const Position& rhs) {
     bool is_equal = true;
     for (int pt = 1; pt <= 6; pt++) {
         for (int sd = 0; sd < 2; sd++) {

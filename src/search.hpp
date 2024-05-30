@@ -25,17 +25,17 @@ constexpr inline bool is_pv_node(NodeTypes n) { return n == NodeTypes::ROOT_NODE
 constexpr static int MAX_PLY = 250;
 
 namespace Perft {
-    uint64_t run_perft(ChessBoard& c, int depth, bool print_debug = false);
+    uint64_t run_perft(Position& c, int depth, bool print_debug = false);
 }
 
 namespace Search {
     constexpr std::array<Score, 7> SEEScores = { 0, 100, 300, 300, 500, 900, 0 };
 
-    Move select_random_move(const ChessBoard& c);
+    Move select_random_move(const Position& c);
     bool is_threefold_repetition(const BoardHistory& m, const int halfmove_clock, const ZobristKey z);
-    bool is_draw(const ChessBoard& c, const BoardHistory& m);
-    bool static_exchange_evaluation(const ChessBoard& board, const Move move, const int threshold);
-    bool detect_insufficient_material(const ChessBoard& board, const Side side);
+    bool is_draw(const Position& c, const BoardHistory& m);
+    bool static_exchange_evaluation(const Position& pos, const Move move, const int threshold);
+    bool detect_insufficient_material(const Position& pos, const Side side);
 } // namespace Search
 
 enum class BoundTypes : uint8_t {
@@ -94,8 +94,8 @@ class TranspositionTable {
             this->resize(16);
         };
         uint64_t tt_index(const ZobristKey key) const { return static_cast<uint64_t>((static_cast<__uint128_t>(key) * static_cast<__uint128_t>(table.size())) >> 64); };
-        const TranspositionTableEntry& operator[](const ChessBoard& key) const { return table[tt_index(key.get_zobrist_key())]; };
-        void store(TranspositionTableEntry entry, const ChessBoard& key) {
+        const TranspositionTableEntry& operator[](const Position& key) const { return table[tt_index(key.get_zobrist_key())]; };
+        void store(TranspositionTableEntry entry, const Position& key) {
             const auto tt_key = tt_index(key.get_zobrist_key());
             if (table[tt_key].key() != entry.key()
                 || entry.bound_type() == BoundTypes::EXACT_BOUND
@@ -156,8 +156,8 @@ class SearchHandler {
 
         void search_thread_function();
         Score run_aspiration_window_search(int depth, Score previous_score);
-        template <NodeTypes node_type> Score negamax_step(const ChessBoard& board, Score alpha, Score beta, int depth, int ply, uint64_t& node_count, bool is_cut_node);
-        template <NodeTypes node_type> Score quiescent_search(const ChessBoard& board, Score alpha, Score beta, int ply, uint64_t& node_count);
+        template <NodeTypes node_type> Score negamax_step(const Position& pos, Score alpha, Score beta, int depth, int ply, uint64_t& node_count, bool is_cut_node);
+        template <NodeTypes node_type> Score quiescent_search(const Position& pos, Score alpha, Score beta, int ply, uint64_t& node_count);
         Move run_iterative_deepening_search();
 
     public:
@@ -166,10 +166,10 @@ class SearchHandler {
 
         bool is_searching() { return this->in_search; };
         int get_current_search_id() { return this->current_search_id; };
-        ChessBoard& get_board() { return this->board_hist[board_hist.len() - 1]; };
+        Position& get_pos() { return this->board_hist[board_hist.len() - 1]; };
         BoardHistory& get_history() { return this->board_hist; };
 
-        void set_board(const ChessBoard& c) { 
+        void set_pos(const Position& c) { 
             this->board_hist = BoardHistory(c);
         };
         void set_history(const BoardHistory& h) {

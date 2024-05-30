@@ -10,9 +10,9 @@ TEST(UtilTests, TestTrailingZeroBits) {
         ASSERT_EQ(get_lsb(1ULL << i), i);
     }
 
-    ChessBoard c;
-    c.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K3 w Qkq - 0 1");
-    ASSERT_EQ(get_lsb(c.kings(Side::WHITE)), 4);
+    Position pos;
+    pos.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K3 w Qkq - 0 1");
+    ASSERT_EQ(get_lsb(pos.kings(Side::WHITE)), 4);
 }
 
 TEST(UtilTests, TestBitboardFromIdx) {

@@ -4,9 +4,9 @@
 
 #include "magic_numbers.hpp"
 
-int MoveGenerator::get_checking_piece_count(const ChessBoard& c, const Side side) { return std::popcount(MoveGenerator::get_checkers(c, side)); }
+int MoveGenerator::get_checking_piece_count(const Position& c, const Side side) { return std::popcount(MoveGenerator::get_checkers(c, side)); }
 
-Bitboard MoveGenerator::get_checkers(const ChessBoard& c, const Side side) {
+Bitboard MoveGenerator::get_checkers(const Position& c, const Side side) {
     const Side enemy = enemy_side(side);
 
     return get_attackers(c, enemy, get_lsb(c.kings(side)), c.occupancy());
@@ -21,7 +21,7 @@ Bitboard MoveGenerator::get_checkers(const ChessBoard& c, const Side side) {
  * @param occupancy
  * @return Bitboard
  */
-Bitboard MoveGenerator::get_attackers(const ChessBoard& board, const Side side, const int target_idx, const Bitboard occupancy) {
+Bitboard MoveGenerator::get_attackers(const Position& board, const Side side, const int target_idx, const Bitboard occupancy) {
     const Side enemy = enemy_side(side);
     Bitboard bishop_mask = MoveGenerator::generate_bishop_mm(occupancy, target_idx);
     Bitboard rook_mask = MoveGenerator::generate_rook_mm(occupancy, target_idx);
@@ -52,7 +52,7 @@ Bitboard MoveGenerator::generate_queen_mm(const Bitboard b, const int idx) {
     return MoveGenerator::generate_bishop_mm(b, idx) | MoveGenerator::generate_rook_mm(b, idx);
 }
 
-void MoveGenerator::generate_castling_moves(const ChessBoard& c, const Side side, MoveList& move_list) {
+void MoveGenerator::generate_castling_moves(const Position& c, const Side side, MoveList& move_list) {
     const Bitboard total_occupancy = c.occupancy();
     const auto enemy = enemy_side(side);
     if (c.get_kingside_castling(side)) {
@@ -75,7 +75,7 @@ void MoveGenerator::generate_castling_moves(const ChessBoard& c, const Side side
     }
 }
 
-bool MoveGenerator::is_move_legal(const ChessBoard& c, const Move m) {
+bool MoveGenerator::is_move_legal(const Position& c, const Move m) {
     int king_idx = get_lsb(c.kings(c.stm()));
     const auto move_side = static_cast<Side>(get_bit(c.occupancy(Side::BLACK), m.src_sq()));
     const Side enemy = enemy_side(move_side);
