@@ -1,6 +1,7 @@
 #pragma once
 
 #include <bit>
+#include <cassert>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
@@ -27,33 +28,48 @@ enum class Square: uint8_t {
     A6, B6, C6, D6, E6, F6, G6, H6,
     A7, B7, C7, D7, E7, F7, G7, H7,
     A8, B8, C8, D8, E8, F8, G8, H8,
+
+    NONE
 };
+
+constexpr Square& operator++(Square& sq, int) {
+    assert(sq != Square::NONE);
+    sq = static_cast<Square>(static_cast<int>(sq) + 1);
+    return sq;
+}
+constexpr Square operator+(const Square sq, const int offset) { return static_cast<Square>(static_cast<int>(sq) + offset); };
+constexpr Square operator-(const Square sq, const int offset) { return static_cast<Square>(static_cast<int>(sq) - offset); };
+constexpr uint8_t sq_to_int(const Square sq) { return static_cast<uint8_t>(sq); };
 
 constexpr inline uint64_t bit(uint8_t x) { return ((uint64_t) 1) << x; };
 template <std::integral T> constexpr inline T get_bit(T val, uint8_t x) { return (val >> x) & 0x1; };
+template <std::integral T> constexpr inline T get_bit(T val, Square sq) { return get_bit(val, sq_to_int(sq)); };
 template <std::integral T> constexpr inline void set_bit(T& val, uint8_t x) { val |= bit(x); };
+template <std::integral T> constexpr inline void set_bit(T& val, Square sq) { return set_bit(val, sq_to_int(sq)); };
 template <std::integral T> constexpr inline void clear_bit(T& val, uint8_t x) { val &= ~bit(x); };
+template <std::integral T> constexpr inline void clear_bit(T& val, Square sq) { return clear_bit(val, sq_to_int(sq)); };
 template <std::integral T> constexpr inline void toggle_bit(T& val, uint8_t x) { val ^= bit(x); };
 
 constexpr inline uint64_t bits(uint8_t max, uint8_t min) { return ((0xFFFFFFFFFFFFFFFF << (min)) & (0xFFFFFFFFFFFFFFFF >> (64 - ((max) + 1)))); };
 template <std::integral T> constexpr inline T get_bits(T val, uint8_t max, uint8_t min) { return (val & bits(max, min)) >> min; };
-constexpr inline uint8_t rank(uint8_t pos) { return get_bits(pos, 5, 3); };
-constexpr inline uint8_t file(uint8_t pos) { return get_bits(pos, 2, 0); };
+constexpr inline uint8_t rank(Square sq) { return get_bits(sq_to_int(sq), 5, 3); };
+constexpr inline uint8_t file(Square sq) { return get_bits(sq_to_int(sq), 2, 0); };
 // rank is the row and file the column
 constexpr Bitboard rank_bb(uint8_t rnk) { return static_cast<Bitboard>(0x00000000000000FF) << (8 * rnk); };
 constexpr Bitboard file_bb(uint8_t fil) { return 0x0101010101010101 << fil; };
 
-constexpr inline uint8_t get_position(uint8_t rank, uint8_t file) { return ((rank & 0x7) << 3) | (file & 0x7); };
+constexpr inline Square get_position(uint8_t rank, uint8_t file) { return static_cast<Square>(((rank & 0x7) << 3) | (file & 0x7)); };
 constexpr inline Side enemy_side(Side stm) { return (stm == Side::WHITE) ? Side::BLACK : Side::WHITE; };
 
 void print_bb(Bitboard to_print);
 
-constexpr inline int get_lsb(Bitboard bitboard) { return std::countr_zero(bitboard); };
+constexpr inline Square get_lsb(Bitboard bitboard) { return static_cast<Square>(std::countr_zero(bitboard)); };
 
 constexpr inline Bitboard idx_to_bb(int idx) { return bit(idx); };
+constexpr inline Bitboard sq_to_bb(Square sq) { return bit(sq_to_int(sq)); };
 
-constexpr inline int pop_lsb(Bitboard& num) {
-    const int to_return = get_lsb(num);
+constexpr inline Square pop_lsb(Bitboard& num) {
+    const Square to_return = get_lsb(num);
     clear_bit(num, to_return);
     return to_return;
 };

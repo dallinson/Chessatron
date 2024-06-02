@@ -83,8 +83,8 @@ class Position {
             return piece_bbs[bb_idx<PieceTypes::PAWN>] & side_bbs[static_cast<uint8_t>(side)];
         };
 
-        inline Piece piece_at(const int sq) const {
-            return piece_mb[sq];
+        inline Piece piece_at(const Square sq) const {
+            return piece_mb[sq_to_int(sq)];
         }
 
         /**
@@ -117,7 +117,7 @@ class Position {
             }
         };
 
-        void set_piece(Piece piece, uint8_t pos);
+        void set_piece(Piece piece, Square sq);
         void print_board() const;
         void clear_board();
 
@@ -131,7 +131,7 @@ class Position {
 
         void recompute_blockers_and_checkers(const Side side);
 
-        int piece_to(Move move) const { return piece_at(move.src_sq()).get_value() << 6 | move.dst_sq(); };
+        int piece_to(Move move) const { return piece_at(move.src_sq()).get_value() << 6 | sq_to_int(move.dst_sq()); };
 
         inline Bitboard checkers() const { return _checkers; };
         inline Bitboard pinned_pieces() const { return _pinned_pieces; };
@@ -196,7 +196,7 @@ class BoardHistory {
         Move move_at(size_t idx) const { return move_hist[idx]; };
         size_t conthist_idx(size_t idx) const {
             const auto move = move_hist[idx];
-            return (board_hist[idx - 1].piece_at(move.src_sq()).get_value() << 6) | move.dst_sq();
+            return (board_hist[idx - 1].piece_at(move.src_sq()).get_value() << 6) | sq_to_int(move.dst_sq());
         };
 
         void clear() { idx = 0; };

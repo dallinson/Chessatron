@@ -21,35 +21,37 @@ Bitboard MoveGenerator::get_checkers(const Position& c, const Side side) {
  * @param occupancy
  * @return Bitboard
  */
-Bitboard MoveGenerator::get_attackers(const Position& board, const Side side, const int target_idx, const Bitboard occupancy) {
+Bitboard MoveGenerator::get_attackers(const Position& board, const Side side, const Square target_sq, const Bitboard occupancy) {
     const Side enemy = enemy_side(side);
-    Bitboard bishop_mask = MoveGenerator::generate_bishop_mm(occupancy, target_idx);
-    Bitboard rook_mask = MoveGenerator::generate_rook_mm(occupancy, target_idx);
+    Bitboard bishop_mask = MoveGenerator::generate_bishop_mm(occupancy, target_sq);
+    Bitboard rook_mask = MoveGenerator::generate_rook_mm(occupancy, target_sq);
 
     Bitboard to_return = 0;
 
     to_return |= board.queens(side) & (bishop_mask | rook_mask);
     to_return |= board.bishops(side) & bishop_mask;
     to_return |= board.rooks(side) & rook_mask;
-    to_return |= board.knights(side) & MagicNumbers::KnightMoves[target_idx];
-    to_return |= board.pawns(side) & MagicNumbers::PawnAttacks[(64 * static_cast<int>(enemy)) + target_idx];
-    to_return |= board.kings(side) & MagicNumbers::KingMoves[target_idx];
+    to_return |= board.knights(side) & MagicNumbers::KnightMoves[sq_to_int(target_sq)];
+    to_return |= board.pawns(side) & MagicNumbers::PawnAttacks[(64 * static_cast<int>(enemy)) + sq_to_int(target_sq)];
+    to_return |= board.kings(side) & MagicNumbers::KingMoves[sq_to_int(target_sq)];
 
     return to_return;
 }
 
-Bitboard MoveGenerator::generate_bishop_mm(const Bitboard b, const int idx) {
+Bitboard MoveGenerator::generate_bishop_mm(const Bitboard b, const Square sq) {
+    const auto idx = sq_to_int(sq);
     Bitboard masked = (b & MagicNumbers::BishopMasks[idx]);
     return MagicNumbers::BishopAttacks[(512 * idx) + ((masked * MagicNumbers::BishopMagics[idx]) >> (64 - MagicNumbers::BishopBits[idx]))];
 }
 
-Bitboard MoveGenerator::generate_rook_mm(const Bitboard b, const int idx) {
+Bitboard MoveGenerator::generate_rook_mm(const Bitboard b, const Square sq) {
+    const auto idx = sq_to_int(sq);
     Bitboard masked = (b & MagicNumbers::RookMasks[idx]);
     return MagicNumbers::RookAttacks[(4096 * idx) + ((masked * MagicNumbers::RookMagics[idx]) >> (64 - MagicNumbers::RookBits[idx]))];
 }
 
-Bitboard MoveGenerator::generate_queen_mm(const Bitboard b, const int idx) {
-    return MoveGenerator::generate_bishop_mm(b, idx) | MoveGenerator::generate_rook_mm(b, idx);
+Bitboard MoveGenerator::generate_queen_mm(const Bitboard b, const Square sq) {
+    return MoveGenerator::generate_bishop_mm(b, sq) | MoveGenerator::generate_rook_mm(b, sq);
 }
 
 void MoveGenerator::generate_castling_moves(const Position& c, const Side side, MoveList& move_list) {
@@ -59,7 +61,7 @@ void MoveGenerator::generate_castling_moves(const Position& c, const Side side, 
         int shift_val = 56 * static_cast<int>(side);
         if (((uint64_t) 0b10010000 ^ ((c.occupancy() >> shift_val) & 0xF0)) == 0) {
             // if only these spaces are occupied
-            if (get_attackers(c, enemy, 5 + shift_val, total_occupancy) == 0 && get_attackers(c, enemy, 6 + shift_val, total_occupancy) == 0) {
+            if (get_attackers(c, enemy, static_cast<Square>(5 + shift_val), total_occupancy) == 0 && get_attackers(c, enemy, static_cast<Square>(6 + shift_val), total_occupancy) == 0) {
                 move_list.add_move(Move(MoveFlags::KINGSIDE_CASTLE, 6 + shift_val, 4 + shift_val));
             }
         }
@@ -68,7 +70,7 @@ void MoveGenerator::generate_castling_moves(const Position& c, const Side side, 
         int shift_val = 56 * static_cast<int>(side);
         if (((uint64_t) 0b00010001 ^ ((c.occupancy() >> shift_val) & 0x1F)) == 0) {
             // if only these spaces are occupied
-            if (get_attackers(c, enemy, 3 + shift_val, total_occupancy) == 0 && get_attackers(c, enemy, 2 + shift_val, total_occupancy) == 0) {
+            if (get_attackers(c, enemy, static_cast<Square>(3 + shift_val), total_occupancy) == 0 && get_attackers(c, enemy, static_cast<Square>(2 + shift_val), total_occupancy) == 0) {
                 move_list.add_move(Move(MoveFlags::QUEENSIDE_CASTLE, 2 + shift_val, 4 + shift_val));
             }
         }
@@ -76,7 +78,7 @@ void MoveGenerator::generate_castling_moves(const Position& c, const Side side, 
 }
 
 bool MoveGenerator::is_move_legal(const Position& c, const Move m) {
-    int king_idx = get_lsb(c.kings(c.stm()));
+    const auto king_idx = get_lsb(c.kings(c.stm()));
     const auto move_side = static_cast<Side>(get_bit(c.occupancy(Side::BLACK), m.src_sq()));
     const Side enemy = enemy_side(move_side);
     if (m.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) {
@@ -86,34 +88,34 @@ bool MoveGenerator::is_move_legal(const Position& c, const Move m) {
         // and we would have moved out of check
         Bitboard occupancy = c.occupancy();
         Bitboard cleared_occupancy =
-            occupancy ^ (idx_to_bb(m.src_sq()) | idx_to_bb(m.dst_sq() - 8 + (16 * static_cast<int>(c.stm()))));
+            occupancy ^ (sq_to_bb(m.src_sq()) | sq_to_bb(m.dst_sq() - 8 + (16 * static_cast<int>(c.stm()))));
         // clear the origin and capture spaces
         // then set the destination square
-        cleared_occupancy |= idx_to_bb(m.dst_sq());
+        cleared_occupancy |= sq_to_bb(m.dst_sq());
         return !((MoveGenerator::generate_bishop_mm(cleared_occupancy, king_idx) & (c.bishops(enemy) | c.queens(enemy)))
                  || (MoveGenerator::generate_rook_mm(cleared_occupancy, king_idx) & (c.rooks(enemy) | c.queens(enemy))));
     } else if (get_bit(c.kings(), m.src_sq()) != 0) {
-        Bitboard cleared_bitboard = c.occupancy() ^ idx_to_bb(m.src_sq());
-        int target_idx = m.dst_sq();
+        Bitboard cleared_bitboard = c.occupancy() ^ sq_to_bb(m.src_sq());
+        const auto target_idx = m.dst_sq();
         const auto potential_diagonal_sliders = (c.bishops(enemy) | c.queens(enemy));
         const auto potential_orthogonal_sliders = (c.rooks(enemy) | c.queens(enemy));
         return !((generate_bishop_mm(cleared_bitboard, target_idx) & potential_diagonal_sliders)
                  || (generate_rook_mm(cleared_bitboard, target_idx) & potential_orthogonal_sliders)
-                 || (c.knights(enemy) & MagicNumbers::KnightMoves[target_idx])
-                 || (c.pawns(enemy) & MagicNumbers::PawnAttacks[(64 * static_cast<int>(move_side)) + target_idx])
-                 || (c.kings(enemy) & MagicNumbers::KingMoves[target_idx]));
+                 || (c.knights(enemy) & MagicNumbers::KnightMoves[sq_to_int(target_idx)])
+                 || (c.pawns(enemy) & MagicNumbers::PawnAttacks[(64 * static_cast<int>(move_side)) + sq_to_int(target_idx)])
+                 || (c.kings(enemy) & MagicNumbers::KingMoves[sq_to_int(target_idx)]));
     } else [[likely]] {
 
         Bitboard checking_pieces = c.checkers();
         if (checking_pieces) {
             // if there's a piece checking our king - we know at most one piece can be checking as double checks are king moves only
-            if (!(MagicNumbers::ConnectingSquares[(64 * king_idx) + get_lsb(checking_pieces)] & idx_to_bb(m.dst_sq()))) {
+            if (!(MagicNumbers::ConnectingSquares[(64 * sq_to_int(king_idx)) + sq_to_int(get_lsb(checking_pieces))] & sq_to_bb(m.dst_sq()))) {
                 return false;
             }
         }
 
-        if (idx_to_bb(m.src_sq()) & c.pinned_pieces()) {
-            return MagicNumbers::AlignedSquares[(64 * king_idx) + m.src_sq()] & idx_to_bb(m.dst_sq());
+        if (sq_to_bb(m.src_sq()) & c.pinned_pieces()) {
+            return MagicNumbers::AlignedSquares[(64 * sq_to_int(king_idx)) + sq_to_int(m.src_sq())] & sq_to_bb(m.dst_sq());
         }
     }
 

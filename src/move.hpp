@@ -37,11 +37,12 @@ class Move {
         constexpr Move(){};
         constexpr Move(uint16_t v) : move(v){};
         constexpr Move(MoveFlags flags, uint_fast8_t dest, uint_fast8_t src) : move((((uint16_t) flags) << 12) | (((uint16_t) dest) << 6) | src){};
+        constexpr Move(MoveFlags flags, Square dest, Square src) : Move(flags, sq_to_int(dest), sq_to_int(src)) {};
         constexpr static Move NULL_MOVE() { return Move(0); };
 
         constexpr uint16_t value() const { return move; };
-        constexpr uint8_t src_sq() const { return get_bits(move, 5, 0); };
-        constexpr uint8_t dst_sq() const { return get_bits(move, 11, 6); };
+        constexpr Square src_sq() const { return static_cast<Square>(get_bits(move, 5, 0)); };
+        constexpr Square dst_sq() const { return static_cast<Square>(get_bits(move, 11, 6)); };
 
         constexpr uint8_t src_rnk() const { return get_bits(move, 5, 3); };
         constexpr uint8_t src_fle() const { return get_bits(move, 2, 0); };

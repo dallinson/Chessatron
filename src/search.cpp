@@ -111,11 +111,11 @@ bool Search::static_exchange_evaluation(const Position& pos, const Move move, co
     const Bitboard rooks = pos.rooks() | pos.queens();
 
     Bitboard occupied = pos.occupancy();
-    occupied ^= bit(move.src_sq());
-    occupied |= bit(move.dst_sq());
+    occupied ^= sq_to_bb(move.src_sq());
+    occupied |= sq_to_bb(move.dst_sq());
     if (move.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) {
         const auto ep_target = get_position(move.src_rnk(), move.dst_fle());
-        occupied ^= bit(ep_target);
+        occupied ^= sq_to_bb(ep_target);
     }
 
     Bitboard attackers = (MoveGenerator::get_attackers(pos, pos.stm(), move.dst_sq(), occupied)

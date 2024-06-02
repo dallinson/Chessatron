@@ -2,9 +2,12 @@
 
 #include <cmath>
 
+#include "../utils.hpp"
+
 #define GET_SIGN(x) (((x) > 0) - ((x) < 0))
 // clever way of doing a sign function, from https://stackoverflow.com/a/1903975
 #define ABS(x) (((x) < 0) ? -(x) : (x))
+
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 // pre-C++23 these functions are not constexpr so are reimplemented here
@@ -19,32 +22,32 @@
  */
 consteval std::array<Bitboard, 64 * 64> compute_connecting_squares() {
     std::array<Bitboard, 64 * 64> to_return;
-    for (int first_square = 0; first_square < 64; first_square++) {
-        for (int second_square = 0; second_square < 64; second_square++) {
-            Bitboard b = idx_to_bb(second_square);
+    for (Square first_square = Square::A1; first_square != Square::NONE; first_square++) {
+        for (Square second_square = Square::A1; second_square != Square::NONE; second_square++) {
+            Bitboard b = sq_to_bb(second_square);
             int rank_diff = rank(first_square) - rank(second_square);
             int file_diff = file(first_square) - file(second_square);
 
             if (first_square == second_square) {
-                b = idx_to_bb(second_square);
+                b = sq_to_bb(second_square);
             } else if (rank(first_square) == rank(second_square)) {
                 for (int8_t i = file(first_square) - GET_SIGN(file_diff); i != ((int8_t) file(second_square)); i -= GET_SIGN(file_diff)) {
                     // use int8_t to satisfy the compiler re loop iteration count
-                    b |= idx_to_bb(get_position(rank(first_square), i));
+                    b |= sq_to_bb(get_position(rank(first_square), i));
                 }
             } else if (file(first_square) == file(second_square)) {
                 for (int8_t i = rank(first_square) - GET_SIGN(rank_diff); i != ((int8_t) rank(second_square)); i -= GET_SIGN(rank_diff)) {
-                    b |= idx_to_bb(get_position(i, file(first_square)));
+                    b |= sq_to_bb(get_position(i, file(first_square)));
                 }
             } else {
-                int min_square = MIN(first_square, second_square);
-                int max_square = MAX(first_square, second_square);
+                int min_square = MIN(sq_to_int(first_square), sq_to_int(second_square));
+                int max_square = MAX(sq_to_int(first_square), sq_to_int(second_square));
 
                 if (ABS(rank_diff) == ABS(file_diff)) {
                     if (GET_SIGN(rank_diff) == GET_SIGN(file_diff)) {
                         // from bottom left to top right
                         for (int i = 0; i < 64; i++) {
-                            int abs_diff = ABS(first_square - i);
+                            int abs_diff = ABS(sq_to_int(first_square) - i);
                             if ((abs_diff % 9) == 0 && i > min_square && i < max_square) {
                                 b |= bit(i);
                             }
@@ -52,7 +55,7 @@ consteval std::array<Bitboard, 64 * 64> compute_connecting_squares() {
                     } else {
                         // from top left to bottom right
                         for (int i = 0; i < 64; i++) {
-                            int abs_diff = ABS(first_square - i);
+                            int abs_diff = ABS(sq_to_int(first_square) - i);
                             if ((abs_diff % 7) == 0 && i > min_square && i < max_square) {
                                 b |= bit(i);
                             }
@@ -60,7 +63,7 @@ consteval std::array<Bitboard, 64 * 64> compute_connecting_squares() {
                     }
                 }
             }
-            to_return[(64 * first_square) + second_square] = b;
+            to_return[(64 * sq_to_int(first_square)) + sq_to_int(second_square)] = b;
         }
     }
     return to_return;
@@ -70,8 +73,8 @@ constexpr std::array<Bitboard, 64 * 64> MagicNumbers::ConnectingSquares = comput
 
 consteval std::array<Bitboard, 64 * 64> compute_aligned_squares() {
     std::array<Bitboard, 64 * 64> to_return;
-    for (int first_square = 0; first_square < 64; first_square++) {
-        for (int second_square = 0; second_square < 64; second_square++) {
+    for (Square first_square = Square::A1; first_square != Square::NONE; first_square++) {
+        for (Square second_square = Square::A1; second_square != Square::NONE; second_square++) {
             Bitboard b = 0;
             int rank_diff = rank(first_square) - rank(second_square);
             int file_diff = file(first_square) - file(second_square);
@@ -80,21 +83,21 @@ consteval std::array<Bitboard, 64 * 64> compute_aligned_squares() {
                 b = 0;
             } else if (rank_diff == 0) {
                 for (int i = 0; i < 8; i++) {
-                    b |= idx_to_bb(get_position(rank(first_square), i));
+                    b |= sq_to_bb(get_position(rank(first_square), i));
                 }
             } else if (file_diff == 0) {
                 for (int i = 0; i < 8; i++) {
-                    b |= idx_to_bb(get_position(i, file(first_square)));
+                    b |= sq_to_bb(get_position(i, file(first_square)));
                 }
             } else if (ABS(rank_diff) == ABS(file_diff)) {
                 for (int i = 0; i < 64; i++) {
-                    int abs_diff = ABS(first_square - i);
+                    int abs_diff = ABS(sq_to_int(first_square) - i);
                     if ((abs_diff % ((GET_SIGN(rank_diff) == GET_SIGN(file_diff)) ? 9 : 7)) == 0) {
                         b |= bit(i);
                     }
                 }
             }
-            to_return[(64 * first_square) + second_square] = b;
+            to_return[(64 * sq_to_int(first_square)) + sq_to_int(second_square)] = b;
         }
     }
     return to_return;
@@ -112,11 +115,11 @@ consteval std::array<Bitboard, 64> generate_king_moves() {
                     int r_rk = rk + r;
                     int f_fl = fl + f;
                     if (!((r == 0 && f == 0) || r_rk < 0 || f_fl < 0 || r_rk >= 8 || f_fl >= 8)) {
-                        b |= idx_to_bb(get_position(r_rk, f_fl));
+                        b |= sq_to_bb(get_position(r_rk, f_fl));
                     }
                 }
             }
-            to_return[get_position(rk, fl)] = b;
+            to_return[sq_to_int(get_position(rk, fl))] = b;
         }
     }
     return to_return;
