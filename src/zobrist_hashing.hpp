@@ -8,6 +8,7 @@
 #include "utils.hpp"
 
 constexpr inline ZobristKey calculate_zobrist_key(Piece piece, uint8_t pos) { return (piece.to_bitboard_idx() * 64) + pos; };
+constexpr inline ZobristKey calculate_zobrist_key(Piece piece, Square sq) { return calculate_zobrist_key(piece, sq_to_int(sq)); };
 
 namespace ZobristKeys {
     extern const std::array<ZobristKey, 64 * 12> PositionKeys;

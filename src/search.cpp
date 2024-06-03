@@ -12,12 +12,12 @@
 TranspositionTable tt;
 
 template <bool print_debug> // this could just as easily be done as a parameter but this gives some practice with templates
-uint64_t perft(const ChessBoard& old_board, BoardHistory& history, int depth) {
+uint64_t perft(const Position& old_pos, BoardHistory& history, int depth) {
 
     MoveList moves;
     uint64_t to_return = 0;
 
-    moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(old_board, old_board.stm());
+    moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(old_pos, old_pos.stm());
 
     if (depth == 1) {
         if constexpr (print_debug) {
@@ -30,7 +30,7 @@ uint64_t perft(const ChessBoard& old_board, BoardHistory& history, int depth) {
 
     for (size_t i = 0; i < moves.size(); i++) {
         uint64_t val;
-        auto& board = old_board.make_move(moves[i].move, history);
+        auto& board = old_pos.make_move(moves[i].move, history);
         val = perft<false>(board, history, depth - 1);
         if constexpr (print_debug) {
             std::cout << moves[i].move.to_string() << ": " << val << std::endl;
@@ -41,7 +41,7 @@ uint64_t perft(const ChessBoard& old_board, BoardHistory& history, int depth) {
     return to_return;
 }
 
-uint64_t Perft::run_perft(ChessBoard& board, int depth, bool print_debug) {
+uint64_t Perft::run_perft(Position& board, int depth, bool print_debug) {
     BoardHistory history(board);
     uint64_t nodes = 0;
     const auto perft_start_point = std::chrono::steady_clock::now();
@@ -59,8 +59,8 @@ uint64_t Perft::run_perft(ChessBoard& board, int depth, bool print_debug) {
     return nodes;
 }
 
-Move Search::select_random_move(const ChessBoard& c) {
-    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(c, c.stm());
+Move Search::select_random_move(const Position& pos) {
+    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(pos, pos.stm());
     return moves[rand() % moves.size()].move;
 }
 
@@ -82,15 +82,15 @@ bool Search::is_threefold_repetition(const BoardHistory& history, const int half
     return false;
 }
 
-bool Search::is_draw(const ChessBoard& board, const BoardHistory& history) {
-    return board.get_halfmove_clock() > 100 || is_threefold_repetition(history, board.get_halfmove_clock(), board.get_zobrist_key())
-           || Search::detect_insufficient_material(board, board.stm());
+bool Search::is_draw(const Position& pos, const BoardHistory& history) {
+    return pos.get_halfmove_clock() > 100 || is_threefold_repetition(history, pos.get_halfmove_clock(), pos.get_zobrist_key())
+           || Search::detect_insufficient_material(pos, pos.stm());
 }
 
-bool Search::static_exchange_evaluation(const ChessBoard& board, const Move move, const int threshold) {
-    PieceTypes next_victim = move.is_promotion() ? move.get_promotion_piece_type() : board.piece_at(move.src_sq()).get_type();
+bool Search::static_exchange_evaluation(const Position& pos, const Move move, const int threshold) {
+    PieceTypes next_victim = move.is_promotion() ? move.get_promotion_piece_type() : pos.piece_at(move.src_sq()).get_type();
 
-    Score balance = Search::SEEScores[static_cast<int>(board.piece_at(move.dst_sq()).get_type())];
+    Score balance = Search::SEEScores[static_cast<int>(pos.piece_at(move.dst_sq()).get_type())];
     if (move.is_promotion()) {
         balance += (Search::SEEScores[static_cast<int>(move.get_promotion_piece_type())] - Search::SEEScores[static_cast<int>(PieceTypes::PAWN)]);
     } else if (move.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) {
@@ -107,27 +107,27 @@ bool Search::static_exchange_evaluation(const ChessBoard& board, const Move move
     if (balance >= 0)
         return true;
 
-    const Bitboard bishops = board.bishops() | board.queens();
-    const Bitboard rooks = board.rooks() | board.queens();
+    const Bitboard bishops = pos.bishops() | pos.queens();
+    const Bitboard rooks = pos.rooks() | pos.queens();
 
-    Bitboard occupied = board.occupancy();
-    occupied ^= bit(move.src_sq());
-    occupied |= bit(move.dst_sq());
+    Bitboard occupied = pos.occupancy();
+    occupied ^= move.src_sq();
+    occupied |= move.dst_sq();
     if (move.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) {
         const auto ep_target = get_position(move.src_rnk(), move.dst_fle());
-        occupied ^= bit(ep_target);
+        occupied ^= ep_target;
     }
 
-    Bitboard attackers = (MoveGenerator::get_attackers(board, board.stm(), move.dst_sq(), occupied)
-                          | MoveGenerator::get_attackers(board, enemy_side(board.stm()), move.dst_sq(), occupied))
+    Bitboard attackers = (MoveGenerator::get_attackers(pos, pos.stm(), move.dst_sq(), occupied)
+                          | MoveGenerator::get_attackers(pos, enemy_side(pos.stm()), move.dst_sq(), occupied))
                          & occupied;
 
-    Side moving_side = enemy_side(board.stm());
+    Side moving_side = enemy_side(pos.stm());
 
     while (true) {
-        const Bitboard this_side_attackers = attackers & board.occupancy(moving_side);
+        const Bitboard this_side_attackers = attackers & pos.occupancy(moving_side);
 
-        if (this_side_attackers == 0) {
+        if (this_side_attackers.empty()) {
             break;
         }
 
@@ -135,13 +135,13 @@ bool Search::static_exchange_evaluation(const ChessBoard& board, const Move move
 
         for (next_victim = PieceTypes::PAWN; next_victim <= PieceTypes::QUEEN;
              next_victim = static_cast<PieceTypes>(static_cast<int>(next_victim) + 1)) {
-            victim_attackers = this_side_attackers & board.get_bb(static_cast<int>(next_victim) - 1, static_cast<int>(moving_side));
-            if (victim_attackers != 0) {
+            victim_attackers = this_side_attackers & pos.get_bb(static_cast<int>(next_victim) - 1, static_cast<int>(moving_side));
+            if (!victim_attackers.empty()) {
                 break;
             }
         }
 
-        occupied ^= (victim_attackers & -victim_attackers);
+        occupied ^= (victim_attackers.bb & -(victim_attackers.bb));
 
         if (next_victim == PieceTypes::PAWN || next_victim == PieceTypes::BISHOP || next_victim == PieceTypes::QUEEN) {
             // the pieces that attack diagonally
@@ -160,36 +160,36 @@ bool Search::static_exchange_evaluation(const ChessBoard& board, const Move move
         balance = -balance - 1 - Search::SEEScores[static_cast<int>(next_victim)];
 
         if (balance >= 0) {
-            if (next_victim == PieceTypes::KING && (attackers & board.occupancy(moving_side))) {
+            if (next_victim == PieceTypes::KING && !(attackers & pos.occupancy(moving_side)).empty()) {
                 moving_side = enemy_side(moving_side);
             }
             break;
         }
     }
 
-    return board.stm() != moving_side;
+    return pos.stm() != moving_side;
 }
 
-bool Search::detect_insufficient_material(const ChessBoard& board, const Side side) {
+bool Search::detect_insufficient_material(const Position& board, const Side side) {
     const Side enemy = enemy_side(side);
     if (board.occupancy(enemy) == board.kings(enemy)) {
         // if the enemy side only has the king
         const Bitboard pieces = board.queens(side) | board.rooks(side) | board.bishops(side) | board.knights(side) | board.pawns(side);
-        if (pieces == 0) {
+        if (pieces.empty()) {
             return true;
         }
         if (pieces == board.bishops(side) || pieces == board.knights(side)) {
-            return std::popcount(pieces) == 1;
+            return pieces.popcnt() == 1;
         }
     }
     return false;
 }
 
 template <NodeTypes node_type>
-Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Score beta, int depth, int ply, uint64_t& node_count, bool is_cut_node) {
+Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score beta, int depth, int ply, uint64_t& node_count, bool is_cut_node) {
 
     pv_table.pv_length[ply] = ply;
-    if (Search::is_draw(old_board, board_hist)) {
+    if (Search::is_draw(old_pos, board_hist)) {
         return 0;
     }
 
@@ -197,10 +197,10 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
     const auto child_cutnode_type = is_pv_node(node_type) ? true : !is_cut_node;
     int extensions = 0;
 
-    const auto tt_entry = tt[old_board];
+    const auto tt_entry = tt[old_pos];
     if constexpr (!is_pv_node(node_type)) {
         const bool should_cutoff =
-            tt_entry.key() == old_board.get_zobrist_key() && tt_entry.depth() >= depth
+            tt_entry.key() == old_pos.get_zobrist_key() && tt_entry.depth() >= depth
             && (tt_entry.bound_type() == BoundTypes::EXACT_BOUND || (tt_entry.bound_type() == BoundTypes::LOWER_BOUND && tt_entry.score() >= beta)
                 || (tt_entry.bound_type() == BoundTypes::UPPER_BOUND && tt_entry.score() <= alpha));
         if (should_cutoff) {
@@ -212,32 +212,32 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
             return tt_entry.score();
         }
     }
-    const bool tt_hit = tt_entry.key() == old_board.get_zobrist_key();
+    const bool tt_hit = tt_entry.key() == old_pos.get_zobrist_key();
 
     if (depth <= 0) {
-        return quiescent_search<pv_node_type>(old_board, alpha, beta, ply, node_count);
+        return quiescent_search<pv_node_type>(old_pos, alpha, beta, ply, node_count);
         // return c.evaluate();
     }
 
-    if (old_board.in_check()) {
+    if (old_pos.in_check()) {
         extensions += 1;
     }
 
-    const auto static_eval = tt_hit ? tt_entry.score() : Evaluation::evaluate_board(old_board);
+    const auto static_eval = tt_hit ? tt_entry.score() : Evaluation::evaluate_board(old_pos);
     if (ply >= MAX_PLY) {
         return static_eval;
     }
 
     // Reverse futility pruning
     if constexpr (!is_pv_node(node_type)) {
-        if (!old_board.in_check() && depth < 7 && (static_eval - (70 * depth)) >= beta) {
+        if (!old_pos.in_check() && depth < 7 && (static_eval - (70 * depth)) >= beta) {
             return static_eval;
         }
     }
 
     if constexpr (!is_pv_node(node_type)) {
-        if (!old_board.in_check() && static_eval < alpha - 400 - 250 * depth * depth) {
-            const auto razoring_score = quiescent_search<NodeTypes::NON_PV_NODE>(old_board, alpha - 1, alpha, ply + 1, node_count);
+        if (!old_pos.in_check() && static_eval < alpha - 400 - 250 * depth * depth) {
+            const auto razoring_score = quiescent_search<NodeTypes::NON_PV_NODE>(old_pos, alpha - 1, alpha, ply + 1, node_count);
             if (razoring_score < alpha) {
                 return razoring_score;
             }
@@ -245,11 +245,11 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
     }
 
     if constexpr (!is_pv_node(node_type)) {
-        if (static_eval >= beta && !old_board.in_check() && depth >= 3) {
+        if (static_eval >= beta && !old_pos.in_check() && depth >= 3) {
             // Try null move pruning if we aren't in check
 
             if (!board_hist.move_at(board_hist.len() - 1).is_null_move()) {
-                auto& board = old_board.make_move(Move::NULL_MOVE(), board_hist);
+                auto& board = old_pos.make_move(Move::NULL_MOVE(), board_hist);
                 
                 const auto nmp_reduction = 4
                     + (depth / 4)
@@ -269,9 +269,9 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
         }
     }
 
-    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(old_board, old_board.stm());
+    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(old_pos, old_pos.stm());
     if (moves.size() == 0) {
-        if (old_board.in_check()) {
+        if (old_pos.in_check()) {
             // if in check
             return ply + MagicNumbers::NegativeInfinity;
         } else {
@@ -283,7 +283,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
     // mate and draw detection
 
     bool found_pv_move = false;
-    auto mp = MovePicker(std::move(moves), old_board, board_hist, tt_hit ? tt_entry.move() : Move::NULL_MOVE(), history_table,
+    auto mp = MovePicker(std::move(moves), old_pos, board_hist, tt_hit ? tt_entry.move() : Move::NULL_MOVE(), history_table,
                                 search_stack[ply].killer_move, found_pv_move);
     const bool tt_move = found_pv_move && tt_hit;
     // move reordering
@@ -309,14 +309,14 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
 
         if constexpr (!is_pv_node(node_type)) {
             // late move pruning
-            if (depth <= 6 && !old_board.in_check() && move.move.is_quiet() && total_moves >= static_cast<size_t>((depth * depth) + 4)) {
+            if (depth <= 6 && !old_pos.in_check() && move.move.is_quiet() && total_moves >= static_cast<size_t>((depth * depth) + 4)) {
                 skip_quiets = true;
                 continue;
             }
         }
 
         // futility pruning
-        if (!old_board.in_check() && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && !move.move.is_capture() && depth <= 6
+        if (!old_pos.in_check() && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && !move.move.is_capture() && depth <= 6
             && static_eval + 200 * depth < alpha) {
             skip_quiets = true;
             continue;
@@ -324,19 +324,19 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
 
         // history pruning
         if constexpr (!is_pv_node(node_type)) {
-            if (best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && total_moves > 1 && depth <= 6 && static_eval <= alpha && history_table.score(board_hist, move.move, old_board.stm()) < -(depth * depth) * 14) {
+            if (best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && total_moves > 1 && depth <= 6 && static_eval <= alpha && history_table.score(board_hist, move.move, old_pos.stm()) < -(depth * depth) * 14) {
                 continue;
             }
         }
 
         if (depth <= 10 && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY)
-            && !Search::static_exchange_evaluation(old_board, move.move, move.move.is_capture() ? (-20 * depth * depth) : (-65 * depth))) {
+            && !Search::static_exchange_evaluation(old_pos, move.move, move.move.is_capture() ? (-20 * depth * depth) : (-65 * depth))) {
             continue;
         }
 
-        tt.prefetch(old_board.key_after(move.move));
+        tt.prefetch(old_pos.key_after(move.move));
         const auto pre_move_node_count = node_count;
-        auto& board = old_board.make_move(move.move, board_hist);
+        auto& pos = old_pos.make_move(move.move, board_hist);
         node_count += 1;
         Score score;
         const auto new_depth = depth - 1 + extensions;
@@ -351,28 +351,28 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
                 // default log formula for lmr
                 lmr_reduction += static_cast<int>(!is_pv_node(node_type) && is_cut_node);
                 // reduce more if we are not in a pv node and we're in a cut node
-                lmr_reduction -= static_cast<int>(board.in_check());
+                lmr_reduction -= static_cast<int>(pos.in_check());
                 // reduce less if we're in check
                 return lmr_reduction;
             }(), 1, MAX_PLY - ply);
             
-            score = -negamax_step<NodeTypes::NON_PV_NODE>(board, -(alpha + 1), -alpha, lmr_depth, ply + 1, node_count,
+            score = -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, lmr_depth, ply + 1, node_count,
                                                           child_cutnode_type);
 
             // it's possible the LMR score will raise alpha; in this case we re-search with the full depth
             if (score > alpha) {
-                score = -negamax_step<NodeTypes::NON_PV_NODE>(board, -(alpha + 1), -alpha, new_depth, ply + 1, node_count,
+                score = -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, new_depth, ply + 1, node_count,
                                                               child_cutnode_type);
             }
         }
         // if we didn't perform LMR
         else if (!is_pv_node(node_type) || total_moves >= 2) {
             score =
-                -negamax_step<NodeTypes::NON_PV_NODE>(board, -(alpha + 1), -alpha, new_depth, ply + 1, node_count, child_cutnode_type);
+                -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, new_depth, ply + 1, node_count, child_cutnode_type);
         }
 
         if (is_pv_node(node_type) && (total_moves == 1 || score > alpha)) {
-            score = -negamax_step<NodeTypes::PV_NODE>(board, -beta, -alpha, new_depth, ply + 1, node_count, child_cutnode_type);
+            score = -negamax_step<NodeTypes::PV_NODE>(pos, -beta, -alpha, new_depth, ply + 1, node_count, child_cutnode_type);
         }
 
         board_hist.pop_board();
@@ -395,7 +395,7 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
                 }
                 if (score >= beta) {
                     search_stack[ply].killer_move = move.move;
-                    history_table.update_scores(board_hist, evaluated_moves, move, old_board.stm(), depth);
+                    history_table.update_scores(board_hist, evaluated_moves, move, old_pos.stm(), depth);
                     break;
                 }
                 alpha = score;
@@ -405,16 +405,16 @@ Score SearchHandler::negamax_step(const ChessBoard& old_board, Score alpha, Scor
     }
     const BoundTypes bound_type =
         (best_score >= beta ? BoundTypes::LOWER_BOUND : (alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND));
-    tt.store(TranspositionTableEntry(best_move, depth, bound_type, best_score, old_board.get_zobrist_key()), old_board);
+    tt.store(TranspositionTableEntry(best_move, depth, bound_type, best_score, old_pos.get_zobrist_key()), old_pos);
     return best_score;
 }
 
 template <NodeTypes node_type>
-Score SearchHandler::quiescent_search(const ChessBoard& old_board, Score alpha, Score beta, int ply, uint64_t& node_count) {
-    if (Search::is_draw(old_board, board_hist)) {
+Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Score beta, int ply, uint64_t& node_count) {
+    if (Search::is_draw(old_pos, board_hist)) {
         return 0;
     }
-    Score static_eval = Evaluation::evaluate_board(old_board);
+    Score static_eval = Evaluation::evaluate_board(old_pos);
     if (ply >= MAX_PLY) {
         return static_eval;
     }
@@ -422,9 +422,9 @@ Score SearchHandler::quiescent_search(const ChessBoard& old_board, Score alpha, 
         return static_eval;
     }
     alpha = std::max(static_eval, alpha);
-    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIESCENCE>(old_board, old_board.stm());
-    if (moves.size() == 0 && MoveGenerator::generate_legal_moves<MoveGenType::NON_QUIESCENCE>(old_board, old_board.stm()).size() == 0) {
-        if (old_board.in_check()) {
+    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIESCENCE>(old_pos, old_pos.stm());
+    if (moves.size() == 0 && MoveGenerator::generate_legal_moves<MoveGenType::NON_QUIESCENCE>(old_pos, old_pos.stm()).size() == 0) {
+        if (old_pos.in_check()) {
             // if in check
             return ply + MagicNumbers::NegativeInfinity;
         } else {
@@ -434,7 +434,7 @@ Score SearchHandler::quiescent_search(const ChessBoard& old_board, Score alpha, 
 
     bool found_pv_move = false;
     Score best_score = static_eval;
-    auto mp = MovePicker(std::move(moves), old_board, board_hist, Move::NULL_MOVE(), history_table, search_stack[ply].killer_move, found_pv_move);
+    auto mp = MovePicker(std::move(moves), old_pos, board_hist, Move::NULL_MOVE(), history_table, search_stack[ply].killer_move, found_pv_move);
     int total_moves = 0;
     std::optional<ScoredMove> opt_move;
     while ((opt_move = mp.next(false)).has_value()) {
@@ -448,25 +448,25 @@ Score SearchHandler::quiescent_search(const ChessBoard& old_board, Score alpha, 
                 continue;
             }
         } else {
-            if (!Search::static_exchange_evaluation(old_board, move.move, -65)) {
+            if (!Search::static_exchange_evaluation(old_pos, move.move, -65)) {
                 continue;
             }
         }
 
-        auto& board = old_board.make_move(move.move, board_hist);
+        auto& pos = old_pos.make_move(move.move, board_hist);
         node_count += 1;
         Score score;
         if constexpr (is_pv_node(node_type)) {
             if (total_moves == 0) {
-                score = -quiescent_search<NodeTypes::PV_NODE>(board, -beta, -alpha, ply + 1, node_count);
+                score = -quiescent_search<NodeTypes::PV_NODE>(pos, -beta, -alpha, ply + 1, node_count);
             } else {
-                score = -quiescent_search<NodeTypes::NON_PV_NODE>(board, -alpha - 1, -alpha, ply + 1, node_count);
+                score = -quiescent_search<NodeTypes::NON_PV_NODE>(pos, -alpha - 1, -alpha, ply + 1, node_count);
                 if (score > alpha) {
-                    score = -quiescent_search<NodeTypes::PV_NODE>(board, -beta, -alpha, ply + 1, node_count);
+                    score = -quiescent_search<NodeTypes::PV_NODE>(pos, -beta, -alpha, ply + 1, node_count);
                 }
             }
         } else {
-            score = -quiescent_search<NodeTypes::NON_PV_NODE>(board, -alpha - 1, -alpha, ply + 1, node_count);
+            score = -quiescent_search<NodeTypes::NON_PV_NODE>(pos, -alpha - 1, -alpha, ply + 1, node_count);
         }
 
         board_hist.pop_board();

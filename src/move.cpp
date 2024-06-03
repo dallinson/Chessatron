@@ -4,7 +4,7 @@
 
 
 std::string Move::to_string() const {
-    if (this->src_sq() == 0 && this->dst_sq() == 0) {
+    if (this->src_sq() == Square::A1 && this->dst_sq() == Square::A1) {
         // if this is a null move
         return "0000";
     }

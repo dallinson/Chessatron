@@ -124,10 +124,10 @@ TEST(SEETests, TestStaticExchangeEval) {
         const int gain = std::stoi(tokens[2]);
         const bool expected = gain >= 0;
 
-        ChessBoard board;
-        board.set_from_fen(fen);
+        Position pos;
+        pos.set_from_fen(fen);
 
-        const bool result = Search::static_exchange_evaluation(board, board.generate_move_from_string(uci_move).value(), 0);
+        const bool result = Search::static_exchange_evaluation(pos, pos.generate_move_from_string(uci_move).value(), 0);
         ASSERT_EQ(result, expected) << "Mismatch with test case " << test;
     }
 }

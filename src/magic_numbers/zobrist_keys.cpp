@@ -239,7 +239,7 @@ constexpr std::array<ZobristKey, 10> ZobristKeys::EnPassantKeys = {8127998803539
                                                                    0ull,
                                                                    0ull};
 
-constexpr std::array<ZobristKey, 16> ZobristKeys::EnPassantCheckBitboards = {
+constexpr std::array<Bitboard, 16> ZobristKeys::EnPassantCheckBitboards = {
     33554432ull,       83886080ull,        167772160ull,       335544320ull,
     671088640ull,      1342177280ull,      2684354560ull,      1073741824ull,
 

@@ -146,9 +146,9 @@ void SearchHandler::run_bench(uint16_t depth) {
     for (const auto& fen : fens) {
         std::unique_lock<std::mutex> lock(search_mutex);
         this->reset();
-        ChessBoard board;
-        board.set_from_fen(fen);
-        this->set_board(board);
+        Position pos;
+        pos.set_from_fen(fen);
+        this->set_pos(pos);
         this->search(DepthTC{depth});
         cv.wait(lock, [this] { return !this->is_searching(); });
         // loop until search completes

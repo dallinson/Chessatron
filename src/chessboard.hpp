@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <optional>
 
+#include "bitboard.hpp"
 #include "move.hpp"
 #include "pieces.hpp"
 #include "utils.hpp"
@@ -14,7 +15,7 @@ template <PieceTypes p> uint8_t bb_idx = static_cast<int>(p) - 1;
 
 class BoardHistory;
 
-class ChessBoard {
+class Position {
     private:
         std::array<Bitboard, 6> piece_bbs = {0};
         std::array<Bitboard, 2> side_bbs = {0};
@@ -40,9 +41,9 @@ class ChessBoard {
         int fullmove_counter = 0;
 
     public:
-        ChessBoard() = default;
-        ChessBoard(const ChessBoard& origin, const Move to_make);
-        ChessBoard& make_move(const Move to_make, BoardHistory& move_history) const;
+        Position() = default;
+        Position(const Position& origin, const Move to_make);
+        Position& make_move(const Move to_make, BoardHistory& move_history) const;
 
         inline Bitboard occupancy() const {
             return side_bbs[0] | side_bbs[1];
@@ -83,8 +84,8 @@ class ChessBoard {
             return piece_bbs[bb_idx<PieceTypes::PAWN>] & side_bbs[static_cast<uint8_t>(side)];
         };
 
-        inline Piece piece_at(const int sq) const {
-            return piece_mb[sq];
+        inline Piece piece_at(const Square sq) const {
+            return piece_mb[sq_to_int(sq)];
         }
 
         /**
@@ -117,7 +118,7 @@ class ChessBoard {
             }
         };
 
-        void set_piece(Piece piece, uint8_t pos);
+        void set_piece(Piece piece, Square sq);
         void print_board() const;
         void clear_board();
 
@@ -131,11 +132,11 @@ class ChessBoard {
 
         void recompute_blockers_and_checkers(const Side side);
 
-        int piece_to(Move move) const { return piece_at(move.src_sq()).get_value() << 6 | move.dst_sq(); };
+        int piece_to(Move move) const { return piece_at(move.src_sq()).get_value() << 6 | sq_to_int(move.dst_sq()); };
 
         inline Bitboard checkers() const { return _checkers; };
         inline Bitboard pinned_pieces() const { return _pinned_pieces; };
-        bool in_check() const { return _checkers != 0; }; 
+        bool in_check() const { return !_checkers.empty(); }; 
 
         int32_t get_score(Side side) const { return scores[static_cast<int>(side)]; };
         uint8_t get_mg_phase() const { return mg_phase; };
@@ -146,7 +147,7 @@ class ChessBoard {
             if (en_passant_file != 9) {
                 const Side enemy = enemy_side(side_to_move);
                 const size_t offset = en_passant_file + 8 * static_cast<int>(enemy);
-                if ((pawns(side_to_move) & ZobristKeys::EnPassantCheckBitboards[offset]) == 0) {
+                if ((pawns(side_to_move) & ZobristKeys::EnPassantCheckBitboards[offset]).empty()) {
                     default_key ^= ZobristKeys::EnPassantKeys[en_passant_file];
                 }
             }
@@ -157,11 +158,11 @@ class ChessBoard {
         std::optional<Move> generate_move_from_string(const std::string& m) const;
 };
 
-bool operator==(const ChessBoard& lhs, const ChessBoard& rhs);
+bool operator==(const Position& lhs, const Position& rhs);
 
 class BoardHistory {
     private:
-        std::vector<ChessBoard> board_hist;
+        std::vector<Position> board_hist;
         // The move at index i is the move made to reach the board at index i, or
         // alternatively the move made at index i - 1
         std::array<Move, MAX_GAME_MOVE_COUNT> move_hist;
@@ -171,32 +172,32 @@ class BoardHistory {
         BoardHistory() : idx(0) {
             board_hist.resize(MAX_GAME_MOVE_COUNT);
         };
-        BoardHistory(const ChessBoard& board) {
+        BoardHistory(const Position& board) {
             idx = 0;
             board_hist.resize(MAX_GAME_MOVE_COUNT);
             push_board(board);
         }
 
-        ChessBoard& push_board(const ChessBoard new_board, const Move move = Move::NULL_MOVE()) {
+        Position& push_board(const Position new_board, const Move move = Move::NULL_MOVE()) {
             this->board_hist[idx] = new_board;
             this->move_hist[idx] = move;
             idx += 1;
             return this->board_hist[idx - 1];
         }
 
-        ChessBoard& pop_board() {
+        Position& pop_board() {
             assert(idx >= 2);
             idx -= 1;
             return this->board_hist[idx - 1];
         }
 
         size_t len() const { return idx; };
-        const ChessBoard& operator[](size_t idx) const { return board_hist[idx]; };
-        ChessBoard& operator[](size_t idx) { return board_hist[idx]; };
+        const Position& operator[](size_t idx) const { return board_hist[idx]; };
+        Position& operator[](size_t idx) { return board_hist[idx]; };
         Move move_at(size_t idx) const { return move_hist[idx]; };
         size_t conthist_idx(size_t idx) const {
             const auto move = move_hist[idx];
-            return (board_hist[idx - 1].piece_at(move.src_sq()).get_value() << 6) | move.dst_sq();
+            return (board_hist[idx - 1].piece_at(move.src_sq()).get_value() << 6) | sq_to_int(move.dst_sq());
         };
 
         void clear() { idx = 0; };

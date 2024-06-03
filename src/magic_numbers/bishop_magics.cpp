@@ -30,34 +30,34 @@ constexpr Bitboard MagicNumbers::BishopMasks[64] = {
 constexpr int MagicNumbers::BishopBits[64] = {6, 5, 5, 5, 5, 5, 5, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 7, 7, 7, 7, 5, 5, 5, 5, 7, 9, 9, 7, 5, 5,
                                               5, 5, 7, 9, 9, 7, 5, 5, 5, 5, 7, 7, 7, 7, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 5, 5, 5, 5, 5, 5, 6};
 
-constexpr Bitboard generate_bishop_attacks(int square, Bitboard mask) {
+constexpr Bitboard generate_bishop_attacks(Square square, Bitboard mask) {
     int rnk = rank(square);
     int fle = file(square);
     Bitboard to_return = 0;
     int r, f;
     for (r = rnk + 1, f = fle + 1; r <= 7 && f <= 7; r++, f++) {
-        Bitboard b = idx_to_bb(get_position(r, f));
+        Bitboard b(get_position(r, f));
         to_return |= b;
         if (b & mask) {
             break;
         }
     }
     for (r = rnk + 1, f = fle - 1; r <= 7 && f >= 0; r++, f--) {
-        Bitboard b = idx_to_bb(get_position(r, f));
+        Bitboard b(get_position(r, f));
         to_return |= b;
         if (b & mask) {
             break;
         }
     }
     for (r = rnk - 1, f = fle + 1; r >= 0 && f <= 7; r--, f++) {
-        Bitboard b = idx_to_bb(get_position(r, f));
+        Bitboard b(get_position(r, f));
         to_return |= b;
         if (b & mask) {
             break;
         }
     }
     for (r = rnk - 1, f = fle - 1; r >= 0 && f >= 0; r--, f--) {
-        Bitboard b = idx_to_bb(get_position(r, f));
+        Bitboard b(get_position(r, f));
         to_return |= b;
         if (b & mask) {
             break;
@@ -78,13 +78,13 @@ consteval std::array<Bitboard, 64 * 512> generate_bishop_attack_bitboards() {
             attacks[i] = 0;
         }
         Bitboard current_blockers = 0;
-        for (int i = 0; i < (1 << std::popcount(attack_mask)); i++) {
+        for (int i = 0; i < (1 << attack_mask.popcnt()); i++) {
             blockers[i] = current_blockers;
             current_blockers = (current_blockers - attack_mask) & attack_mask;
             // bit twiddling trick
-            attacks[i] = generate_bishop_attacks(square, blockers[i]);
+            attacks[i] = generate_bishop_attacks(static_cast<Square>(square), blockers[i]);
         }
-        for (int i = 0; i < (1 << std::popcount(attack_mask)); i++) {
+        for (int i = 0; i < (1 << attack_mask.popcnt()); i++) {
             int j = (512 * square) + ((blockers[i] * MagicNumbers::BishopMagics[square]) >> (64 - MagicNumbers::BishopBits[square]));
             to_return[j] = attacks[i];
         }

@@ -87,7 +87,8 @@ namespace PieceSquareTables {
         }
     };
 
-    constexpr inline int32_t get_psqt_score(const Piece p, uint8_t pos) {
+    constexpr inline int32_t get_psqt_score(const Piece p, Square sq) {
+        int pos = sq_to_int(sq);
         if (p.get_side() == Side::WHITE) {
             pos ^= 0b00111000;
         }
