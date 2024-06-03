@@ -6,7 +6,6 @@
 #include <cstddef>
 #include <cstdint>
 
-using Bitboard = uint64_t;
 using ZobristKey = uint64_t;
 using Score = int16_t;
 
@@ -55,23 +54,8 @@ template <std::integral T> constexpr inline T get_bits(T val, uint8_t max, uint8
 constexpr inline uint8_t rank(Square sq) { return get_bits(sq_to_int(sq), 5, 3); };
 constexpr inline uint8_t file(Square sq) { return get_bits(sq_to_int(sq), 2, 0); };
 // rank is the row and file the column
-constexpr Bitboard rank_bb(uint8_t rnk) { return static_cast<Bitboard>(0x00000000000000FF) << (8 * rnk); };
-constexpr Bitboard file_bb(uint8_t fil) { return 0x0101010101010101 << fil; };
 
 constexpr inline Square get_position(uint8_t rank, uint8_t file) { return static_cast<Square>(((rank & 0x7) << 3) | (file & 0x7)); };
 constexpr inline Side enemy_side(Side stm) { return (stm == Side::WHITE) ? Side::BLACK : Side::WHITE; };
-
-void print_bb(Bitboard to_print);
-
-constexpr inline Square get_lsb(Bitboard bitboard) { return static_cast<Square>(std::countr_zero(bitboard)); };
-
-constexpr inline Bitboard idx_to_bb(int idx) { return bit(idx); };
-constexpr inline Bitboard sq_to_bb(Square sq) { return bit(sq_to_int(sq)); };
-
-constexpr inline Square pop_lsb(Bitboard& num) {
-    const Square to_return = get_lsb(num);
-    clear_bit(num, to_return);
-    return to_return;
-};
 
 bool is_aligned(int sq_1, int sq_2, int sq_3);

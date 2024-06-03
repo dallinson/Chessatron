@@ -10,29 +10,29 @@ TEST(ChessBoardTests, SetFenStartPos) {
     Position pos;
     ASSERT_TRUE(pos.set_from_fen("startpos").has_value());
 
-    ASSERT_EQ(pos.occupancy(), (uint64_t) 0xFFFF00000000FFFF);
-    ASSERT_EQ(pos.pawns(), (uint64_t) 0x00FF00000000FF00);
-    ASSERT_EQ(pos.rooks(), (uint64_t) 0x8100000000000081);
-    ASSERT_EQ(pos.knights(), (uint64_t) 0x4200000000000042);
-    ASSERT_EQ(pos.bishops(), (uint64_t) 0x2400000000000024);
-    ASSERT_EQ(pos.queens(), (uint64_t) 0x0800000000000008);
-    ASSERT_EQ(pos.kings(), (uint64_t) 0x1000000000000010);
+    ASSERT_EQ(pos.occupancy(), Bitboard(0xFFFF00000000FFFF));
+    ASSERT_EQ(pos.pawns(), Bitboard(0x00FF00000000FF00));
+    ASSERT_EQ(pos.rooks(), Bitboard(0x8100000000000081));
+    ASSERT_EQ(pos.knights(), Bitboard(0x4200000000000042));
+    ASSERT_EQ(pos.bishops(), Bitboard(0x2400000000000024));
+    ASSERT_EQ(pos.queens(), Bitboard(0x0800000000000008));
+    ASSERT_EQ(pos.kings(), Bitboard(0x1000000000000010));
 
-    ASSERT_EQ(pos.occupancy(Side::WHITE), (uint64_t) 0x000000000000FFFF);
-    ASSERT_EQ(pos.pawns(Side::WHITE), (uint64_t) 0x000000000000FF00);
-    ASSERT_EQ(pos.rooks(Side::WHITE), (uint64_t) 0x0000000000000081);
-    ASSERT_EQ(pos.knights(Side::WHITE), (uint64_t) 0x0000000000000042);
-    ASSERT_EQ(pos.bishops(Side::WHITE), (uint64_t) 0x0000000000000024);
-    ASSERT_EQ(pos.queens(Side::WHITE), (uint64_t) 0x0000000000000008);
-    ASSERT_EQ(pos.kings(Side::WHITE), (uint64_t) 0x0000000000000010);
+    ASSERT_EQ(pos.occupancy(Side::WHITE), Bitboard(0x000000000000FFFF));
+    ASSERT_EQ(pos.pawns(Side::WHITE), Bitboard(0x000000000000FF00));
+    ASSERT_EQ(pos.rooks(Side::WHITE), Bitboard(0x0000000000000081));
+    ASSERT_EQ(pos.knights(Side::WHITE), Bitboard(0x0000000000000042));
+    ASSERT_EQ(pos.bishops(Side::WHITE), Bitboard(0x0000000000000024));
+    ASSERT_EQ(pos.queens(Side::WHITE), Bitboard(0x0000000000000008));
+    ASSERT_EQ(pos.kings(Side::WHITE), Bitboard(0x0000000000000010));
 
-    ASSERT_EQ(pos.occupancy(Side::BLACK), (uint64_t) 0xFFFF000000000000);
-    ASSERT_EQ(pos.pawns(Side::BLACK), (uint64_t) 0x00FF000000000000);
-    ASSERT_EQ(pos.rooks(Side::BLACK), (uint64_t) 0x8100000000000000);
-    ASSERT_EQ(pos.knights(Side::BLACK), (uint64_t) 0x4200000000000000);
-    ASSERT_EQ(pos.bishops(Side::BLACK), (uint64_t) 0x2400000000000000);
-    ASSERT_EQ(pos.queens(Side::BLACK), (uint64_t) 0x0800000000000000);
-    ASSERT_EQ(pos.kings(Side::BLACK), (uint64_t) 0x1000000000000000);
+    ASSERT_EQ(pos.occupancy(Side::BLACK), Bitboard(0xFFFF000000000000));
+    ASSERT_EQ(pos.pawns(Side::BLACK), Bitboard(0x00FF000000000000));
+    ASSERT_EQ(pos.rooks(Side::BLACK), Bitboard(0x8100000000000000));
+    ASSERT_EQ(pos.knights(Side::BLACK), Bitboard(0x4200000000000000));
+    ASSERT_EQ(pos.bishops(Side::BLACK), Bitboard(0x2400000000000000));
+    ASSERT_EQ(pos.queens(Side::BLACK), Bitboard(0x0800000000000000));
+    ASSERT_EQ(pos.kings(Side::BLACK), Bitboard(0x1000000000000000));
 
     ASSERT_EQ(pos.stm(), Side::WHITE);
     ASSERT_EQ(pos.get_en_passant_file(), 9);
@@ -42,29 +42,29 @@ TEST(ChessBoardTests, SetFenExplicitStartPos) {
     Position pos;
     ASSERT_TRUE(pos.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"));
 
-    ASSERT_EQ(pos.occupancy(), (uint64_t) 0xFFFF00000000FFFF);
-    ASSERT_EQ(pos.pawns(), (uint64_t) 0x00FF00000000FF00);
-    ASSERT_EQ(pos.rooks(), (uint64_t) 0x8100000000000081);
-    ASSERT_EQ(pos.knights(), (uint64_t) 0x4200000000000042);
-    ASSERT_EQ(pos.bishops(), (uint64_t) 0x2400000000000024);
-    ASSERT_EQ(pos.queens(), (uint64_t) 0x0800000000000008);
-    ASSERT_EQ(pos.kings(), (uint64_t) 0x1000000000000010);
+    ASSERT_EQ(pos.occupancy(), Bitboard(0xFFFF00000000FFFF));
+    ASSERT_EQ(pos.pawns(), Bitboard(0x00FF00000000FF00));
+    ASSERT_EQ(pos.rooks(), Bitboard(0x8100000000000081));
+    ASSERT_EQ(pos.knights(), Bitboard(0x4200000000000042));
+    ASSERT_EQ(pos.bishops(), Bitboard(0x2400000000000024));
+    ASSERT_EQ(pos.queens(), Bitboard(0x0800000000000008));
+    ASSERT_EQ(pos.kings(), Bitboard(0x1000000000000010));
 
-    ASSERT_EQ(pos.occupancy(Side::WHITE), (uint64_t) 0x000000000000FFFF);
-    ASSERT_EQ(pos.pawns(Side::WHITE), (uint64_t) 0x000000000000FF00);
-    ASSERT_EQ(pos.rooks(Side::WHITE), (uint64_t) 0x0000000000000081);
-    ASSERT_EQ(pos.knights(Side::WHITE), (uint64_t) 0x0000000000000042);
-    ASSERT_EQ(pos.bishops(Side::WHITE), (uint64_t) 0x0000000000000024);
-    ASSERT_EQ(pos.queens(Side::WHITE), (uint64_t) 0x0000000000000008);
-    ASSERT_EQ(pos.kings(Side::WHITE), (uint64_t) 0x0000000000000010);
+    ASSERT_EQ(pos.occupancy(Side::WHITE), Bitboard(0x000000000000FFFF));
+    ASSERT_EQ(pos.pawns(Side::WHITE), Bitboard(0x000000000000FF00));
+    ASSERT_EQ(pos.rooks(Side::WHITE), Bitboard(0x0000000000000081));
+    ASSERT_EQ(pos.knights(Side::WHITE), Bitboard(0x0000000000000042));
+    ASSERT_EQ(pos.bishops(Side::WHITE), Bitboard(0x0000000000000024));
+    ASSERT_EQ(pos.queens(Side::WHITE), Bitboard(0x0000000000000008));
+    ASSERT_EQ(pos.kings(Side::WHITE), Bitboard(0x0000000000000010));
 
-    ASSERT_EQ(pos.occupancy(Side::BLACK), (uint64_t) 0xFFFF000000000000);
-    ASSERT_EQ(pos.pawns(Side::BLACK), (uint64_t) 0x00FF000000000000);
-    ASSERT_EQ(pos.rooks(Side::BLACK), (uint64_t) 0x8100000000000000);
-    ASSERT_EQ(pos.knights(Side::BLACK), (uint64_t) 0x4200000000000000);
-    ASSERT_EQ(pos.bishops(Side::BLACK), (uint64_t) 0x2400000000000000);
-    ASSERT_EQ(pos.queens(Side::BLACK), (uint64_t) 0x0800000000000000);
-    ASSERT_EQ(pos.kings(Side::BLACK), (uint64_t) 0x1000000000000000);
+    ASSERT_EQ(pos.occupancy(Side::BLACK), Bitboard(0xFFFF000000000000));
+    ASSERT_EQ(pos.pawns(Side::BLACK), Bitboard(0x00FF000000000000));
+    ASSERT_EQ(pos.rooks(Side::BLACK), Bitboard(0x8100000000000000));
+    ASSERT_EQ(pos.knights(Side::BLACK), Bitboard(0x4200000000000000));
+    ASSERT_EQ(pos.bishops(Side::BLACK), Bitboard(0x2400000000000000));
+    ASSERT_EQ(pos.queens(Side::BLACK), Bitboard(0x0800000000000000));
+    ASSERT_EQ(pos.kings(Side::BLACK), Bitboard(0x1000000000000000));
 
     ASSERT_EQ(pos.stm(), Side::WHITE);
     ASSERT_EQ(pos.get_en_passant_file(), 9);
@@ -74,29 +74,29 @@ TEST(ChessBoardTests, SetFenExplicitStartPosShort) {
     Position pos;
     ASSERT_FALSE(pos.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR "));
 
-    ASSERT_EQ(pos.occupancy(), (uint64_t) 0xFFFF00000000FFFF);
-    ASSERT_EQ(pos.pawns(), (uint64_t) 0x00FF00000000FF00);
-    ASSERT_EQ(pos.rooks(), (uint64_t) 0x8100000000000081);
-    ASSERT_EQ(pos.knights(), (uint64_t) 0x4200000000000042);
-    ASSERT_EQ(pos.bishops(), (uint64_t) 0x2400000000000024);
-    ASSERT_EQ(pos.queens(), (uint64_t) 0x0800000000000008);
-    ASSERT_EQ(pos.kings(), (uint64_t) 0x1000000000000010);
+    ASSERT_EQ(pos.occupancy(), Bitboard(0xFFFF00000000FFFF));
+    ASSERT_EQ(pos.pawns(), Bitboard(0x00FF00000000FF00));
+    ASSERT_EQ(pos.rooks(), Bitboard(0x8100000000000081));
+    ASSERT_EQ(pos.knights(), Bitboard(0x4200000000000042));
+    ASSERT_EQ(pos.bishops(), Bitboard(0x2400000000000024));
+    ASSERT_EQ(pos.queens(), Bitboard(0x0800000000000008));
+    ASSERT_EQ(pos.kings(), Bitboard(0x1000000000000010));
 
-    ASSERT_EQ(pos.occupancy(Side::WHITE), (uint64_t) 0x000000000000FFFF);
-    ASSERT_EQ(pos.pawns(Side::WHITE), (uint64_t) 0x000000000000FF00);
-    ASSERT_EQ(pos.rooks(Side::WHITE), (uint64_t) 0x0000000000000081);
-    ASSERT_EQ(pos.knights(Side::WHITE), (uint64_t) 0x0000000000000042);
-    ASSERT_EQ(pos.bishops(Side::WHITE), (uint64_t) 0x0000000000000024);
-    ASSERT_EQ(pos.queens(Side::WHITE), (uint64_t) 0x0000000000000008);
-    ASSERT_EQ(pos.kings(Side::WHITE), (uint64_t) 0x0000000000000010);
+    ASSERT_EQ(pos.occupancy(Side::WHITE), Bitboard(0x000000000000FFFF));
+    ASSERT_EQ(pos.pawns(Side::WHITE), Bitboard(0x000000000000FF00));
+    ASSERT_EQ(pos.rooks(Side::WHITE), Bitboard(0x0000000000000081));
+    ASSERT_EQ(pos.knights(Side::WHITE), Bitboard(0x0000000000000042));
+    ASSERT_EQ(pos.bishops(Side::WHITE), Bitboard(0x0000000000000024));
+    ASSERT_EQ(pos.queens(Side::WHITE), Bitboard(0x0000000000000008));
+    ASSERT_EQ(pos.kings(Side::WHITE), Bitboard(0x0000000000000010));
 
-    ASSERT_EQ(pos.occupancy(Side::BLACK), (uint64_t) 0xFFFF000000000000);
-    ASSERT_EQ(pos.pawns(Side::BLACK), (uint64_t) 0x00FF000000000000);
-    ASSERT_EQ(pos.rooks(Side::BLACK), (uint64_t) 0x8100000000000000);
-    ASSERT_EQ(pos.knights(Side::BLACK), (uint64_t) 0x4200000000000000);
-    ASSERT_EQ(pos.bishops(Side::BLACK), (uint64_t) 0x2400000000000000);
-    ASSERT_EQ(pos.queens(Side::BLACK), (uint64_t) 0x0800000000000000);
-    ASSERT_EQ(pos.kings(Side::BLACK), (uint64_t) 0x1000000000000000);
+    ASSERT_EQ(pos.occupancy(Side::BLACK), Bitboard(0xFFFF000000000000));
+    ASSERT_EQ(pos.pawns(Side::BLACK), Bitboard(0x00FF000000000000));
+    ASSERT_EQ(pos.rooks(Side::BLACK), Bitboard(0x8100000000000000));
+    ASSERT_EQ(pos.knights(Side::BLACK), Bitboard(0x4200000000000000));
+    ASSERT_EQ(pos.bishops(Side::BLACK), Bitboard(0x2400000000000000));
+    ASSERT_EQ(pos.queens(Side::BLACK), Bitboard(0x0800000000000000));
+    ASSERT_EQ(pos.kings(Side::BLACK), Bitboard(0x1000000000000000));
 }
 
 TEST(ChessBoardTests, TestMakeUnmakeMove) {
@@ -181,7 +181,7 @@ TEST(ChessBoardTests, TestClearBoard) {
     pos.set_from_fen("startpos");
     pos.clear_board();
     for (int i = 0; i < 12; i++) {
-        ASSERT_EQ(pos.get_bb(i / 2, i % 6), 0);
+        ASSERT_TRUE(pos.get_bb(i / 2, i % 6).empty());
     }
     ASSERT_EQ(pos.stm(), Side::WHITE);
     ASSERT_EQ(pos.get_en_passant_file(), 9);

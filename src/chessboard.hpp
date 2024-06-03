@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <optional>
 
+#include "bitboard.hpp"
 #include "move.hpp"
 #include "pieces.hpp"
 #include "utils.hpp"
@@ -135,7 +136,7 @@ class Position {
 
         inline Bitboard checkers() const { return _checkers; };
         inline Bitboard pinned_pieces() const { return _pinned_pieces; };
-        bool in_check() const { return _checkers != 0; }; 
+        bool in_check() const { return !_checkers.empty(); }; 
 
         int32_t get_score(Side side) const { return scores[static_cast<int>(side)]; };
         uint8_t get_mg_phase() const { return mg_phase; };
@@ -146,7 +147,7 @@ class Position {
             if (en_passant_file != 9) {
                 const Side enemy = enemy_side(side_to_move);
                 const size_t offset = en_passant_file + 8 * static_cast<int>(enemy);
-                if ((pawns(side_to_move) & ZobristKeys::EnPassantCheckBitboards[offset]) == 0) {
+                if ((pawns(side_to_move) & ZobristKeys::EnPassantCheckBitboards[offset]).empty()) {
                     default_key ^= ZobristKeys::EnPassantKeys[en_passant_file];
                 }
             }

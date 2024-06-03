@@ -45,8 +45,8 @@ constexpr int castling_rights[64] = {0b1011, 15, 15, 15, 0b1010, 15, 15, 0b1110,
 
 void Position::set_piece(Piece piece, Square sq) {
     auto pos = sq_to_int(sq);
-    set_bit(piece_bbs[static_cast<int>(piece.get_type()) - 1], pos);
-    set_bit(side_bbs[static_cast<int>(piece.get_side())], pos);
+    piece_bbs[static_cast<int>(piece.get_type()) - 1] |= sq;
+    side_bbs[static_cast<int>(piece.get_side())] |= sq;
     piece_mb[pos] = piece;
     zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(piece, pos)];
 
@@ -260,7 +260,7 @@ Position::Position(const Position& origin, const Move to_make) {
     const auto dest_sq = to_make.dst_sq();
     const auto moved = piece_at(src_sq);
     Piece at_target = static_cast<Piece>(0);
-    if (get_bit(occupancy(), dest_sq) != 0) {
+    if (occupancy()[dest_sq]) {
         at_target = piece_at(dest_sq);
     }
     this->zobrist_key ^= ZobristKeys::EnPassantKeys[en_passant_file];
@@ -277,14 +277,14 @@ Position::Position(const Position& origin, const Move to_make) {
             halfmove_clock = 0;
         }
 
-        clear_bit(piece_bbs[static_cast<int>(moved.get_type()) - 1], src_sq);
-        clear_bit(side_bbs[static_cast<int>(moved.get_side())], src_sq);
+        piece_bbs[static_cast<int>(moved.get_type()) - 1] &= ~Bitboard(src_sq);
+        side_bbs[static_cast<int>(moved.get_side())] &= ~Bitboard(src_sq);
         piece_mb[sq_to_int(src_sq)] = 0;
         if (at_target.get_value()) {
             // If there _was_ a piece there
             // we do this as en passant captures without a piece at the position
-            clear_bit(piece_bbs[static_cast<int>(at_target.get_type()) - 1], dest_sq);
-            clear_bit(side_bbs[static_cast<int>(at_target.get_side())], dest_sq);
+            piece_bbs[static_cast<int>(at_target.get_type()) - 1] &= ~Bitboard(dest_sq);
+            side_bbs[static_cast<int>(at_target.get_side())] &= ~Bitboard(dest_sq);
 
             zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(at_target, to_make.dst_sq())];
             scores[static_cast<int>(enemy_side(side))] -= get_psqt_score(Piece(enemy_side(side), at_target.get_type()), to_make.dst_sq());
@@ -297,20 +297,20 @@ Position::Position(const Position& origin, const Move to_make) {
             Piece promoted_piece = Piece(side, PieceTypes((static_cast<int>(to_make.get_move_flags()) & 0b0011) + 2));
             zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(promoted_piece, dest_sq)];
             // promoted_piece += side;
-            set_bit(this->piece_bbs[static_cast<int>(promoted_piece.get_type()) - 1], dest_sq);
+            this->piece_bbs[static_cast<int>(promoted_piece.get_type()) - 1] |= dest_sq;
             piece_mb[sq_to_int(dest_sq)] = promoted_piece;
             // This handles pawn promotions
             scores[static_cast<int>(side)] += get_psqt_score(Piece(side, promoted_piece.get_type()), dest_sq);
 
             mg_phase += mg_phase_vals[static_cast<int>(promoted_piece.get_type()) - 1];
         } else {
-            set_bit(this->piece_bbs[static_cast<int>(moved.get_type()) - 1], dest_sq);
+            this->piece_bbs[static_cast<int>(moved.get_type()) - 1] |= dest_sq;
             piece_mb[sq_to_int(dest_sq)] = moved;
             zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, to_make.dst_sq())];
             scores[static_cast<int>(side)] += get_psqt_score(Piece(side, moved.get_type()), dest_sq);
             // otherwise sets pieces if moved normally
         }
-        set_bit(this->side_bbs[static_cast<int>(moved.get_side())], dest_sq);
+        this->side_bbs[static_cast<int>(moved.get_side())] |= dest_sq;
 
         if (to_make.get_move_flags() == MoveFlags::DOUBLE_PAWN_PUSH) [[unlikely]] {
             this->en_passant_file = to_make.dst_fle();
@@ -322,8 +322,8 @@ Position::Position(const Position& origin, const Move to_make) {
         if (to_make.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) [[unlikely]] {
             Side enemy = enemy_side(side);
             const auto enemy_pawn_idx = get_position(to_make.src_rnk(), to_make.dst_fle());
-            clear_bit(this->piece_bbs[bb_idx<PAWN>], enemy_pawn_idx);
-            clear_bit(this->side_bbs[static_cast<int>(enemy_side(side))], enemy_pawn_idx);
+            this->piece_bbs[bb_idx<PAWN>] &= ~Bitboard(enemy_pawn_idx);
+            this->side_bbs[static_cast<int>(enemy_side(side))] &= ~Bitboard(enemy_pawn_idx);
             piece_mb[sq_to_int(enemy_pawn_idx)] = 0;
             this->zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(enemy, PAWN), enemy_pawn_idx)];
             scores[static_cast<int>(enemy)] -= get_psqt_score(Piece(enemy, PAWN), enemy_pawn_idx);
@@ -336,14 +336,14 @@ Position::Position(const Position& origin, const Move to_make) {
 
             // we moved the king, now move the rook
 
-            clear_bit(this->piece_bbs[bb_idx<ROOK>], rook_origin);
-            clear_bit(this->side_bbs[static_cast<int>(side)], rook_origin);
+            this->piece_bbs[bb_idx<ROOK>] &= ~Bitboard(rook_origin);
+            this->side_bbs[static_cast<int>(side)] &= ~Bitboard(rook_origin);
             piece_mb[sq_to_int(rook_origin)] = 0;
             zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, ROOK), rook_origin)];
             scores[static_cast<int>(side)] -= get_psqt_score(Piece(side, ROOK), rook_origin);
 
-            set_bit(this->piece_bbs[bb_idx<ROOK>], rook_dest);
-            set_bit(this->side_bbs[static_cast<int>(side)], rook_dest);
+            this->piece_bbs[bb_idx<ROOK>] |= rook_dest;
+            this->side_bbs[static_cast<int>(side)] |= rook_dest;
             piece_mb[sq_to_int(rook_dest)] = Piece(side, PieceTypes::ROOK);
             zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, ROOK), rook_dest)];
             scores[static_cast<int>(side)] += get_psqt_score(Piece(side, ROOK), rook_dest);
@@ -363,7 +363,7 @@ Position::Position(const Position& origin, const Move to_make) {
 Position& Position::make_move(const Move to_make, BoardHistory& history) const { return history.push_board(Position(*this, to_make), to_make); }
 
 void Position::recompute_blockers_and_checkers(const Side side) {
-    const auto king_idx = get_lsb(this->kings(side));
+    const auto king_idx = this->kings(side).lsb();
     const Side enemy = enemy_side(side);
     _checkers = MoveGenerator::get_checkers(*this, side);
 
@@ -375,9 +375,9 @@ void Position::recompute_blockers_and_checkers(const Side side) {
     const Bitboard check_blockers = occupancy() ^ potential_checks;
     // don't evaluate ones where we already check the king
 
-    while (potential_checks) {
-        const Bitboard line_to_king = MagicNumbers::ConnectingSquares[(64 * sq_to_int(king_idx)) + sq_to_int(pop_lsb(potential_checks))];
-        if (std::popcount(line_to_king & check_blockers) <= 1) {
+    while (!potential_checks.empty()) {
+        const Bitboard line_to_king = MagicNumbers::ConnectingSquares[(64 * sq_to_int(king_idx)) + sq_to_int(potential_checks.pop_lsb())];
+        if ((line_to_king & check_blockers).popcnt() <= 1) {
             _pinned_pieces |= line_to_king & check_blockers;
         }
     }
@@ -392,7 +392,7 @@ ZobristKey Position::key_after(const Move move) const {
     const Side side = moved.get_side();
 
     Piece at_target = static_cast<Piece>(0);
-    if (get_bit(occupancy(), dest_sq) != 0) {
+    if (occupancy()[dest_sq]) {
         at_target = piece_at(dest_sq);
     }
 
@@ -479,7 +479,7 @@ std::optional<Move> Position::generate_move_from_string(const std::string& s) co
             m = MoveFlags::KINGSIDE_CASTLE;
         }
     }
-    if (get_bit(occupancy(), end_sq) != 0) {
+    if (occupancy()[end_sq]) {
         m = MoveFlags(static_cast<int>(m) | static_cast<int>(MoveFlags::CAPTURE));
     }
 

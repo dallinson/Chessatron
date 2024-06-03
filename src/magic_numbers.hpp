@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <limits>
 
+#include "bitboard.hpp"
 #include "utils.hpp"
 
 #define BISHOP_MOVES 512

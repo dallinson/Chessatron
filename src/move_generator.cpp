@@ -4,12 +4,12 @@
 
 #include "magic_numbers.hpp"
 
-int MoveGenerator::get_checking_piece_count(const Position& c, const Side side) { return std::popcount(MoveGenerator::get_checkers(c, side)); }
+int MoveGenerator::get_checking_piece_count(const Position& c, const Side side) { return MoveGenerator::get_checkers(c, side).popcnt(); }
 
 Bitboard MoveGenerator::get_checkers(const Position& c, const Side side) {
     const Side enemy = enemy_side(side);
 
-    return get_attackers(c, enemy, get_lsb(c.kings(side)), c.occupancy());
+    return get_attackers(c, enemy, c.kings(side).lsb(), c.occupancy());
 }
 
 /**
@@ -59,18 +59,18 @@ void MoveGenerator::generate_castling_moves(const Position& c, const Side side, 
     const auto enemy = enemy_side(side);
     if (c.get_kingside_castling(side)) {
         int shift_val = 56 * static_cast<int>(side);
-        if (((uint64_t) 0b10010000 ^ ((c.occupancy() >> shift_val) & 0xF0)) == 0) {
+        if ((Bitboard(0b10010000) ^ ((c.occupancy() >> shift_val) & Bitboard(0xF0))).empty()) {
             // if only these spaces are occupied
-            if (get_attackers(c, enemy, static_cast<Square>(5 + shift_val), total_occupancy) == 0 && get_attackers(c, enemy, static_cast<Square>(6 + shift_val), total_occupancy) == 0) {
+            if (get_attackers(c, enemy, static_cast<Square>(5 + shift_val), total_occupancy).empty() && get_attackers(c, enemy, static_cast<Square>(6 + shift_val), total_occupancy).empty()) {
                 move_list.add_move(Move(MoveFlags::KINGSIDE_CASTLE, 6 + shift_val, 4 + shift_val));
             }
         }
     }
     if (c.get_queenside_castling(side)) {
         int shift_val = 56 * static_cast<int>(side);
-        if (((uint64_t) 0b00010001 ^ ((c.occupancy() >> shift_val) & 0x1F)) == 0) {
+        if ((Bitboard(0b00010001) ^ ((c.occupancy() >> shift_val) & Bitboard(0x1F))).empty()) {
             // if only these spaces are occupied
-            if (get_attackers(c, enemy, static_cast<Square>(3 + shift_val), total_occupancy) == 0 && get_attackers(c, enemy, static_cast<Square>(2 + shift_val), total_occupancy) == 0) {
+            if (get_attackers(c, enemy, static_cast<Square>(3 + shift_val), total_occupancy).empty() && get_attackers(c, enemy, static_cast<Square>(2 + shift_val), total_occupancy).empty()) {
                 move_list.add_move(Move(MoveFlags::QUEENSIDE_CASTLE, 2 + shift_val, 4 + shift_val));
             }
         }
@@ -78,8 +78,8 @@ void MoveGenerator::generate_castling_moves(const Position& c, const Side side, 
 }
 
 bool MoveGenerator::is_move_legal(const Position& c, const Move m) {
-    const auto king_idx = get_lsb(c.kings(c.stm()));
-    const auto move_side = static_cast<Side>(get_bit(c.occupancy(Side::BLACK), m.src_sq()));
+    const auto king_idx = c.kings(c.stm()).lsb();
+    const auto move_side = static_cast<Side>(c.occupancy(Side::BLACK)[m.src_sq()]);
     const Side enemy = enemy_side(move_side);
     if (m.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) {
         // with en passant knights and pawns _cannot_ capture as the previous
@@ -88,14 +88,14 @@ bool MoveGenerator::is_move_legal(const Position& c, const Move m) {
         // and we would have moved out of check
         Bitboard occupancy = c.occupancy();
         Bitboard cleared_occupancy =
-            occupancy ^ (sq_to_bb(m.src_sq()) | sq_to_bb(m.dst_sq() - 8 + (16 * static_cast<int>(c.stm()))));
+            occupancy ^ (Bitboard(m.src_sq()) | Bitboard(m.dst_sq() - 8 + (16 * static_cast<int>(c.stm()))));
         // clear the origin and capture spaces
         // then set the destination square
-        cleared_occupancy |= sq_to_bb(m.dst_sq());
+        cleared_occupancy |= m.dst_sq();
         return !((MoveGenerator::generate_bishop_mm(cleared_occupancy, king_idx) & (c.bishops(enemy) | c.queens(enemy)))
                  || (MoveGenerator::generate_rook_mm(cleared_occupancy, king_idx) & (c.rooks(enemy) | c.queens(enemy))));
-    } else if (get_bit(c.kings(), m.src_sq()) != 0) {
-        Bitboard cleared_bitboard = c.occupancy() ^ sq_to_bb(m.src_sq());
+    } else if (c.kings()[m.src_sq()]) {
+        Bitboard cleared_bitboard = c.occupancy() ^ m.src_sq();
         const auto target_idx = m.dst_sq();
         const auto potential_diagonal_sliders = (c.bishops(enemy) | c.queens(enemy));
         const auto potential_orthogonal_sliders = (c.rooks(enemy) | c.queens(enemy));
@@ -107,15 +107,15 @@ bool MoveGenerator::is_move_legal(const Position& c, const Move m) {
     } else [[likely]] {
 
         Bitboard checking_pieces = c.checkers();
-        if (checking_pieces) {
+        if (!checking_pieces.empty()) {
             // if there's a piece checking our king - we know at most one piece can be checking as double checks are king moves only
-            if (!(MagicNumbers::ConnectingSquares[(64 * sq_to_int(king_idx)) + sq_to_int(get_lsb(checking_pieces))] & sq_to_bb(m.dst_sq()))) {
+            if (!(MagicNumbers::ConnectingSquares[(64 * sq_to_int(king_idx)) + sq_to_int(checking_pieces.lsb())] & m.dst_sq())) {
                 return false;
             }
         }
 
-        if (sq_to_bb(m.src_sq()) & c.pinned_pieces()) {
-            return MagicNumbers::AlignedSquares[(64 * sq_to_int(king_idx)) + sq_to_int(m.src_sq())] & sq_to_bb(m.dst_sq());
+        if (!(c.pinned_pieces() & m.src_sq()).empty()) {
+            return !(MagicNumbers::AlignedSquares[(64 * sq_to_int(king_idx)) + sq_to_int(m.src_sq())] & m.dst_sq()).empty();
         }
     }
 

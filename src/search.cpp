@@ -111,11 +111,11 @@ bool Search::static_exchange_evaluation(const Position& pos, const Move move, co
     const Bitboard rooks = pos.rooks() | pos.queens();
 
     Bitboard occupied = pos.occupancy();
-    occupied ^= sq_to_bb(move.src_sq());
-    occupied |= sq_to_bb(move.dst_sq());
+    occupied ^= move.src_sq();
+    occupied |= move.dst_sq();
     if (move.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) {
         const auto ep_target = get_position(move.src_rnk(), move.dst_fle());
-        occupied ^= sq_to_bb(ep_target);
+        occupied ^= ep_target;
     }
 
     Bitboard attackers = (MoveGenerator::get_attackers(pos, pos.stm(), move.dst_sq(), occupied)
@@ -127,7 +127,7 @@ bool Search::static_exchange_evaluation(const Position& pos, const Move move, co
     while (true) {
         const Bitboard this_side_attackers = attackers & pos.occupancy(moving_side);
 
-        if (this_side_attackers == 0) {
+        if (this_side_attackers.empty()) {
             break;
         }
 
@@ -136,12 +136,12 @@ bool Search::static_exchange_evaluation(const Position& pos, const Move move, co
         for (next_victim = PieceTypes::PAWN; next_victim <= PieceTypes::QUEEN;
              next_victim = static_cast<PieceTypes>(static_cast<int>(next_victim) + 1)) {
             victim_attackers = this_side_attackers & pos.get_bb(static_cast<int>(next_victim) - 1, static_cast<int>(moving_side));
-            if (victim_attackers != 0) {
+            if (!victim_attackers.empty()) {
                 break;
             }
         }
 
-        occupied ^= (victim_attackers & -victim_attackers);
+        occupied ^= (victim_attackers.bb & -(victim_attackers.bb));
 
         if (next_victim == PieceTypes::PAWN || next_victim == PieceTypes::BISHOP || next_victim == PieceTypes::QUEEN) {
             // the pieces that attack diagonally
@@ -160,7 +160,7 @@ bool Search::static_exchange_evaluation(const Position& pos, const Move move, co
         balance = -balance - 1 - Search::SEEScores[static_cast<int>(next_victim)];
 
         if (balance >= 0) {
-            if (next_victim == PieceTypes::KING && (attackers & pos.occupancy(moving_side))) {
+            if (next_victim == PieceTypes::KING && !(attackers & pos.occupancy(moving_side)).empty()) {
                 moving_side = enemy_side(moving_side);
             }
             break;
@@ -175,11 +175,11 @@ bool Search::detect_insufficient_material(const Position& board, const Side side
     if (board.occupancy(enemy) == board.kings(enemy)) {
         // if the enemy side only has the king
         const Bitboard pieces = board.queens(side) | board.rooks(side) | board.bishops(side) | board.knights(side) | board.pawns(side);
-        if (pieces == 0) {
+        if (pieces.empty()) {
             return true;
         }
         if (pieces == board.bishops(side) || pieces == board.knights(side)) {
-            return std::popcount(pieces) == 1;
+            return pieces.popcnt() == 1;
         }
     }
     return false;

@@ -24,20 +24,20 @@ consteval std::array<Bitboard, 64 * 64> compute_connecting_squares() {
     std::array<Bitboard, 64 * 64> to_return;
     for (Square first_square = Square::A1; first_square != Square::NONE; first_square++) {
         for (Square second_square = Square::A1; second_square != Square::NONE; second_square++) {
-            Bitboard b = sq_to_bb(second_square);
+            Bitboard b(second_square);
             int rank_diff = rank(first_square) - rank(second_square);
             int file_diff = file(first_square) - file(second_square);
 
             if (first_square == second_square) {
-                b = sq_to_bb(second_square);
+                b = Bitboard(second_square);
             } else if (rank(first_square) == rank(second_square)) {
                 for (int8_t i = file(first_square) - GET_SIGN(file_diff); i != ((int8_t) file(second_square)); i -= GET_SIGN(file_diff)) {
                     // use int8_t to satisfy the compiler re loop iteration count
-                    b |= sq_to_bb(get_position(rank(first_square), i));
+                    b |= get_position(rank(first_square), i);
                 }
             } else if (file(first_square) == file(second_square)) {
                 for (int8_t i = rank(first_square) - GET_SIGN(rank_diff); i != ((int8_t) rank(second_square)); i -= GET_SIGN(rank_diff)) {
-                    b |= sq_to_bb(get_position(i, file(first_square)));
+                    b |= get_position(i, file(first_square));
                 }
             } else {
                 int min_square = MIN(sq_to_int(first_square), sq_to_int(second_square));
@@ -83,11 +83,11 @@ consteval std::array<Bitboard, 64 * 64> compute_aligned_squares() {
                 b = 0;
             } else if (rank_diff == 0) {
                 for (int i = 0; i < 8; i++) {
-                    b |= sq_to_bb(get_position(rank(first_square), i));
+                    b |= get_position(rank(first_square), i);
                 }
             } else if (file_diff == 0) {
                 for (int i = 0; i < 8; i++) {
-                    b |= sq_to_bb(get_position(i, file(first_square)));
+                    b |= get_position(i, file(first_square));
                 }
             } else if (ABS(rank_diff) == ABS(file_diff)) {
                 for (int i = 0; i < 64; i++) {
@@ -115,7 +115,7 @@ consteval std::array<Bitboard, 64> generate_king_moves() {
                     int r_rk = rk + r;
                     int f_fl = fl + f;
                     if (!((r == 0 && f == 0) || r_rk < 0 || f_fl < 0 || r_rk >= 8 || f_fl >= 8)) {
-                        b |= sq_to_bb(get_position(r_rk, f_fl));
+                        b |= get_position(r_rk, f_fl);
                     }
                 }
             }

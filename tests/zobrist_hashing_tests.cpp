@@ -219,7 +219,7 @@ TEST(ZobristHashingTests, TestPolyglotExamples) {
 TEST(ZobristHashingTests, TestEmptyBoard) {
     Position pos;
     pos.clear_board();
-    ASSERT_EQ(pos.occupancy(), 0);
+    ASSERT_TRUE(pos.occupancy().empty());
     ASSERT_EQ(pos.stm(), Side::WHITE);
     ASSERT_EQ(pos.get_zobrist_key(), ZobristKeys::SideToMove);
     ASSERT_EQ(pos.get_polyglot_zobrist_key(), ZobristKeys::SideToMove);
