@@ -30,7 +30,7 @@ class HistoryTable {
         HistoryValue score(const BoardHistory& hist, Move move, Side stm) const;
         HistoryValue mainhist_score(Move move, Side stm) const { return main_hist[move.hist_idx(stm)]; };
         HistoryValue conthist_score(const BoardHistory& hist, Move move) const;
-        void update_scores(const BoardHistory& hist, std::span<const ScoredMove> moves, ScoredMove current_move, Side stm, int depth);
+        void update_scores(const BoardHistory& hist, std::span<const Move> moves, ScoredMove current_move, Side stm, int depth);
         void update_mainhist_score(Move move, Side stm, HistoryValue bonus);
         void update_conthist_score(const BoardHistory& hist, Move move, HistoryValue bonus);
         void clear() { 
