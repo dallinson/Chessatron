@@ -62,7 +62,7 @@ void MoveGenerator::generate_castling_moves(const Position& c, const Side side, 
         if ((Bitboard(0b10010000) ^ ((c.occupancy() >> shift_val) & Bitboard(0xF0))).empty()) {
             // if only these spaces are occupied
             if (get_attackers(c, enemy, static_cast<Square>(5 + shift_val), total_occupancy).empty() && get_attackers(c, enemy, static_cast<Square>(6 + shift_val), total_occupancy).empty()) {
-                move_list.add_move(Move(MoveFlags::KINGSIDE_CASTLE, 6 + shift_val, 4 + shift_val));
+                move_list.add(Move(MoveFlags::KINGSIDE_CASTLE, 6 + shift_val, 4 + shift_val));
             }
         }
     }
@@ -71,7 +71,7 @@ void MoveGenerator::generate_castling_moves(const Position& c, const Side side, 
         if ((Bitboard(0b00010001) ^ ((c.occupancy() >> shift_val) & Bitboard(0x1F))).empty()) {
             // if only these spaces are occupied
             if (get_attackers(c, enemy, static_cast<Square>(3 + shift_val), total_occupancy).empty() && get_attackers(c, enemy, static_cast<Square>(2 + shift_val), total_occupancy).empty()) {
-                move_list.add_move(Move(MoveFlags::QUEENSIDE_CASTLE, 2 + shift_val, 4 + shift_val));
+                move_list.add(Move(MoveFlags::QUEENSIDE_CASTLE, 2 + shift_val, 4 + shift_val));
             }
         }
     }

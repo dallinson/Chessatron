@@ -130,16 +130,16 @@ template <PieceTypes piece_type, MoveGenType gen_type> void MoveGenerator::gener
             const auto flag = (c.occupancy()[target_idx])
                 ? MoveFlags::CAPTURE
                 : MoveFlags::QUIET_MOVE;
-            output.add_move(Move(flag, target_idx, piece_idx));
+            output.add(Move(flag, target_idx, piece_idx));
         }
     }
 }
 
 template <MoveGenType gen_type, MoveFlags base_flags> void gen_promotions(MoveList& move_list, const Square src, const Square dst) {
-    if constexpr (gen_type != MoveGenType::NON_QUIESCENCE) move_list.add_move(Move(MoveFlags::QUEEN_PROMOTION | base_flags, dst, src));
-    if constexpr (gen_type != MoveGenType::NON_QUIESCENCE) move_list.add_move(Move(MoveFlags::KNIGHT_PROMOTION | base_flags, dst, src));
-    if constexpr (gen_type != MoveGenType::QUIESCENCE) move_list.add_move(Move(MoveFlags::ROOK_PROMOTION | base_flags, dst, src));
-    if constexpr (gen_type != MoveGenType::QUIESCENCE) move_list.add_move(Move(MoveFlags::BISHOP_PROMOTION | base_flags, dst, src));
+    if constexpr (gen_type != MoveGenType::NON_QUIESCENCE) move_list.add(Move(MoveFlags::QUEEN_PROMOTION | base_flags, dst, src));
+    if constexpr (gen_type != MoveGenType::NON_QUIESCENCE) move_list.add(Move(MoveFlags::KNIGHT_PROMOTION | base_flags, dst, src));
+    if constexpr (gen_type != MoveGenType::QUIESCENCE) move_list.add(Move(MoveFlags::ROOK_PROMOTION | base_flags, dst, src));
+    if constexpr (gen_type != MoveGenType::QUIESCENCE) move_list.add(Move(MoveFlags::BISHOP_PROMOTION | base_flags, dst, src));
 }
 
 template <MoveGenType gen_type, Side stm> void MoveGenerator::generate_pawn_moves(const Position& c, MoveList& move_list) {
@@ -162,7 +162,7 @@ template <MoveGenType gen_type, Side stm> void MoveGenerator::generate_pawn_move
 
         while (!double_advancing.empty()) {
             const auto lsb = double_advancing.pop_lsb();
-            move_list.add_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, lsb, lsb - (2 * ahead)));
+            move_list.add(Move(MoveFlags::DOUBLE_PAWN_PUSH, lsb, lsb - (2 * ahead)));
         }
     }
 
@@ -178,7 +178,7 @@ template <MoveGenType gen_type, Side stm> void MoveGenerator::generate_pawn_move
     if constexpr (gen_type != MoveGenType::QUIESCENCE) {
         while (!non_promotable.empty()) {
             const auto lsb = non_promotable.pop_lsb();
-            move_list.add_move(Move(MoveFlags::QUIET_MOVE, lsb, lsb - ahead));
+            move_list.add(Move(MoveFlags::QUIET_MOVE, lsb, lsb - ahead));
         }
     }
 
@@ -199,7 +199,7 @@ template <MoveGenType gen_type, Side stm> void MoveGenerator::generate_pawn_move
                 if (rank(lsb) == back_rank) {
                     gen_promotions<MoveGenType::ALL_LEGAL, MoveFlags::CAPTURE>(move_list, lsb - offset, lsb);
                 } else {
-                    move_list.add_move(Move(MoveFlags::CAPTURE, lsb, lsb - offset));
+                    move_list.add(Move(MoveFlags::CAPTURE, lsb, lsb - offset));
                 }
             }
         }
@@ -218,7 +218,7 @@ template <MoveGenType gen_type, Side stm> void MoveGenerator::generate_pawn_move
                 if (rank(lsb) == back_rank) {
                     gen_promotions<MoveGenType::ALL_LEGAL, MoveFlags::CAPTURE>(move_list, lsb - offset, lsb);
                 } else {
-                    move_list.add_move(Move(MoveFlags::CAPTURE, lsb, lsb - offset));
+                    move_list.add(Move(MoveFlags::CAPTURE, lsb, lsb - offset));
                 }
             }
         }
@@ -238,7 +238,7 @@ template <MoveGenType gen_type, Side stm> void MoveGenerator::generate_pawn_move
                 generate_rook_mm(cleared_bb, ksq) & (c.rooks(enemy_side(stm)) | c.queens(enemy_side(stm)));
 
             if (threatening_bishops.empty() && threatening_rooks.empty()) {
-                move_list.add_move(Move(MoveFlags::EN_PASSANT_CAPTURE, ep_target_square, lsb));
+                move_list.add(Move(MoveFlags::EN_PASSANT_CAPTURE, ep_target_square, lsb));
             }
         }
     }

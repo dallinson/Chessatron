@@ -69,33 +69,29 @@ struct ScoredMove {
     Move move;
     bool see_ordering_result;
     uint8_t padding;
+
+    ScoredMove() {};
+    ScoredMove(Move move) : move(move) {};
 };
 
 bool operator==(const Move& lhs, const Move& rhs);
 
-class MoveList {
+template<typename T, size_t elem_count>
+class StackVector {
     private:
         size_t idx;
-        std::array<ScoredMove, MAX_TURN_MOVE_COUNT> data;
+        std::array<T, elem_count> data;
 
     public:
-        MoveList() : idx(0){};
+        StackVector() : idx(0) {};
 
-        void add_move(const Move to_add) {
-            this->data[idx].move = to_add;
+        void add(const T to_add) {
+            this->data[idx] = to_add;
             idx += 1;
         };
 
-        void add_moves(const MoveList& other_list) {
-            size_t other_len = other_list.size();
-            memcpy(&this->data[idx], other_list.get_data_addr(), other_len * sizeof(Move));
-            idx += other_len;
-        };
-
-        ScoredMove& operator[](size_t arg_idx) { return data[arg_idx]; }
-        const ScoredMove& operator[](size_t arg_idx) const { return data[arg_idx]; }
-
-        const ScoredMove* get_data_addr() const { return data.data(); }
+        T& operator[](size_t arg_idx) { return data[arg_idx]; }
+        const T& operator[](size_t arg_idx) const { return data[arg_idx]; }
 
         size_t size() const { return this->idx; };
 
@@ -107,3 +103,5 @@ class MoveList {
         void clear() { this->idx = 0; };
 };
 
+using MoveList = StackVector<ScoredMove, MAX_TURN_MOVE_COUNT>;
+using UnscoredMoveList = StackVector<Move, MAX_TURN_MOVE_COUNT>;

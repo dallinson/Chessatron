@@ -298,7 +298,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     const Score original_alpha = alpha;
     std::optional<ScoredMove> opt_move;
     size_t total_moves = 0;
-    MoveList evaluated_moves;
+    UnscoredMoveList evaluated_moves;
     bool skip_quiets = false;
     while ((opt_move = mp.next(skip_quiets)).has_value()) {
         if (search_cancelled) {
@@ -401,7 +401,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
                 alpha = score;
             }
         }
-        evaluated_moves.add_move(move.move);
+        evaluated_moves.add(move.move);
     }
     const BoundTypes bound_type =
         (best_score >= beta ? BoundTypes::LOWER_BOUND : (alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND));
