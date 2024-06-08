@@ -204,10 +204,14 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
             && (tt_entry.bound_type() == BoundTypes::EXACT_BOUND || (tt_entry.bound_type() == BoundTypes::LOWER_BOUND && tt_entry.score() >= beta)
                 || (tt_entry.bound_type() == BoundTypes::UPPER_BOUND && tt_entry.score() <= alpha));
         if (should_cutoff) {
-            if (tt_entry.score() == MagicNumbers::PositiveInfinity) {
-                return MagicNumbers::PositiveInfinity - ply;
-            } else if (tt_entry.score() == MagicNumbers::NegativeInfinity) {
-                return MagicNumbers::NegativeInfinity + ply;
+            // Positive infinity is a a mate at this square
+            // Negative infinity is being mated at this square
+            // A mate score is therefore greater than (positive_infinity - max_ply) or
+            // less than (negative_infinity + max_ply)
+            if (tt_entry.score() >= (MagicNumbers::PositiveInfinity - MAX_PLY)) {
+                return tt_entry.score() - ply;
+            } else if (tt_entry.score() <= (MagicNumbers::NegativeInfinity + MAX_PLY)) {
+                return tt_entry.score() + ply;
             }
             return tt_entry.score();
         }
@@ -405,7 +409,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     }
     const BoundTypes bound_type =
         (best_score >= beta ? BoundTypes::LOWER_BOUND : (alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND));
-    tt.store(TranspositionTableEntry(best_move, depth, bound_type, best_score, old_pos.get_zobrist_key()), old_pos);
+    tt.store(TranspositionTableEntry(best_move, depth, bound_type, best_score, old_pos.get_zobrist_key()), old_pos, ply);
     return best_score;
 }
 
