@@ -484,7 +484,7 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
 }
 
 Score SearchHandler::run_aspiration_window_search(int depth, Score previous_score) {
-    Score window = 40;
+    Score window = 30;
     Score alpha, beta;
     while (true) {
         if (depth <= 4) {
