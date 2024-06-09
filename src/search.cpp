@@ -370,6 +370,8 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
                 // reduce more if we are not in a pv node and we're in a cut node
                 lmr_reduction -= static_cast<int>(pos.in_check());
                 // reduce less if we're in check
+                lmr_reduction += static_cast<int>(!improving);
+                // Reduce more if we aren't improving
                 return lmr_reduction;
             }(), 1, MAX_PLY - ply);
             
