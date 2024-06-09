@@ -232,6 +232,19 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
         return static_eval;
     }
 
+    const auto improving = [&]() {
+        if (old_pos.in_check()) {
+            return false;
+        }
+
+        if (board_hist.len() >= 3 && !board_hist[board_hist.len() - 3].in_check()) {
+            return static_eval > Evaluation::evaluate_board(board_hist[board_hist.len() - 3]);
+        } else if (board_hist.len() >= 5 && !board_hist[board_hist.len() - 5].in_check()) {
+            return static_eval > Evaluation::evaluate_board(board_hist[board_hist.len() - 5]);
+        }
+        return false;
+    }();
+
     // Reverse futility pruning
     if constexpr (!is_pv_node(node_type)) {
         if (!old_pos.in_check() && depth < 7 && (static_eval - (70 * depth)) >= beta) {
@@ -313,7 +326,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
         if constexpr (!is_pv_node(node_type)) {
             // late move pruning
-            if (depth <= 6 && !old_pos.in_check() && move.move.is_quiet() && total_moves >= static_cast<size_t>((depth * depth) + 4)) {
+            if (depth <= 6 && !old_pos.in_check() && move.move.is_quiet() && total_moves >= static_cast<size_t>(1 + (((depth * depth) + 3) / (2 - improving)))) {
                 skip_quiets = true;
                 continue;
             }
