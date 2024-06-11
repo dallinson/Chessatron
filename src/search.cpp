@@ -360,11 +360,11 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
         // See if we can perform LMR
         if (depth > 2
-            && total_moves >= std::max((size_t) 2, 1 + static_cast<size_t>(is_pv_node(node_type)) + static_cast<size_t>(!tt_move)
-                                                           + static_cast<size_t>(node_type == NodeTypes::ROOT_NODE)
-                                                           + static_cast<size_t>(move.move.is_capture() || move.move.is_promotion()))) {
+            && evaluated_moves.size() >= std::max((size_t) 1, static_cast<size_t>(is_pv_node(node_type)) + static_cast<size_t>(!tt_move)
+                                            + static_cast<size_t>(node_type == NodeTypes::ROOT_NODE)
+                                            + static_cast<size_t>(move.move.is_capture() || move.move.is_promotion()))) {
             const auto lmr_depth = std::clamp(new_depth - [&]() {
-                int lmr_reduction = LmrTable[depth][total_moves - 1];
+                int lmr_reduction = LmrTable[depth][evaluated_moves.size()];
                 // default log formula for lmr
                 lmr_reduction += static_cast<int>(!is_pv_node(node_type) && is_cut_node);
                 // reduce more if we are not in a pv node and we're in a cut node
@@ -385,12 +385,12 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
             }
         }
         // if we didn't perform LMR
-        else if (!is_pv_node(node_type) || total_moves >= 2) {
+        else if (!is_pv_node(node_type) || evaluated_moves.size() >= 1) {
             score =
                 -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, new_depth, ply + 1, node_count, child_cutnode_type);
         }
 
-        if (is_pv_node(node_type) && (total_moves == 1 || score > alpha)) {
+        if (is_pv_node(node_type) && (evaluated_moves.size() == 0 || score > alpha)) {
             score = -negamax_step<NodeTypes::PV_NODE>(pos, -beta, -alpha, new_depth, ply + 1, node_count, child_cutnode_type);
         }
 
