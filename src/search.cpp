@@ -314,7 +314,6 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     Score best_score = MagicNumbers::NegativeInfinity;
     const Score original_alpha = alpha;
     std::optional<ScoredMove> opt_move;
-    size_t total_moves = 0;
     UnscoredMoveList evaluated_moves;
     bool skip_quiets = false;
     while ((opt_move = mp.next(skip_quiets)).has_value()) {
@@ -322,11 +321,10 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
             break;
         }
         const auto move = opt_move.value();
-        total_moves += 1;
 
         if constexpr (!is_pv_node(node_type)) {
             // late move pruning
-            if (depth <= 6 && !old_pos.in_check() && move.move.is_quiet() && total_moves >= static_cast<size_t>(1 + (((depth * depth) + 3) / (2 - improving)))) {
+            if (depth <= 6 && !old_pos.in_check() && move.move.is_quiet() && evaluated_moves.size() >= static_cast<size_t>(((depth * depth) + 3) / (2 - improving))) {
                 skip_quiets = true;
                 continue;
             }
@@ -341,7 +339,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
         // history pruning
         if constexpr (!is_pv_node(node_type)) {
-            if (best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && total_moves > 1 && depth <= 6 && static_eval <= alpha && history_table.score(board_hist, move.move, old_pos.stm()) < -(depth * depth) * 14) {
+            if (best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && evaluated_moves.size() > 0 && depth <= 6 && static_eval <= alpha && history_table.score(board_hist, move.move, old_pos.stm()) < -(depth * depth) * 14) {
                 continue;
             }
         }
