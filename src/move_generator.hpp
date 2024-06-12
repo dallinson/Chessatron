@@ -36,6 +36,7 @@ namespace MoveGenerator {
     Bitboard generate_rook_mm(const Bitboard b, const Square sq);
     Bitboard generate_queen_mm(const Bitboard b, const Square sq);
     template <PieceTypes piece_type> Bitboard generate_mm(const Bitboard b, const Square sq);
+    Bitboard generate_mm(const PieceTypes pc_type, const Bitboard occupancy, const Square sq);
 
     template <PieceTypes piece_type, MoveGenType gen_type> void generate_moves(const Position& c, const Side side, MoveList& move_list);
     template <MoveGenType gen_type, Side stm> void generate_pawn_moves(const Position& c, MoveList& move_list);
