@@ -97,8 +97,8 @@ class StackVector {
 
         auto begin() const { return data.begin(); };
         auto begin() { return data.begin(); };
-        auto end() const { return data.end(); };
-        auto end() { return data.end(); };
+        auto end() const { return data.begin() + idx; };
+        auto end() { return data.begin() + idx; };
 
         void clear() { this->idx = 0; };
 };
