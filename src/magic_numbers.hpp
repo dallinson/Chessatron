@@ -5,10 +5,12 @@
 #include <limits>
 
 #include "bitboard.hpp"
+#include "mdarray.hpp"
 #include "utils.hpp"
 
 #define BISHOP_MOVES 512
 #define ROOK_MOVES 4096
+
 
 namespace MagicNumbers {
     extern const Bitboard RookMagics[64];
@@ -19,15 +21,15 @@ namespace MagicNumbers {
     extern const int RookBits[64];
     extern const int BishopBits[64];
 
-    extern const std::array<Bitboard, 32768> BishopAttacks;
-    extern const std::array<Bitboard, 262144> RookAttacks;
+    extern const MDArray<Bitboard, 64, 512> BishopAttacks;
+    extern const MDArray<Bitboard, 64, 4096> RookAttacks;
 
-    extern const std::array<Bitboard, 64 * 64> ConnectingSquares;
-    extern const std::array<Bitboard, 64 * 64> AlignedSquares;
+    extern const MDArray<Bitboard, 64, 64> ConnectingSquares;
+    extern const MDArray<Bitboard, 64, 64> AlignedSquares;
 
     extern const std::array<Bitboard, 64> KingMoves;
-    extern const Bitboard KnightMoves[64];
-    extern const Bitboard PawnAttacks[128];
+    extern const std::array<Bitboard, 64> KnightMoves;
+    extern const MDArray<Bitboard, 2, 64> PawnAttacks;
 
     void generate_magics();
 

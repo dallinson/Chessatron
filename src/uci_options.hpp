@@ -21,7 +21,7 @@ class UCIOption {
         std::string value;
         std::function<void(UCIOption&)> callback;
     public:
-        UCIOption() : option_type(UCIOptionTypes::SPIN), min(0), max(0), default_value(0), value(0), callback([](UCIOption& opt) {(void) opt;}) {};
+        UCIOption() : option_type(UCIOptionTypes::SPIN), min(0), max(0), default_value("0"), value("0"), callback([](UCIOption& opt) {(void) opt;}) {};
         UCIOption(int min, int max, std::string default_value, std::function<void(UCIOption&)> callback);
         operator int() const;
 

@@ -376,7 +376,7 @@ void Position::recompute_blockers_and_checkers(const Side side) {
     // don't evaluate ones where we already check the king
 
     while (!potential_checks.empty()) {
-        const Bitboard line_to_king = MagicNumbers::ConnectingSquares[(64 * sq_to_int(king_idx)) + sq_to_int(potential_checks.pop_lsb())];
+        const Bitboard line_to_king = MagicNumbers::ConnectingSquares[sq_to_int(king_idx)][sq_to_int(potential_checks.pop_lsb())];
         if ((line_to_king & check_blockers).popcnt() <= 1) {
             _pinned_pieces |= line_to_king & check_blockers;
         }

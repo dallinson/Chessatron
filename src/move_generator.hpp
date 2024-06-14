@@ -123,11 +123,11 @@ template <PieceTypes piece_type, MoveGenType gen_type> void MoveGenerator::gener
         if constexpr (piece_type != PieceTypes::KING) {
             if (!c.checkers().empty()) {
                 // no checking pieces implies the checking idx is 64
-                potential_moves &= MagicNumbers::ConnectingSquares[(64 * sq_to_int(king_idx)) + sq_to_int(c.checkers().lsb())];
+                potential_moves &= MagicNumbers::ConnectingSquares[sq_to_int(king_idx)][sq_to_int(c.checkers().lsb())];
             }
             if (!(c.pinned_pieces() & piece_idx).empty()) {
                 // if we are pinned
-                potential_moves &= MagicNumbers::AlignedSquares[(64 * sq_to_int(king_idx)) + sq_to_int(piece_idx)];
+                potential_moves &= MagicNumbers::AlignedSquares[sq_to_int(king_idx)][sq_to_int(piece_idx)];
             }
             // these are the only valid move positions
         }
@@ -165,7 +165,7 @@ template <MoveGenType gen_type, Side stm> void MoveGenerator::generate_pawn_move
     constexpr auto ahead = stm == Side::WHITE ? 8 : -8;
     constexpr auto back_rank = stm == Side::WHITE ? 7 : 0;
     constexpr auto back_rank_bb = rank_bb(back_rank);
-    const auto valid_dests = c.in_check() ? MagicNumbers::ConnectingSquares[(64 * sq_to_int(ksq)) + sq_to_int(c.checkers().lsb())] : Bitboard(0xFFFFFFFFFFFFFFFF);
+    const auto valid_dests = c.in_check() ? MagicNumbers::ConnectingSquares[sq_to_int(ksq)][sq_to_int(c.checkers().lsb())] : Bitboard(0xFFFFFFFFFFFFFFFF);
 
     const auto advanceable = unpinned_pawns | (pinned_pawns & file_bb(file(ksq)));
     auto advancing = (stm == Side::WHITE ? advanceable << 8 : advanceable >> 8) & ~occupied;
@@ -207,7 +207,7 @@ template <MoveGenType gen_type, Side stm> void MoveGenerator::generate_pawn_move
             Bitboard capturing_pieces = ([&]() {
                 const auto invalid_bb = a_file | back_rank_bb;
                 if (!(c.kings(stm) & invalid_bb).empty()) return static_cast<Bitboard>(0);
-                return pinned_pawns & MagicNumbers::AlignedSquares[(64 * sq_to_int(ksq)) + sq_to_int(ksq + offset)];
+                return pinned_pawns & MagicNumbers::AlignedSquares[sq_to_int(ksq)][sq_to_int(ksq + offset)];
             }() | unpinned_pawns) & ~a_file;
             capturing_pieces = (stm == Side::WHITE ? capturing_pieces << 7 : capturing_pieces >> 9) & enemy_bb & valid_dests;
             while (!capturing_pieces.empty()) {
@@ -226,7 +226,7 @@ template <MoveGenType gen_type, Side stm> void MoveGenerator::generate_pawn_move
             Bitboard capturing_pieces = ([&]() {
                 const auto invalid_bb = h_file | back_rank_bb;
                 if (!(c.kings(stm) & invalid_bb).empty()) return static_cast<Bitboard>(0);
-                return pinned_pawns & MagicNumbers::AlignedSquares[(64 * sq_to_int(ksq)) + sq_to_int(ksq + offset)];
+                return pinned_pawns & MagicNumbers::AlignedSquares[sq_to_int(ksq)][sq_to_int(ksq + offset)];
             }() | unpinned_pawns) & ~h_file;
             capturing_pieces = (stm == Side::WHITE ? capturing_pieces << 9 : capturing_pieces >> 7) & enemy_bb & valid_dests;
             while (!capturing_pieces.empty()) {

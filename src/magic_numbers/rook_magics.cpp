@@ -72,8 +72,8 @@ constexpr Bitboard generate_rook_attacks(Square square, Bitboard mask) {
     return to_return;
 }
 
-consteval std::array<Bitboard, 64 * 4096> generate_rook_attack_bitboards() {
-    std::array<Bitboard, 64 * 4096> to_return = {0};
+consteval MDArray<Bitboard, 64, 4096> generate_rook_attack_bitboards() {
+    MDArray<Bitboard, 64, 4096> to_return = {{{0}}};
     for (Square square = Square::A1; square != Square::NONE; square++) {
         Bitboard attack_mask = MagicNumbers::RookMasks[sq_to_int(square)];
         std::array<Bitboard, 4096> blockers = {0};
@@ -90,11 +90,10 @@ consteval std::array<Bitboard, 64 * 4096> generate_rook_attack_bitboards() {
             attacks[i] = generate_rook_attacks(square, blockers[i]);
         }
         for (int i = 0; i < (1 << attack_mask.popcnt()); i++) {
-            int j = (4096 * sq_to_int(square)) + ((blockers[i] * MagicNumbers::RookMagics[sq_to_int(square)]) >> (64 - MagicNumbers::RookBits[sq_to_int(square)]));
-            to_return[j] = attacks[i];
+            to_return[sq_to_int(square)][(blockers[i] * MagicNumbers::RookMagics[sq_to_int(square)]) >> (64 - MagicNumbers::RookBits[sq_to_int(square)])] = attacks[i];
         }
     }
     return to_return;
 }
 
-constexpr std::array<Bitboard, 262144> MagicNumbers::RookAttacks = generate_rook_attack_bitboards();
+constexpr MDArray<Bitboard, 64, 4096> MagicNumbers::RookAttacks = generate_rook_attack_bitboards();

@@ -32,7 +32,7 @@ Bitboard MoveGenerator::get_attackers(const Position& board, const Side side, co
     to_return |= board.bishops(side) & bishop_mask;
     to_return |= board.rooks(side) & rook_mask;
     to_return |= board.knights(side) & MagicNumbers::KnightMoves[sq_to_int(target_sq)];
-    to_return |= board.pawns(side) & MagicNumbers::PawnAttacks[(64 * static_cast<int>(enemy)) + sq_to_int(target_sq)];
+    to_return |= board.pawns(side) & MagicNumbers::PawnAttacks[static_cast<int>(enemy)][sq_to_int(target_sq)];
     to_return |= board.kings(side) & MagicNumbers::KingMoves[sq_to_int(target_sq)];
 
     return to_return;
@@ -41,13 +41,13 @@ Bitboard MoveGenerator::get_attackers(const Position& board, const Side side, co
 Bitboard MoveGenerator::generate_bishop_mm(const Bitboard b, const Square sq) {
     const auto idx = sq_to_int(sq);
     Bitboard masked = (b & MagicNumbers::BishopMasks[idx]);
-    return MagicNumbers::BishopAttacks[(512 * idx) + ((masked * MagicNumbers::BishopMagics[idx]) >> (64 - MagicNumbers::BishopBits[idx]))];
+    return MagicNumbers::BishopAttacks[idx][((masked * MagicNumbers::BishopMagics[idx]) >> (64 - MagicNumbers::BishopBits[idx]))];
 }
 
 Bitboard MoveGenerator::generate_rook_mm(const Bitboard b, const Square sq) {
     const auto idx = sq_to_int(sq);
     Bitboard masked = (b & MagicNumbers::RookMasks[idx]);
-    return MagicNumbers::RookAttacks[(4096 * idx) + ((masked * MagicNumbers::RookMagics[idx]) >> (64 - MagicNumbers::RookBits[idx]))];
+    return MagicNumbers::RookAttacks[idx][((masked * MagicNumbers::RookMagics[idx]) >> (64 - MagicNumbers::RookBits[idx]))];
 }
 
 Bitboard MoveGenerator::generate_queen_mm(const Bitboard b, const Square sq) {
@@ -94,6 +94,14 @@ void MoveGenerator::generate_castling_moves(const Position& c, const Side side, 
     }
 }
 
+/**
+ * @brief Checks if a pseudolegal move on a position is legal; algorithm stolen from Stockfish
+ * 
+ * @param c 
+ * @param m 
+ * @return true 
+ * @return false 
+ */
 bool MoveGenerator::is_move_legal(const Position& c, const Move m) {
     const auto king_idx = c.kings(c.stm()).lsb();
     const auto move_side = static_cast<Side>(c.occupancy(Side::BLACK)[m.src_sq()]);
@@ -119,26 +127,34 @@ bool MoveGenerator::is_move_legal(const Position& c, const Move m) {
         return !((generate_bishop_mm(cleared_bitboard, target_idx) & potential_diagonal_sliders)
                  || (generate_rook_mm(cleared_bitboard, target_idx) & potential_orthogonal_sliders)
                  || (c.knights(enemy) & MagicNumbers::KnightMoves[sq_to_int(target_idx)])
-                 || (c.pawns(enemy) & MagicNumbers::PawnAttacks[(64 * static_cast<int>(move_side)) + sq_to_int(target_idx)])
+                 || (c.pawns(enemy) & MagicNumbers::PawnAttacks[static_cast<int>(move_side)][sq_to_int(target_idx)])
                  || (c.kings(enemy) & MagicNumbers::KingMoves[sq_to_int(target_idx)]));
     } else [[likely]] {
 
         Bitboard checking_pieces = c.checkers();
         if (!checking_pieces.empty()) {
             // if there's a piece checking our king - we know at most one piece can be checking as double checks are king moves only
-            if (!(MagicNumbers::ConnectingSquares[(64 * sq_to_int(king_idx)) + sq_to_int(checking_pieces.lsb())] & m.dst_sq())) {
+            if (!(MagicNumbers::ConnectingSquares[sq_to_int(king_idx)][sq_to_int(checking_pieces.lsb())] & m.dst_sq())) {
                 return false;
             }
         }
 
         if (!(c.pinned_pieces() & m.src_sq()).empty()) {
-            return !(MagicNumbers::AlignedSquares[(64 * sq_to_int(king_idx)) + sq_to_int(m.src_sq())] & m.dst_sq()).empty();
+            return !(MagicNumbers::AlignedSquares[sq_to_int(king_idx)][sq_to_int(m.src_sq())] & m.dst_sq()).empty();
         }
     }
 
     return true;
 }
 
+/**
+ * @brief Checks if a move on a position is pseudolegal; algorithm stolen from Stockfish
+ * 
+ * @param pos 
+ * @param m 
+ * @return true 
+ * @return false 
+ */
 bool MoveGenerator::is_move_pseudolegal(const Position& pos, const Move m) {
     const auto stm = pos.stm();
     const auto from = m.src_sq();
@@ -183,7 +199,7 @@ bool MoveGenerator::is_move_pseudolegal(const Position& pos, const Move m) {
             return false;
         }
 
-        const auto can_capture = !(MagicNumbers::PawnAttacks[(64 * static_cast<int>(stm)) + sq_to_int(from)] & pos.occupancy(enemy_side(stm)) & to).empty();
+        const auto can_capture = !(MagicNumbers::PawnAttacks[static_cast<int>(stm)][sq_to_int(from)] & pos.occupancy(enemy_side(stm)) & to).empty();
         if (m.is_capture() && !can_capture) return false;
         const auto to_empty = (pos.occupancy() & to).empty();
         const auto pawn_push = stm == Side::WHITE ? 8 : -8;
