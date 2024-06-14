@@ -67,8 +67,8 @@ constexpr Bitboard generate_bishop_attacks(Square square, Bitboard mask) {
     return to_return;
 }
 
-consteval std::array<Bitboard, 64 * 512> generate_bishop_attack_bitboards() {
-    std::array<Bitboard, 64 * 512> to_return = {0};
+consteval MDArray<Bitboard, 64, 512> generate_bishop_attack_bitboards() {
+    MDArray<Bitboard, 64, 512> to_return = {{{0}}};
     for (int square = 0; square < 64; square++) {
         Bitboard attack_mask = MagicNumbers::BishopMasks[square];
         std::array<Bitboard, 512> blockers = {0};
@@ -85,11 +85,10 @@ consteval std::array<Bitboard, 64 * 512> generate_bishop_attack_bitboards() {
             attacks[i] = generate_bishop_attacks(static_cast<Square>(square), blockers[i]);
         }
         for (int i = 0; i < (1 << attack_mask.popcnt()); i++) {
-            int j = (512 * square) + ((blockers[i] * MagicNumbers::BishopMagics[square]) >> (64 - MagicNumbers::BishopBits[square]));
-            to_return[j] = attacks[i];
+            to_return[square][(blockers[i] * MagicNumbers::BishopMagics[square]) >> (64 - MagicNumbers::BishopBits[square])] = attacks[i];
         }
     }
     return to_return;
 }
 
-constexpr std::array<Bitboard, 32768> MagicNumbers::BishopAttacks = generate_bishop_attack_bitboards();
+constexpr MDArray<Bitboard, 64, 512> MagicNumbers::BishopAttacks = generate_bishop_attack_bitboards();

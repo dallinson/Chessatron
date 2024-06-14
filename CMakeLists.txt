@@ -1,11 +1,20 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.28)
 
-project(Chessatron)
+project(Chessatron LANGUAGES CXX)
 
+file(GLOB MODULES "src/*.ixx")
+set_source_files_properties(${MODULES} PROPERTIES TYPE CXX_MODULES)
 file(GLOB SOURCES "src/*.cpp" "src/**/*.cpp")
 file(GLOB TESTS "tests/*.cpp" "tests/**/*.cpp")
 
-set(CMAKE_CXX_STANDARD 20)
+function(add_modules target)
+    target_sources(${target}
+        PRIVATE
+            FILE_SET modules_${target} TYPE CXX_MODULES FILES ${MODULES}
+    )
+endfunction()
+
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -Wextra -Wno-unused-private-field -march=native -mtune=native")
@@ -23,6 +32,7 @@ include(CheckIPOSupported)
 check_ipo_supported(RESULT supported OUTPUT error)
 
 add_executable(Chessatron ${SOURCES})
+add_modules(Chessatron)
 
 target_include_directories(Chessatron PRIVATE src)
 
@@ -38,7 +48,6 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
-include(Dart)
 include(GoogleTest)
 
 add_executable(
@@ -46,6 +55,7 @@ add_executable(
     ${TESTS}
     ${SOURCES}
 )
+add_modules(chessatron_tests)
 
 if( supported )
     message(STATUS "IPO / LTO enabled")

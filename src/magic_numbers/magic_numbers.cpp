@@ -5,6 +5,8 @@
 
 #include "../utils.hpp"
 
+import mdarray;
+
 template <typename T> constexpr T constexpr_sign(const T x) { return ((x) > 0) - ((x) < 0); };
 // clever way of doing a sign function, from https://stackoverflow.com/a/1903975
 template <typename T> constexpr T constexpr_abs(const T x) { return (((x) < 0) ? -(x) : (x)); };
@@ -20,8 +22,8 @@ template <typename T> constexpr T constexpr_max(const T a, const T b) { return (
  *
  * @return consteval
  */
-consteval std::array<Bitboard, 64 * 64> compute_connecting_squares() {
-    std::array<Bitboard, 64 * 64> to_return;
+consteval MDArray<Bitboard, 64, 64> compute_connecting_squares() {
+    MDArray<Bitboard, 64, 64> to_return;
     for (Square first_square = Square::A1; first_square != Square::NONE; first_square++) {
         for (Square second_square = Square::A1; second_square != Square::NONE; second_square++) {
             Bitboard b(second_square);
@@ -63,16 +65,16 @@ consteval std::array<Bitboard, 64 * 64> compute_connecting_squares() {
                     }
                 }
             }
-            to_return[(64 * sq_to_int(first_square)) + sq_to_int(second_square)] = b;
+            to_return[sq_to_int(first_square)][sq_to_int(second_square)] = b;
         }
     }
     return to_return;
 }
 
-constexpr std::array<Bitboard, 64 * 64> MagicNumbers::ConnectingSquares = compute_connecting_squares();
+constexpr MDArray<Bitboard, 64, 64> MagicNumbers::ConnectingSquares = compute_connecting_squares();
 
-consteval std::array<Bitboard, 64 * 64> compute_aligned_squares() {
-    std::array<Bitboard, 64 * 64> to_return;
+consteval MDArray<Bitboard, 64, 64> compute_aligned_squares() {
+    MDArray<Bitboard, 64, 64> to_return;
     for (Square first_square = Square::A1; first_square != Square::NONE; first_square++) {
         for (Square second_square = Square::A1; second_square != Square::NONE; second_square++) {
             Bitboard b = 0;
@@ -97,13 +99,13 @@ consteval std::array<Bitboard, 64 * 64> compute_aligned_squares() {
                     }
                 }
             }
-            to_return[(64 * sq_to_int(first_square)) + sq_to_int(second_square)] = b;
+            to_return[sq_to_int(first_square)][sq_to_int(second_square)] = b;
         }
     }
     return to_return;
 }
 
-constexpr std::array<Bitboard, 64 * 64> MagicNumbers::AlignedSquares = compute_aligned_squares();
+constexpr MDArray<Bitboard, 64, 64> MagicNumbers::AlignedSquares = compute_aligned_squares();
 
 consteval std::array<Bitboard, 64> generate_king_moves() {
     std::array<Bitboard, 64> to_return;
@@ -129,7 +131,7 @@ constexpr std::array<Bitboard, 64> MagicNumbers::KingMoves = generate_king_moves
 
 
 
-constexpr Bitboard MagicNumbers::KnightMoves[64] = {
+constexpr std::array<Bitboard, 64> MagicNumbers::KnightMoves = {
     0x20400UL,
     0x50800UL,
     0xa1100UL,
@@ -196,8 +198,8 @@ constexpr Bitboard MagicNumbers::KnightMoves[64] = {
     0x20400000000000UL,
 };
 
-constexpr Bitboard MagicNumbers::PawnAttacks[128] = {
-    0x200,
+constexpr MDArray<Bitboard, 2, 64> MagicNumbers::PawnAttacks = {{
+    {0x200,
     0x500,
     0xa00,
     0x1400,
@@ -260,8 +262,8 @@ constexpr Bitboard MagicNumbers::PawnAttacks[128] = {
     0x0,
     0x0,
     0x0,
-    0x0,
-    0x0,
+    0x0},
+    {0x0,
     0x0,
     0x0,
     0x0,
@@ -324,5 +326,5 @@ constexpr Bitboard MagicNumbers::PawnAttacks[128] = {
     0x28000000000000,
     0x50000000000000,
     0xa0000000000000,
-    0x40000000000000,
-};
+    0x40000000000000}
+}};
