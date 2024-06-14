@@ -54,6 +54,23 @@ Bitboard MoveGenerator::generate_queen_mm(const Bitboard b, const Square sq) {
     return MoveGenerator::generate_bishop_mm(b, sq) | MoveGenerator::generate_rook_mm(b, sq);
 }
 
+Bitboard MoveGenerator::generate_mm(const PieceTypes pc_type, const Bitboard occupancy, const Square sq) {
+    switch (pc_type) {
+        case PieceTypes::KNIGHT:
+            return generate_mm<PieceTypes::KNIGHT>(occupancy, sq);
+        case PieceTypes::BISHOP:
+            return generate_mm<PieceTypes::BISHOP>(occupancy, sq);
+        case PieceTypes::ROOK:
+            return generate_mm<PieceTypes::ROOK>(occupancy, sq);
+        case PieceTypes::QUEEN:
+            return generate_mm<PieceTypes::QUEEN>(occupancy, sq);
+        case PieceTypes::KING:
+            return generate_mm<PieceTypes::KING>(occupancy, sq);
+        default:
+            return 0;
+    }
+}
+
 void MoveGenerator::generate_castling_moves(const Position& c, const Side side, MoveList& move_list) {
     const Bitboard total_occupancy = c.occupancy();
     const auto enemy = enemy_side(side);
@@ -119,5 +136,82 @@ bool MoveGenerator::is_move_legal(const Position& c, const Move m) {
         }
     }
 
+    return true;
+}
+
+bool MoveGenerator::is_move_pseudolegal(const Position& pos, const Move m) {
+    const auto stm = pos.stm();
+    const auto from = m.src_sq();
+    const auto to = m.dst_sq();
+    const auto moved_pc = pos.piece_at(from);
+
+    {
+        MoveList generated_moves;
+        if (m.is_castling_move()) {
+            generate_castling_moves(pos, stm, generated_moves);
+            return std::find_if(generated_moves.begin(), generated_moves.end(), [&](ScoredMove s){ return s.move == m; }) != generated_moves.end();
+        } else if (m.is_promotion()) {
+            if (stm == Side::WHITE) {
+                generate_pawn_moves<MoveGenType::ALL_LEGAL, Side::WHITE>(pos, generated_moves);
+            } else {
+                generate_pawn_moves<MoveGenType::ALL_LEGAL, Side::BLACK>(pos, generated_moves);
+            }
+            return std::find_if(generated_moves.begin(), generated_moves.end(), [&](ScoredMove s){ return s.move == m; }) != generated_moves.end();
+        } else if (m.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) {
+            if (stm == Side::WHITE) {
+                generate_pawn_moves<MoveGenType::CAPTURES, Side::WHITE>(pos, generated_moves);
+            } else {
+                generate_pawn_moves<MoveGenType::CAPTURES, Side::BLACK>(pos, generated_moves);
+            }
+            return std::find_if(generated_moves.begin(), generated_moves.end(), [&](ScoredMove s){ return s.move == m; }) != generated_moves.end();
+        }
+    }
+
+    // We must move a friendly piece
+    if (moved_pc == 0 || moved_pc.get_side() != stm) {
+        return false;
+    }
+
+    // Make sure a friendly piece is not at the destination
+    if (!(pos.occupancy(stm) & to).empty()) {
+        return false;
+    }
+
+    if (moved_pc.get_type() == PieceTypes::PAWN) {
+        // Ensure this isn't a promotion
+        if (!((rank_bb(0) | rank_bb(7)) & to).empty()) {
+            return false;
+        }
+
+        const auto can_capture = !(MagicNumbers::PawnAttacks[(64 * static_cast<int>(stm)) + sq_to_int(from)] & pos.occupancy(enemy_side(stm)) & to).empty();
+        if (m.is_capture() && !can_capture) return false;
+        const auto to_empty = (pos.occupancy() & to).empty();
+        const auto pawn_push = stm == Side::WHITE ? 8 : -8;
+        const auto can_single_push = (static_cast<Square>(sq_to_int(from) + pawn_push) == to) && to_empty;
+        if (m.get_move_flags() == MoveFlags::QUIET_MOVE && !can_single_push) return false;
+        const auto start_rank = stm == Side::WHITE ? 1 : 6;
+        const auto can_double_push = (static_cast<Square>(sq_to_int(from) + (2 * pawn_push)) == to)
+                                        && m.src_rnk() == start_rank
+                                        && to_empty
+                                        && (pos.occupancy() & static_cast<Square>(sq_to_int(to) - pawn_push)).empty();
+        if (m.get_move_flags() == MoveFlags::DOUBLE_PAWN_PUSH && !can_double_push) return false;
+    } else if ((generate_mm(moved_pc.get_type(), pos.occupancy(), from) & to).empty()) {
+        return false;
+    }
+
+    if (pos.in_check()) {
+        if (moved_pc.get_type() != PieceTypes::KING) {
+            // only king moves are legal in double check
+            if (pos.checkers().popcnt() > 1) {
+                return false;
+            }
+
+            if (MagicNumbers::ConnectingSquares[(64 * sq_to_int(pos.kings(stm).lsb())) + sq_to_int(pos.checkers().lsb())].empty()) {
+                return false;
+            }
+        } else if (!get_attackers(pos, enemy_side(stm), to, pos.occupancy() ^ from).empty()) {
+            return false;
+        }
+    }
     return true;
 }

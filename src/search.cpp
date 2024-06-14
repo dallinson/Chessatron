@@ -299,13 +299,12 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     }
     // mate and draw detection
 
-    bool found_pv_move = false;
     auto mp = MovePicker(std::move(moves), old_pos, board_hist, tt_hit ? tt_entry.move() : Move::NULL_MOVE(), history_table,
-                                search_stack[ply].killer_move, found_pv_move);
-    const bool tt_move = found_pv_move && tt_hit;
+                                search_stack[ply].killer_move);
+    const bool tt_move = tt_hit && MoveGenerator::is_move_pseudolegal(old_pos, tt_entry.move()) && MoveGenerator::is_move_legal(old_pos, tt_entry.move());
     // move reordering
 
-    if (depth >= 5 && !found_pv_move) {
+    if (depth >= 5 && !tt_move) {
         extensions -= 1;
     }
     // iir
@@ -449,9 +448,8 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
         }
     }
 
-    bool found_pv_move = false;
     Score best_score = static_eval;
-    auto mp = MovePicker(std::move(moves), old_pos, board_hist, Move::NULL_MOVE(), history_table, search_stack[ply].killer_move, found_pv_move);
+    auto mp = MovePicker(std::move(moves), old_pos, board_hist, Move::NULL_MOVE(), history_table, search_stack[ply].killer_move);
     int total_moves = 0;
     std::optional<ScoredMove> opt_move;
     while ((opt_move = mp.next(false)).has_value()) {

@@ -9,7 +9,7 @@
 
 constexpr std::array<uint8_t, 6> ordering_scores = {1, 2, 3, 4, 5, 6};
 
-MovePicker::MovePicker(MoveList&& input_moves, const Position& pos, const BoardHistory& hist, const Move pv_move, const HistoryTable& history_table, Move killer, bool& found_pv_move) {
+MovePicker::MovePicker(MoveList&& input_moves, const Position& pos, const BoardHistory& hist, const Move pv_move, const HistoryTable& history_table, Move killer) {
     this->moves = input_moves;
     this->idx = 0;
 
@@ -19,7 +19,6 @@ MovePicker::MovePicker(MoveList&& input_moves, const Position& pos, const BoardH
         auto& move = moves[i];
         move.score = 0;
         if (move.move == pv_move) {
-            found_pv_move = true;
             move.score = std::numeric_limits<int32_t>::max();
             //continue;
         } else if (move.move.is_promotion()) {
