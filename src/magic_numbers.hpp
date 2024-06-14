@@ -5,12 +5,12 @@
 #include <limits>
 
 #include "bitboard.hpp"
+#include "mdarray.hpp"
 #include "utils.hpp"
 
 #define BISHOP_MOVES 512
 #define ROOK_MOVES 4096
 
-import mdarray;
 
 namespace MagicNumbers {
     extern const Bitboard RookMagics[64];

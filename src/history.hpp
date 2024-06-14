@@ -7,10 +7,9 @@
 #include <vector>
 
 #include "chessboard.hpp"
+#include "mdarray.hpp"
 #include "move.hpp"
 #include "utils.hpp"
-
-import mdarray;
 
 using HistoryValue = int32_t;
 

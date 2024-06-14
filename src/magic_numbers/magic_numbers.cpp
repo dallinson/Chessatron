@@ -5,8 +5,6 @@
 
 #include "../utils.hpp"
 
-import mdarray;
-
 template <typename T> constexpr T constexpr_sign(const T x) { return ((x) > 0) - ((x) < 0); };
 // clever way of doing a sign function, from https://stackoverflow.com/a/1903975
 template <typename T> constexpr T constexpr_abs(const T x) { return (((x) < 0) ? -(x) : (x)); };
