@@ -222,7 +222,7 @@ bool MoveGenerator::is_move_pseudolegal(const Position& pos, const Move m) {
                 return false;
             }
 
-            if (MagicNumbers::ConnectingSquares[(64 * sq_to_int(pos.kings(stm).lsb())) + sq_to_int(pos.checkers().lsb())].empty()) {
+            if (MagicNumbers::ConnectingSquares[sq_to_int(pos.kings(stm).lsb())][sq_to_int(pos.checkers().lsb())].empty()) {
                 return false;
             }
         } else if (!get_attackers(pos, enemy_side(stm), to, pos.occupancy() ^ from).empty()) {
