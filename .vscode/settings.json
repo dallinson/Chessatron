@@ -90,6 +90,7 @@
         "future": "cpp",
         "coroutine": "cpp",
         "resumable": "cpp",
-        "span": "cpp"
+        "span": "cpp",
+        "charconv": "cpp"
     }
 }
