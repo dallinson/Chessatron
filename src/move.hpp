@@ -58,6 +58,7 @@ class Move {
         constexpr bool is_promotion() const { return static_cast<int>(get_move_flags()) >= 8; };
         constexpr bool is_castling_move() const { return get_move_flags() == MoveFlags::QUEENSIDE_CASTLE || get_move_flags() == MoveFlags::KINGSIDE_CASTLE; };
         constexpr bool is_quiet() const { return !(is_capture() || is_promotion()); };
+        constexpr bool is_noisy() const { return !is_quiet(); };
 
         constexpr uint16_t hist_idx(Side stm) const { return (static_cast<int>(stm) << 12) + get_bits(move, 11, 0); };
 

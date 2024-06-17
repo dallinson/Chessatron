@@ -21,19 +21,7 @@ MovePicker::MovePicker(MoveList&& input_moves, const Position& pos, const BoardH
         if (move.move == pv_move) {
             move.score = std::numeric_limits<int32_t>::max();
             //continue;
-        } else if (move.move.is_promotion()) {
-            switch (move.move.get_promotion_piece_type()) {
-            case PieceTypes::QUEEN:
-                move.score = 2000000001;
-                break;
-            case PieceTypes::KNIGHT:
-                move.score = 2000000000;
-                break;
-            default:
-                move.score = -2000000001;
-                break;
-            }
-        } else if (move.move.is_capture()) {
+        } else if (move.move.is_noisy()) {
             move.score = 900000000;
             move.see_ordering_result = Search::static_exchange_evaluation(pos, move.move, -20);
             if (!move.see_ordering_result) {
