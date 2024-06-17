@@ -39,12 +39,11 @@ MovePicker::MovePicker(MoveList&& input_moves, const Position& pos, const BoardH
             if (!move.see_ordering_result) {
                 move.score = -1000000;
             }
-            const auto src_score = ordering_scores[static_cast<uint8_t>(pos.piece_at(move.move.src_sq()).get_type()) - 1];
             const auto dest_type = move.move.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE
                                        ? PieceTypes::PAWN
                                        : pos.piece_at(move.move.dst_sq()).get_type();
             const auto dest_score = ordering_scores[static_cast<uint8_t>(dest_type) - 1];
-            move.score += ((100000 * dest_score) + (6 - src_score));
+            move.score += ((100000 * dest_score) + history_table.capthist_score(hist, move.move));
         } else if (move.move == killer) {
             move.score = 800000000;
         } else {
