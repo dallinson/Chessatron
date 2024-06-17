@@ -458,12 +458,8 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
         }
         const auto& move = opt_move.value();
 
-        if (move.move.is_capture() && !move.move.is_promotion()) {
+        if (move.move.is_noisy()) {
             if (!move.see_ordering_result) {
-                continue;
-            }
-        } else {
-            if (!Search::static_exchange_evaluation(old_pos, move.move, -65)) {
                 continue;
             }
         }
