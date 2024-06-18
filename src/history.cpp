@@ -3,7 +3,7 @@
 #include <algorithm>
 
 HistoryValue HistoryTable::score(const BoardHistory& hist, Move move, Side stm) const {
-    if (move.is_capture()) {
+    if (move.is_noisy()) {
         return capthist_score(hist, move);
     } else {
         return mainhist_score(move, stm) + 2 * conthist_score(hist, move);
@@ -13,11 +13,11 @@ HistoryValue HistoryTable::score(const BoardHistory& hist, Move move, Side stm) 
 void HistoryTable::update_scores(const BoardHistory& hist, std::span<const Move> moves, ScoredMove current_move, Side stm, int depth) {
     const auto hist_bonus = bonus(depth);
     const auto hist_malus = malus(depth);
-    if (!current_move.move.is_capture()) {
+    if (!current_move.move.is_noisy()) {
         update_mainhist_score(current_move.move, stm, hist_bonus);
         update_conthist_score(hist, current_move.move, hist_bonus);
         std::for_each(moves.begin(), moves.end(), [&](Move move) {
-            if (!move.is_capture()) {
+            if (!move.is_noisy()) {
                 update_mainhist_score(move, stm, hist_malus);
                 update_conthist_score(hist, move, hist_malus);
             }
@@ -26,7 +26,7 @@ void HistoryTable::update_scores(const BoardHistory& hist, std::span<const Move>
         update_capthist_score(hist, current_move.move, hist_bonus);
     }
     std::for_each(moves.begin(), moves.end(), [&](Move move) {
-        if (move.is_capture() && move != current_move.move) {
+        if (move.is_noisy() && move != current_move.move) {
             update_capthist_score(hist, move, hist_malus);
         }
     });
