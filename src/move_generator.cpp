@@ -175,9 +175,9 @@ bool MoveGenerator::is_move_pseudolegal(const Position& pos, const Move m) {
             return std::find_if(generated_moves.begin(), generated_moves.end(), [&](ScoredMove s){ return s.move == m; }) != generated_moves.end();
         } else if (m.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) {
             if (stm == Side::WHITE) {
-                generate_pawn_moves<MoveGenType::CAPTURES, Side::WHITE>(pos, generated_moves);
+                generate_pawn_moves<MoveGenType::NOISY, Side::WHITE>(pos, generated_moves);
             } else {
-                generate_pawn_moves<MoveGenType::CAPTURES, Side::BLACK>(pos, generated_moves);
+                generate_pawn_moves<MoveGenType::NOISY, Side::BLACK>(pos, generated_moves);
             }
             return std::find_if(generated_moves.begin(), generated_moves.end(), [&](ScoredMove s){ return s.move == m; }) != generated_moves.end();
         }
