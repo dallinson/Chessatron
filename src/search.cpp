@@ -343,8 +343,9 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
             }
         }
 
+        const auto see_depth = depth - !is_pv_node(node_type);
         if (depth <= 10 && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY)
-            && !Search::static_exchange_evaluation(old_pos, move.move, move.move.is_capture() ? (-20 * depth * depth) : (-65 * depth))) {
+            && !Search::static_exchange_evaluation(old_pos, move.move, move.move.is_capture() ? (-20 * see_depth * see_depth) : (-65 * see_depth))) {
             continue;
         }
 
