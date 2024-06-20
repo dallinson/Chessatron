@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.16)
 
 project(Chessatron LANGUAGES CXX)
 
+option(PGO "Whether to enable or disable profile-guided optimisations" OFF)
+
 file(GLOB SOURCES "src/*.cpp" "src/**/*.cpp")
 file(GLOB TESTS "tests/*.cpp" "tests/**/*.cpp")
 
@@ -19,12 +21,22 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconstexpr-steps=250000000")
 endif()
 
+add_executable(Chessatron ${SOURCES})
+target_include_directories(Chessatron PRIVATE src)
+
+if(PGO)
+    if(EXISTS ${CMAKE_BINARY_DIR}/chessatron.profdata)
+        target_compile_options(Chessatron PRIVATE -fprofile-use=${CMAKE_BINARY_DIR}/chessatron.profdata)
+        target_link_options(Chessatron PRIVATE -fprofile-use=${CMAKE_BINARY_DIR}/chessatron.profdata)
+    else()
+        target_compile_options(Chessatron PRIVATE -fprofile-generate)
+        target_link_options(Chessatron PRIVATE -fprofile-generate)
+    endif()
+endif()
+
+
 include(CheckIPOSupported)
 check_ipo_supported(RESULT supported OUTPUT error)
-
-add_executable(Chessatron ${SOURCES})
-
-target_include_directories(Chessatron PRIVATE src)
 
 include(FetchContent)
 FetchContent_Declare(
