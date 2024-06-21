@@ -227,7 +227,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
         extensions += 1;
     }
 
-    const auto static_eval = tt_hit ? tt_entry.score() : Evaluation::evaluate_board(old_pos);
+    const auto static_eval = (tt_hit && tt_entry.score() >= alpha && tt_entry.score() <= beta) ? tt_entry.score() : Evaluation::evaluate_board(old_pos);
     if (ply >= MAX_PLY) {
         return static_eval;
     }
