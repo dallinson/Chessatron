@@ -231,16 +231,21 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     if (ply >= MAX_PLY) {
         return static_eval;
     }
+    if (old_pos.in_check()) {
+        search_stack[ply].static_eval = std::nullopt;
+    } else {
+        search_stack[ply].static_eval = static_eval;
+    }
 
     const auto improving = [&]() {
         if (old_pos.in_check()) {
             return false;
         }
 
-        if (board_hist.len() >= 3 && !board_hist[board_hist.len() - 3].in_check()) {
-            return static_eval > Evaluation::evaluate_board(board_hist[board_hist.len() - 3]);
-        } else if (board_hist.len() >= 5 && !board_hist[board_hist.len() - 5].in_check()) {
-            return static_eval > Evaluation::evaluate_board(board_hist[board_hist.len() - 5]);
+        if (search_stack[ply - 2].static_eval.has_value()) {
+            return static_eval > search_stack[ply - 2].static_eval.value();
+        } else if (search_stack[ply - 4].static_eval.has_value()) {
+            return static_eval > search_stack[ply - 4].static_eval.value();
         }
         return false;
     }();
@@ -506,7 +511,7 @@ Score SearchHandler::run_aspiration_window_search(int depth, Score previous_scor
             beta = previous_score + window;
         }
 
-        previous_score = negamax_step<NodeTypes::ROOT_NODE>(board_hist[board_hist.len() - 1], alpha, beta, depth, 0, node_count, false);
+        previous_score = negamax_step<NodeTypes::ROOT_NODE>(board_hist[board_hist.len() - 1], alpha, beta, depth, 4, node_count, false);
 
         if (search_cancelled) {
             return previous_score;

@@ -22,7 +22,7 @@ enum class NodeTypes {
 };
 constexpr inline bool is_pv_node(NodeTypes n) { return n == NodeTypes::ROOT_NODE || n == NodeTypes::PV_NODE; };
 
-constexpr static int MAX_PLY = 250;
+constexpr static int MAX_PLY = 250 + 4;
 
 namespace Perft {
     uint64_t run_perft(Position& c, int depth, bool print_debug = false);
@@ -125,6 +125,7 @@ class TranspositionTable {
 
 struct SearchStackFrame {
     Move killer_move = Move::NULL_MOVE();
+    std::optional<Score> static_eval = std::nullopt;
 };
 
 struct PvTable {
