@@ -292,9 +292,9 @@ Position::Position(const Position& origin, const Move to_make) {
             mg_phase -= mg_phase_vals[static_cast<int>(at_target.get_type()) - 1];
         }
 
-        if (static_cast<int>(to_make.get_move_flags()) >= 8) {
+        if (static_cast<int>(to_make.flags()) >= 8) {
             // Any value >= 8 is a promotion
-            Piece promoted_piece = Piece(side, PieceTypes((static_cast<int>(to_make.get_move_flags()) & 0b0011) + 2));
+            Piece promoted_piece = Piece(side, PieceTypes((static_cast<int>(to_make.flags()) & 0b0011) + 2));
             zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(promoted_piece, dest_sq)];
             // promoted_piece += side;
             this->piece_bbs[static_cast<int>(promoted_piece.get_type()) - 1] |= dest_sq;
@@ -312,14 +312,14 @@ Position::Position(const Position& origin, const Move to_make) {
         }
         this->side_bbs[static_cast<int>(moved.get_side())] |= dest_sq;
 
-        if (to_make.get_move_flags() == MoveFlags::DOUBLE_PAWN_PUSH) [[unlikely]] {
+        if (to_make.flags() == MoveFlags::DOUBLE_PAWN_PUSH) [[unlikely]] {
             this->en_passant_file = to_make.dst_fle();
             this->zobrist_key ^= ZobristKeys::EnPassantKeys[en_passant_file];
         }
         // the en passant zobrist key for 9 is 0 so no need to XOR (would be a no-op)
         // set where the last en passant happened, else clear it
 
-        if (to_make.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) [[unlikely]] {
+        if (to_make.flags() == MoveFlags::EN_PASSANT_CAPTURE) [[unlikely]] {
             Side enemy = enemy_side(side);
             const auto enemy_pawn_idx = get_position(to_make.src_rnk(), to_make.dst_fle());
             this->piece_bbs[bb_idx<PAWN>] &= ~Bitboard(enemy_pawn_idx);
@@ -331,8 +331,8 @@ Position::Position(const Position& origin, const Move to_make) {
 
         if (to_make.is_castling_move()) {
             const auto king_dest = to_make.dst_sq();
-            const auto rook_dest = king_dest + (to_make.get_move_flags() == MoveFlags::KINGSIDE_CASTLE ? -1 : 1);
-            const auto rook_origin = king_dest + (to_make.get_move_flags() == MoveFlags::KINGSIDE_CASTLE ? 1 : -2);
+            const auto rook_dest = king_dest + (to_make.flags() == MoveFlags::KINGSIDE_CASTLE ? -1 : 1);
+            const auto rook_origin = king_dest + (to_make.flags() == MoveFlags::KINGSIDE_CASTLE ? 1 : -2);
 
             // we moved the king, now move the rook
 
@@ -402,17 +402,17 @@ ZobristKey Position::key_after(const Move move) const {
     }
 
     if (move.is_promotion()) {
-        Piece promoted_piece = Piece(side, PieceTypes((static_cast<int>(move.get_move_flags()) & 0b0011) + 2));
+        Piece promoted_piece = Piece(side, PieceTypes((static_cast<int>(move.flags()) & 0b0011) + 2));
         to_return ^= ZobristKeys::PositionKeys[calculate_zobrist_key(promoted_piece, dest_sq)];
     } else {
         to_return ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, dest_sq)];
     }
 
-    if (move.get_move_flags() == MoveFlags::DOUBLE_PAWN_PUSH) {
+    if (move.flags() == MoveFlags::DOUBLE_PAWN_PUSH) {
         to_return ^= ZobristKeys::EnPassantKeys[move.dst_fle()];
     }
 
-    if (move.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) {
+    if (move.flags() == MoveFlags::EN_PASSANT_CAPTURE) {
         const auto enemy = enemy_side(side);
         const auto enemy_pawn_idx = get_position(move.src_rnk(), move.dst_fle());
         to_return ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(enemy, PAWN), enemy_pawn_idx)];
@@ -420,8 +420,8 @@ ZobristKey Position::key_after(const Move move) const {
 
     if (move.is_castling_move()) {
         const auto king_dest = move.dst_sq();
-        const auto rook_dest = king_dest + (move.get_move_flags() == MoveFlags::KINGSIDE_CASTLE ? -1 : 1);
-        const auto rook_origin = king_dest + (move.get_move_flags() == MoveFlags::KINGSIDE_CASTLE ? 1 : -2);
+        const auto rook_dest = king_dest + (move.flags() == MoveFlags::KINGSIDE_CASTLE ? -1 : 1);
+        const auto rook_origin = king_dest + (move.flags() == MoveFlags::KINGSIDE_CASTLE ? 1 : -2);
 
         to_return ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, ROOK), rook_origin)];
         to_return ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, ROOK), rook_dest)];

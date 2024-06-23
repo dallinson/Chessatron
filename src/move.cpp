@@ -16,7 +16,7 @@ std::string Move::to_string() const {
     to_return.push_back(this->dst_rnk() + 49);
 
     if (this->is_promotion()) {
-        switch (this->get_promotion_piece_type()) {
+        switch (this->promo_type()) {
         case PieceTypes::ROOK:
             to_return.push_back('r');
             break;
