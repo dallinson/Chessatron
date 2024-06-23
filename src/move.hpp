@@ -50,13 +50,13 @@ class Move {
         constexpr uint8_t dst_rnk() const { return get_bits(move, 11, 9); };
         constexpr uint8_t dst_fle() const { return get_bits(move, 8, 6); };
 
-        constexpr MoveFlags get_move_flags() const { return (MoveFlags) get_bits(move, 15, 12); };
-        constexpr PieceTypes get_promotion_piece_type() const { return static_cast<PieceTypes>((static_cast<int>(get_move_flags()) & 0b0011) + 2); };
+        constexpr MoveFlags flags() const { return (MoveFlags) get_bits(move, 15, 12); };
+        constexpr PieceTypes promo_type() const { return static_cast<PieceTypes>((static_cast<int>(flags()) & 0b0011) + 2); };
 
         constexpr bool is_null_move() const { return move == 0; };
-        constexpr bool is_capture() const { return (static_cast<int>(get_move_flags()) & 0x04) != 0; };
-        constexpr bool is_promotion() const { return static_cast<int>(get_move_flags()) >= 8; };
-        constexpr bool is_castling_move() const { return get_move_flags() == MoveFlags::QUEENSIDE_CASTLE || get_move_flags() == MoveFlags::KINGSIDE_CASTLE; };
+        constexpr bool is_capture() const { return (static_cast<int>(flags()) & 0x04) != 0; };
+        constexpr bool is_promotion() const { return static_cast<int>(flags()) >= 8; };
+        constexpr bool is_castling_move() const { return flags() == MoveFlags::QUEENSIDE_CASTLE || flags() == MoveFlags::KINGSIDE_CASTLE; };
         constexpr bool is_quiet() const { return !(is_capture() || is_promotion()); };
         constexpr bool is_noisy() const { return !is_quiet(); };
 

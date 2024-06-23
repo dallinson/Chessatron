@@ -106,7 +106,7 @@ bool MoveGenerator::is_move_legal(const Position& c, const Move m) {
     const auto king_idx = c.kings(c.stm()).lsb();
     const auto move_side = static_cast<Side>(c.occupancy(Side::BLACK)[m.src_sq()]);
     const Side enemy = enemy_side(move_side);
-    if (m.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) {
+    if (m.flags() == MoveFlags::EN_PASSANT_CAPTURE) {
         // with en passant knights and pawns _cannot_ capture as the previous
         // move was moving a pawn, and therefore knights/pawns were not in
         // position to capture-they'd have needed to be moved two moves ago,
@@ -164,6 +164,7 @@ bool MoveGenerator::is_move_pseudolegal(const Position& pos, const Move m) {
     {
         MoveList generated_moves;
         if (m.is_castling_move()) {
+            if (pos.in_check()) return false;
             generate_castling_moves(pos, stm, generated_moves);
             return std::find_if(generated_moves.begin(), generated_moves.end(), [&](ScoredMove s){ return s.move == m; }) != generated_moves.end();
         } else if (m.is_promotion()) {
@@ -173,7 +174,7 @@ bool MoveGenerator::is_move_pseudolegal(const Position& pos, const Move m) {
                 generate_pawn_moves<MoveGenType::ALL_LEGAL, Side::BLACK>(pos, generated_moves);
             }
             return std::find_if(generated_moves.begin(), generated_moves.end(), [&](ScoredMove s){ return s.move == m; }) != generated_moves.end();
-        } else if (m.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) {
+        } else if (m.flags() == MoveFlags::EN_PASSANT_CAPTURE) {
             if (stm == Side::WHITE) {
                 generate_pawn_moves<MoveGenType::NOISY, Side::WHITE>(pos, generated_moves);
             } else {
@@ -193,6 +194,16 @@ bool MoveGenerator::is_move_pseudolegal(const Position& pos, const Move m) {
         return false;
     }
 
+    // Ensure that captures are captures
+    if (m.is_capture() && (pos.occupancy(enemy_side(stm)) & to).empty()) {
+        return false;
+    }
+
+    // If an enemy piece exists and we're doing a quiet move
+    if (m.flags() == MoveFlags::QUIET_MOVE && !(pos.occupancy(enemy_side(stm)) & to).empty()) {
+        return false;
+    }
+
     if (moved_pc.get_type() == PieceTypes::PAWN) {
         // Ensure this isn't a promotion
         if (!((rank_bb(0) | rank_bb(7)) & to).empty()) {
@@ -204,14 +215,14 @@ bool MoveGenerator::is_move_pseudolegal(const Position& pos, const Move m) {
         const auto to_empty = (pos.occupancy() & to).empty();
         const auto pawn_push = stm == Side::WHITE ? 8 : -8;
         const auto can_single_push = (static_cast<Square>(sq_to_int(from) + pawn_push) == to) && to_empty;
-        if (m.get_move_flags() == MoveFlags::QUIET_MOVE && !can_single_push) return false;
+        if (m.flags() == MoveFlags::QUIET_MOVE && !can_single_push) return false;
         const auto start_rank = stm == Side::WHITE ? 1 : 6;
         const auto can_double_push = (static_cast<Square>(sq_to_int(from) + (2 * pawn_push)) == to)
                                         && m.src_rnk() == start_rank
                                         && to_empty
                                         && (pos.occupancy() & static_cast<Square>(sq_to_int(to) - pawn_push)).empty();
-        if (m.get_move_flags() == MoveFlags::DOUBLE_PAWN_PUSH && !can_double_push) return false;
-    } else if ((generate_mm(moved_pc.get_type(), pos.occupancy(), from) & to).empty()) {
+        if (m.flags() == MoveFlags::DOUBLE_PAWN_PUSH && !can_double_push) return false;
+    } else if ((generate_mm(moved_pc.get_type(), pos.occupancy(), from) & to).empty() || m.flags() == MoveFlags::DOUBLE_PAWN_PUSH) {
         return false;
     }
 

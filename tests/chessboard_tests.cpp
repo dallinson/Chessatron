@@ -116,7 +116,7 @@ TEST(ChessBoardTests, TestMakeUnmakeMove) {
     for (Square sq = Square::A1; sq != Square::NONE; sq++) {
             ASSERT_EQ(pos.piece_at(sq).get_value(), original.piece_at(sq).get_value())
                 << "Mismatch at square " << std::to_string(sq_to_int(sq)) << " after move " << m.to_string() << " with flags "
-                << std::to_string(static_cast<int>(m.get_move_flags())) << " (value " << std::to_string(m.value()) << ")";
+                << std::to_string(static_cast<int>(m.flags())) << " (value " << std::to_string(m.value()) << ")";
         }
     }
 

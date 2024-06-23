@@ -55,7 +55,7 @@ HistoryValue HistoryTable::conthist_score(const BoardHistory& hist, Move move) c
 
 HistoryValue HistoryTable::capthist_score(const BoardHistory& hist, const Move move) const {
     const auto& pos = hist[hist.len() - 1];
-    const auto captured_type = (move.is_promotion() || move.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE)
+    const auto captured_type = (move.is_promotion() || move.flags() == MoveFlags::EN_PASSANT_CAPTURE)
         ? PieceTypes::PAWN
         : pos.piece_at(move.dst_sq()).get_type();
     return (*capt_hist)[pos.piece_to(move)][static_cast<int>(captured_type) - 1];
@@ -63,7 +63,7 @@ HistoryValue HistoryTable::capthist_score(const BoardHistory& hist, const Move m
 
 void HistoryTable::update_capthist_score(const BoardHistory& hist, Move move, HistoryValue bonus) {
     const auto& pos = hist[hist.len() - 1];
-    const auto captured_type = (move.is_promotion() || move.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE)
+    const auto captured_type = (move.is_promotion() || move.flags() == MoveFlags::EN_PASSANT_CAPTURE)
         ? PieceTypes::PAWN
         : pos.piece_at(move.dst_sq()).get_type();
     const auto scaled_bonus = bonus - capthist_score(hist, move) * std::abs(bonus) / 32768;

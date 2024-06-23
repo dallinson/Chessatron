@@ -88,12 +88,12 @@ bool Search::is_draw(const Position& pos, const BoardHistory& history) {
 }
 
 bool Search::static_exchange_evaluation(const Position& pos, const Move move, const int threshold) {
-    PieceTypes next_victim = move.is_promotion() ? move.get_promotion_piece_type() : pos.piece_at(move.src_sq()).get_type();
+    PieceTypes next_victim = move.is_promotion() ? move.promo_type() : pos.piece_at(move.src_sq()).get_type();
 
     Score balance = Search::SEEScores[static_cast<int>(pos.piece_at(move.dst_sq()).get_type())];
     if (move.is_promotion()) {
-        balance += (Search::SEEScores[static_cast<int>(move.get_promotion_piece_type())] - Search::SEEScores[static_cast<int>(PieceTypes::PAWN)]);
-    } else if (move.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) {
+        balance += (Search::SEEScores[static_cast<int>(move.promo_type())] - Search::SEEScores[static_cast<int>(PieceTypes::PAWN)]);
+    } else if (move.flags() == MoveFlags::EN_PASSANT_CAPTURE) {
         balance = Search::SEEScores[static_cast<int>(PieceTypes::PAWN)];
     }
 
@@ -113,7 +113,7 @@ bool Search::static_exchange_evaluation(const Position& pos, const Move move, co
     Bitboard occupied = pos.occupancy();
     occupied ^= move.src_sq();
     occupied |= move.dst_sq();
-    if (move.get_move_flags() == MoveFlags::EN_PASSANT_CAPTURE) {
+    if (move.flags() == MoveFlags::EN_PASSANT_CAPTURE) {
         const auto ep_target = get_position(move.src_rnk(), move.dst_fle());
         occupied ^= ep_target;
     }
@@ -299,9 +299,9 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     }
     // mate and draw detection
 
-    auto mp = MovePicker(std::move(moves), old_pos, board_hist, tt_hit ? tt_entry.move() : Move::NULL_MOVE(), history_table,
-                                search_stack[ply].killer_move);
     const bool tt_move = tt_hit && MoveGenerator::is_move_pseudolegal(old_pos, tt_entry.move()) && MoveGenerator::is_move_legal(old_pos, tt_entry.move());
+    auto mp = MovePicker(std::move(moves), old_pos, board_hist, tt_move ? tt_entry.move() : Move::NULL_MOVE(), history_table,
+                                search_stack[ply].killer_move);
     // move reordering
 
     if (depth >= 5 && !tt_move) {
