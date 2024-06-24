@@ -18,11 +18,6 @@ void MovePicker::score_moves() {
             move.score = std::numeric_limits<int32_t>::max();
             //continue;
         } else if (move.move.is_noisy()) {
-            move.score = 900000000;
-            move.see_ordering_result = Search::static_exchange_evaluation(pos, move.move, -20);
-            if (!move.see_ordering_result) {
-                move.score = -1000000;
-            }
             const auto dest_type = (move.move.is_promotion() || move.move.flags() == MoveFlags::EN_PASSANT_CAPTURE)
                                        ? PieceTypes::PAWN
                                        : pos.piece_at(move.move.dst_sq()).get_type();
@@ -50,38 +45,65 @@ ScoredMove MovePicker::partial_selection_sort() {
 
 std::optional<ScoredMove> MovePicker::next(const bool skip_quiets) {
     if (stage == MovePickerStage::PICK_TT) {
-        stage = MovePickerStage::GEN_ALL;
+        stage = MovePickerStage::GEN_NOISY;
         return tt_move;
-    } else if (stage == MovePickerStage::GEN_ALL) {
-        stage = MovePickerStage::PICK_REMAINING;
+    } else if (stage == MovePickerStage::GEN_NOISY) {
+        stage = MovePickerStage::PICK_GOOD_NOISY;
         idx = 0;
-        moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(pos, pos.stm());
+        moves = MoveGenerator::generate_legal_moves<MoveGenType::NOISY>(pos, pos.stm());
         score_moves();
         return next(skip_quiets);
-    } else if (stage == MovePickerStage::GEN_QSEARCH) {
-        stage = MovePickerStage::PICK_REMAINING;
-        idx = 0;
-        moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIESCENCE>(pos, pos.stm());
-        score_moves();
-        return next(skip_quiets);
-    } else {
-        if (this->idx >= this->moves.size()) {
-            return std::nullopt;
+    } else if (stage == MovePickerStage::PICK_GOOD_NOISY) {
+        if (idx >= moves.size()) {
+            stage = is_qsearch ? MovePickerStage::START_BAD_NOISY : MovePickerStage::GEN_QUIETS;
+            return next(skip_quiets);
         }
 
+        auto best_move = partial_selection_sort();
+        idx += 1;
+        if (best_move.move == tt_move) return next(skip_quiets);
+        best_move.see_ordering_result = Search::static_exchange_evaluation(pos, best_move.move, -20);
+        if (best_move.see_ordering_result) {
+            return best_move;
+        }
+        bad_captures.add(best_move);
+        return next(skip_quiets);
+    } else if (stage == MovePickerStage::GEN_QUIETS) {
         if (skip_quiets) {
-            while (idx < this->moves.size() && moves[idx].move.is_quiet()) {
-                idx += 1;
-            }
+            stage = MovePickerStage::START_BAD_NOISY;
+            return next(skip_quiets);
         }
-
-        if (idx >= this->moves.size()) {
-            return std::nullopt;
+        stage = MovePickerStage::PICK_QUIETS;
+        idx = 0;
+        moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIETS>(pos, pos.stm());
+        score_moves();
+        return next(skip_quiets);
+    } else if (stage == MovePickerStage::PICK_QUIETS) {
+        if (skip_quiets || idx >= moves.size()) {
+            stage = MovePickerStage::START_BAD_NOISY;
+            return next(skip_quiets);
         }
 
         const auto best_move = partial_selection_sort();
         idx += 1;
         if (best_move.move == tt_move) return next(skip_quiets);
         return best_move;
+    } else if (stage == MovePickerStage::START_BAD_NOISY) {
+        idx = 0;
+        moves = bad_captures;
+        stage = MovePickerStage::PICK_BAD_NOISY;
+        return next(skip_quiets);
+    } else if (stage == MovePickerStage::PICK_BAD_NOISY) {
+        if (idx >= moves.size()) {
+            stage = MovePickerStage::PICK_NONE;
+            return std::nullopt;
+        }
+        const auto best_move = partial_selection_sort();
+        idx += 1;
+        if (best_move.move == tt_move) return next(skip_quiets);
+        return best_move;
+    } else if (stage == MovePickerStage::PICK_NONE) {
+        return std::nullopt;
     }
+    return std::nullopt;
 }

@@ -9,9 +9,13 @@
 
 enum class MovePickerStage {
     PICK_TT,
-    GEN_QSEARCH,
-    GEN_ALL,
-    PICK_REMAINING,
+    GEN_NOISY,
+    PICK_GOOD_NOISY,
+    GEN_QUIETS,
+    PICK_QUIETS,
+    START_BAD_NOISY,
+    PICK_BAD_NOISY,
+    PICK_NONE,
 };
 
 class MovePicker {
@@ -24,7 +28,7 @@ class MovePicker {
         const bool is_qsearch;
 
         MovePickerStage stage;
-        MoveList moves;
+        MoveList moves, bad_captures;
         size_t idx;
 
         void score_moves();
@@ -40,10 +44,10 @@ class MovePicker {
               idx(0)
             {
                 if (is_qsearch) {
-                    stage = MovePickerStage::GEN_QSEARCH;
+                    stage = MovePickerStage::GEN_NOISY;
                 } else {
                     if (tt_move.is_null_move()) {
-                        stage = MovePickerStage::GEN_ALL;
+                        stage = MovePickerStage::GEN_NOISY;
                     } else {
                         stage = MovePickerStage::PICK_TT;
                     }
