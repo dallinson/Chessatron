@@ -9,16 +9,12 @@
 
 constexpr std::array<uint8_t, 6> ordering_scores = {1, 2, 3, 4, 5, 6};
 
-MovePicker::MovePicker(MoveList&& input_moves, const Position& pos, const BoardHistory& hist, const Move pv_move, const HistoryTable& history_table, Move killer) {
-    this->moves = input_moves;
+MovePicker::MovePicker(const Position& pos, const BoardHistory& board_hist, const HistoryTable& hist_table, const Move tt_move, const Move killer_move, const bool is_qsearch) {
     this->idx = 0;
-
-    auto best_idx = 0;
     
-    for (size_t i = 0; i < moves.size(); i++) {
-        auto& move = moves[i];
+    for (auto& move : moves) {
         move.score = 0;
-        if (move.move == pv_move) {
+        if (move.move == tt_move) {
             move.score = std::numeric_limits<int32_t>::max();
             //continue;
         } else if (move.move.is_noisy()) {
@@ -31,26 +27,19 @@ MovePicker::MovePicker(MoveList&& input_moves, const Position& pos, const BoardH
                                        ? PieceTypes::PAWN
                                        : pos.piece_at(move.move.dst_sq()).get_type();
             const auto dest_score = ordering_scores[static_cast<uint8_t>(dest_type) - 1];
-            move.score += ((100000 * dest_score) + history_table.capthist_score(hist, move.move));
-        } else if (move.move == killer) {
+            move.score += ((100000 * dest_score) + hist_table.capthist_score(board_hist, move.move));
+        } else if (move.move == killer_move) {
             move.score = 800000000;
         } else {
-            move.score += history_table.score(hist, move.move, pos.stm());
-        }
-        if (move.score > moves[best_idx].score) {
-            best_idx = i;
+            move.score += hist_table.score(board_hist, move.move, pos.stm());
         }
     }
-    std::swap(moves[0], moves[best_idx]);
 }
 
 
 std::optional<ScoredMove> MovePicker::next(const bool skip_quiets) {
     if (this->idx >= this->moves.size()) {
         return std::nullopt;
-    } else if (this->idx == 0) {
-        this->idx += 1;
-        return std::optional(this->moves[0]);
     }
 
     if (skip_quiets) {
