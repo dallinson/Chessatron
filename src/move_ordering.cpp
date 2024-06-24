@@ -9,7 +9,7 @@
 
 constexpr std::array<uint8_t, 6> ordering_scores = {1, 2, 3, 4, 5, 6};
 
-MovePicker::MovePicker(const Position& pos, const BoardHistory& board_hist, const HistoryTable& hist_table, const Move tt_move, const Move killer_move, const bool is_qsearch) {
+void MovePicker::score_moves() {
     this->idx = 0;
     
     for (auto& move : moves) {
