@@ -7,6 +7,13 @@
 #include "move.hpp"
 #include "move_generator.hpp"
 
+enum class MovePickerStage {
+    PICK_TT,
+    GEN_QSEARCH,
+    GEN_ALL,
+    PICK_REMAINING,
+};
+
 class MovePicker {
     private:
         const Position& pos;
@@ -16,6 +23,7 @@ class MovePicker {
         const Move tt_move, killer_move;
         const bool is_qsearch;
 
+        MovePickerStage stage;
         MoveList moves;
         size_t idx;
 
@@ -32,11 +40,14 @@ class MovePicker {
               idx(0)
             {
                 if (is_qsearch) {
-                    moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIESCENCE>(pos, pos.stm());
+                    stage = MovePickerStage::GEN_QSEARCH;
                 } else {
-                    moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(pos, pos.stm());
+                    if (tt_move.is_null_move()) {
+                        stage = MovePickerStage::GEN_ALL;
+                    } else {
+                        stage = MovePickerStage::PICK_TT;
+                    }
                 }
-                score_moves();
             }
 
         std::optional<ScoredMove> next(const bool skip_quiets);

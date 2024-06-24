@@ -49,22 +49,39 @@ ScoredMove MovePicker::partial_selection_sort() {
 }
 
 std::optional<ScoredMove> MovePicker::next(const bool skip_quiets) {
-    if (this->idx >= this->moves.size()) {
-        return std::nullopt;
-    }
-
-    if (skip_quiets) {
-        while (idx < this->moves.size() && moves[idx].move.is_quiet()) {
-            idx += 1;
+    if (stage == MovePickerStage::PICK_TT) {
+        stage = MovePickerStage::GEN_ALL;
+        return tt_move;
+    } else if (stage == MovePickerStage::GEN_ALL) {
+        stage = MovePickerStage::PICK_REMAINING;
+        idx = 0;
+        moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(pos, pos.stm());
+        score_moves();
+        return next(skip_quiets);
+    } else if (stage == MovePickerStage::GEN_QSEARCH) {
+        stage = MovePickerStage::PICK_REMAINING;
+        idx = 0;
+        moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIESCENCE>(pos, pos.stm());
+        score_moves();
+        return next(skip_quiets);
+    } else {
+        if (this->idx >= this->moves.size()) {
+            return std::nullopt;
         }
+
+        if (skip_quiets) {
+            while (idx < this->moves.size() && moves[idx].move.is_quiet()) {
+                idx += 1;
+            }
+        }
+
+        if (idx >= this->moves.size()) {
+            return std::nullopt;
+        }
+
+        const auto best_move = partial_selection_sort();
+        idx += 1;
+        if (best_move.move == tt_move) return next(skip_quiets);
+        return best_move;
     }
-
-    if (idx >= this->moves.size()) {
-        return std::nullopt;
-    }
-
-    const auto best_move = partial_selection_sort();
-
-    idx += 1;
-    return best_move;
 }
