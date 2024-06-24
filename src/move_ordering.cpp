@@ -36,6 +36,17 @@ void MovePicker::score_moves() {
     }
 }
 
+ScoredMove MovePicker::partial_selection_sort() {
+    int best_idx = this->idx;
+
+    for (size_t i = (this->idx + 1); i < this->moves.size(); i++) {
+        if (moves[i].score > moves[best_idx].score) {
+            best_idx = i;
+        }
+    }
+    std::swap(moves[best_idx], moves[idx]);
+    return moves[idx];
+}
 
 std::optional<ScoredMove> MovePicker::next(const bool skip_quiets) {
     if (this->idx >= this->moves.size()) {
@@ -52,16 +63,8 @@ std::optional<ScoredMove> MovePicker::next(const bool skip_quiets) {
         return std::nullopt;
     }
 
-    int best_idx = this->idx;
+    const auto best_move = partial_selection_sort();
 
-    for (size_t i = (this->idx + 1); i < this->moves.size(); i++) {
-        if (moves[i].score > moves[best_idx].score) {
-            best_idx = i;
-        }
-    }
-    std::swap(moves[best_idx], moves[idx]);
-
-    const auto best_move = moves[idx];
     idx += 1;
     return best_move;
 }

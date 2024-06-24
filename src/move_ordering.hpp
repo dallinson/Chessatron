@@ -20,6 +20,7 @@ class MovePicker {
         size_t idx;
 
         void score_moves();
+        ScoredMove partial_selection_sort();
     public:
         MovePicker(const Position& pos, const BoardHistory& board_hist, const HistoryTable& hist_table, const Move tt_move, const Move killer_move, const bool is_qsearch)
             : pos(pos),
