@@ -578,7 +578,7 @@ Move SearchHandler::run_iterative_deepening_search() {
             best_move_stability = 0;
         }
 
-        if (TimeManagement::is_time_based_tc(tc) && time_so_far > TimeManagement::calculate_soft_limit(tc, node_spent_table, pv_move, node_count, best_move_stability)) {
+        if (TimeManagement::is_time_based_tc(tc) && time_so_far > TimeManagement::calculate_soft_limit(tc, depth, node_spent_table, pv_move, node_count, best_move_stability)) {
             break;
         }
     }
