@@ -542,6 +542,8 @@ Move SearchHandler::run_iterative_deepening_search() {
     for (unsigned int i = 0; i < pv_table.pv_array.size(); i++) {
         pv_table.pv_array[i].fill(Move::NULL_MOVE());
     }
+    auto best_move = Move::NULL_MOVE();
+    auto best_move_stability = 0;
 
     Score current_score = 0;
     for (int depth = 1; depth <= TimeManagement::get_search_depth(tc) && !search_cancelled; depth++) {
@@ -568,7 +570,15 @@ Move SearchHandler::run_iterative_deepening_search() {
             return pv_move;
         }
 
-        if (TimeManagement::is_time_based_tc(tc) && time_so_far > TimeManagement::calculate_soft_limit(tc, node_spent_table, pv_move, node_count)) {
+        if (pv_move == best_move) {
+            best_move_stability += 1;
+            best_move_stability = std::min(best_move_stability, 4);
+        } else {
+            best_move = pv_move;
+            best_move_stability = 0;
+        }
+
+        if (TimeManagement::is_time_based_tc(tc) && time_so_far > TimeManagement::calculate_soft_limit(tc, node_spent_table, pv_move, node_count, best_move_stability)) {
             break;
         }
     }
