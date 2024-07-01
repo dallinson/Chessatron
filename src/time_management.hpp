@@ -110,9 +110,9 @@ namespace TimeManagement {
      * @return uint32_t 
      */
     inline uint32_t calculate_soft_limit(const TimeControlInfo& tc, const std::array<uint64_t, 4096>& node_spent_table, const Move pv_move, const uint64_t node_count, const int bestmove_count) {
-        const auto best_move_fraction = (static_cast<double>(node_spent_table[pv_move.value() & 0x0FFF]) / static_cast<double>(node_count)) * 1.5;
+        const auto best_move_fraction_factor = (1.6 - (static_cast<double>(node_spent_table[pv_move.value() & 0x0FFF]) / static_cast<double>(node_count))) * 1.5;
         constexpr std::array<double, 5> bestmove_stability = { 2.43, 1.35, 1.09, 0.88, 0.68 };
-        return ((get_search_time(tc) / 10) * 3) * (1.6 - best_move_fraction) * bestmove_stability[bestmove_count];
+        return ((get_search_time(tc) / 10) * 3) * best_move_fraction_factor * bestmove_stability[bestmove_count];
     }
 
 };
