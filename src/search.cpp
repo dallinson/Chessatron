@@ -506,7 +506,7 @@ Score SearchHandler::run_aspiration_window_search(int depth, Score previous_scor
             beta = previous_score + window;
         }
 
-        previous_score = negamax_step<NodeTypes::ROOT_NODE>(board_hist[board_hist.len() - 1], alpha, beta, depth, 0, node_count, false);
+        previous_score = negamax_step<NodeTypes::ROOT_NODE>(board_hist[board_hist.len() - 1], alpha, beta, depth, PLY_OFFSET, node_count, false);
 
         if (search_cancelled) {
             return previous_score;
@@ -558,8 +558,8 @@ Move SearchHandler::run_iterative_deepening_search() {
                               ? ("mate " + std::to_string(((current_score / std::abs(current_score)) * (depth + 1)) / 2))
                               : ("cp " + std::to_string(current_score)))
                       << " time " << time_so_far << " pv ";
-            for (int i = 0; i < pv_table.pv_length[0]; i++) {
-                std::cout << pv_table.pv_array[0][i].to_string() << " ";
+            for (int i = 0; i < (pv_table.pv_length[PLY_OFFSET] - PLY_OFFSET); i++) {
+                std::cout << pv_table.pv_array[PLY_OFFSET][i + PLY_OFFSET].to_string() << " ";
             }
             std::cout << std::endl;
         }
