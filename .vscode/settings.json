@@ -92,5 +92,6 @@
         "resumable": "cpp",
         "span": "cpp",
         "charconv": "cpp"
-    }
+    },
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
 }

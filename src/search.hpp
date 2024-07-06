@@ -96,15 +96,17 @@ class TranspositionTable {
         };
         uint64_t tt_index(const ZobristKey key) const { return static_cast<uint64_t>((static_cast<__uint128_t>(key) * static_cast<__uint128_t>(table.size())) >> 64); };
         const TranspositionTableEntry& operator[](const Position& key) const { return table[tt_index(key.get_zobrist_key())]; };
-        void store(TranspositionTableEntry entry, const Position& key, const int ply) {
+        void store(TranspositionTableEntry entry, const Position& key) {
             const auto tt_key = tt_index(key.get_zobrist_key());
             if (table[tt_key].key() != entry.key()
                 || entry.bound_type() == BoundTypes::EXACT_BOUND
                 || entry.depth() + 5 > table[tt_key].depth()) {
                 if (entry.score() <= MagicNumbers::NegativeInfinity + MAX_PLY) {
-                    entry.set_score(entry.score() - ply);
+                    // If we're being mated
+                    entry.set_score(MagicNumbers::NegativeInfinity);
                 } else if (entry.score() >= MagicNumbers::PositiveInfinity - MAX_PLY) {
-                    entry.set_score(entry.score() + ply);
+                    // If we have mate
+                    entry.set_score(MagicNumbers::PositiveInfinity);
                 }
                 if (entry.move().is_null_move()) {
                     entry.set_move(table[tt_key].move());

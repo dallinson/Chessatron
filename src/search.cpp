@@ -208,10 +208,10 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
             // Negative infinity is being mated at this square
             // A mate score is therefore greater than (positive_infinity - max_ply) or
             // less than (negative_infinity + max_ply)
-            if (tt_entry.score() >= (MagicNumbers::PositiveInfinity - MAX_PLY)) {
-                return tt_entry.score() - ply;
+            if (tt_entry.score() == MagicNumbers::PositiveInfinity) {
+                return MagicNumbers::PositiveInfinity - ply;
             } else if (tt_entry.score() <= (MagicNumbers::NegativeInfinity + MAX_PLY)) {
-                return tt_entry.score() + ply;
+                return MagicNumbers::NegativeInfinity + ply;
             }
             return tt_entry.score();
         }
@@ -421,7 +421,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     }
     const BoundTypes bound_type =
         (best_score >= beta ? BoundTypes::LOWER_BOUND : (alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND));
-    tt.store(TranspositionTableEntry(best_move, depth, bound_type, best_score, old_pos.get_zobrist_key()), old_pos, ply);
+    tt.store(TranspositionTableEntry(best_move, depth, bound_type, best_score, old_pos.get_zobrist_key()), old_pos);
     return best_score;
 }
 
@@ -456,7 +456,7 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
         if (search_cancelled) {
             break;
         }
-        const auto& move = opt_move.value();
+        const auto move = *opt_move;
 
         if (move.move.is_noisy()) {
             if (!move.see_ordering_result) {
