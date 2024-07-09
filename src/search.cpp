@@ -227,7 +227,25 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
         extensions += 1;
     }
 
-    const auto static_eval = tt_hit ? tt_entry.score() : Evaluation::evaluate_board(old_pos);
+    const auto raw_eval = [&](){
+        if (old_pos.in_check()) {
+            return MagicNumbers::NegativeInfinity;
+        } else if (tt_hit && tt_entry.static_eval() > (MagicNumbers::NegativeInfinity + MAX_PLY)) {
+            return tt_entry.static_eval();
+        } else {
+            return Evaluation::evaluate_board(old_pos);
+        }
+    }();
+    const auto static_eval = [&](){
+        if (tt_hit
+            && tt_entry.score() > (MagicNumbers::NegativeInfinity + MAX_PLY)
+            && (tt_entry.bound_type() == BoundTypes::EXACT_BOUND
+                || (tt_entry.bound_type() == BoundTypes::LOWER_BOUND && tt_entry.score() > raw_eval)
+                || (tt_entry.bound_type() == BoundTypes::UPPER_BOUND && tt_entry.score() < raw_eval))) {
+                    return tt_entry.score();
+                }
+        return raw_eval;
+    }();
     if (ply >= MAX_PLY) {
         return static_eval;
     }
@@ -421,7 +439,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     }
     const BoundTypes bound_type =
         (best_score >= beta ? BoundTypes::LOWER_BOUND : (alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND));
-    tt.store(TranspositionTableEntry(best_move, depth, bound_type, best_score, old_pos.get_zobrist_key()), old_pos);
+    tt.store(TranspositionTableEntry(best_move, depth, bound_type, best_score, raw_eval, old_pos.get_zobrist_key()), old_pos);
     return best_score;
 }
 
