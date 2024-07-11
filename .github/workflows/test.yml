@@ -27,4 +27,4 @@ jobs:
           make chessatron_tests
       - name: Run tests
         working-directory: build
-        run: ctest -c Release
+        run: ctest --build-config Release
