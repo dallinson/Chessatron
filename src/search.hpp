@@ -68,21 +68,23 @@ class TranspositionTableEntry {
     private:
         ZobristKey _key;
         Score _score;
+        Score _static_eval;
         Move pv_move;
         uint8_t _depth;
         BoundTypes _bound;
-        uint16_t padding;
 
+        friend class TranspositionTable;
+        void set_score(Score new_score) { this->_score = new_score; };
+        void set_move(Move new_move) { this->pv_move = new_move; };
     public:
         TranspositionTableEntry() : _key(0), pv_move(Move::NULL_MOVE()), _depth(0), _bound(BoundTypes::NONE) {};
-        TranspositionTableEntry(Move pv_move, uint8_t depth, BoundTypes bound, Score score, ZobristKey key) : _key(key), _score(score), pv_move(pv_move), _depth(depth), _bound(bound) {};
+        TranspositionTableEntry(Move pv_move, uint8_t depth, BoundTypes bound, Score score, Score static_eval, ZobristKey key) : _key(key), _score(score), _static_eval(static_eval), pv_move(pv_move), _depth(depth), _bound(bound) {};
 
         Move move() const { return this->pv_move; };
         uint8_t depth() const { return this->_depth; };
         BoundTypes bound_type() const { return this->_bound; };
-        void set_score(Score new_score) { this->_score = new_score; };
-        void set_move(Move new_move) { this->pv_move = new_move; };
         Score score() const { return this->_score; };
+        Score static_eval() const { return this->_static_eval; };
         ZobristKey key() const { return this->_key; };
 };
 
