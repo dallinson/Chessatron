@@ -24,6 +24,7 @@ constexpr inline bool is_pv_node(NodeTypes n) { return n == NodeTypes::ROOT_NODE
 
 constexpr static int PLY_OFFSET = 4;
 constexpr static int MAX_PLY = 250 + PLY_OFFSET;
+constexpr static int MATE_FOUND = MagicNumbers::PositiveInfinity - MAX_PLY;
 
 namespace Perft {
     uint64_t run_perft(Position& c, int depth, bool print_debug = false);
