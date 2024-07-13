@@ -25,10 +25,10 @@ class Piece {
 
         void set_value(uint8_t val) { this->val = val; };
         constexpr uint8_t get_value() const { return this->val; };
-        constexpr PieceTypes get_type() const { return PieceTypes(get_bits(val, 2, 0)); };
-        constexpr Side get_side() const { return Side(get_bit(val, 3)); };
+        constexpr PieceTypes type() const { return PieceTypes(get_bits(val, 2, 0)); };
+        constexpr Side side() const { return Side(get_bit(val, 3)); };
 
-        constexpr uint8_t to_bitboard_idx() const { return (2 * (static_cast<int>(get_type()) - 1)) + static_cast<uint8_t>(get_side()); };
+        constexpr uint8_t to_bitboard_idx() const { return (2 * (static_cast<int>(type()) - 1)) + static_cast<uint8_t>(side()); };
 };
 
 inline bool operator==(const Piece& lhs, const Piece& rhs) { return lhs.get_value() == rhs.get_value(); }

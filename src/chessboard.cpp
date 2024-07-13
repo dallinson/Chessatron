@@ -45,13 +45,13 @@ constexpr int castling_rights[64] = {0b1011, 15, 15, 15, 0b1010, 15, 15, 0b1110,
 
 void Position::set_piece(Piece piece, Square sq) {
     auto pos = sq_to_int(sq);
-    piece_bbs[static_cast<int>(piece.get_type()) - 1] |= sq;
-    side_bbs[static_cast<int>(piece.get_side())] |= sq;
+    piece_bbs[static_cast<int>(piece.type()) - 1] |= sq;
+    side_bbs[static_cast<int>(piece.side())] |= sq;
     piece_mb[pos] = piece;
-    zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(piece, pos)];
+    _zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(piece, pos)];
 
-    const auto piece_side = piece.get_side();
-    const auto piece_type = piece.get_type();
+    const auto piece_side = piece.side();
+    const auto piece_type = piece.type();
     if (piece_side == Side::WHITE) {
         pos ^= 0b00111000;
     }
@@ -73,7 +73,7 @@ void Position::clear_board() {
     en_passant_file = 9;
     castling = 0;
 
-    zobrist_key = ZobristKeys::SideToMove;
+    _zobrist_key = ZobristKeys::SideToMove;
 
     scores = {0};
     // Only the white side to move key should be set
@@ -181,7 +181,7 @@ std::optional<int> Position::set_from_fen(const std::string input) {
         side_to_move = Side::WHITE;
     } else if (input[char_idx] == 'b') {
         side_to_move = Side::BLACK;
-        zobrist_key ^= ZobristKeys::SideToMove;
+        _zobrist_key ^= ZobristKeys::SideToMove;
         // Clearing the board sets this key, so this ensures the zobrist key is correct
     } else {
         return std::optional<int>();
@@ -263,58 +263,58 @@ Position::Position(const Position& origin, const Move to_make) {
     if (occupancy()[dest_sq]) {
         at_target = piece_at(dest_sq);
     }
-    this->zobrist_key ^= ZobristKeys::EnPassantKeys[en_passant_file];
+    this->_zobrist_key ^= ZobristKeys::EnPassantKeys[en_passant_file];
     halfmove_clock += 1;
     this->en_passant_file = 9;
     if (!to_make.is_null_move()) [[likely]] {
-        const Side side = moved.get_side();
-        zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, src_sq)];
+        const Side side = moved.side();
+        _zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, src_sq)];
         scores[static_cast<int>(side)] -= get_psqt_score(moved, src_sq);
 
         // get the piece we're moving and clear the origin square
 
-        if (to_make.is_capture() || moved.get_type() == PAWN) {
+        if (to_make.is_capture() || moved.type() == PAWN) {
             halfmove_clock = 0;
         }
 
-        piece_bbs[static_cast<int>(moved.get_type()) - 1] &= ~Bitboard(src_sq);
-        side_bbs[static_cast<int>(moved.get_side())] &= ~Bitboard(src_sq);
+        piece_bbs[static_cast<int>(moved.type()) - 1] &= ~Bitboard(src_sq);
+        side_bbs[static_cast<int>(moved.side())] &= ~Bitboard(src_sq);
         piece_mb[sq_to_int(src_sq)] = 0;
         if (at_target.get_value()) {
             // If there _was_ a piece there
             // we do this as en passant captures without a piece at the position
-            piece_bbs[static_cast<int>(at_target.get_type()) - 1] &= ~Bitboard(dest_sq);
-            side_bbs[static_cast<int>(at_target.get_side())] &= ~Bitboard(dest_sq);
+            piece_bbs[static_cast<int>(at_target.type()) - 1] &= ~Bitboard(dest_sq);
+            side_bbs[static_cast<int>(at_target.side())] &= ~Bitboard(dest_sq);
 
-            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(at_target, to_make.dst_sq())];
-            scores[static_cast<int>(enemy_side(side))] -= get_psqt_score(Piece(enemy_side(side), at_target.get_type()), to_make.dst_sq());
+            _zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(at_target, to_make.dst_sq())];
+            scores[static_cast<int>(enemy_side(side))] -= get_psqt_score(Piece(enemy_side(side), at_target.type()), to_make.dst_sq());
 
-            mg_phase -= mg_phase_vals[static_cast<int>(at_target.get_type()) - 1];
+            mg_phase -= mg_phase_vals[static_cast<int>(at_target.type()) - 1];
         }
 
         if (static_cast<int>(to_make.flags()) >= 8) {
             // Any value >= 8 is a promotion
             Piece promoted_piece = Piece(side, PieceTypes((static_cast<int>(to_make.flags()) & 0b0011) + 2));
-            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(promoted_piece, dest_sq)];
+            _zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(promoted_piece, dest_sq)];
             // promoted_piece += side;
-            this->piece_bbs[static_cast<int>(promoted_piece.get_type()) - 1] |= dest_sq;
+            this->piece_bbs[static_cast<int>(promoted_piece.type()) - 1] |= dest_sq;
             piece_mb[sq_to_int(dest_sq)] = promoted_piece;
             // This handles pawn promotions
-            scores[static_cast<int>(side)] += get_psqt_score(Piece(side, promoted_piece.get_type()), dest_sq);
+            scores[static_cast<int>(side)] += get_psqt_score(Piece(side, promoted_piece.type()), dest_sq);
 
-            mg_phase += mg_phase_vals[static_cast<int>(promoted_piece.get_type()) - 1];
+            mg_phase += mg_phase_vals[static_cast<int>(promoted_piece.type()) - 1];
         } else {
-            this->piece_bbs[static_cast<int>(moved.get_type()) - 1] |= dest_sq;
+            this->piece_bbs[static_cast<int>(moved.type()) - 1] |= dest_sq;
             piece_mb[sq_to_int(dest_sq)] = moved;
-            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, to_make.dst_sq())];
-            scores[static_cast<int>(side)] += get_psqt_score(Piece(side, moved.get_type()), dest_sq);
+            _zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, to_make.dst_sq())];
+            scores[static_cast<int>(side)] += get_psqt_score(Piece(side, moved.type()), dest_sq);
             // otherwise sets pieces if moved normally
         }
-        this->side_bbs[static_cast<int>(moved.get_side())] |= dest_sq;
+        this->side_bbs[static_cast<int>(moved.side())] |= dest_sq;
 
         if (to_make.flags() == MoveFlags::DOUBLE_PAWN_PUSH) [[unlikely]] {
             this->en_passant_file = to_make.dst_fle();
-            this->zobrist_key ^= ZobristKeys::EnPassantKeys[en_passant_file];
+            this->_zobrist_key ^= ZobristKeys::EnPassantKeys[en_passant_file];
         }
         // the en passant zobrist key for 9 is 0 so no need to XOR (would be a no-op)
         // set where the last en passant happened, else clear it
@@ -325,7 +325,7 @@ Position::Position(const Position& origin, const Move to_make) {
             this->piece_bbs[bb_idx<PAWN>] &= ~Bitboard(enemy_pawn_idx);
             this->side_bbs[static_cast<int>(enemy_side(side))] &= ~Bitboard(enemy_pawn_idx);
             piece_mb[sq_to_int(enemy_pawn_idx)] = 0;
-            this->zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(enemy, PAWN), enemy_pawn_idx)];
+            this->_zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(enemy, PAWN), enemy_pawn_idx)];
             scores[static_cast<int>(enemy)] -= get_psqt_score(Piece(enemy, PAWN), enemy_pawn_idx);
         }
 
@@ -339,24 +339,24 @@ Position::Position(const Position& origin, const Move to_make) {
             this->piece_bbs[bb_idx<ROOK>] &= ~Bitboard(rook_origin);
             this->side_bbs[static_cast<int>(side)] &= ~Bitboard(rook_origin);
             piece_mb[sq_to_int(rook_origin)] = 0;
-            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, ROOK), rook_origin)];
+            _zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, ROOK), rook_origin)];
             scores[static_cast<int>(side)] -= get_psqt_score(Piece(side, ROOK), rook_origin);
 
             this->piece_bbs[bb_idx<ROOK>] |= rook_dest;
             this->side_bbs[static_cast<int>(side)] |= rook_dest;
             piece_mb[sq_to_int(rook_dest)] = Piece(side, PieceTypes::ROOK);
-            zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, ROOK), rook_dest)];
+            _zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, ROOK), rook_dest)];
             scores[static_cast<int>(side)] += get_psqt_score(Piece(side, ROOK), rook_dest);
         }
 
         const auto offset_diff = castling_rights[sq_to_int(to_make.src_sq())] & castling_rights[sq_to_int(to_make.dst_sq())];
         const auto new_castling = castling & offset_diff;
-        zobrist_key ^= castling_keys[new_castling ^ castling];
+        _zobrist_key ^= castling_keys[new_castling ^ castling];
         castling = new_castling;
     }
     fullmove_counter += static_cast<int>(side_to_move);
     side_to_move = enemy_side(side_to_move);
-    zobrist_key ^= ZobristKeys::SideToMove;
+    _zobrist_key ^= ZobristKeys::SideToMove;
     recompute_blockers_and_checkers(side_to_move);
 }
 
@@ -385,11 +385,11 @@ void Position::recompute_blockers_and_checkers(const Side side) {
 
 ZobristKey Position::key_after(const Move move) const {
     assert(!move.is_null_move());
-    auto to_return = zobrist_key;
+    auto to_return = _zobrist_key;
     const auto src_sq = move.src_sq();
     const auto dest_sq = move.dst_sq();
     const auto moved = piece_at(src_sq);
-    const Side side = moved.get_side();
+    const Side side = moved.side();
 
     Piece at_target = static_cast<Piece>(0);
     if (occupancy()[dest_sq]) {
@@ -457,7 +457,7 @@ std::optional<Move> Position::generate_move_from_string(const std::string& s) co
     const auto start_sq = get_position(s.at(1) - 49, s.at(0) - 97);
     const auto end_sq = get_position(s.at(3) - 49, s.at(2) - 97);
     // Side move_side = this->stm();
-    PieceTypes moving_type = this->piece_at(start_sq).get_type();
+    PieceTypes moving_type = this->piece_at(start_sq).type();
     const auto offset = sq_to_int(start_sq) - sq_to_int(end_sq);
     if (moving_type == PAWN && (std::abs(offset) == 7 || std::abs(offset) == 9)) {
         // so a capture
@@ -488,7 +488,7 @@ std::optional<Move> Position::generate_move_from_string(const std::string& s) co
 
 bool operator==(const Position& lhs, const Position& rhs) {
     bool is_equal = true;
-    for (int pt = 1; pt <= 6; pt++) {
+    for (int pt = 0; pt < 6; pt++) {
         for (int sd = 0; sd < 2; sd++) {
             is_equal &= (lhs.get_bb(pt, sd) == rhs.get_bb(pt, sd));
         }

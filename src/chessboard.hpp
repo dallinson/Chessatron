@@ -36,7 +36,7 @@ class Position {
         std::array<int32_t, 2> scores = {0};
         uint8_t mg_phase = 0;
 
-        ZobristKey zobrist_key = 0;
+        ZobristKey _zobrist_key = 0;
         int halfmove_clock = 0;
         int fullmove_counter = 0;
 
@@ -95,9 +95,9 @@ class Position {
          */
         uint8_t get_en_passant_file() const { return en_passant_file; };
         void set_en_passant_file(int file) {
-            zobrist_key ^= ZobristKeys::EnPassantKeys[en_passant_file];
+            _zobrist_key ^= ZobristKeys::EnPassantKeys[en_passant_file];
             en_passant_file = file;
-            zobrist_key ^= ZobristKeys::EnPassantKeys[file];
+            _zobrist_key ^= ZobristKeys::EnPassantKeys[file];
         };
 
         inline bool get_queenside_castling(const Side side) const { return get_bit(castling, 2 + static_cast<uint8_t>(side)); };
@@ -106,14 +106,14 @@ class Position {
         inline void set_kingside_castling(const Side side, const bool val) {
             const int offset = static_cast<int>(side);
             if (get_bit(castling, offset) != val) {
-                zobrist_key ^= ZobristKeys::CastlingKeys[offset];
+                _zobrist_key ^= ZobristKeys::CastlingKeys[offset];
                 toggle_bit(castling, offset);
             }
         };
         inline void set_queenside_castling(const Side side, const bool val) {
             const int offset = 2 + static_cast<int>(side);
             if (get_bit(castling, offset) != val) {
-                zobrist_key ^= ZobristKeys::CastlingKeys[offset];
+                _zobrist_key ^= ZobristKeys::CastlingKeys[offset];
                 toggle_bit(castling, offset);
             }
         };
@@ -141,9 +141,9 @@ class Position {
         int32_t get_score(Side side) const { return scores[static_cast<int>(side)]; };
         uint8_t get_mg_phase() const { return mg_phase; };
 
-        inline ZobristKey get_zobrist_key() const { return zobrist_key; };
+        inline ZobristKey zobrist_key() const { return _zobrist_key; };
         ZobristKey get_polyglot_zobrist_key() const {
-            auto default_key = this->zobrist_key;
+            auto default_key = this->_zobrist_key;
             if (en_passant_file != 9) {
                 const Side enemy = enemy_side(side_to_move);
                 const size_t offset = en_passant_file + 8 * static_cast<int>(enemy);

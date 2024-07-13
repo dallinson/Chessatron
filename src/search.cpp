@@ -69,7 +69,7 @@ bool Search::is_threefold_repetition(const BoardHistory& history, const int half
     const int history_len = history.len();
     const auto castling_rights = history[history_len - 1].get_castling();
     for (int i = history_len - 3; i > 0 && i > history_len - halfmove_clock - 1; i -= 2) {
-        if (history[i].get_zobrist_key() == z) {
+        if (history[i].zobrist_key() == z) {
             counter += 1;
             if (counter >= 3) {
                 return true;
@@ -83,14 +83,14 @@ bool Search::is_threefold_repetition(const BoardHistory& history, const int half
 }
 
 bool Search::is_draw(const Position& pos, const BoardHistory& history) {
-    return pos.get_halfmove_clock() > 100 || is_threefold_repetition(history, pos.get_halfmove_clock(), pos.get_zobrist_key())
+    return pos.get_halfmove_clock() > 100 || is_threefold_repetition(history, pos.get_halfmove_clock(), pos.zobrist_key())
            || Search::detect_insufficient_material(pos, pos.stm());
 }
 
 bool Search::static_exchange_evaluation(const Position& pos, const Move move, const int threshold) {
-    PieceTypes next_victim = move.is_promotion() ? move.promo_type() : pos.piece_at(move.src_sq()).get_type();
+    PieceTypes next_victim = move.is_promotion() ? move.promo_type() : pos.piece_at(move.src_sq()).type();
 
-    Score balance = Search::SEEScores[static_cast<int>(pos.piece_at(move.dst_sq()).get_type())];
+    Score balance = Search::SEEScores[static_cast<int>(pos.piece_at(move.dst_sq()).type())];
     if (move.is_promotion()) {
         balance += (Search::SEEScores[static_cast<int>(move.promo_type())] - Search::SEEScores[static_cast<int>(PieceTypes::PAWN)]);
     } else if (move.flags() == MoveFlags::EN_PASSANT_CAPTURE) {
@@ -200,7 +200,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     const auto tt_entry = tt[old_pos];
     if constexpr (!is_pv_node(node_type)) {
         const bool should_cutoff =
-            tt_entry.key() == old_pos.get_zobrist_key() && tt_entry.depth() >= depth
+            tt_entry.key() == old_pos.zobrist_key() && tt_entry.depth() >= depth
             && (tt_entry.bound_type() == BoundTypes::EXACT_BOUND || (tt_entry.bound_type() == BoundTypes::LOWER_BOUND && tt_entry.score() >= beta)
                 || (tt_entry.bound_type() == BoundTypes::UPPER_BOUND && tt_entry.score() <= alpha));
         if (should_cutoff) {
@@ -216,7 +216,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
             return tt_entry.score();
         }
     }
-    const bool tt_hit = tt_entry.key() == old_pos.get_zobrist_key();
+    const bool tt_hit = tt_entry.key() == old_pos.zobrist_key();
 
     if (depth <= 0) {
         return quiescent_search<pv_node_type>(old_pos, alpha, beta, ply, node_count);
@@ -439,7 +439,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     }
     const BoundTypes bound_type =
         (best_score >= beta ? BoundTypes::LOWER_BOUND : (alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND));
-    tt.store(TranspositionTableEntry(best_move, depth, bound_type, best_score, raw_eval, old_pos.get_zobrist_key()), old_pos);
+    tt.store(TranspositionTableEntry(best_move, depth, bound_type, best_score, raw_eval, old_pos.zobrist_key()), old_pos);
     return best_score;
 }
 

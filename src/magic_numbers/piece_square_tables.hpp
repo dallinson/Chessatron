@@ -89,10 +89,10 @@ namespace PieceSquareTables {
 
     constexpr inline int32_t get_psqt_score(const Piece p, Square sq) {
         int pos = sq_to_int(sq);
-        if (p.get_side() == Side::WHITE) {
+        if (p.side() == Side::WHITE) {
             pos ^= 0b00111000;
         }
-        return Tables[static_cast<int>(p.get_type()) - 1][pos];
+        return Tables[static_cast<int>(p.type()) - 1][pos];
     }
 
     // clang-format on
