@@ -74,13 +74,13 @@ void HistoryTable::update_capthist_score(const BoardHistory& hist, Move move, Hi
 }
 
 int corrhist_idx(const ZobristKey pawn_hash) {
-    return pawn_hash & (16834 - 1);
+    return pawn_hash & (16384 - 1);
 }
 
 
 Score HistoryTable::corrhist_score(const Position& pos, const Score static_eval) const {
     const Score entry = (*corr_hist)[corrhist_idx(pos.pawn_hash())][static_cast<int>(pos.stm())];
-    const int32_t adjusted_score = static_eval + (entry * std::abs(entry)) / 16834;
+    const int32_t adjusted_score = static_eval + (entry * std::abs(entry)) / 16384;
 
     return std::clamp(adjusted_score, -MATE_FOUND + 1, MATE_FOUND - 1);
 }
