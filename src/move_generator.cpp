@@ -185,7 +185,7 @@ bool MoveGenerator::is_move_pseudolegal(const Position& pos, const Move m) {
     }
 
     // We must move a friendly piece
-    if (moved_pc == 0 || moved_pc.get_side() != stm) {
+    if (moved_pc == 0 || moved_pc.side() != stm) {
         return false;
     }
 
@@ -204,7 +204,7 @@ bool MoveGenerator::is_move_pseudolegal(const Position& pos, const Move m) {
         return false;
     }
 
-    if (moved_pc.get_type() == PieceTypes::PAWN) {
+    if (moved_pc.type() == PieceTypes::PAWN) {
         // Ensure this isn't a promotion
         if (!((rank_bb(0) | rank_bb(7)) & to).empty()) {
             return false;
@@ -222,12 +222,12 @@ bool MoveGenerator::is_move_pseudolegal(const Position& pos, const Move m) {
                                         && to_empty
                                         && (pos.occupancy() & static_cast<Square>(sq_to_int(to) - pawn_push)).empty();
         if (m.flags() == MoveFlags::DOUBLE_PAWN_PUSH && !can_double_push) return false;
-    } else if ((generate_mm(moved_pc.get_type(), pos.occupancy(), from) & to).empty() || m.flags() == MoveFlags::DOUBLE_PAWN_PUSH) {
+    } else if ((generate_mm(moved_pc.type(), pos.occupancy(), from) & to).empty() || m.flags() == MoveFlags::DOUBLE_PAWN_PUSH) {
         return false;
     }
 
     if (pos.in_check()) {
-        if (moved_pc.get_type() != PieceTypes::KING) {
+        if (moved_pc.type() != PieceTypes::KING) {
             // only king moves are legal in double check
             if (pos.checkers().popcnt() > 1) {
                 return false;
