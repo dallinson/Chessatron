@@ -75,7 +75,7 @@ void Position::clear_board() {
     castling = 0;
 
     _zobrist_key = ZobristKeys::SideToMove;
-    _pawn_hash = ZobristKeys::SideToMove;
+    _pawn_hash = 0;
 
     scores = {0};
     // Only the white side to move key should be set
@@ -184,7 +184,6 @@ std::optional<int> Position::set_from_fen(const std::string input) {
     } else if (input[char_idx] == 'b') {
         side_to_move = Side::BLACK;
         _zobrist_key ^= ZobristKeys::SideToMove;
-        _pawn_hash ^= ZobristKeys::SideToMove;
         // Clearing the board sets this key, so this ensures the zobrist key is correct
     } else {
         return std::optional<int>();
@@ -364,7 +363,6 @@ Position::Position(const Position& origin, const Move to_make) {
     fullmove_counter += static_cast<int>(side_to_move);
     side_to_move = enemy_side(side_to_move);
     _zobrist_key ^= ZobristKeys::SideToMove;
-    _pawn_hash ^= ZobristKeys::SideToMove;
     recompute_blockers_and_checkers(side_to_move);
 }
 
