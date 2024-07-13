@@ -32,6 +32,25 @@ TEST(ZobristHashingTests, TestSimplePosition) {
                                        ZobristKeys::SideToMove);
 }
 
+TEST(ZobristHashingTests, TestSimplePositionPawnHash) {
+    Position pos;
+    pos.set_from_fen("8/4k3/8/6K1/8/8/1P6/8 w - - 0 1");
+    ASSERT_EQ(pos.pawn_hash(), ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::PAWN), 9)] ^ ZobristKeys::SideToMove);
+
+    BoardHistory hist(pos);
+    pos = pos.make_move(Move(MoveFlags::QUIET_MOVE, 17, 9), hist);
+    ASSERT_EQ(pos.pawn_hash(), ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::PAWN), 17)]);
+
+    pos = hist.pop_board();
+    ASSERT_EQ(pos.pawn_hash(), ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::PAWN), 9)] ^ ZobristKeys::SideToMove);
+
+    pos = pos.make_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, 25, 9), hist);
+    ASSERT_EQ(pos.pawn_hash(), ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::PAWN), 25)]);
+
+    pos = hist.pop_board();
+    ASSERT_EQ(pos.pawn_hash(), ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::PAWN), 9)] ^ ZobristKeys::SideToMove);
+}
+
 TEST(ZobristHashingTests, TestEnPassant) {
     Position pos;
     pos.set_from_fen("8/4k3/8/6K1/2p5/8/1P6/8 w - - 0 1");
@@ -58,6 +77,26 @@ TEST(ZobristHashingTests, TestEnPassant) {
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::BLACK, PieceTypes::KING), 52)] ^
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::BLACK, PieceTypes::PAWN), 26)] ^
                                        ZobristKeys::EnPassantKeys[1]);
+}
+
+TEST(ZobristHashingTests, TestEnPassantPawnHash) {
+    Position pos;
+    pos.set_from_fen("8/4k3/8/6K1/2p5/8/1P6/8 w - - 0 1");
+    ASSERT_EQ(pos.pawn_hash(), ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::PAWN), 9)] ^
+                                       ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::BLACK, PieceTypes::PAWN), 26)] ^
+                                       ZobristKeys::SideToMove);
+    BoardHistory hist(pos);
+    pos = pos.make_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, 25, 9), hist);
+    ASSERT_EQ(pos.pawn_hash(), ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::PAWN), 25)] ^
+                                       ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::BLACK, PieceTypes::PAWN), 26)]);
+
+    pos = pos.make_move(Move(MoveFlags::EN_PASSANT_CAPTURE, 17, 26), hist);
+    ASSERT_EQ(pos.pawn_hash(), ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::BLACK, PieceTypes::PAWN), 17)] ^ ZobristKeys::SideToMove);
+
+    pos = hist.pop_board();
+    ASSERT_EQ(pos.pawn_hash(), ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::PAWN), 25)] ^
+                                       ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::BLACK, PieceTypes::PAWN), 26)]);
+
 }
 
 TEST(ZobristHashingTests, TestPawnPromotionAndCapture) {
@@ -103,6 +142,35 @@ TEST(ZobristHashingTests, TestPawnPromotionAndCapture) {
                                        ZobristKeys::SideToMove);
 }
 
+TEST(ZobristHashingTests, TestPawnPromotionAndCapturePawnHash) {
+    Position pos;
+    pos.set_from_fen("1p6/P3k3/8/6K1/8/8/8/8 w - - 0 1");
+    ASSERT_EQ(pos.pawn_hash(), ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::BLACK, PieceTypes::PAWN), 57)] ^
+                                       ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::PAWN), 48)] ^
+                                       ZobristKeys::SideToMove);
+    BoardHistory hist(pos);
+    pos = pos.make_move(Move(MoveFlags::ROOK_PROMOTION, 56, 48), hist);
+    ASSERT_EQ(pos.pawn_hash(), ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::BLACK, PieceTypes::PAWN), 57)]);
+
+    pos = pos.make_move(Move(MoveFlags::QUIET_MOVE, 53, 52), hist);
+    ASSERT_EQ(pos.pawn_hash(), ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::BLACK, PieceTypes::PAWN), 57)] ^ ZobristKeys::SideToMove);
+
+    pos = pos.make_move(Move(MoveFlags::CAPTURE, 57, 56), hist);
+    ASSERT_EQ(pos.pawn_hash(), 0);
+
+    pos = hist.pop_board();
+    ASSERT_EQ(pos.pawn_hash(), ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::BLACK, PieceTypes::PAWN), 57)] ^ ZobristKeys::SideToMove);
+
+    pos = hist.pop_board();
+    ASSERT_EQ(pos.pawn_hash(), ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::BLACK, PieceTypes::PAWN), 57)]);
+
+    pos = hist.pop_board();
+    ASSERT_EQ(pos.pawn_hash(), ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::BLACK, PieceTypes::PAWN), 57)] ^
+                                       ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::PAWN), 48)] ^
+                                       ZobristKeys::SideToMove);
+}
+
+
 TEST(ZobristHashingTests, TestPawnPromotionCapture) {
     Position pos;
     pos.set_from_fen("1p6/P3k3/8/6K1/8/8/8/8 w - - 0 1");
@@ -120,6 +188,22 @@ TEST(ZobristHashingTests, TestPawnPromotionCapture) {
     ASSERT_EQ(pos.zobrist_key(), ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::KING), 38)] ^
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::BLACK, PieceTypes::KING), 52)] ^
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::BLACK, PieceTypes::PAWN), 57)] ^
+                                       ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::PAWN), 48)] ^
+                                       ZobristKeys::SideToMove);
+}
+
+TEST(ZobristHashingTests, TestPawnPromotionCapturePawnHash) {
+    Position pos;
+    pos.set_from_fen("1p6/P3k3/8/6K1/8/8/8/8 w - - 0 1");
+    ASSERT_EQ(pos.pawn_hash(), ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::BLACK, PieceTypes::PAWN), 57)] ^
+                                       ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::PAWN), 48)] ^
+                                       ZobristKeys::SideToMove);
+    BoardHistory hist(pos);
+    pos = pos.make_move(Move(MoveFlags::ROOK_PROMOTION_CAPTURE, 57, 48), hist);
+    ASSERT_EQ(pos.pawn_hash(), 0);
+
+    pos = hist.pop_board();
+    ASSERT_EQ(pos.pawn_hash(), ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::BLACK, PieceTypes::PAWN), 57)] ^
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::PAWN), 48)] ^
                                        ZobristKeys::SideToMove);
 }
@@ -192,6 +276,43 @@ TEST(ZobristHashingTests, TestCastling) {
                                        ZobristKeys::CastlingKeys[0] ^ ZobristKeys::CastlingKeys[2] ^ ZobristKeys::SideToMove);
 }
 
+TEST(ZobristHashingTests, TestCastlingPawnHash) {
+    Position pos;
+    pos.set_from_fen("8/8/5k2/8/8/8/8/R3K2R w KQ - 0 1");
+    ASSERT_EQ(pos.pawn_hash(), ZobristKeys::SideToMove);
+
+    BoardHistory hist(pos);
+    pos = pos.make_move(Move(MoveFlags::QUIET_MOVE, 12, 4), hist);
+    ASSERT_EQ(pos.pawn_hash(), 0);
+
+    pos = hist.pop_board();
+    ASSERT_EQ(pos.pawn_hash(), ZobristKeys::SideToMove);
+
+    pos = pos.make_move(Move(MoveFlags::QUIET_MOVE, 8, 0), hist);
+    ASSERT_EQ(pos.pawn_hash(), 0);
+
+    pos = hist.pop_board();
+    ASSERT_EQ(pos.pawn_hash(), ZobristKeys::SideToMove);
+
+    pos = pos.make_move(Move(MoveFlags::QUIET_MOVE, 15, 7), hist);
+    ASSERT_EQ(pos.pawn_hash(), 0);
+
+    pos = hist.pop_board();
+    ASSERT_EQ(pos.pawn_hash(), ZobristKeys::SideToMove);
+
+    pos = pos.make_move(Move(MoveFlags::QUEENSIDE_CASTLE, 2, 4), hist);
+    ASSERT_EQ(pos.pawn_hash(), 0);
+
+    pos = hist.pop_board();
+    ASSERT_EQ(pos.pawn_hash(), ZobristKeys::SideToMove);
+
+    pos = pos.make_move(Move(MoveFlags::KINGSIDE_CASTLE, 6, 4), hist);
+    ASSERT_EQ(pos.pawn_hash(), 0);
+
+    pos = hist.pop_board();
+    ASSERT_EQ(pos.pawn_hash(), ZobristKeys::SideToMove);
+}
+
 TEST(ZobristHashingTests, TestPolyglotExamples) {
     Position pos;
     pos.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
@@ -223,4 +344,5 @@ TEST(ZobristHashingTests, TestEmptyBoard) {
     ASSERT_EQ(pos.stm(), Side::WHITE);
     ASSERT_EQ(pos.zobrist_key(), ZobristKeys::SideToMove);
     ASSERT_EQ(pos.get_polyglot_zobrist_key(), ZobristKeys::SideToMove);
+    ASSERT_EQ(pos.pawn_hash(), ZobristKeys::SideToMove);
 }
