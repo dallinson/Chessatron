@@ -2,6 +2,8 @@
 
 #include <algorithm>
 
+#include "search.hpp"
+
 HistoryValue HistoryTable::score(const BoardHistory& hist, Move move, Side stm) const {
     if (move.is_noisy()) {
         return capthist_score(hist, move);
@@ -37,6 +39,7 @@ void HistoryTable::update_mainhist_score(Move move, Side stm, HistoryValue bonus
     main_hist[move.hist_idx(stm)] += scaled_bonus;
 }
 
+
 void HistoryTable::update_conthist_score(const BoardHistory& hist, Move move, HistoryValue bonus) {
     if (!hist.move_at(hist.len() - 1).is_null_move()) {
         const auto scaled_bonus = bonus - conthist_score(hist, move) * std::abs(bonus) / 32768;
@@ -68,4 +71,24 @@ void HistoryTable::update_capthist_score(const BoardHistory& hist, Move move, Hi
         : pos.piece_at(move.dst_sq()).type();
     const auto scaled_bonus = bonus - capthist_score(hist, move) * std::abs(bonus) / 32768;
     (*capt_hist)[pos.piece_to(move)][static_cast<int>(captured_type) - 1] += scaled_bonus;
+}
+
+int corrhist_idx(const ZobristKey pawn_hash) {
+    return pawn_hash & (16384 - 1);
+}
+
+
+Score HistoryTable::corrhist_score(const Position& pos, const Score static_eval) const {
+    const Score entry = (*corr_hist)[corrhist_idx(pos.pawn_hash())][static_cast<int>(pos.stm())];
+    const int32_t adjusted_score = static_eval + (entry * std::abs(entry)) / 16384;
+
+    return std::clamp(adjusted_score, -MATE_FOUND + 1, MATE_FOUND - 1);
+}
+
+void HistoryTable::update_corrhist_score(const Position& pos, const Score static_eval, const Score search_score, const int depth) {
+    
+    const auto error = search_score - static_eval;
+    const auto bonus = std::clamp(error * depth / 8, -128, 128);
+    auto& score = (*corr_hist)[corrhist_idx(pos.pawn_hash())][static_cast<int>(pos.stm())];
+    score += bonus - score * std::abs(bonus) / 512;
 }

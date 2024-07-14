@@ -37,6 +37,7 @@ class Position {
         uint8_t mg_phase = 0;
 
         ZobristKey _zobrist_key = 0;
+        ZobristKey _pawn_hash = 0;
         int halfmove_clock = 0;
         int fullmove_counter = 0;
 
@@ -126,7 +127,6 @@ class Position {
 
         Side stm() const { return this->side_to_move; };
 
-
         int get_fullmove_counter() const { return this->fullmove_counter; };
         int get_halfmove_clock() const { return this->halfmove_clock; };
 
@@ -142,6 +142,7 @@ class Position {
         uint8_t get_mg_phase() const { return mg_phase; };
 
         inline ZobristKey zobrist_key() const { return _zobrist_key; };
+        ZobristKey pawn_hash() const { return _pawn_hash; };
         ZobristKey get_polyglot_zobrist_key() const {
             auto default_key = this->_zobrist_key;
             if (en_passant_file != 9) {
