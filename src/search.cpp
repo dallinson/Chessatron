@@ -579,6 +579,7 @@ Move SearchHandler::run_iterative_deepening_search() {
     for (unsigned int i = 0; i < pv_table.pv_array.size(); i++) {
         pv_table.pv_array[i].fill(Move::NULL_MOVE());
     }
+    std::for_each(search_stack.begin(), search_stack.end(), [](SearchStackFrame& elem) { elem = SearchStackFrame(); });
 
     Score current_score = 0;
     for (int depth = 1; depth <= TimeManagement::get_search_depth(tc) && !search_cancelled; depth++) {
