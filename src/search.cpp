@@ -245,6 +245,8 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
         }
     }();
 
+    search_stack[ply].static_eval = adjusted_eval;
+
     const auto static_eval = [&]() {
         if (tt_hit
             && tt_entry.score() > (MagicNumbers::NegativeInfinity + MAX_PLY)
@@ -265,10 +267,10 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
             return false;
         }
 
-        if (board_hist.len() >= 3 && !board_hist[board_hist.len() - 3].in_check()) {
-            return static_eval > Evaluation::evaluate_board(board_hist[board_hist.len() - 3]);
-        } else if (board_hist.len() >= 5 && !board_hist[board_hist.len() - 5].in_check()) {
-            return static_eval > Evaluation::evaluate_board(board_hist[board_hist.len() - 5]);
+        if (search_stack[ply - 2].static_eval != MagicNumbers::NegativeInfinity) {
+            return search_stack[ply].static_eval > search_stack[ply - 2].static_eval;
+        } else if (search_stack[ply - 4].static_eval != MagicNumbers::NegativeInfinity) {
+            return search_stack[ply].static_eval > search_stack[ply - 4].static_eval;
         }
         return false;
     }();

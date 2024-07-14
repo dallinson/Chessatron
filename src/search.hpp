@@ -131,6 +131,7 @@ class TranspositionTable {
 
 struct SearchStackFrame {
     Move killer_move = Move::NULL_MOVE();
+    Score static_eval = MagicNumbers::NegativeInfinity;
 };
 
 struct PvTable {
