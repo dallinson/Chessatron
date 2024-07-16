@@ -3,8 +3,6 @@
 #include <iostream>
 #include <string>
 
-std::unordered_map<std::string, UCIOption> uci_options;
-
 UCIOption::UCIOption(int min, int max, std::string default_value, std::function<void(UCIOption&)> callback) {
     this->option_type = UCIOptionTypes::SPIN;
     this->min = min;
