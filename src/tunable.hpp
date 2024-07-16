@@ -30,6 +30,6 @@ inline TunableInt::Tunable(std::string_view name, int value, int min, int max, i
     this->step = step;
     this->learning_rate = learning_rate;
     #ifdef IS_TUNE 
-    uci_options.insert(std::make_pair(this->name, UCIOption(this->min, this->max, std::to_string(this->value), UCIOptionTypes::TUNE_SPIN, [this](UCIOption& opt) { this->value = opt; })));
+    uci_options().insert(std::make_pair(this->name, UCIOption(this->min, this->max, std::to_string(this->value), UCIOptionTypes::TUNE_SPIN, [this](UCIOption& opt) { this->value = opt; })));
     #endif
 }

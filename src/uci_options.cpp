@@ -3,8 +3,6 @@
 #include <iostream>
 #include <string>
 
-std::unordered_map<std::string, UCIOption> uci_options;
-
 UCIOption::UCIOption(int min, int max, std::string default_value, UCIOptionTypes option_type, std::function<void(UCIOption&)> callback) {
     this->option_type = option_type;
     this->min = min;
@@ -33,7 +31,7 @@ std::ostream& operator<<(std::ostream& out, const UCIOption& opt) {
                        : opt.get_type() == UCIOptionTypes::BUTTON ? "button"
                        : opt.get_type() == UCIOptionTypes::STRING ? "string"
                                                                   : "");
-    if (opt.get_type() == UCIOptionTypes::SPIN) {
+    if (opt.get_type() == UCIOptionTypes::SPIN || opt.get_type() == UCIOptionTypes::TUNE_SPIN) {
         out << std::string("spin default ") << opt.get_default_value() << std::string(" min ") << std::to_string(opt.get_min())
             << std::string(" max ") << std::to_string(opt.get_max());
     }

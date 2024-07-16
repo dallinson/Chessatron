@@ -133,8 +133,8 @@ int main(int argc, char** argv) {
     srand(time(NULL));
     SearchHandler s;
 
-    uci_options.insert(std::make_pair("Hash", UCIOption(1, 2048, "16", [](UCIOption& opt) { tt.resize(size_t(opt)); })));
-    uci_options.insert(std::make_pair("Threads", UCIOption(1, 1, "1", [](UCIOption& opt) { (void) opt; })));
+    uci_options().insert(std::make_pair("Hash", UCIOption(1, 2048, "16", [](UCIOption& opt) { tt.resize(size_t(opt)); })));
+    uci_options().insert(std::make_pair("Threads", UCIOption(1, 1, "1", [](UCIOption& opt) { (void) opt; })));
 
     if (argc > 1) {
         if (std::string(argv[1]) == "bench") {
@@ -150,7 +150,7 @@ int main(int argc, char** argv) {
     for (std::string line; std::getline(std::cin, line);) {
         if (line == "uci") {
             std::cout << "id name Chessatron\n";
-            for (const auto& element : uci_options) {
+            for (const auto& element : uci_options()) {
                 std::cout << "option name " << element.first << element.second << std::endl;
             }
             std::cout << "uciok" << std::endl;
@@ -184,8 +184,8 @@ int main(int argc, char** argv) {
                         value += (value.empty() ? "" : " ");
                         value += token;
                     }
-                    if (uci_options.contains(option_name)) {
-                        uci_options[option_name].set_value(value);
+                    if (uci_options().contains(option_name)) {
+                        uci_options()[option_name].set_value(value);
                     }
                 }
             }
