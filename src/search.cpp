@@ -9,6 +9,8 @@
 #include "move_generator.hpp"
 #include "move_ordering.hpp"
 
+#include "tunable.hpp"
+
 TranspositionTable tt;
 
 template <bool print_debug> // this could just as easily be done as a parameter but this gives some practice with templates
@@ -275,7 +277,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
     // Reverse futility pruning
     if constexpr (!is_pv_node(node_type)) {
-        if (!old_pos.in_check() && depth < 7 && (static_eval - (70 * depth)) >= beta) {
+        if (!old_pos.in_check() && depth < 7 && (static_eval - (TunableInt("rfp_margin", 70, 50, 90, 2) * depth)) >= beta) {
             return static_eval;
         }
     }

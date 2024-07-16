@@ -14,6 +14,7 @@
 #include "evaluation.hpp"
 #include "history.hpp"
 #include "time_management.hpp"
+#include "tunable.hpp"
 
 enum class NodeTypes {
     ROOT_NODE,
@@ -31,7 +32,14 @@ namespace Perft {
 }
 
 namespace Search {
-    constexpr std::array<Score, 7> SEEScores = { 0, 100, 300, 300, 500, 900, 0 };
+    inline std::array<Score, 7> SEEScores = { 0, 
+        Score(TunableInt("see_pawn_value", 100, 0, 200, 10)),
+        Score(TunableInt("see_knight_value", 300, 100, 500, 25)),
+        Score(TunableInt("see_bishop_value", 300, 100, 500, 25)),
+        Score(TunableInt("see_rook_value", 500, 300, 700, 25)),
+        Score(TunableInt("see_queen_value", 900, 500, 1300, 50)),
+        0
+    };
 
     Move select_random_move(const Position& c);
     bool is_threefold_repetition(const BoardHistory& m, const int halfmove_clock, const ZobristKey z);

@@ -5,8 +5,8 @@
 
 std::unordered_map<std::string, UCIOption> uci_options;
 
-UCIOption::UCIOption(int min, int max, std::string default_value, std::function<void(UCIOption&)> callback) {
-    this->option_type = UCIOptionTypes::SPIN;
+UCIOption::UCIOption(int min, int max, std::string default_value, UCIOptionTypes option_type, std::function<void(UCIOption&)> callback) {
+    this->option_type = option_type;
     this->min = min;
     this->max = max;
     this->default_value = default_value;
@@ -15,7 +15,7 @@ UCIOption::UCIOption(int min, int max, std::string default_value, std::function<
 }
 
 UCIOption::operator int() const {
-    if (this->option_type == UCIOptionTypes::SPIN) {
+    if (this->option_type == UCIOptionTypes::SPIN || this->option_type == UCIOptionTypes::TUNE_SPIN) {
         return std::stoi(this->value);
     }
     return 0;
