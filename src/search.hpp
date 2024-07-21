@@ -33,11 +33,11 @@ namespace Perft {
 
 namespace Search {
     inline std::array<Score, 7> SEEScores = { 0, 
-        Score(TunableInt("see_pawn_value", 100, 0, 200, 10)),
-        Score(TunableInt("see_knight_value", 300, 100, 500, 25)),
-        Score(TunableInt("see_bishop_value", 300, 100, 500, 25)),
-        Score(TunableInt("see_rook_value", 500, 300, 700, 25)),
-        Score(TunableInt("see_queen_value", 900, 500, 1300, 50)),
+        Score(TunableInt("see_pawn_value", 100, 0, 200)),
+        Score(TunableInt("see_knight_value", 300, 100, 500)),
+        Score(TunableInt("see_bishop_value", 300, 100, 500)),
+        Score(TunableInt("see_rook_value", 500, 300, 700)),
+        Score(TunableInt("see_queen_value", 900, 500, 1300)),
         0
     };
 
