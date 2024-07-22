@@ -32,13 +32,14 @@ namespace Perft {
 }
 
 namespace Search {
-    inline std::array<Score, 7> SEEScores = { 0, 
-        Score(TunableInt("see_pawn_value", 100, 0, 200)),
-        Score(TunableInt("see_knight_value", 300, 100, 500)),
-        Score(TunableInt("see_bishop_value", 300, 100, 500)),
-        Score(TunableInt("see_rook_value", 500, 300, 700)),
-        Score(TunableInt("see_queen_value", 900, 500, 1300)),
-        0
+    inline std::array<TunableInt, 7> SEEScores = {
+        TUNABLE_INT("see_empty_value", 0, 0, 0),
+        TUNABLE_INT("see_pawn_value", 100, 0, 200),
+        TUNABLE_INT("see_knight_value", 300, 100, 500),
+        TUNABLE_INT("see_bishop_value", 300, 100, 500),
+        TUNABLE_INT("see_rook_value", 500, 300, 700),
+        TUNABLE_INT("see_queen_value", 900, 500, 1300),
+        TUNABLE_INT("see_king_value", 0, 0, 0)
     };
 
     Move select_random_move(const Position& c);
@@ -59,8 +60,8 @@ inline std::array<std::array<int, MAX_TURN_MOVE_COUNT + 1>, MAX_PLY + 1> LmrTabl
 inline std::array<std::array<int, MAX_TURN_MOVE_COUNT + 1>, MAX_PLY + 1> generate_lmr_table();
 inline void recompute_table() { LmrTable = generate_lmr_table(); };
 
-inline auto log_table_offset = TunableFloat("lmr_table_offset", 0.39, 0.05, 0.95, 0.002, [](){ recompute_table(); });
-inline auto log_table_divisor = TunableFloat("lmr_table_divisor", 2.11, 1.0, 3.0, 0.002, [](){ recompute_table(); });
+inline auto log_table_offset = TUNABLE_FLOAT_CALLBACK("lmr_table_offset", 0.39, 0.05, 0.95, 0.002, [](){ recompute_table(); });
+inline auto log_table_divisor = TUNABLE_FLOAT_CALLBACK("lmr_table_divisor", 2.11, 1.0, 3.0, 0.002, [](){ recompute_table(); });
 
 inline std::array<std::array<int, MAX_TURN_MOVE_COUNT + 1>, MAX_PLY + 1> generate_lmr_table() {
     std::array<std::array<int, MAX_TURN_MOVE_COUNT + 1>, MAX_PLY + 1> to_return = {};

@@ -39,7 +39,7 @@ std::ostream& operator<<(std::ostream& out, const UCIOption& opt) {
                                                                   : "");
     if (opt.get_type() == UCIOptionTypes::SPIN || opt.get_type() == UCIOptionTypes::TUNE_SPIN) {
         out << std::string("spin default ") << opt.default_value() << std::string(" min ") << std::to_string(opt.get_min())
-            << std::string(" max ") << std::to_string(opt.get_max()) << " value " << int(opt);
+            << std::string(" max ") << std::to_string(opt.get_max());
     } else if (opt.get_type() == UCIOptionTypes::STRING || opt.get_type() == UCIOptionTypes::TUNE_STRING) {
         out << "string default " << ((opt.default_value() == "") ? "<empty>" : opt.default_value());
     }

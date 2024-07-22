@@ -1,9 +1,15 @@
 #pragma once
 
+#include <cassert>
 #include <string>
 
 #include "uci_options.hpp"
 
+#ifdef IS_TUNE
+#define TUNABLE_INT TunableInt
+#define TUNABLE_FLOAT TunableFloat
+#define TUNABLE_INT_CALLBACK TunableInt
+#define TUNABLE_FLOAT_CALLBACK TunableFloat
 template<typename T>
 class Tunable {
     private:
@@ -34,11 +40,7 @@ inline TunableInt::Tunable(std::string_view name, int value, int min, int max, d
     if (this->step < 0.5) {
         this->learning_rate *= 2 * this->step;
     }
-    #ifdef IS_TUNE 
     uci_options().insert(std::make_pair(this->name, UCIOption(this->min, this->max, std::to_string(this->value), UCIOptionTypes::TUNE_SPIN, [this, custom_callback](UCIOption& opt) { this->value = opt; custom_callback(); })));
-    #else 
-    (void) custom_callback;
-    #endif
 }
 
 template<>
@@ -50,10 +52,13 @@ inline TunableFloat::Tunable(std::string_view name, double value, double min, do
     this->value = value;
     this->step = (max - min) / 20;
     this->learning_rate = desired_learning_rate;
-    #ifdef IS_TUNE 
     uci_options().insert(std::make_pair(this->name, UCIOption(this->min, this->max, std::to_string(this->value), UCIOptionTypes::TUNE_STRING, [this, custom_callback](UCIOption& opt) { this->value = std::stod(opt); custom_callback(); })));
-    #else 
-    (void) custom_callback;
-    #endif
-
 }
+#else
+using TunableInt = int;
+using TunableFloat = double;
+#define TUNABLE_INT(name, val, min, max) val
+#define TUNABLE_FLOAT(name, val, min, max) val
+#define TUNABLE_INT_CALLBACK(name, val, min, max, learning_rate, callback) val
+#define TUNABLE_FLOAT_CALLBACK(name, val, min, max, learning_rate, callback) val
+#endif
