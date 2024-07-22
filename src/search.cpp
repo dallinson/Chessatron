@@ -27,7 +27,7 @@ auto nmp_se_divisor = TunableInt("nmp_se_divisor", 200, 100, 300);
 auto iir_depth = TunableInt("iir_depth", 5, 2, 8);
 
 auto lmp_depth = TunableInt("lmp_depth", 6, 2, 10);
-auto lmp_offset = TunableInt("lmp_offset", 1, 3, 5);
+auto lmp_offset = TunableInt("lmp_offset", 3, 1, 5);
 
 auto fp_depth = TunableInt("fp_depth", 6, 2, 10);
 auto fp_multi = TunableInt("fp_multi", 200, 100, 300);
