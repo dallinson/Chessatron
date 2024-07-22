@@ -32,7 +32,7 @@ auto lmp_offset = TunableInt("lmp_offset", 3, 1, 5);
 auto fp_depth = TunableInt("fp_depth", 6, 2, 10);
 auto fp_multi = TunableInt("fp_multi", 200, 100, 300);
 
-auto hp_depth = TunableInt("hp_depth", 6, 2, 1);
+auto hp_depth = TunableInt("hp_depth", 6, 2, 10);
 auto hp_multi = TunableInt("hp_multi", 14, 4, 24);
 
 auto see_prune_depth = TunableInt("see_prune_depth", 10, 5, 15);

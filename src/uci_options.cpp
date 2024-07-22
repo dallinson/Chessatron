@@ -20,7 +20,7 @@ UCIOption::operator int() const {
 }
 
 UCIOption::operator std::string() const {
-    if (this->option_type == UCIOptionTypes::SPIN || this->option_type == UCIOptionTypes::TUNE_SPIN) {
+    if (this->option_type == UCIOptionTypes::STRING || this->option_type == UCIOptionTypes::TUNE_STRING) {
         return this->value;
     }
     return "";

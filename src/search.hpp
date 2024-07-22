@@ -59,7 +59,7 @@ inline std::array<std::array<int, MAX_TURN_MOVE_COUNT + 1>, MAX_PLY + 1> LmrTabl
 inline std::array<std::array<int, MAX_TURN_MOVE_COUNT + 1>, MAX_PLY + 1> generate_lmr_table();
 inline void recompute_table() { LmrTable = generate_lmr_table(); };
 
-inline auto log_table_offset = TunableFloat("lmr_table_offset", 0.39, 0.05, 0.95, 0.02, [](){ recompute_table(); });
+inline auto log_table_offset = TunableFloat("lmr_table_offset", 0.39, 0.05, 0.95, 0.002, [](){ recompute_table(); });
 inline auto log_table_divisor = TunableFloat("lmr_table_divisor", 2.11, 1.0, 3.0, 0.002, [](){ recompute_table(); });
 
 inline std::array<std::array<int, MAX_TURN_MOVE_COUNT + 1>, MAX_PLY + 1> generate_lmr_table() {
