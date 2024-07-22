@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cassert>
+#include <iostream>
 #include <string>
 
 #include "uci_options.hpp"
@@ -40,6 +41,7 @@ inline TunableInt::Tunable(std::string_view name, int value, int min, int max, d
     if (this->step < 0.5) {
         this->learning_rate *= 2 * this->step;
     }
+    std::cout << this->name << ", " << "int" << ", " << this->value << ", " << this->min << ", " << this->max << ", " << this->step << ", " << this->learning_rate << std::endl;
     uci_options().insert(std::make_pair(this->name, UCIOption(this->min, this->max, std::to_string(this->value), UCIOptionTypes::TUNE_SPIN, [this, custom_callback](UCIOption& opt) { this->value = opt; custom_callback(); })));
 }
 
@@ -52,6 +54,7 @@ inline TunableFloat::Tunable(std::string_view name, double value, double min, do
     this->value = value;
     this->step = (max - min) / 20;
     this->learning_rate = desired_learning_rate;
+    std::cout << this->name << ", " << "float" << ", " << this->value << ", " << this->min << ", " << this->max << ", " << this->step << ", " << this->learning_rate << std::endl;
     uci_options().insert(std::make_pair(this->name, UCIOption(this->min, this->max, std::to_string(this->value), UCIOptionTypes::TUNE_STRING, [this, custom_callback](UCIOption& opt) { this->value = std::stod(opt); custom_callback(); })));
 }
 #else
