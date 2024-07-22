@@ -6,11 +6,6 @@
 
 class UCIOption;
 
-inline auto& uci_options() {
-    static std::unordered_map<std::string, UCIOption> options;
-    return options;
-}
-
 enum class UCIOptionTypes {
     CHECK,
     SPIN,
@@ -45,3 +40,8 @@ class UCIOption {
 };
 
 std::ostream& operator<<(std::ostream& out, const UCIOption& opt);
+
+inline auto& uci_options() {
+    static std::unordered_map<std::string, UCIOption> options;
+    return options;
+}
