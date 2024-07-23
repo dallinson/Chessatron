@@ -94,8 +94,8 @@ namespace TimeManagement {
         }, tc);
     }
 
-    inline auto hard_limit_time_divisor = TUNABLE_INT("hard_limit_time_divisor", 20, 1, 40);
-    inline auto hard_limit_inc_divisor = TUNABLE_INT("hard_limit_inc_divisor", 2, 1, 10);
+    /*inline auto hard_limit_time_divisor = TUNABLE_INT("hard_limit_time_divisor", 20, 1, 40);
+    inline auto hard_limit_inc_divisor = TUNABLE_INT("hard_limit_inc_divisor", 2, 1, 10);*/
     /**
      * @brief Calculates the hard limit of the search from the time of the side to move and the increment
      * 
@@ -104,11 +104,11 @@ namespace TimeManagement {
      * @return uint32_t 
      */
     inline uint32_t calculate_hard_limit(const uint32_t side_time, const uint32_t side_increment) {
-        return side_time / hard_limit_time_divisor + side_increment / hard_limit_inc_divisor;
+        return side_time / 20 + side_increment / 2;
     }
 
 
-    inline auto soft_limit_multi = TUNABLE_FLOAT("soft_limit_multi", 0.3, 0.1, 0.75);
+    //inline auto soft_limit_multi = TUNABLE_FLOAT("soft_limit_multi", 0.3, 0.1, 0.75);
     /**
      * @brief Calculates the soft limit of the search from the search time
      * 
