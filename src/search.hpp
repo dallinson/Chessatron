@@ -32,15 +32,22 @@ namespace Perft {
 }
 
 namespace Search {
-    inline std::array<Score, 7> SEEScores = {
-        0,
-        100,
-        300,
-        300,
-        500,
-        900,
-        0
-    };
+    inline std::array<Score, 7> SEEScores = { 0, 100, 300, 300, 500, 900, 0 };
+    inline void update_see_values();
+
+    inline TunableInt see_pawn_value = TUNABLE_INT_CALLBACK("see_pawn_value", 100, 0, 200, 0.002, [](){ update_see_values(); });
+    inline TunableInt see_knight_value = TUNABLE_INT_CALLBACK("see_knight_value", 300, 100, 500, 0.002, [](){ update_see_values(); });
+    inline TunableInt see_bishop_value = TUNABLE_INT_CALLBACK("see_bishop_value", 300, 100, 500, 0.002, [](){ update_see_values(); });
+    inline TunableInt see_rook_value = TUNABLE_INT_CALLBACK("see_rook_value", 500, 300, 700, 0.002, [](){ update_see_values(); });
+    inline TunableInt see_queen_value = TUNABLE_INT_CALLBACK("see_queen_value", 900, 500, 1300, 0.002, [](){ update_see_values(); });
+
+    inline void update_see_values() {
+        SEEScores[1] = see_pawn_value;
+        SEEScores[2] = see_knight_value;
+        SEEScores[3] = see_bishop_value;
+        SEEScores[4] = see_rook_value;
+        SEEScores[5] = see_queen_value;
+    }
 
     Move select_random_move(const Position& c);
     bool is_threefold_repetition(const BoardHistory& m, const int halfmove_clock, const ZobristKey z);
