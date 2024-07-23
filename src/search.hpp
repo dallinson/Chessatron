@@ -32,14 +32,14 @@ namespace Perft {
 }
 
 namespace Search {
-    inline std::array<TunableInt, 7> SEEScores = {
-        TUNABLE_INT("see_empty_value", 0, -100, 100),
-        TUNABLE_INT("see_pawn_value", 100, 0, 200),
-        TUNABLE_INT("see_knight_value", 300, 100, 500),
-        TUNABLE_INT("see_bishop_value", 300, 100, 500),
-        TUNABLE_INT("see_rook_value", 500, 300, 700),
-        TUNABLE_INT("see_queen_value", 900, 500, 1300),
-        TUNABLE_INT("see_king_value", 0, -100, 100)
+    inline std::array<Score, 7> SEEScores = {
+        0,
+        100,
+        300,
+        300,
+        500,
+        900,
+        0
     };
 
     Move select_random_move(const Position& c);
