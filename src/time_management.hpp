@@ -6,6 +6,8 @@
 
 #include <cstdint>
 
+#include "tunable.hpp"
+
 // Used for movestogo-based time control
 struct FixedTimeTC;
 // Used for wtime/btime/winc/binc-based time control
@@ -92,6 +94,8 @@ namespace TimeManagement {
         }, tc);
     }
 
+    TUNABLE_SPECIFIER auto hard_limit_time_divisor = TUNABLE_INT("hard_limit_time_divisor", 14, 1, 40);
+    TUNABLE_SPECIFIER auto hard_limit_inc_divisor = TUNABLE_INT("hard_limit_inc_divisor", 1, 1, 10);
     /**
      * @brief Calculates the hard limit of the search from the time of the side to move and the increment
      * 
@@ -100,9 +104,11 @@ namespace TimeManagement {
      * @return uint32_t 
      */
     inline uint32_t calculate_hard_limit(const uint32_t side_time, const uint32_t side_increment) {
-        return side_time / 20 + side_increment / 2;
+        return side_time / hard_limit_time_divisor + side_increment / hard_limit_inc_divisor;
     }
 
+
+    TUNABLE_SPECIFIER auto soft_limit_multi = TUNABLE_FLOAT("soft_limit_multi", 0.3172, 0.1, 0.75);
     /**
      * @brief Calculates the soft limit of the search from the search time
      * 
@@ -111,7 +117,7 @@ namespace TimeManagement {
      */
     inline uint32_t calculate_soft_limit(const TimeControlInfo& tc, const std::array<uint64_t, 4096>& node_spent_table, const Move pv_move, const uint64_t node_count) {
         const auto best_move_fraction = static_cast<double>(node_spent_table[pv_move.value() & 0x0FFF]) / static_cast<double>(node_count);
-        return (get_search_time(tc) * 0.3) * (1.6 - best_move_fraction) * 1.5;
+        return (get_search_time(tc) * soft_limit_multi) * (1.6 - best_move_fraction) * 1.5;
     }
 
 };

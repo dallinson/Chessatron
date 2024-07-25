@@ -181,7 +181,7 @@ TEST(ChessBoardTests, TestClearBoard) {
     pos.set_from_fen("startpos");
     pos.clear_board();
     for (int i = 0; i < 12; i++) {
-        ASSERT_TRUE(pos.get_bb(i / 2, i % 6).empty());
+        ASSERT_TRUE(pos.get_bb(i / 2, i % 2).empty());
     }
     ASSERT_EQ(pos.stm(), Side::WHITE);
     ASSERT_EQ(pos.get_en_passant_file(), 9);

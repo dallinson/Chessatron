@@ -9,7 +9,37 @@
 #include "move_generator.hpp"
 #include "move_ordering.hpp"
 
+#include "tunable.hpp"
+
 TranspositionTable tt;
+
+TUNABLE_SPECIFIER auto rfp_depth = TUNABLE_INT("rfp_depth", 7, 3, 9);
+TUNABLE_SPECIFIER auto rfp_margin = TUNABLE_INT("rfp_margin", 72, 50, 90);
+
+TUNABLE_SPECIFIER auto razoring_offset = TUNABLE_INT("razoring_offset", 370, 200, 600);
+TUNABLE_SPECIFIER auto razoring_multi = TUNABLE_INT("razoring_multi", 255, 100, 400);
+
+TUNABLE_SPECIFIER auto nmp_depth = TUNABLE_INT("nmp_depth", 3, 1, 5);
+TUNABLE_SPECIFIER auto base_nmp_reduction = TUNABLE_INT("base_nmp_reduction", 4, 1, 7);
+TUNABLE_SPECIFIER auto nmp_depth_divisor = TUNABLE_INT("nmp_depth_divisor", 4, 1, 7);
+TUNABLE_SPECIFIER auto nmp_se_divisor = TUNABLE_INT("nmp_se_divisor", 204, 100, 300);
+
+TUNABLE_SPECIFIER auto iir_depth = TUNABLE_INT("iir_depth", 5, 2, 8);
+
+TUNABLE_SPECIFIER auto lmp_depth = TUNABLE_INT("lmp_depth", 6, 2, 10);
+TUNABLE_SPECIFIER auto lmp_offset = TUNABLE_INT("lmp_offset", 3, 1, 5);
+
+TUNABLE_SPECIFIER auto fp_depth = TUNABLE_INT("fp_depth", 6, 2, 10);
+TUNABLE_SPECIFIER auto fp_multi = TUNABLE_INT("fp_multi", 200, 100, 300);
+
+TUNABLE_SPECIFIER auto hp_depth = TUNABLE_INT("hp_depth", 6, 2, 10);
+TUNABLE_SPECIFIER auto hp_multi = TUNABLE_INT("hp_multi", 13, 4, 24);
+
+TUNABLE_SPECIFIER auto see_prune_depth = TUNABLE_INT("see_prune_depth", 10, 5, 15);
+TUNABLE_SPECIFIER auto noisy_see_prune_multi = TUNABLE_INT("noisy_see_prune_multi", -20, -35, -5);
+TUNABLE_SPECIFIER auto quiet_see_prune_multi = TUNABLE_INT("quiet_see_prune_multi", -65, -100, -30);
+
+TUNABLE_SPECIFIER auto asp_window = TUNABLE_INT("asp_window", 28, 10, 50);
 
 template <bool print_debug> // this could just as easily be done as a parameter but this gives some practice with templates
 uint64_t perft(const Position& old_pos, BoardHistory& history, int depth) {
@@ -275,13 +305,13 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
     // Reverse futility pruning
     if constexpr (!is_pv_node(node_type)) {
-        if (!old_pos.in_check() && depth < 7 && (static_eval - (70 * depth)) >= beta) {
+        if (!old_pos.in_check() && depth < rfp_depth && (static_eval - (rfp_margin * depth)) >= beta) {
             return static_eval;
         }
     }
 
     if constexpr (!is_pv_node(node_type)) {
-        if (!old_pos.in_check() && static_eval < alpha - 400 - 250 * depth * depth) {
+        if (!old_pos.in_check() && static_eval < alpha - razoring_offset - razoring_multi * depth * depth) {
             const auto razoring_score = quiescent_search<NodeTypes::NON_PV_NODE>(old_pos, alpha - 1, alpha, ply + 1, node_count);
             if (razoring_score < alpha) {
                 return razoring_score;
@@ -290,15 +320,15 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     }
 
     if constexpr (!is_pv_node(node_type)) {
-        if (static_eval >= beta && !old_pos.in_check() && depth >= 3) {
+        if (static_eval >= beta && !old_pos.in_check() && depth >= nmp_depth) {
             // Try null move pruning if we aren't in check
 
             if (!board_hist.move_at(board_hist.len() - 1).is_null_move()) {
                 auto& board = old_pos.make_move(Move::NULL_MOVE(), board_hist);
                 
-                const auto nmp_reduction = 4
-                    + (depth / 4)
-                    + std::min((static_eval - beta) / 200, 2);
+                const auto nmp_reduction = base_nmp_reduction
+                    + (depth / nmp_depth_divisor)
+                    + std::min((static_eval - beta) / nmp_se_divisor, 2);
                 auto null_score =
                     -negamax_step<pv_node_type>(board, -beta, -alpha, depth - nmp_reduction, ply + 1, node_count, child_cutnode_type);
 
@@ -332,7 +362,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
                                 search_stack[ply].killer_move);
     // move reordering
 
-    if (depth >= 5 && !tt_move) {
+    if (depth >= iir_depth && !tt_move) {
         extensions -= 1;
     }
     // iir
@@ -351,28 +381,28 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
         if constexpr (!is_pv_node(node_type)) {
             // late move pruning
-            if (depth <= 6 && !old_pos.in_check() && move.move.is_quiet() && evaluated_moves.size() >= static_cast<size_t>(((depth * depth) + 3) / (2 - improving))) {
+            if (depth <= lmp_depth && !old_pos.in_check() && move.move.is_quiet() && evaluated_moves.size() >= static_cast<size_t>(((depth * depth) + lmp_offset) / (2 - improving))) {
                 skip_quiets = true;
                 continue;
             }
         }
 
         // futility pruning
-        if (!old_pos.in_check() && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && !move.move.is_capture() && depth <= 6
-            && static_eval + 200 * depth < alpha) {
+        if (!old_pos.in_check() && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && !move.move.is_capture() && depth <= fp_depth
+            && static_eval + fp_multi * depth < alpha) {
             skip_quiets = true;
             continue;
         }
 
         // history pruning
         if constexpr (!is_pv_node(node_type)) {
-            if (best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && evaluated_moves.size() > 0 && depth <= 6 && static_eval <= alpha && history_table.score(board_hist, move.move, old_pos.stm()) < -(depth * depth) * 14) {
+            if (best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && evaluated_moves.size() > 0 && depth <= hp_depth && static_eval <= alpha && history_table.score(board_hist, move.move, old_pos.stm()) < -(depth * depth) * hp_multi) {
                 continue;
             }
         }
 
-        if (depth <= 10 && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY)
-            && !Search::static_exchange_evaluation(old_pos, move.move, move.move.is_capture() ? (-20 * depth * depth) : (-65 * depth))) {
+        if (depth <= see_prune_depth && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY)
+            && !Search::static_exchange_evaluation(old_pos, move.move, move.move.is_capture() ? (noisy_see_prune_multi * depth * depth) : (quiet_see_prune_multi * depth))) {
             continue;
         }
 
@@ -532,7 +562,7 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
 }
 
 Score SearchHandler::run_aspiration_window_search(int depth, Score previous_score) {
-    Score window = 30;
+    Score window = asp_window;
     Score alpha, beta;
     while (true) {
         if (depth <= 4) {

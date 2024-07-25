@@ -165,6 +165,8 @@ int main(int argc, char** argv) {
             s.EndSearch();
         } else if (line == "d") {
             s.get_pos().print_board();
+        } else if (line == "bench") {
+            s.run_bench();
         } else {
             auto parsed_line = split_on_whitespace(line);
             if (parsed_line.size() >= 1) {

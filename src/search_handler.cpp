@@ -47,7 +47,10 @@ void SearchHandler::shutdown() {
     this->search_thread.join();
 }
 
-SearchHandler::SearchHandler() { this->search_thread = std::thread(&SearchHandler::search_thread_function, this); }
+SearchHandler::SearchHandler() { 
+    this->search_thread = std::thread(&SearchHandler::search_thread_function, this);
+    recompute_table();
+}
 
 void SearchHandler::search(const TimeControlInfo& tc) {
     current_search_id += 1;
