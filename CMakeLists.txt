@@ -71,7 +71,6 @@ target_link_libraries(
     GTest::gtest_main
 )
 
-target_compile_definitions(Chessatron PUBLIC IS_TUNE)
 target_compile_definitions(chessatron_tests PUBLIC IS_TESTING)
 
 gtest_discover_tests(chessatron_tests)
