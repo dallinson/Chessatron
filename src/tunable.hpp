@@ -11,6 +11,7 @@
 #define TUNABLE_FLOAT TunableFloat
 #define TUNABLE_INT_CALLBACK TunableInt
 #define TUNABLE_FLOAT_CALLBACK TunableFloat
+#define TUNABLE_SPECIFIER inline
 template<typename T>
 class Tunable {
     private:
@@ -27,7 +28,6 @@ class Tunable {
 
 using TunableInt = Tunable<int>;
 using TunableFloat = Tunable<double>;
-
 
 template<>
 inline TunableInt::Tunable(std::string_view name, int value, int min, int max, double desired_learning_rate, std::function<void(void)> custom_callback) {
@@ -60,8 +60,9 @@ inline TunableFloat::Tunable(std::string_view name, double value, double min, do
 #else
 using TunableInt = int;
 using TunableFloat = double;
-#define TUNABLE_INT(name, val, min, max) val
-#define TUNABLE_FLOAT(name, val, min, max) val
-#define TUNABLE_INT_CALLBACK(name, val, min, max, learning_rate, callback) val
-#define TUNABLE_FLOAT_CALLBACK(name, val, min, max, learning_rate, callback) val
+#define TUNABLE_INT(name, val, min, max) (val)
+#define TUNABLE_FLOAT(name, val, min, max) (val)
+#define TUNABLE_INT_CALLBACK(name, val, min, max, learning_rate, callback) (val)
+#define TUNABLE_FLOAT_CALLBACK(name, val, min, max, learning_rate, callback) (val)
+#define TUNABLE_SPECIFIER constexpr
 #endif

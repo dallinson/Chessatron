@@ -32,14 +32,15 @@ namespace Perft {
 }
 
 namespace Search {
-    inline std::array<Score, 7> SEEScores = { 0, 100, 300, 300, 500, 900, 0 };
+    TUNABLE_SPECIFIER std::array<Score, 7> SEEScores = { 0, 100, 300, 300, 500, 900, 0 };
     inline void update_see_values();
 
-    inline TunableInt see_pawn_value = TUNABLE_INT_CALLBACK("see_pawn_value", 100, 0, 200, 0.002, [](){ update_see_values(); });
-    inline TunableInt see_knight_value = TUNABLE_INT_CALLBACK("see_knight_value", 300, 100, 500, 0.002, [](){ update_see_values(); });
-    inline TunableInt see_bishop_value = TUNABLE_INT_CALLBACK("see_bishop_value", 300, 100, 500, 0.002, [](){ update_see_values(); });
-    inline TunableInt see_rook_value = TUNABLE_INT_CALLBACK("see_rook_value", 500, 300, 700, 0.002, [](){ update_see_values(); });
-    inline TunableInt see_queen_value = TUNABLE_INT_CALLBACK("see_queen_value", 900, 500, 1300, 0.002, [](){ update_see_values(); });
+    #ifdef IS_TUNE
+    TUNABLE_SPECIFIER TunableInt see_pawn_value = TUNABLE_INT_CALLBACK("see_pawn_value", 100, 0, 200, 0.002, [](){ update_see_values(); });
+    TUNABLE_SPECIFIER TunableInt see_knight_value = TUNABLE_INT_CALLBACK("see_knight_value", 300, 100, 500, 0.002, [](){ update_see_values(); });
+    TUNABLE_SPECIFIER TunableInt see_bishop_value = TUNABLE_INT_CALLBACK("see_bishop_value", 300, 100, 500, 0.002, [](){ update_see_values(); });
+    TUNABLE_SPECIFIER TunableInt see_rook_value = TUNABLE_INT_CALLBACK("see_rook_value", 500, 300, 700, 0.002, [](){ update_see_values(); });
+    TUNABLE_SPECIFIER TunableInt see_queen_value = TUNABLE_INT_CALLBACK("see_queen_value", 900, 500, 1300, 0.002, [](){ update_see_values(); });
 
     inline void update_see_values() {
         SEEScores[1] = see_pawn_value;
@@ -48,6 +49,7 @@ namespace Search {
         SEEScores[4] = see_rook_value;
         SEEScores[5] = see_queen_value;
     }
+    #endif
 
     Move select_random_move(const Position& c);
     bool is_threefold_repetition(const BoardHistory& m, const int halfmove_clock, const ZobristKey z);
@@ -67,8 +69,8 @@ inline std::array<std::array<int, MAX_TURN_MOVE_COUNT + 1>, MAX_PLY + 1> LmrTabl
 inline std::array<std::array<int, MAX_TURN_MOVE_COUNT + 1>, MAX_PLY + 1> generate_lmr_table();
 inline void recompute_table() { LmrTable = generate_lmr_table(); };
 
-inline auto log_table_offset = TUNABLE_FLOAT_CALLBACK("lmr_table_offset", 0.39, 0.05, 0.95, 0.002, [](){ recompute_table(); });
-inline auto log_table_divisor = TUNABLE_FLOAT_CALLBACK("lmr_table_divisor", 2.11, 1.0, 3.0, 0.002, [](){ recompute_table(); });
+TUNABLE_SPECIFIER auto log_table_offset = TUNABLE_FLOAT_CALLBACK("lmr_table_offset", 0.39, 0.05, 0.95, 0.002, [](){ recompute_table(); });
+TUNABLE_SPECIFIER auto log_table_divisor = TUNABLE_FLOAT_CALLBACK("lmr_table_divisor", 2.11, 1.0, 3.0, 0.002, [](){ recompute_table(); });
 
 inline std::array<std::array<int, MAX_TURN_MOVE_COUNT + 1>, MAX_PLY + 1> generate_lmr_table() {
     std::array<std::array<int, MAX_TURN_MOVE_COUNT + 1>, MAX_PLY + 1> to_return = {};
