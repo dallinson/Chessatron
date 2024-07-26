@@ -218,7 +218,8 @@ bool Search::detect_insufficient_material(const Position& board, const Side side
 template <NodeTypes node_type>
 Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score beta, int depth, int ply, uint64_t& node_count, bool is_cut_node) {
 
-    pv_table.pv_length[ply] = ply;
+    const auto in_singular_search = !search_stack[ply].excluded_move.is_null_move();
+    if (!in_singular_search) pv_table.pv_length[ply] = ply;
     if (Search::is_draw(old_pos, board_hist)) {
         return 0;
     }
@@ -230,8 +231,11 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     const auto tt_entry = tt[old_pos];
     if constexpr (!is_pv_node(node_type)) {
         const bool should_cutoff =
-            tt_entry.key() == old_pos.zobrist_key() && tt_entry.depth() >= depth
-            && (tt_entry.bound_type() == BoundTypes::EXACT_BOUND || (tt_entry.bound_type() == BoundTypes::LOWER_BOUND && tt_entry.score() >= beta)
+            !in_singular_search
+            && tt_entry.key() == old_pos.zobrist_key()
+            && tt_entry.depth() >= depth
+            && (tt_entry.bound_type() == BoundTypes::EXACT_BOUND 
+                || (tt_entry.bound_type() == BoundTypes::LOWER_BOUND && tt_entry.score() >= beta)
                 || (tt_entry.bound_type() == BoundTypes::UPPER_BOUND && tt_entry.score() <= alpha));
         if (should_cutoff) {
             // Positive infinity is a a mate at this square
@@ -305,13 +309,13 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
     // Reverse futility pruning
     if constexpr (!is_pv_node(node_type)) {
-        if (!old_pos.in_check() && depth < rfp_depth && (static_eval - (rfp_margin * depth)) >= beta) {
+        if (!old_pos.in_check() && depth < rfp_depth && (static_eval - (rfp_margin * depth)) >= beta && !in_singular_search) {
             return static_eval;
         }
     }
 
     if constexpr (!is_pv_node(node_type)) {
-        if (!old_pos.in_check() && static_eval < alpha - razoring_offset - razoring_multi * depth * depth) {
+        if (!old_pos.in_check() && static_eval < alpha - razoring_offset - razoring_multi * depth * depth && !in_singular_search) {
             const auto razoring_score = quiescent_search<NodeTypes::NON_PV_NODE>(old_pos, alpha - 1, alpha, ply + 1, node_count);
             if (razoring_score < alpha) {
                 return razoring_score;
@@ -320,7 +324,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     }
 
     if constexpr (!is_pv_node(node_type)) {
-        if (static_eval >= beta && !old_pos.in_check() && depth >= nmp_depth) {
+        if (static_eval >= beta && !old_pos.in_check() && depth >= nmp_depth && !in_singular_search) {
             // Try null move pruning if we aren't in check
 
             if (!board_hist.move_at(board_hist.len() - 1).is_null_move()) {
@@ -378,6 +382,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
             break;
         }
         const auto move = opt_move.value();
+        if (in_singular_search && search_stack[ply].excluded_move == move.move) continue;
 
         if constexpr (!is_pv_node(node_type)) {
             // late move pruning
@@ -408,10 +413,26 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
         tt.prefetch(old_pos.key_after(move.move));
         const auto pre_move_node_count = node_count;
-        auto& pos = old_pos.make_move(move.move, board_hist);
         node_count += 1;
         Score score;
-        const auto new_depth = depth - 1 + extensions;
+        const auto new_depth = depth - 1 + extensions + static_cast<int>([&](){
+            // Singular Extensions
+            if constexpr (node_type == NodeTypes::ROOT_NODE) return false;
+            if (depth >= 8 && move.move == tt_entry.move() && !in_singular_search
+                && tt_entry.depth() + 4 >= depth && tt_entry.bound_type() != BoundTypes::UPPER_BOUND
+                && std::abs(tt_entry.score()) < (MagicNumbers::PositiveInfinity - MAX_PLY)) {
+                    // Do SE
+                    const auto se_depth = (depth - 1) / 2;
+                    const auto se_beta = tt_entry.score() - (3 * depth);
+                    search_stack[ply].excluded_move = tt_entry.move();
+                    const auto se_score = negamax_step<NodeTypes::NON_PV_NODE>(old_pos, se_beta - 1, se_beta, se_depth, ply, node_count, is_cut_node);
+                    search_stack[ply].excluded_move = Move::NULL_MOVE();
+                    return (se_score < se_beta);
+                } else {
+                    return false;
+                }
+        }());
+        auto& pos = old_pos.make_move(move.move, board_hist);
 
         // See if we can perform LMR
         if (depth > 2
@@ -488,7 +509,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
             history_table.update_corrhist_score(old_pos, adjusted_eval, best_score, depth);
         }
 
-    tt.store(TranspositionTableEntry(best_move, depth, bound_type, best_score, raw_eval, old_pos.zobrist_key()), old_pos);
+    if (!in_singular_search) tt.store(TranspositionTableEntry(best_move, depth, bound_type, best_score, raw_eval, old_pos.zobrist_key()), old_pos);
     return best_score;
 }
 
