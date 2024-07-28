@@ -505,8 +505,13 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
         return static_eval;
     }
     alpha = std::max(static_eval, alpha);
-    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIESCENCE>(old_pos, old_pos.stm());
-    if (moves.size() == 0 && MoveGenerator::generate_legal_moves<MoveGenType::NON_QUIESCENCE>(old_pos, old_pos.stm()).size() == 0) {
+    MoveList moves;
+    if (old_pos.in_check()) {
+        moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(old_pos, old_pos.stm());
+    } else {
+        moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIESCENCE>(old_pos, old_pos.stm());
+    }
+    if (moves.size() == 0 && (old_pos.in_check() || MoveGenerator::generate_legal_moves<MoveGenType::NON_QUIESCENCE>(old_pos, old_pos.stm()).size() == 0)) {
         if (old_pos.in_check()) {
             // if in check
             return ply + MagicNumbers::NegativeInfinity;
