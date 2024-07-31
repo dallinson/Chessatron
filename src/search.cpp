@@ -497,7 +497,7 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
     if (Search::is_draw(old_pos, board_hist)) {
         return 0;
     }
-    Score static_eval = history_table.corrhist_score(old_pos, Evaluation::evaluate_board(old_pos));
+    Score static_eval = old_pos.in_check() ? MagicNumbers::NegativeInfinity : history_table.corrhist_score(old_pos, Evaluation::evaluate_board(old_pos));
     if (ply >= MAX_PLY) {
         return static_eval;
     }
