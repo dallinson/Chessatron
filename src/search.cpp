@@ -279,8 +279,8 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
         if (tt_hit
             && tt_entry.score() > (MagicNumbers::NegativeInfinity + MAX_PLY)
             && (tt_entry.bound_type() == BoundTypes::EXACT_BOUND
-                || (tt_entry.bound_type() == BoundTypes::LOWER_BOUND && tt_entry.score() > raw_eval)
-                || (tt_entry.bound_type() == BoundTypes::UPPER_BOUND && tt_entry.score() < raw_eval))) {
+                || (tt_entry.bound_type() == BoundTypes::LOWER_BOUND && tt_entry.score() > adjusted_eval)
+                || (tt_entry.bound_type() == BoundTypes::UPPER_BOUND && tt_entry.score() < adjusted_eval))) {
                     return tt_entry.score();
                 }
         return adjusted_eval;
