@@ -21,6 +21,7 @@ constexpr auto default_see_knight_value = 297;
 constexpr auto default_see_bishop_value = 290;
 constexpr auto default_see_rook_value = 512;
 constexpr auto default_see_queen_value = 915;
+TUNABLE_SPECIFIER TunableInt tt_depth_offset = TUNABLE_INT("tt_depth_offset", 5, 3, 6);
 
 enum class NodeTypes {
     ROOT_NODE,
@@ -46,7 +47,7 @@ namespace Search {
     TUNABLE_SPECIFIER TunableInt see_knight_value = TUNABLE_INT_CALLBACK("see_knight_value", default_see_knight_value, 100, 500, 0.002, [](){ update_see_values(); });
     TUNABLE_SPECIFIER TunableInt see_bishop_value = TUNABLE_INT_CALLBACK("see_bishop_value", default_see_bishop_value, 100, 500, 0.002, [](){ update_see_values(); });
     TUNABLE_SPECIFIER TunableInt see_rook_value = TUNABLE_INT_CALLBACK("see_rook_value", default_see_rook_value, 300, 700, 0.002, [](){ update_see_values(); });
-    TUNABLE_SPECIFIER TunableInt see_queen_value = TUNABLE_INT_CALLBACK("see_queen_value", default_see_queen_value, 500, 1300, 0.002, [](){ update_see_values(); });
+    TUNABLE_SPECIFIER TunableInt see_queen_value = TUNABLE_INT_CALLBACK("see_queen_value", default_see_queen_value, 700, 1100, 0.002, [](){ update_see_values(); });
 
     inline void update_see_values() {
         SEEScores[1] = see_pawn_value;
@@ -132,7 +133,7 @@ class TranspositionTable {
             const auto tt_key = tt_index(key.zobrist_key());
             if (table[tt_key].key() != entry.key()
                 || entry.bound_type() == BoundTypes::EXACT_BOUND
-                || entry.depth() + 5 > table[tt_key].depth()) {
+                || entry.depth() + tt_depth_offset > table[tt_key].depth()) {
                 if (entry.score() <= MagicNumbers::NegativeInfinity + MAX_PLY) {
                     // If we're being mated
                     entry.set_score(MagicNumbers::NegativeInfinity);

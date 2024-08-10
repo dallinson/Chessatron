@@ -72,5 +72,6 @@ target_link_libraries(
 )
 
 target_compile_definitions(chessatron_tests PUBLIC IS_TESTING)
+target_compile_definitions(Chessatron PUBLIC IS_TUNE)
 
 gtest_discover_tests(chessatron_tests)

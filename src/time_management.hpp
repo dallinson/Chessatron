@@ -94,8 +94,8 @@ namespace TimeManagement {
         }, tc);
     }
 
-    TUNABLE_SPECIFIER auto hard_limit_time_divisor = TUNABLE_INT("hard_limit_time_divisor", 14, 1, 40);
-    TUNABLE_SPECIFIER auto hard_limit_inc_divisor = TUNABLE_INT("hard_limit_inc_divisor", 1, 1, 10);
+    TUNABLE_SPECIFIER auto hard_limit_time_divisor = TUNABLE_INT("hard_limit_time_divisor", 14, 1, 20);
+    TUNABLE_SPECIFIER auto hard_limit_inc_divisor = TUNABLE_INT("hard_limit_inc_divisor", 1, 1, 5);
     /**
      * @brief Calculates the hard limit of the search from the time of the side to move and the increment
      * 
