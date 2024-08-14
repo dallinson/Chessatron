@@ -16,11 +16,11 @@
 #include "time_management.hpp"
 #include "tunable.hpp"
 
-constexpr auto default_see_pawn_value = 103;
-constexpr auto default_see_knight_value = 297;
-constexpr auto default_see_bishop_value = 290;
-constexpr auto default_see_rook_value = 512;
-constexpr auto default_see_queen_value = 915;
+constexpr auto default_see_pawn_value = 97;
+constexpr auto default_see_knight_value = 292;
+constexpr auto default_see_bishop_value = 281;
+constexpr auto default_see_rook_value = 509;
+constexpr auto default_see_queen_value = 920;
 TUNABLE_SPECIFIER TunableInt tt_depth_offset = TUNABLE_INT("tt_depth_offset", 5, 3, 6);
 
 enum class NodeTypes {
@@ -76,8 +76,8 @@ inline std::array<std::array<int, MAX_TURN_MOVE_COUNT + 1>, MAX_PLY + 1> LmrTabl
 inline std::array<std::array<int, MAX_TURN_MOVE_COUNT + 1>, MAX_PLY + 1> generate_lmr_table();
 inline void recompute_table() { LmrTable = generate_lmr_table(); };
 
-TUNABLE_SPECIFIER auto log_table_offset = TUNABLE_FLOAT_CALLBACK("lmr_table_offset", 0.3574, 0.05, 0.95, 0.002, [](){ recompute_table(); });
-TUNABLE_SPECIFIER auto log_table_divisor = TUNABLE_FLOAT_CALLBACK("lmr_table_divisor", 2.099, 1.0, 3.0, 0.002, [](){ recompute_table(); });
+TUNABLE_SPECIFIER auto log_table_offset = TUNABLE_FLOAT_CALLBACK("lmr_table_offset", 0.3274, 0.05, 0.95, 0.002, [](){ recompute_table(); });
+TUNABLE_SPECIFIER auto log_table_divisor = TUNABLE_FLOAT_CALLBACK("lmr_table_divisor", 2.1816, 1.0, 3.0, 0.002, [](){ recompute_table(); });
 
 inline std::array<std::array<int, MAX_TURN_MOVE_COUNT + 1>, MAX_PLY + 1> generate_lmr_table() {
     std::array<std::array<int, MAX_TURN_MOVE_COUNT + 1>, MAX_PLY + 1> to_return = {};
