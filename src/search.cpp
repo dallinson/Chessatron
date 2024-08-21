@@ -421,7 +421,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
             const auto lmr_depth = std::clamp(new_depth - [&]() {
                 int lmr_reduction = LmrTable[depth][evaluated_moves.size()];
                 // default log formula for lmr
-                lmr_reduction += static_cast<int>(!is_pv_node(node_type) && is_cut_node);
+                lmr_reduction += static_cast<int>(!is_pv_node(node_type) && is_cut_node && ((tt_move && !tt_entry.move().is_null_move()) || tt_entry.depth() + 4 <= depth));
                 // reduce more if we are not in a pv node and we're in a cut node
                 lmr_reduction -= static_cast<int>(pos.in_check());
                 // reduce less if we're in check
