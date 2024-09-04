@@ -428,7 +428,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
                 lmr_reduction += static_cast<int>(!improving);
                 // Reduce more if we aren't improving
                 return lmr_reduction;
-            }(), 0, MAX_PLY - ply);
+            }(), static_cast<int>(depth > 5), MAX_PLY - ply);
             
             score = -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, lmr_depth, ply + 1, node_count,
                                                           child_cutnode_type);
