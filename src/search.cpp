@@ -230,8 +230,11 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     const auto tt_entry = tt[old_pos];
     if constexpr (!is_pv_node(node_type)) {
         const bool should_cutoff =
-            tt_entry.key() == old_pos.zobrist_key() && tt_entry.depth() >= depth
-            && (tt_entry.bound_type() == BoundTypes::EXACT_BOUND || (tt_entry.bound_type() == BoundTypes::LOWER_BOUND && tt_entry.score() >= beta)
+            tt_entry.key() == old_pos.zobrist_key()
+            && tt_entry.depth() >= depth
+            && old_pos.get_halfmove_clock() < 80
+            && (tt_entry.bound_type() == BoundTypes::EXACT_BOUND
+                || (tt_entry.bound_type() == BoundTypes::LOWER_BOUND && tt_entry.score() >= beta)
                 || (tt_entry.bound_type() == BoundTypes::UPPER_BOUND && tt_entry.score() <= alpha));
         if (should_cutoff) {
             // Positive infinity is a a mate at this square
