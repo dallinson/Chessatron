@@ -524,16 +524,19 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
     auto mp = MovePicker(std::move(moves), old_pos, board_hist, Move::NULL_MOVE(), history_table, search_stack[ply].killer_move);
     int total_moves = 0;
     std::optional<ScoredMove> opt_move;
+    Score futility = static_eval + 150;
     while ((opt_move = mp.next(false)).has_value()) {
         if (search_cancelled) {
             break;
         }
         const auto move = *opt_move;
 
-        if (move.move.is_noisy()) {
-            if (!move.see_ordering_result) {
-                continue;
+        if (!old_pos.in_check() && futility <= alpha && !move.see_ordering_result) {
+            // This implies the move is a noisy move as only noisies are generated when not in check
+            if (best_score < futility) {
+                best_score = futility;
             }
+            continue;
         }
 
         auto& pos = old_pos.make_move(move.move, board_hist);
