@@ -427,6 +427,8 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
                 // reduce less if we're in check
                 lmr_reduction += static_cast<int>(!improving);
                 // Reduce more if we aren't improving
+                lmr_reduction += static_cast<int>(is_cut_node);
+                // Reduce more if in a cutnode
                 return lmr_reduction;
             }(), 1, MAX_PLY - ply);
             
