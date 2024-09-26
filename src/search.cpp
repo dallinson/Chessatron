@@ -231,7 +231,8 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     if constexpr (!is_pv_node(node_type)) {
         const bool should_cutoff =
             tt_entry.key() == old_pos.zobrist_key() && tt_entry.depth() >= depth
-            && (tt_entry.bound_type() == BoundTypes::EXACT_BOUND || (tt_entry.bound_type() == BoundTypes::LOWER_BOUND && tt_entry.score() >= beta)
+            && (tt_entry.bound_type() == BoundTypes::EXACT_BOUND
+                || (tt_entry.bound_type() == BoundTypes::LOWER_BOUND && tt_entry.score() >= beta)
                 || (tt_entry.bound_type() == BoundTypes::UPPER_BOUND && tt_entry.score() <= alpha));
         if (should_cutoff) {
             // Positive infinity is a a mate at this square
@@ -497,6 +498,15 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
     if (Search::is_draw(old_pos, board_hist)) {
         return 0;
     }
+
+    const auto entry = tt[old_pos];
+    if (entry.key() == old_pos.zobrist_key()
+        && (entry.bound_type() == BoundTypes::EXACT_BOUND
+            || (entry.bound_type() == BoundTypes::LOWER_BOUND && entry.score() >= beta)
+            || (entry.bound_type() == BoundTypes::UPPER_BOUND && entry.score() <= alpha))) {
+                return entry.score();
+    }
+
     Score static_eval = old_pos.in_check() ? MagicNumbers::NegativeInfinity : history_table.corrhist_score(old_pos, Evaluation::evaluate_board(old_pos));
     if (ply >= MAX_PLY) {
         return static_eval;
