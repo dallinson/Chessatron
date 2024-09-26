@@ -230,7 +230,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     const auto tt_entry = tt[old_pos];
     if constexpr (!is_pv_node(node_type)) {
         const bool should_cutoff =
-            tt_entry.key() == old_pos.zobrist_key() && tt_entry.depth() >= depth
+            tt_entry.key() == old_pos.zobrist_key() && tt_entry.ply() >= depth
             && (tt_entry.bound_type() == BoundTypes::EXACT_BOUND || (tt_entry.bound_type() == BoundTypes::LOWER_BOUND && tt_entry.score() >= beta)
                 || (tt_entry.bound_type() == BoundTypes::UPPER_BOUND && tt_entry.score() <= alpha));
         if (should_cutoff) {
@@ -421,7 +421,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
             const auto lmr_depth = std::clamp(new_depth - [&]() {
                 int lmr_reduction = LmrTable[depth][evaluated_moves.size()];
                 // default log formula for lmr
-                lmr_reduction += static_cast<int>(!is_pv_node(node_type) && is_cut_node && ((tt_move && !tt_entry.move().is_null_move()) || tt_entry.depth() + 4 <= depth));
+                lmr_reduction += static_cast<int>(!is_pv_node(node_type) && is_cut_node && ((tt_move && !tt_entry.move().is_null_move()) || tt_entry.ply() + 4 <= depth));
                 // reduce more if we are not in a pv node and we're in a cut node
                 lmr_reduction -= static_cast<int>(pos.in_check());
                 // reduce less if we're in check
@@ -488,7 +488,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
             history_table.update_corrhist_score(old_pos, adjusted_eval, best_score, depth);
         }
 
-    tt.store(TranspositionTableEntry(best_move, depth, bound_type, best_score, raw_eval, old_pos.zobrist_key()), old_pos);
+    tt.store(TranspositionTableEntry(best_move, ply, bound_type, best_score, raw_eval, old_pos.zobrist_key()), old_pos);
     return best_score;
 }
 
