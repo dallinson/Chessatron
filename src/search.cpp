@@ -531,8 +531,10 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
     }
 
     Score best_score = static_eval;
+    const auto original_alpha = alpha;
     auto mp = MovePicker(std::move(moves), old_pos, board_hist, Move::NULL_MOVE(), history_table, search_stack[ply].killer_move);
     int total_moves = 0;
+    Move best_move = Move::NULL_MOVE();
     std::optional<ScoredMove> opt_move;
     while ((opt_move = mp.next(false)).has_value()) {
         if (search_cancelled) {
@@ -566,13 +568,19 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
         total_moves += 1;
         if (score > best_score) {
             best_score = score;
-            if (score >= beta) {
-                search_stack[ply].killer_move = move.move;
-                break;
+            if (score > alpha) {
+                best_move = move.move;
+                if (score >= beta) {
+                    search_stack[ply].killer_move = move.move;
+                    break;
+                }
+                alpha = score;
             }
-            alpha = std::max(score, alpha);
         }
     }
+    const BoundTypes bound_type =
+        (best_score >= beta ? BoundTypes::LOWER_BOUND : (alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND));
+    tt.store(TranspositionTableEntry(best_move, 0, bound_type, best_score, static_eval, old_pos.zobrist_key()), old_pos);
     return best_score;
 }
 
