@@ -13,12 +13,12 @@ int32_t get_mg_score(int32_t score) { return std::bit_cast<int16_t>(static_cast<
 Score Evaluation::evaluate_board(const Position& board) {
     const Side stm = board.stm();
     const Side enemy = enemy_side(board.stm());
-    const auto mg_score = get_mg_score(board.get_score(stm)) - get_mg_score(board.get_score(enemy));
-    const auto eg_score = get_eg_score(board.get_score(stm)) - get_eg_score(board.get_score(enemy));
+    const auto mg_score = (get_mg_score(board.get_score(stm)) - get_mg_score(board.get_score(enemy))) + 26;
+    const auto eg_score = (get_eg_score(board.get_score(stm)) - get_eg_score(board.get_score(enemy))) + 23;
 
     const auto mg_phase = std::min(board.get_mg_phase(), (uint8_t) 24);
     const auto eg_phase = 24 - mg_phase;
 
-    return std::clamp((((mg_score * mg_phase) + (eg_score * eg_phase)) / 24) + 10, MagicNumbers::NegativeInfinity + MAX_PLY + 1,
+    return std::clamp((((mg_score * mg_phase) + (eg_score * eg_phase)) / 24), MagicNumbers::NegativeInfinity + MAX_PLY + 1,
                       MagicNumbers::PositiveInfinity - MAX_PLY - 1);
 }
