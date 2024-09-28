@@ -19,6 +19,6 @@ Score Evaluation::evaluate_board(const Position& board) {
     const auto mg_phase = std::min(board.get_mg_phase(), (uint8_t) 24);
     const auto eg_phase = 24 - mg_phase;
 
-    return std::clamp(((mg_score * mg_phase) + (eg_score * eg_phase)) / 24, MagicNumbers::NegativeInfinity + MAX_PLY + 1,
+    return std::clamp((((mg_score * mg_phase) + (eg_score * eg_phase)) / 24) + 10, MagicNumbers::NegativeInfinity + MAX_PLY + 1,
                       MagicNumbers::PositiveInfinity - MAX_PLY - 1);
 }
