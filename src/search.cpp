@@ -497,13 +497,32 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
     if (Search::is_draw(old_pos, board_hist)) {
         return 0;
     }
-    Score static_eval = old_pos.in_check() ? MagicNumbers::NegativeInfinity : history_table.corrhist_score(old_pos, Evaluation::evaluate_board(old_pos));
+
+    const auto raw_eval = [&]() {
+        if (old_pos.in_check()) {
+            return MagicNumbers::NegativeInfinity;
+        } else {
+            return Evaluation::evaluate_board(old_pos);
+        }
+    }();
+
+    const auto static_eval = [&]() {
+        if (old_pos.in_check()) {
+            return MagicNumbers::NegativeInfinity;
+        } else {
+            return history_table.corrhist_score(old_pos, raw_eval);
+        }
+    }();
+
     if (ply >= MAX_PLY) {
         return static_eval;
     }
+
+    // Stand pat; we assume the static eval is the lower bound of our score
     if (static_eval >= beta) {
         return static_eval;
     }
+
     alpha = std::max(static_eval, alpha);
     MoveList moves;
     if (old_pos.in_check()) {
