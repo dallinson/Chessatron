@@ -507,13 +507,30 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
                 return entry.score();
     }
 
-    Score static_eval = old_pos.in_check() ? MagicNumbers::NegativeInfinity : history_table.corrhist_score(old_pos, Evaluation::evaluate_board(old_pos));
+    const auto raw_eval = [&]() {
+        if (old_pos.in_check()) {
+            return MagicNumbers::NegativeInfinity;
+        } else {
+            return Evaluation::evaluate_board(old_pos);
+        }
+    }();
+
+    const auto static_eval = [&]() {
+        if (old_pos.in_check()) {
+            return MagicNumbers::NegativeInfinity;
+        } else {
+            return history_table.corrhist_score(old_pos, raw_eval);
+        }
+    }();
     if (ply >= MAX_PLY) {
         return static_eval;
     }
+
+    // Stand pat; we assume the static eval is the lower bound of our score
     if (static_eval >= beta) {
         return static_eval;
     }
+
     alpha = std::max(static_eval, alpha);
     MoveList moves;
     if (old_pos.in_check()) {
@@ -580,7 +597,7 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
     }
     const BoundTypes bound_type =
         (best_score >= beta ? BoundTypes::LOWER_BOUND : (alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND));
-    tt.store(TranspositionTableEntry(best_move, 0, bound_type, best_score, static_eval, old_pos.zobrist_key()), old_pos);
+    tt.store(TranspositionTableEntry(best_move, 0, bound_type, best_score, raw_eval, old_pos.zobrist_key()), old_pos);
     return best_score;
 }
 
