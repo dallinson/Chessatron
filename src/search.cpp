@@ -499,12 +499,14 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
         return 0;
     }
 
-    const auto entry = tt[old_pos];
-    if (entry.key() == old_pos.zobrist_key()
-        && (entry.bound_type() == BoundTypes::EXACT_BOUND
-            || (entry.bound_type() == BoundTypes::LOWER_BOUND && entry.score() >= beta)
-            || (entry.bound_type() == BoundTypes::UPPER_BOUND && entry.score() <= alpha))) {
-                return entry.score();
+    if constexpr(!is_pv_node(node_type)) {
+        const auto entry = tt[old_pos];
+        if (entry.key() == old_pos.zobrist_key()
+            && (entry.bound_type() == BoundTypes::EXACT_BOUND
+                || (entry.bound_type() == BoundTypes::LOWER_BOUND && entry.score() >= beta)
+                || (entry.bound_type() == BoundTypes::UPPER_BOUND && entry.score() <= alpha))) {
+                    return entry.score();
+        }
     }
 
     const auto raw_eval = [&]() {
