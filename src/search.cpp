@@ -499,8 +499,8 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
         return 0;
     }
 
+    const auto entry = tt[old_pos];
     if constexpr(!is_pv_node(node_type)) {
-        const auto entry = tt[old_pos];
         if (entry.key() == old_pos.zobrist_key()
             && (entry.bound_type() == BoundTypes::EXACT_BOUND
                 || (entry.bound_type() == BoundTypes::LOWER_BOUND && entry.score() >= beta)
@@ -508,10 +508,13 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
                     return entry.score();
         }
     }
+    const auto tt_hit = entry.key() == old_pos.zobrist_key();
 
     const auto raw_eval = [&]() {
         if (old_pos.in_check()) {
             return MagicNumbers::NegativeInfinity;
+        }  else if (tt_hit && entry.static_eval() > (MagicNumbers::NegativeInfinity + MAX_PLY)) {
+            return entry.static_eval();
         } else {
             return Evaluation::evaluate_board(old_pos);
         }
@@ -524,6 +527,7 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
             return history_table.corrhist_score(old_pos, raw_eval);
         }
     }();
+
     if (ply >= MAX_PLY) {
         return static_eval;
     }
