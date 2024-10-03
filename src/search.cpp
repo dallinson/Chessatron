@@ -231,7 +231,8 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     if constexpr (!is_pv_node(node_type)) {
         const bool should_cutoff =
             tt_entry.key() == old_pos.zobrist_key() && tt_entry.depth() >= depth
-            && (tt_entry.bound_type() == BoundTypes::EXACT_BOUND || (tt_entry.bound_type() == BoundTypes::LOWER_BOUND && tt_entry.score() >= beta)
+            && (tt_entry.bound_type() == BoundTypes::EXACT_BOUND
+                || (tt_entry.bound_type() == BoundTypes::LOWER_BOUND && tt_entry.score() >= beta)
                 || (tt_entry.bound_type() == BoundTypes::UPPER_BOUND && tt_entry.score() <= alpha));
         if (should_cutoff) {
             // Positive infinity is a a mate at this square
@@ -498,6 +499,16 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
         return 0;
     }
 
+    if constexpr(!is_pv_node(node_type)) {
+        const auto entry = tt[old_pos];
+        if (entry.key() == old_pos.zobrist_key()
+            && (entry.bound_type() == BoundTypes::EXACT_BOUND
+                || (entry.bound_type() == BoundTypes::LOWER_BOUND && entry.score() >= beta)
+                || (entry.bound_type() == BoundTypes::UPPER_BOUND && entry.score() <= alpha))) {
+                    return entry.score();
+        }
+    }
+
     const auto raw_eval = [&]() {
         if (old_pos.in_check()) {
             return MagicNumbers::NegativeInfinity;
@@ -513,7 +524,6 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
             return history_table.corrhist_score(old_pos, raw_eval);
         }
     }();
-
     if (ply >= MAX_PLY) {
         return static_eval;
     }
@@ -540,8 +550,10 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
     }
 
     Score best_score = static_eval;
+    const auto original_alpha = alpha;
     auto mp = MovePicker(std::move(moves), old_pos, board_hist, Move::NULL_MOVE(), history_table, search_stack[ply].killer_move);
     int total_moves = 0;
+    Move best_move = Move::NULL_MOVE();
     std::optional<ScoredMove> opt_move;
     while ((opt_move = mp.next(false)).has_value()) {
         if (search_cancelled) {
@@ -575,13 +587,19 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
         total_moves += 1;
         if (score > best_score) {
             best_score = score;
-            if (score >= beta) {
-                search_stack[ply].killer_move = move.move;
-                break;
+            if (score > alpha) {
+                best_move = move.move;
+                if (score >= beta) {
+                    search_stack[ply].killer_move = move.move;
+                    break;
+                }
+                alpha = score;
             }
-            alpha = std::max(score, alpha);
         }
     }
+    const BoundTypes bound_type =
+        (best_score >= beta ? BoundTypes::LOWER_BOUND : (alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND));
+    tt.store(TranspositionTableEntry(best_move, 0, bound_type, best_score, raw_eval, old_pos.zobrist_key()), old_pos);
     return best_score;
 }
 
