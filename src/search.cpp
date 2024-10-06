@@ -520,12 +520,23 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
         }
     }();
 
-    const auto static_eval = [&]() {
+    const auto adjusted_eval = [&]() {
         if (old_pos.in_check()) {
             return MagicNumbers::NegativeInfinity;
         } else {
             return history_table.corrhist_score(old_pos, raw_eval);
         }
+    }();
+
+    const auto static_eval = [&]() {
+        if (tt_hit
+            && entry.score() > (MagicNumbers::NegativeInfinity + MAX_PLY)
+            && (entry.bound_type() == BoundTypes::EXACT_BOUND
+                || (entry.bound_type() == BoundTypes::LOWER_BOUND && entry.score() > raw_eval)
+                || (entry.bound_type() == BoundTypes::UPPER_BOUND && entry.score() < raw_eval))) {
+                    return entry.score();
+                }
+        return adjusted_eval;
     }();
 
     if (ply >= MAX_PLY) {
