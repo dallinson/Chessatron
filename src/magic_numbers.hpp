@@ -37,3 +37,5 @@ namespace MagicNumbers {
     constexpr int16_t NegativeInfinity = -PositiveInfinity;
     // int32_t so a known constant size
 } // namespace MagicNumbers
+
+constexpr static int MATE_FOUND = MagicNumbers::PositiveInfinity - MAX_PLY;
