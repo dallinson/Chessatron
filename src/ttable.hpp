@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <vector>
 
 #include "chessboard.hpp"
@@ -52,8 +53,9 @@ class TranspositionTable {
         TranspositionTable() {
             this->resize(16);
         };
+
         uint64_t tt_index(const ZobristKey key) const { return static_cast<uint64_t>((static_cast<__uint128_t>(key) * static_cast<__uint128_t>(table.size())) >> 64); };
-        const TranspositionTableEntry& operator[](const Position& key) const { return table[tt_index(key.zobrist_key())]; };
+
         void store(TranspositionTableEntry entry, const Position& key) {
             const auto tt_key = tt_index(key.zobrist_key());
             if (table[tt_key].key() != entry.key()
@@ -72,13 +74,27 @@ class TranspositionTable {
                 table[tt_key] = entry;
             }
         }
+
+        std::optional<std::reference_wrapper<const TranspositionTableEntry>> probe(const Position& pos) {
+            const auto tt_key = pos.zobrist_key();
+            const auto tt_idx = tt_index(tt_key);
+            const auto elem = table[tt_idx];
+            if (elem.key() == tt_key) {
+                return std::optional(std::ref(elem));
+            } else {
+                return std::nullopt;
+            }
+        }
+
         void clear() {
             std::fill(table.begin(), table.end(), TranspositionTableEntry());
         }
+
         void resize(size_t mb_size) {
             table.resize((mb_size * 1024 * 1024) / sizeof(TranspositionTableEntry));
             clear();
         }
+
         void prefetch(const ZobristKey key) const {
             __builtin_prefetch(&table[tt_index(key)]);
         }
