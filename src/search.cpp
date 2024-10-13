@@ -5,7 +5,6 @@
 #include <limits>
 #include <vector>
 
-#include "common.hpp"
 #include "move_generator.hpp"
 #include "move_ordering.hpp"
 
@@ -227,27 +226,28 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     const auto child_cutnode_type = is_pv_node(node_type) ? true : !is_cut_node;
     int extensions = 0;
 
-    const auto tt_entry = tt[old_pos];
+    const auto entry = tt.probe(old_pos);
+    const auto tt_hit = entry.has_value();
     if constexpr (!is_pv_node(node_type)) {
         const bool should_cutoff =
-            tt_entry.key() == old_pos.zobrist_key() && tt_entry.depth() >= depth
-            && (tt_entry.bound_type() == BoundTypes::EXACT_BOUND
-                || (tt_entry.bound_type() == BoundTypes::LOWER_BOUND && tt_entry.score() >= beta)
-                || (tt_entry.bound_type() == BoundTypes::UPPER_BOUND && tt_entry.score() <= alpha));
+            tt_hit
+            && entry->get().depth() >= depth
+            && (entry->get().bound_type() == BoundTypes::EXACT_BOUND
+                || (entry->get().bound_type() == BoundTypes::LOWER_BOUND && entry->get().score() >= beta)
+                || (entry->get().bound_type() == BoundTypes::UPPER_BOUND && entry->get().score() <= alpha));
         if (should_cutoff) {
             // Positive infinity is a a mate at this square
             // Negative infinity is being mated at this square
             // A mate score is therefore greater than (positive_infinity - max_ply) or
             // less than (negative_infinity + max_ply)
-            if (tt_entry.score() == MagicNumbers::PositiveInfinity) {
+            if (entry->get().score() == MagicNumbers::PositiveInfinity) {
                 return MagicNumbers::PositiveInfinity - ply;
-            } else if (tt_entry.score() <= (MagicNumbers::NegativeInfinity + MAX_PLY)) {
+            } else if (entry->get().score() <= (MagicNumbers::NegativeInfinity + MAX_PLY)) {
                 return MagicNumbers::NegativeInfinity + ply;
             }
-            return tt_entry.score();
+            return entry->get().score();
         }
     }
-    const bool tt_hit = tt_entry.key() == old_pos.zobrist_key();
 
     if (depth <= 0) {
         return quiescent_search<pv_node_type>(old_pos, alpha, beta, ply, node_count);
@@ -261,8 +261,8 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     const auto raw_eval = [&]() {
         if (old_pos.in_check()) {
             return MagicNumbers::NegativeInfinity;
-        } else if (tt_hit && tt_entry.static_eval() > (MagicNumbers::NegativeInfinity + MAX_PLY)) {
-            return tt_entry.static_eval();
+        } else if (tt_hit && entry->get().static_eval() > (MagicNumbers::NegativeInfinity + MAX_PLY)) {
+            return entry->get().static_eval();
         } else {
             return Evaluation::evaluate_board(old_pos);
         }
@@ -278,11 +278,11 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
     const auto static_eval = [&]() {
         if (tt_hit
-            && tt_entry.score() > (MagicNumbers::NegativeInfinity + MAX_PLY)
-            && (tt_entry.bound_type() == BoundTypes::EXACT_BOUND
-                || (tt_entry.bound_type() == BoundTypes::LOWER_BOUND && tt_entry.score() > raw_eval)
-                || (tt_entry.bound_type() == BoundTypes::UPPER_BOUND && tt_entry.score() < raw_eval))) {
-                    return tt_entry.score();
+            && entry->get().score() > (MagicNumbers::NegativeInfinity + MAX_PLY)
+            && (entry->get().bound_type() == BoundTypes::EXACT_BOUND
+                || (entry->get().bound_type() == BoundTypes::LOWER_BOUND && entry->get().score() > raw_eval)
+                || (entry->get().bound_type() == BoundTypes::UPPER_BOUND && entry->get().score() < raw_eval))) {
+                    return entry->get().score();
                 }
         return adjusted_eval;
     }();
@@ -358,10 +358,11 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     }
     // mate and draw detection
 
-    const bool tt_move = tt_hit && MoveGenerator::is_move_pseudolegal(old_pos, tt_entry.move()) && MoveGenerator::is_move_legal(old_pos, tt_entry.move());
-    auto mp = MovePicker(std::move(moves), old_pos, board_hist, tt_move ? tt_entry.move() : Move::NULL_MOVE(), history_table,
+    const bool tt_move = tt_hit && MoveGenerator::is_move_pseudolegal(old_pos, entry->get().move()) && MoveGenerator::is_move_legal(old_pos, entry->get().move());
+    auto mp = MovePicker(std::move(moves), old_pos, board_hist, tt_move ? entry->get().move() : Move::NULL_MOVE(), history_table,
                                 search_stack[ply].killer_move);
     // move reordering
+    // tt_hit in tt_move condition guards against null entry access
 
     if (depth >= iir_depth && !tt_move) {
         extensions -= 1;
@@ -422,7 +423,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
             const auto lmr_depth = std::clamp(new_depth - [&]() {
                 int lmr_reduction = LmrTable[depth][evaluated_moves.size()];
                 // default log formula for lmr
-                lmr_reduction += static_cast<int>(!is_pv_node(node_type) && is_cut_node && ((tt_move && !tt_entry.move().is_null_move()) || tt_entry.depth() + 4 <= depth));
+                lmr_reduction += static_cast<int>(!is_pv_node(node_type) && is_cut_node && ((tt_move && !entry->get().move().is_null_move()) || (tt_hit && entry->get().depth() + 4 <= depth)));
                 // reduce more if we are not in a pv node and we're in a cut node
                 lmr_reduction -= static_cast<int>(pos.in_check());
                 // reduce less if we're in check
@@ -499,22 +500,23 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
         return 0;
     }
 
-    const auto entry = tt[old_pos];
+    const auto entry = tt.probe(old_pos);
+    const auto tt_hit = entry.has_value();
     if constexpr(!is_pv_node(node_type)) {
-        if (entry.key() == old_pos.zobrist_key()
-            && (entry.bound_type() == BoundTypes::EXACT_BOUND
-                || (entry.bound_type() == BoundTypes::LOWER_BOUND && entry.score() >= beta)
-                || (entry.bound_type() == BoundTypes::UPPER_BOUND && entry.score() <= alpha))) {
-                    return entry.score();
+        if (tt_hit
+            && entry->get().key() == old_pos.zobrist_key()
+            && (entry->get().bound_type() == BoundTypes::EXACT_BOUND
+                || (entry->get().bound_type() == BoundTypes::LOWER_BOUND && entry->get().score() >= beta)
+                || (entry->get().bound_type() == BoundTypes::UPPER_BOUND && entry->get().score() <= alpha))) {
+                    return entry->get().score();
         }
     }
-    const auto tt_hit = entry.key() == old_pos.zobrist_key();
 
     const auto raw_eval = [&]() {
         if (old_pos.in_check()) {
             return MagicNumbers::NegativeInfinity;
-        }  else if (tt_hit && entry.static_eval() > (MagicNumbers::NegativeInfinity + MAX_PLY)) {
-            return entry.static_eval();
+        }  else if (tt_hit && entry->get().static_eval() > (MagicNumbers::NegativeInfinity + MAX_PLY)) {
+            return entry->get().static_eval();
         } else {
             return Evaluation::evaluate_board(old_pos);
         }

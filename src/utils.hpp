@@ -13,6 +13,9 @@ constexpr int MAX_TURN_MOVE_COUNT = 218;
 constexpr int MAX_GAME_MOVE_COUNT = 5899;
 // the maximum possible number of moves, currently 218 on position R6R/3Q4/1Q4Q1/4Q3/2Q4Q/Q4Q2/pp1Q4/kBNN1KB1
 
+constexpr static int PLY_OFFSET = 4;
+constexpr static int MAX_PLY = 250 + PLY_OFFSET;
+
 enum class Side : uint8_t {
     WHITE = 0,
     BLACK = 1,
