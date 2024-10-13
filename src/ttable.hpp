@@ -23,7 +23,7 @@ enum class BoundTypes : uint8_t {
 
 class TranspositionTableEntry {
     private:
-        ZobristKey _key;
+        uint16_t _key;
         Score _score;
         Score _static_eval;
         Move pv_move;
@@ -35,14 +35,14 @@ class TranspositionTableEntry {
         void set_move(Move new_move) { this->pv_move = new_move; };
     public:
         TranspositionTableEntry() : _key(0), pv_move(Move::NULL_MOVE()), _depth(0), _bound(BoundTypes::NONE) {};
-        TranspositionTableEntry(Move pv_move, uint8_t depth, BoundTypes bound, Score score, Score static_eval, ZobristKey key) : _key(key), _score(score), _static_eval(static_eval), pv_move(pv_move), _depth(depth), _bound(bound) {};
+        TranspositionTableEntry(Move pv_move, uint8_t depth, BoundTypes bound, Score score, Score static_eval, uint16_t key) : _key(key), _score(score), _static_eval(static_eval), pv_move(pv_move), _depth(depth), _bound(bound) {};
 
         Move move() const { return this->pv_move; };
         uint8_t depth() const { return this->_depth; };
         BoundTypes bound_type() const { return this->_bound; };
         Score score() const { return this->_score; };
         Score static_eval() const { return this->_static_eval; };
-        ZobristKey key() const { return this->_key; };
+        uint16_t key() const { return this->_key; };
 };
 
 class TranspositionTable {
@@ -58,7 +58,7 @@ class TranspositionTable {
 
         void store(TranspositionTableEntry entry, const Position& key) {
             const auto tt_key = tt_index(key.zobrist_key());
-            if (table[tt_key].key() != entry.key()
+            if (table[tt_key].key() != uint16_t(entry.key())
                 || entry.bound_type() == BoundTypes::EXACT_BOUND
                 || entry.depth() + tt_depth_offset > table[tt_key].depth()) {
                 if (entry.score() <= MagicNumbers::NegativeInfinity + MAX_PLY) {
@@ -79,7 +79,7 @@ class TranspositionTable {
             const auto tt_key = pos.zobrist_key();
             const auto tt_idx = tt_index(tt_key);
             const auto elem = table[tt_idx];
-            if (elem.key() == tt_key) {
+            if (elem.key() == uint16_t(tt_key)) {
                 return std::optional(std::ref(elem));
             } else {
                 return std::nullopt;
