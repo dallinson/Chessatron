@@ -228,6 +228,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
     const auto entry = tt.probe(old_pos);
     const auto tt_hit = entry.has_value();
+    const auto tt_pv = is_pv_node(node_type) || entry->get().was_pv();
     if constexpr (!is_pv_node(node_type)) {
         const bool should_cutoff =
             tt_hit
@@ -490,7 +491,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
             history_table.update_corrhist_score(old_pos, adjusted_eval, best_score, depth);
         }
 
-    tt.store(TranspositionTableEntry(best_move, depth, bound_type, best_score, raw_eval, old_pos.zobrist_key()), old_pos);
+    tt.store(TranspositionTableEntry(best_move, depth, bound_type, best_score, raw_eval, old_pos.zobrist_key(), tt_pv), old_pos);
     return best_score;
 }
 
@@ -502,6 +503,7 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
 
     const auto entry = tt.probe(old_pos);
     const auto tt_hit = entry.has_value();
+    const auto tt_pv = is_pv_node(node_type) || entry->get().was_pv();
     if constexpr(!is_pv_node(node_type)) {
         if (tt_hit
             && entry->get().key() == old_pos.zobrist_key()
@@ -605,7 +607,7 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
     }
     const BoundTypes bound_type =
         (best_score >= beta ? BoundTypes::LOWER_BOUND : (alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND));
-    tt.store(TranspositionTableEntry(best_move, 0, bound_type, best_score, raw_eval, old_pos.zobrist_key()), old_pos);
+    tt.store(TranspositionTableEntry(best_move, 0, bound_type, best_score, raw_eval, old_pos.zobrist_key(), tt_pv), old_pos);
     return best_score;
 }
 

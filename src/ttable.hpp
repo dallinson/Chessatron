@@ -13,6 +13,7 @@ class TranspositionTable;
 extern TranspositionTable tt;
 
 TUNABLE_SPECIFIER TunableInt tt_depth_offset = TUNABLE_INT("tt_depth_offset", 5, 3, 6);
+TUNABLE_SPECIFIER TunableInt tt_pv_offset = TUNABLE_INT("tt_depth_offset", 2, 1, 3);
 
 enum class BoundTypes : uint8_t {
     NONE = 0,
@@ -26,20 +27,23 @@ class TranspositionTableEntry {
         ZobristKey _key;
         Score _score;
         Score _static_eval;
-        Move pv_move;
+        Move _move;
         uint8_t _depth;
-        BoundTypes _bound;
+        uint8_t : 5;
+        bool pv: 1;
+        BoundTypes _bound: 2;
 
         friend class TranspositionTable;
         void set_score(Score new_score) { this->_score = new_score; };
-        void set_move(Move new_move) { this->pv_move = new_move; };
+        void set_move(Move new_move) { this->_move = new_move; };
     public:
-        TranspositionTableEntry() : _key(0), pv_move(Move::NULL_MOVE()), _depth(0), _bound(BoundTypes::NONE) {};
-        TranspositionTableEntry(Move pv_move, uint8_t depth, BoundTypes bound, Score score, Score static_eval, ZobristKey key) : _key(key), _score(score), _static_eval(static_eval), pv_move(pv_move), _depth(depth), _bound(bound) {};
+        TranspositionTableEntry() : _key(0), _move(Move::NULL_MOVE()), _depth(0), pv(false), _bound(BoundTypes::NONE) {};
+        TranspositionTableEntry(Move pv_move, uint8_t depth, BoundTypes bound, Score score, Score static_eval, ZobristKey key, bool was_pv) : _key(key), _score(score), _static_eval(static_eval), _move(pv_move), _depth(depth), pv(was_pv), _bound(bound) {};
 
-        Move move() const { return this->pv_move; };
+        Move move() const { return this->_move; };
         uint8_t depth() const { return this->_depth; };
         BoundTypes bound_type() const { return this->_bound; };
+        bool was_pv() const { return this->pv; };
         Score score() const { return this->_score; };
         Score static_eval() const { return this->_static_eval; };
         ZobristKey key() const { return this->_key; };
@@ -60,7 +64,7 @@ class TranspositionTable {
             const auto tt_key = tt_index(key.zobrist_key());
             if (table[tt_key].key() != entry.key()
                 || entry.bound_type() == BoundTypes::EXACT_BOUND
-                || entry.depth() + tt_depth_offset > table[tt_key].depth()) {
+                || ((entry.depth() + tt_depth_offset) + (entry.was_pv() * tt_pv_offset) > table[tt_key].depth())) {
                 if (entry.score() <= MagicNumbers::NegativeInfinity + MAX_PLY) {
                     // If we're being mated
                     entry.set_score(MagicNumbers::NegativeInfinity);
