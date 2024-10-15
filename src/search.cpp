@@ -228,7 +228,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
     const auto entry = tt.probe(old_pos);
     const auto tt_hit = entry.has_value();
-    const auto tt_pv = is_pv_node(node_type) || entry->get().was_pv();
+    const auto tt_pv = is_pv_node(node_type) || (tt_hit && entry->get().was_pv());
     if constexpr (!is_pv_node(node_type)) {
         const bool should_cutoff =
             tt_hit
@@ -503,7 +503,7 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
 
     const auto entry = tt.probe(old_pos);
     const auto tt_hit = entry.has_value();
-    const auto tt_pv = is_pv_node(node_type) || entry->get().was_pv();
+    const auto tt_pv = is_pv_node(node_type) || (tt_hit && entry->get().was_pv());
     if constexpr(!is_pv_node(node_type)) {
         if (tt_hit
             && entry->get().key() == old_pos.zobrist_key()
