@@ -62,3 +62,15 @@ constexpr inline Square get_position(uint8_t rank, uint8_t file) { return static
 constexpr inline Side enemy_side(Side stm) { return (stm == Side::WHITE) ? Side::BLACK : Side::WHITE; };
 
 bool is_aligned(int sq_1, int sq_2, int sq_3);
+
+template <std::integral T> constexpr T powi(T x, T n) {
+    T result = 1;
+    while (n > 0) {
+        if (n % 2 == 1) {
+            result *= x;
+        }
+        x *= x;
+        n /= 2;
+    }
+    return result;
+}
