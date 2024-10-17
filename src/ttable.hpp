@@ -12,7 +12,7 @@
 class TranspositionTable;
 extern TranspositionTable tt;
 
-constexpr int TT_CLUSTER_SIZE = 4;
+constexpr int TT_CLUSTER_SIZE = 3;
 constexpr int AGE_BITS = 6;
 constexpr int AGE_MOD = 1 << AGE_BITS;
 constexpr int AGE_MASK = powi(2, AGE_BITS) - 1;
@@ -29,7 +29,7 @@ enum class BoundTypes : uint8_t {
 
 class TranspositionTableEntry {
     private:
-        ZobristKey _key;
+        uint16_t _key;
         Score _score;
         Score _static_eval;
         Move pv_move;
@@ -51,11 +51,12 @@ class TranspositionTableEntry {
         BoundTypes bound_type() const { return this->_bound; };
         Score score() const { return this->_score; };
         Score static_eval() const { return this->_static_eval; };
-        ZobristKey key() const { return this->_key; };
+        uint16_t key() const { return this->_key; };
 };
 
 struct Cluster {
     std::array<TranspositionTableEntry, TT_CLUSTER_SIZE> entries;
+    uint16_t _padding;
 };
 
 class TranspositionTable {
@@ -139,3 +140,6 @@ class TranspositionTable {
             current_age = (current_age + 1) % AGE_MOD;
         }
 };
+
+static_assert(sizeof(TranspositionTableEntry) == 10);
+static_assert(sizeof(Cluster) == 32);
