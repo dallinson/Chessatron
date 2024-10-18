@@ -504,7 +504,7 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
     const auto tt_hit = entry.has_value();
     if constexpr(!is_pv_node(node_type)) {
         if (tt_hit
-            && entry->get().key() == old_pos.zobrist_key()
+            && entry->get().key() == static_cast<uint16_t>(old_pos.zobrist_key())
             && (entry->get().bound_type() == BoundTypes::EXACT_BOUND
                 || (entry->get().bound_type() == BoundTypes::LOWER_BOUND && entry->get().score() >= beta)
                 || (entry->get().bound_type() == BoundTypes::UPPER_BOUND && entry->get().score() <= alpha))) {
