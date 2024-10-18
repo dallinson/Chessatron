@@ -72,7 +72,7 @@ class TranspositionTable {
 
         void store(TranspositionTableEntry new_entry, const Position& pos) {
             const auto key = static_cast<uint16_t>(pos.zobrist_key());
-            auto& cluster = table[tt_index(key)];
+            auto& cluster = table[tt_index(pos.zobrist_key())];
 
             std::optional<std::reference_wrapper<TranspositionTableEntry>> entry = std::nullopt;
             auto min_val = std::numeric_limits<int32_t>::max();
@@ -111,11 +111,11 @@ class TranspositionTable {
         }
 
         std::optional<std::reference_wrapper<const TranspositionTableEntry>> probe(const Position& pos) const {
-            const auto tt_key = static_cast<uint16_t>(pos.zobrist_key());
+            const auto tt_key = pos.zobrist_key();
             const auto tt_idx = tt_index(tt_key);
             const auto& cluster = table[tt_idx];
             for (const auto& elem : cluster.entries) {
-                if (elem.key() == tt_key) {
+                if (elem.key() == static_cast<uint16_t>(tt_key)) {
                     return std::optional(std::ref(elem));
                 }
             }
