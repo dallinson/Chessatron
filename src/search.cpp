@@ -688,5 +688,6 @@ Move SearchHandler::run_iterative_deepening_search() {
             break;
         }
     }
+    tt.age(); // Age the TT after every search
     return pv_move;
 }
