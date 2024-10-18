@@ -43,7 +43,7 @@ class TranspositionTableEntry {
         void set_age(uint8_t new_age) { assert(new_age < AGE_MOD); _age = new_age; };
     public:
         TranspositionTableEntry() : _key(0), pv_move(Move::NULL_MOVE()), _depth(0), _age(0), _bound(BoundTypes::NONE) {};
-        TranspositionTableEntry(Move pv_move, uint8_t depth, BoundTypes bound, Score score, Score static_eval, ZobristKey key) : _key(key), _score(score), _static_eval(static_eval), pv_move(pv_move), _depth(depth), _age(0), _bound(bound) {};
+        TranspositionTableEntry(Move pv_move, uint8_t depth, BoundTypes bound, Score score, Score static_eval, ZobristKey key) : _key(static_cast<uint16_t>(key)), _score(score), _static_eval(static_eval), pv_move(pv_move), _depth(depth), _age(0), _bound(bound) {};
 
         Move move() const { return this->pv_move; };
         uint8_t depth() const { return this->_depth; };
@@ -71,8 +71,7 @@ class TranspositionTable {
         uint64_t tt_index(const ZobristKey key) const { return static_cast<uint64_t>((static_cast<__uint128_t>(key) * static_cast<__uint128_t>(table.size())) >> 64); };
 
         void store(TranspositionTableEntry new_entry, const Position& pos) {
-
-            const auto key = pos.zobrist_key();
+            const auto key = static_cast<uint16_t>(pos.zobrist_key());
             auto& cluster = table[tt_index(key)];
 
             std::optional<std::reference_wrapper<TranspositionTableEntry>> entry = std::nullopt;
@@ -112,7 +111,7 @@ class TranspositionTable {
         }
 
         std::optional<std::reference_wrapper<const TranspositionTableEntry>> probe(const Position& pos) const {
-            const auto tt_key = pos.zobrist_key();
+            const auto tt_key = static_cast<uint16_t>(pos.zobrist_key());
             const auto tt_idx = tt_index(tt_key);
             const auto& cluster = table[tt_idx];
             for (const auto& elem : cluster.entries) {
