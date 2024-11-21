@@ -568,7 +568,7 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
         }
         const auto move = *opt_move;
 
-        if (move.move.is_noisy()) {
+        if (move.move.is_noisy() && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY)) {
             if (!move.see_ordering_result) {
                 continue;
             }
