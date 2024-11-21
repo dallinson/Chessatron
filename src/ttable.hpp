@@ -43,7 +43,7 @@ class TranspositionTableEntry {
         void set_age(uint8_t new_age) { assert(new_age < AGE_MOD); _age = new_age; };
     public:
         TranspositionTableEntry() : _key(0), pv_move(Move::NULL_MOVE()), _depth(0), _age(0), _bound(BoundTypes::NONE) {};
-        TranspositionTableEntry(Move pv_move, uint8_t depth, BoundTypes bound, Score score, Score static_eval, ZobristKey key) : _key(static_cast<uint16_t>(key)), _score(score), _static_eval(static_eval), pv_move(pv_move), _depth(depth), _age(0), _bound(bound) {};
+        TranspositionTableEntry(Move pv_move, uint8_t depth, BoundTypes bound, Score score, Score static_eval, ZobristKey key, u8 age) : _key(static_cast<uint16_t>(key)), _score(score), _static_eval(static_eval), pv_move(pv_move), _depth(depth), _age(age), _bound(bound) {};
 
         Move move() const { return this->pv_move; };
         uint8_t depth() const { return this->_depth; };
@@ -70,7 +70,7 @@ class TranspositionTable {
 
         uint64_t tt_index(const ZobristKey key) const { return static_cast<uint64_t>((static_cast<__uint128_t>(key) * static_cast<__uint128_t>(table.size())) >> 64); };
 
-        void store(TranspositionTableEntry new_entry, const Position& pos) {
+        void store(const Score score, const Score static_eval, Move pv_move, const u8 depth, const BoundTypes bound, const Position& pos) {
             const auto key = static_cast<uint16_t>(pos.zobrist_key());
             auto& cluster = table[tt_index(pos.zobrist_key())];
 
@@ -95,19 +95,19 @@ class TranspositionTable {
             assert(entry.has_value());
 
             if (!(
-                   new_entry.bound_type() == BoundTypes::EXACT_BOUND // Replace if the new one is an exact bound
-                || entry->get().key() != new_entry.key() // Or doesn't match the existing key
+                   bound == BoundTypes::EXACT_BOUND // Replace if the new one is an exact bound
+                || entry->get().key() != key // Or doesn't match the existing key
                 || entry->get().age() != current_age // Or the entry wasn't inserted this search
-                || new_entry.depth() + tt_depth_offset > entry->get().depth()
+                || depth + tt_depth_offset > entry->get().depth()
             )) {
                 return;
             }
 
-            if (new_entry.move().is_null_move()) {
-                new_entry.set_move(entry->get().move());
+            if (pv_move.is_null_move()) {
+                pv_move = entry->get().move();
             }
             
-            entry->get() = new_entry;
+            entry->get() = TranspositionTableEntry(pv_move, depth, bound, score, static_eval, key, current_age);
         }
 
         std::optional<std::reference_wrapper<const TranspositionTableEntry>> probe(const Position& pos) const {
