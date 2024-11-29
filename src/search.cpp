@@ -470,7 +470,9 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
                     pv_table.pv_length[ply] = pv_table.pv_length[ply + 1];
                 }
                 if (score >= beta) {
-                    search_stack[ply].killer_move = move.move;
+                    if (move.move.is_quiet()) {
+                        search_stack[ply].killer_move = move.move;
+                    }
                     history_table.update_scores(board_hist, evaluated_moves, move, old_pos.stm(), depth);
                     break;
                 }
@@ -597,7 +599,9 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
             if (score > alpha) {
                 best_move = move.move;
                 if (score >= beta) {
-                    search_stack[ply].killer_move = move.move;
+                    if (move.move.is_quiet()) {
+                        search_stack[ply].killer_move = move.move;
+                    }
                     break;
                 }
                 alpha = score;
