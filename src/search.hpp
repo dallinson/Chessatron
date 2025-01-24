@@ -87,6 +87,7 @@ inline std::array<std::array<int, MAX_TURN_MOVE_COUNT + 1>, MAX_PLY + 1> generat
 
 struct SearchStackFrame {
     Move killer_move = Move::NULL_MOVE();
+    Move excluded_move = Move::NULL_MOVE();
 };
 
 struct PvTable {
