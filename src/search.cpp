@@ -420,7 +420,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
             && evaluated_moves.size() >= std::max((size_t) 1, static_cast<size_t>(is_pv_node(node_type)) + static_cast<size_t>(!tt_move)
                                             + static_cast<size_t>(node_type == NodeTypes::ROOT_NODE)
                                             + static_cast<size_t>(move.move.is_capture() || move.move.is_promotion()))) {
-            const auto lmr_depth = std::clamp(new_depth - [&]() {
+            const auto lmr_depth = std::max(new_depth - [&]() {
                 int lmr_reduction = LmrTable[depth][evaluated_moves.size()];
                 // default log formula for lmr
                 lmr_reduction += static_cast<int>(!is_pv_node(node_type) && is_cut_node && ((tt_move && !entry->get().move().is_null_move()) || (tt_hit && entry->get().depth() + 4 <= depth)));
@@ -430,7 +430,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
                 lmr_reduction += static_cast<int>(!improving);
                 // Reduce more if we aren't improving
                 return lmr_reduction;
-            }(), 1, MAX_PLY - ply);
+            }(), 0);
             
             score = -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, lmr_depth, ply + 1, node_count,
                                                           child_cutnode_type);
