@@ -9,8 +9,12 @@
 
 constexpr std::array<uint8_t, 6> ordering_scores = {1, 2, 3, 4, 5, 6};
 
-MovePicker::MovePicker(MoveList&& input_moves, const Position& pos, const BoardHistory& hist, const Move pv_move, const HistoryTable& history_table, Move killer) {
-    this->moves = input_moves;
+MovePicker::MovePicker(const bool is_qsearch, const Position& pos, const BoardHistory& hist, const Move pv_move, const HistoryTable& history_table, Move killer) {
+    if ((!is_qsearch) || (is_qsearch && pos.in_check())) {
+        this->moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(pos, pos.stm());
+    } else /* (is_qsearch && !pos.in_check()) */ {
+        this->moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIESCENCE>(pos, pos.stm());
+    }
     this->idx = 0;
 
     auto best_idx = 0;
