@@ -356,8 +356,6 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
         } else {
             return 0;
         }
-    } else if (moves.size() == 1) {
-        extensions += 1;
     }
     // mate and draw detection
 
