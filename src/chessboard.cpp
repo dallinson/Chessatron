@@ -49,7 +49,11 @@ void Position::set_piece(Piece piece, Square sq) {
     side_bbs[static_cast<int>(piece.side())] |= sq;
     piece_mb[pos] = piece;
     _zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(piece, pos)];
-    if (piece.type() == PieceTypes::PAWN) _pawn_hash ^= ZobristKeys::PositionKeys[calculate_zobrist_key(piece, pos)];
+    if (piece.type() == PieceTypes::PAWN) {
+        _pawn_hash ^= ZobristKeys::PositionKeys[calculate_zobrist_key(piece, pos)];
+    } else {
+        _side_non_pawn_hashes[static_cast<int>(piece.side())] ^= ZobristKeys::PositionKeys[calculate_zobrist_key(piece, pos)];
+    }
 
     const auto piece_side = piece.side();
     const auto piece_type = piece.type();
@@ -76,6 +80,7 @@ void Position::clear_board() {
 
     _zobrist_key = ZobristKeys::SideToMove;
     _pawn_hash = 0;
+    _side_non_pawn_hashes = { 0, 0 };
 
     scores = {0};
     // Only the white side to move key should be set
@@ -271,7 +276,11 @@ Position::Position(const Position& origin, const Move to_make) {
     if (!to_make.is_null_move()) [[likely]] {
         const Side side = moved.side();
         _zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, src_sq)];
-        if (moved.type() == PAWN) _pawn_hash ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, src_sq)];
+        if (moved.type() == PAWN) {
+            _pawn_hash ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, src_sq)];
+        } else {
+            _side_non_pawn_hashes[static_cast<int>(moved.side())] ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, src_sq)];
+        }
         scores[static_cast<int>(side)] -= get_psqt_score(moved, src_sq);
 
         // get the piece we're moving and clear the origin square
@@ -290,7 +299,11 @@ Position::Position(const Position& origin, const Move to_make) {
             side_bbs[static_cast<int>(at_target.side())] &= ~Bitboard(dest_sq);
 
             _zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(at_target, dest_sq)];
-            if (at_target.type() == PAWN) _pawn_hash ^= ZobristKeys::PositionKeys[calculate_zobrist_key(at_target, dest_sq)];
+            if (at_target.type() == PAWN) {
+                _pawn_hash ^= ZobristKeys::PositionKeys[calculate_zobrist_key(at_target, dest_sq)];
+            } else {
+                _side_non_pawn_hashes[static_cast<int>(at_target.side())] ^= ZobristKeys::PositionKeys[calculate_zobrist_key(at_target, dest_sq)];
+            }
             scores[static_cast<int>(enemy_side(side))] -= get_psqt_score(Piece(enemy_side(side), at_target.type()), dest_sq);
 
             mg_phase -= mg_phase_vals[static_cast<int>(at_target.type()) - 1];

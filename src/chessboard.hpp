@@ -38,6 +38,7 @@ class Position {
 
         ZobristKey _zobrist_key = 0;
         ZobristKey _pawn_hash = 0;
+        std::array<ZobristKey, 2> _side_non_pawn_hashes = { 0, 0 };
         int halfmove_clock = 0;
         int fullmove_counter = 0;
 
