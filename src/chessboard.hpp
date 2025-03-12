@@ -39,7 +39,7 @@ class Position {
         ZobristKey _zobrist_key = 0;
         ZobristKey _pawn_hash = 0;
         std::array<ZobristKey, 2> _side_non_pawn_hashes = { 0, 0 };
-        ZobristKey _major_hash = 0;
+        ZobristKey _minor_hash = 0;
         int halfmove_clock = 0;
         int fullmove_counter = 0;
 
@@ -149,7 +149,7 @@ class Position {
         ZobristKey white_non_pawn_hash() const { return non_pawn_hash(Side::WHITE); };
         ZobristKey black_non_pawn_hash() const { return non_pawn_hash(Side::BLACK); };
         ZobristKey non_pawn_hash() const { return white_non_pawn_hash() ^ black_non_pawn_hash(); };
-        ZobristKey major_hash() const { return _major_hash; };
+        ZobristKey minor_hash() const { return _minor_hash; };
 
         ZobristKey get_polyglot_zobrist_key() const {
             auto default_key = this->_zobrist_key;

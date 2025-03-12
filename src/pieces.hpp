@@ -30,7 +30,7 @@ class Piece {
 
         constexpr uint8_t to_bitboard_idx() const { return (2 * (static_cast<int>(type()) - 1)) + static_cast<uint8_t>(side()); };
 
-        constexpr bool is_major() const { return type() == PieceTypes::ROOK || type() == PieceTypes::QUEEN; };
+        constexpr bool is_minor() const { return type() == PieceTypes::BISHOP || type() == PieceTypes::KNIGHT; };
 };
 
 inline bool operator==(const Piece& lhs, const Piece& rhs) { return lhs.get_value() == rhs.get_value(); }
