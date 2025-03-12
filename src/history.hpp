@@ -22,6 +22,7 @@ class HistoryTable {
         std::unique_ptr<MDArray<Score, 16384, 2>> pawn_corr_hist;
         std::unique_ptr<MDArray<Score, 16384, 2>> white_non_pawn_corr_hist;
         std::unique_ptr<MDArray<Score, 16384, 2>> black_non_pawn_corr_hist;
+        std::unique_ptr<MDArray<Score, 16384, 2>> major_corr_hist;
 
         static size_t calc_hist_idx(Move move, Side stm) { return move.hist_idx(stm); };
         static HistoryValue bonus(int depth) { return std::min(16 * (depth + 1) * (depth + 1), 1200); };
@@ -34,6 +35,7 @@ class HistoryTable {
             pawn_corr_hist = std::make_unique<MDArray<Score, 16384, 2>>();
             white_non_pawn_corr_hist = std::make_unique<MDArray<Score, 16384, 2>>();
             black_non_pawn_corr_hist = std::make_unique<MDArray<Score, 16384, 2>>();
+            major_corr_hist = std::make_unique<MDArray<Score, 16384, 2>>();
             clear(); 
         };
 
@@ -54,6 +56,7 @@ class HistoryTable {
             std::for_each(pawn_corr_hist->begin(), pawn_corr_hist->end(), [](auto& arr) { arr.fill(0); });
             std::for_each(white_non_pawn_corr_hist->begin(), white_non_pawn_corr_hist->end(), [](auto& arr) { arr.fill(0); });
             std::for_each(black_non_pawn_corr_hist->begin(), black_non_pawn_corr_hist->end(), [](auto& arr) { arr.fill(0); });
+            std::for_each(major_corr_hist->begin(), major_corr_hist->end(), [](auto& arr) { arr.fill(0); });
             main_hist.fill(0); 
         };
 };

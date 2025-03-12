@@ -82,6 +82,7 @@ Score HistoryTable::corrhist_score(const Position& pos, const Score static_eval)
     Score entry = (*pawn_corr_hist)[corrhist_idx(pos.pawn_hash())][static_cast<int>(pos.stm())];
     entry += (*white_non_pawn_corr_hist)[corrhist_idx(pos.white_non_pawn_hash())][static_cast<int>(pos.stm())];
     entry += (*black_non_pawn_corr_hist)[corrhist_idx(pos.black_non_pawn_hash())][static_cast<int>(pos.stm())];
+    entry += (*major_corr_hist)[corrhist_idx(pos.major_hash())][static_cast<int>(pos.stm())];
     const int32_t adjusted_score = static_eval + (entry * std::abs(entry)) / 16384;
 
     return std::clamp(adjusted_score, -MATE_FOUND + 1, MATE_FOUND - 1);
@@ -96,4 +97,6 @@ void HistoryTable::update_corrhist_score(const Position& pos, const Score static
     white_non_pawn_score += bonus - white_non_pawn_score * std::abs(bonus) / 512;
     auto& black_non_pawn_score = (*black_non_pawn_corr_hist)[corrhist_idx(pos.black_non_pawn_hash())][static_cast<int>(pos.stm())];
     black_non_pawn_score += bonus - black_non_pawn_score * std::abs(bonus) / 512;
+    auto& major_score = (*black_non_pawn_corr_hist)[corrhist_idx(pos.major_hash())][static_cast<int>(pos.stm())];
+    major_score += bonus - major_score * std::abs(bonus) / 512;
 }
