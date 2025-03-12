@@ -1,5 +1,6 @@
 #include "move_generator.hpp"
 
+#include <algorithm>
 #include <bit>
 
 #include "magic_numbers.hpp"
