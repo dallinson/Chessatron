@@ -144,6 +144,11 @@ class Position {
 
         inline ZobristKey zobrist_key() const { return _zobrist_key; };
         ZobristKey pawn_hash() const { return _pawn_hash; };
+        ZobristKey non_pawn_hash(const Side side) const { return _side_non_pawn_hashes[static_cast<int>(side)]; };
+        ZobristKey white_non_pawn_hash() const { return non_pawn_hash(Side::WHITE); };
+        ZobristKey black_non_pawn_hash() const { return non_pawn_hash(Side::BLACK); };
+        ZobristKey non_pawn_hash() const { return white_non_pawn_hash() ^ black_non_pawn_hash(); };
+
         ZobristKey get_polyglot_zobrist_key() const {
             auto default_key = this->_zobrist_key;
             if (en_passant_file != 9) {

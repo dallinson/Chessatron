@@ -313,6 +313,7 @@ Position::Position(const Position& origin, const Move to_make) {
             // Any value >= 8 is a promotion
             Piece promoted_piece = Piece(side, PieceTypes((static_cast<int>(to_make.flags()) & 0b0011) + 2));
             _zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(promoted_piece, dest_sq)];
+            _side_non_pawn_hashes[static_cast<int>(promoted_piece.side())] ^= ZobristKeys::PositionKeys[calculate_zobrist_key(promoted_piece, to_make.dst_sq())];
             // promoted_piece += side;
             this->piece_bbs[static_cast<int>(promoted_piece.type()) - 1] |= dest_sq;
             piece_mb[sq_to_int(dest_sq)] = promoted_piece;
@@ -324,7 +325,11 @@ Position::Position(const Position& origin, const Move to_make) {
             this->piece_bbs[static_cast<int>(moved.type()) - 1] |= dest_sq;
             piece_mb[sq_to_int(dest_sq)] = moved;
             _zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, dest_sq)];
-            if (moved.type() == PAWN) _pawn_hash ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, to_make.dst_sq())];
+            if (moved.type() == PAWN) {
+                _pawn_hash ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, to_make.dst_sq())];
+            } else {
+                _side_non_pawn_hashes[static_cast<int>(moved.side())] ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, to_make.dst_sq())];
+            }
             scores[static_cast<int>(side)] += get_psqt_score(Piece(side, moved.type()), dest_sq);
             // otherwise sets pieces if moved normally
         }
@@ -359,12 +364,14 @@ Position::Position(const Position& origin, const Move to_make) {
             this->side_bbs[static_cast<int>(side)] &= ~Bitboard(rook_origin);
             piece_mb[sq_to_int(rook_origin)] = 0;
             _zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, ROOK), rook_origin)];
+            _side_non_pawn_hashes[static_cast<int>(side)] ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, ROOK), rook_origin)];
             scores[static_cast<int>(side)] -= get_psqt_score(Piece(side, ROOK), rook_origin);
 
             this->piece_bbs[bb_idx<ROOK>] |= rook_dest;
             this->side_bbs[static_cast<int>(side)] |= rook_dest;
             piece_mb[sq_to_int(rook_dest)] = Piece(side, PieceTypes::ROOK);
             _zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, ROOK), rook_dest)];
+            _side_non_pawn_hashes[static_cast<int>(side)] ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, ROOK), rook_dest)];
             scores[static_cast<int>(side)] += get_psqt_score(Piece(side, ROOK), rook_dest);
         }
 
