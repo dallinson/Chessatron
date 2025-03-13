@@ -19,7 +19,9 @@ class HistoryTable {
         std::array<HistoryValue, 8192> main_hist;
         std::unique_ptr<MDArray<HistoryValue, 4096, 4096>> cont_hist;
         std::unique_ptr<MDArray<HistoryValue, 4096, 6>> capt_hist;
-        std::unique_ptr<MDArray<Score, 16384, 2>> corr_hist;
+        std::unique_ptr<MDArray<Score, 16384, 2>> pawn_corr_hist;
+        std::unique_ptr<MDArray<Score, 16384, 2>> white_non_pawn_corr_hist;
+        std::unique_ptr<MDArray<Score, 16384, 2>> black_non_pawn_corr_hist;
 
         static size_t calc_hist_idx(Move move, Side stm) { return move.hist_idx(stm); };
         static HistoryValue bonus(int depth) { return std::min(16 * (depth + 1) * (depth + 1), 1200); };
@@ -29,7 +31,9 @@ class HistoryTable {
         HistoryTable() {
             cont_hist = std::make_unique<MDArray<HistoryValue, 4096, 4096>>();
             capt_hist = std::make_unique<MDArray<HistoryValue, 4096, 6>>();
-            corr_hist = std::make_unique<MDArray<Score, 16384, 2>>();
+            pawn_corr_hist = std::make_unique<MDArray<Score, 16384, 2>>();
+            white_non_pawn_corr_hist = std::make_unique<MDArray<Score, 16384, 2>>();
+            black_non_pawn_corr_hist = std::make_unique<MDArray<Score, 16384, 2>>();
             clear(); 
         };
 
@@ -47,7 +51,9 @@ class HistoryTable {
         void clear() { 
             std::for_each(cont_hist->begin(), cont_hist->end(), [](auto& arr) { arr.fill(0); });
             std::for_each(capt_hist->begin(), capt_hist->end(), [](auto& arr) { arr.fill(0); });
-            std::for_each(corr_hist->begin(), corr_hist->end(), [](auto& arr) { arr.fill(0); });
+            std::for_each(pawn_corr_hist->begin(), pawn_corr_hist->end(), [](auto& arr) { arr.fill(0); });
+            std::for_each(white_non_pawn_corr_hist->begin(), white_non_pawn_corr_hist->end(), [](auto& arr) { arr.fill(0); });
+            std::for_each(black_non_pawn_corr_hist->begin(), black_non_pawn_corr_hist->end(), [](auto& arr) { arr.fill(0); });
             main_hist.fill(0); 
         };
 };
