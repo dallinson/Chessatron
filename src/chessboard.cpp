@@ -3,6 +3,7 @@
 #include <bit>
 #include <cstring>
 #include <string>
+#include <print>
 
 #include "magic_numbers.hpp"
 #include "magic_numbers/piece_square_tables.hpp"
@@ -91,9 +92,9 @@ void Position::print_board() const {
     static const char* piece_str = ".PNBRQK..pnbrqk.";
     for (int rank = 7; rank >= 0; rank--) {
         for (int file = 0; file < 8; file++) {
-            printf("%c", piece_str[piece_at(get_position(rank, file)).get_value()]);
+            std::print("{}", piece_str[piece_at(get_position(rank, file)).get_value()]);
         }
-        printf("\n");
+        std::println();
     }
 }
 

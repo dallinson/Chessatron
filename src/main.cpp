@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <print>
 #include <vector>
 
 #ifdef IS_TESTING
@@ -150,13 +151,13 @@ int main(int argc, char** argv) {
 
     for (std::string line; std::getline(std::cin, line);) {
         if (line == "uci") {
-            std::cout << "id name Chessatron\n";
+            std::println("id name Chessatron");
             for (const auto& element : uci_options()) {
-                std::cout << "option name " << element.first << element.second << std::endl;
+                std::println("option name {}{}", element.first, element.second);
             }
-            std::cout << "uciok" << std::endl;
+            std::print("uciok");
         } else if (line == "isready") {
-            std::cout << "readyok\n";
+            std::println("readyok");
         } else if (line == "ucinewgame") {
             s.reset();
         } else if (line == "quit") {

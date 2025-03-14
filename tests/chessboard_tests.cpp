@@ -112,10 +112,10 @@ TEST(ChessBoardTests, TestMakeUnmakeMove) {
         pos = pos.make_move(m, hist);
         ASSERT_EQ(hist.len(), 2);
         pos = hist.pop_board();
-        ASSERT_EQ(original_score, pos.get_score(Side::WHITE)) << "Score mismatch after move " << m.to_string();
+        ASSERT_EQ(original_score, pos.get_score(Side::WHITE)) << "Score mismatch after move " << std::format("{}", m);
     for (Square sq = Square::A1; sq != Square::NONE; sq++) {
             ASSERT_EQ(pos.piece_at(sq).get_value(), original.piece_at(sq).get_value())
-                << "Mismatch at square " << std::to_string(sq_to_int(sq)) << " after move " << m.to_string() << " with flags "
+                << "Mismatch at square " << std::to_string(sq_to_int(sq)) << " after move " << std::format("{}", m) << " with flags "
                 << std::to_string(static_cast<int>(m.flags())) << " (value " << std::to_string(m.value()) << ")";
         }
     }
@@ -145,7 +145,7 @@ TEST(ChessBoardTests, TestMakeMove) {
     original.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/1PN2Q1p/P1PBBPPP/R3K2R b KQkq - 0 1");
     BoardHistory hist(pos);
     pos = pos.make_move(Move(MoveFlags::QUIET_MOVE, 17, 9), hist);
-    ASSERT_STREQ(Move(MoveFlags::QUIET_MOVE, 17, 9).to_string().c_str(), "b2b3");
+    ASSERT_STREQ(std::format("{}", Move(MoveFlags::QUIET_MOVE, 17, 9)).c_str(), "b2b3");
     for (Square sq = Square::A1; sq != Square::NONE; sq++) {
         ASSERT_EQ(pos.piece_at(sq).get_value(), original.piece_at(sq).get_value()) << "Mismatch at square " << std::to_string(sq_to_int(sq)) << "!";
     }
@@ -153,7 +153,7 @@ TEST(ChessBoardTests, TestMakeMove) {
     original.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/Pp2P3/2N2Q1p/1PPBBPPP/R3K2R b KQkq a3 0 1");
     hist = BoardHistory(pos);
     pos = pos.make_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, 24, 8), hist);
-    ASSERT_STREQ(Move(MoveFlags::DOUBLE_PAWN_PUSH, 24, 8).to_string().c_str(), "a2a4");
+    ASSERT_STREQ(std::format("{}", Move(MoveFlags::DOUBLE_PAWN_PUSH, 24, 8)).c_str(), "a2a4");
     ASSERT_EQ(Move(MoveFlags::DOUBLE_PAWN_PUSH, 24, 8).value(), 5640);
     for (Square sq = Square::A1; sq != Square::NONE; sq++) {
         ASSERT_EQ(pos.piece_at(sq).get_value(), original.piece_at(sq).get_value()) << "Mismatch at square " << std::to_string(sq_to_int(sq)) << "!";
@@ -352,6 +352,6 @@ TEST(ChessBoardTests, TestUnmakeScores) {
     for (size_t i = 0; i < moves.size(); i++) {
         pos.make_move(moves[i].move, hist);
         hist.pop_board();
-        ASSERT_EQ(pos.get_score(Side::WHITE), mg_score) << "Score mismatch on move " << moves[i].move.to_string();
+        ASSERT_EQ(pos.get_score(Side::WHITE), mg_score) << "Score mismatch on move " << std::format("{}", moves[i].move);
     }
 }

@@ -3,6 +3,7 @@
 #include <array>
 #include <cstdint>
 #include <cstring>
+#include <format>
 #include <string>
 
 #include "pieces.hpp"
@@ -61,8 +62,47 @@ class Move {
         constexpr bool is_noisy() const { return !is_quiet(); };
 
         constexpr uint16_t hist_idx(Side stm) const { return (static_cast<int>(stm) << 12) + get_bits(move, 11, 0); };
+};
 
-        std::string to_string() const;
+template <>
+struct std::formatter<Move> {
+    constexpr auto parse(std::format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    auto format(const Move& move, std::format_context& ctx) const {
+        if (move.src_sq() == Square::A1 && move.dst_sq() == Square::A1) {
+            // if this is a null move
+            return std::format_to(ctx.out(), "{}", "0000");
+        }
+        std::string to_return;
+        to_return.push_back(move.src_fle() + 97);
+        to_return.push_back(move.src_rnk() + 49);
+    
+        to_return.push_back(move.dst_fle() + 97);
+        to_return.push_back(move.dst_rnk() + 49);
+    
+        if (move.is_promotion()) {
+            switch (move.promo_type()) {
+            case PieceTypes::ROOK:
+                to_return.push_back('r');
+                break;
+            case PieceTypes::KNIGHT:
+                to_return.push_back('n');
+                break;
+            case PieceTypes::BISHOP:
+                to_return.push_back('b');
+                break;
+            case PieceTypes::QUEEN:
+                to_return.push_back('q');
+                break;
+            default:
+                break;
+            }
+        }
+        
+        return std::format_to(ctx.out(), "{}", to_return);
+    }
 };
 
 struct ScoredMove {

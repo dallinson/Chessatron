@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <format>
 #include <functional>
 #include <unordered_map>
 
@@ -45,3 +46,24 @@ inline auto& uci_options() {
     static std::unordered_map<std::string, UCIOption> options;
     return options;
 }
+
+template <>
+struct std::formatter<UCIOption> {
+    constexpr auto parse(std::format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    auto format(const UCIOption& opt, std::format_context& ctx) const {
+        std::string to_return = " type ";
+        to_return += std::string(opt.get_type() == UCIOptionTypes::CHECK    ? "check"
+                                 : opt.get_type() == UCIOptionTypes::COMBO  ? "combo"
+                                 : opt.get_type() == UCIOptionTypes::BUTTON ? "button"
+                                                                            : "");
+        if (opt.get_type() == UCIOptionTypes::SPIN || opt.get_type() == UCIOptionTypes::TUNE_SPIN) {
+            to_return += std::format("spin default {} min {} max {}", opt.default_value(), opt.get_min(), opt.get_max());
+        } else if (opt.get_type() == UCIOptionTypes::STRING || opt.get_type() == UCIOptionTypes::TUNE_STRING) {
+            to_return += std::format("string default {}", (opt.default_value() == "") ? "<empty>" : opt.default_value());
+        }
+        return std::format_to(ctx.out(), "{}", to_return);
+    }
+};
