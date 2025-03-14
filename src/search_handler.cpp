@@ -2,7 +2,7 @@
 
 #include <iostream>
 #include <ostream>
-#include <print>
+#include <fmt/format.h>
 
 #include "common.hpp"
 #include "move_generator.hpp"
