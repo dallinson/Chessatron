@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <fmt/format.h>
 #include <vector>
 
 #ifdef IS_TESTING
@@ -130,6 +131,7 @@ int main(int argc, char** argv) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 #endif
+    std::setvbuf(stdout, nullptr, _IONBF, 0);
     srand(time(NULL));
     SearchHandler s;
 
@@ -150,13 +152,13 @@ int main(int argc, char** argv) {
 
     for (std::string line; std::getline(std::cin, line);) {
         if (line == "uci") {
-            std::cout << "id name Chessatron\n";
+            fmt::println("id name Chessatron");
             for (const auto& element : uci_options()) {
-                std::cout << "option name " << element.first << element.second << std::endl;
+                fmt::println("option name {}{}", element.first, element.second);
             }
-            std::cout << "uciok" << std::endl;
+            fmt::println("uciok");
         } else if (line == "isready") {
-            std::cout << "readyok\n";
+            fmt::println("readyok");
         } else if (line == "ucinewgame") {
             s.reset();
         } else if (line == "quit") {

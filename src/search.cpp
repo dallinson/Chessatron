@@ -3,6 +3,7 @@
 #include <cinttypes>
 #include <iostream>
 #include <limits>
+#include <fmt/format.h>
 #include <vector>
 
 #include "move_generator.hpp"
@@ -51,7 +52,7 @@ uint64_t perft(const Position& old_pos, BoardHistory& history, int depth) {
     if (depth == 1) {
         if constexpr (print_debug) {
             for (size_t i = 0; i < moves.size(); i++) {
-                printf("%s: 1\n", moves[i].move.to_string().c_str());
+                fmt::println("{}: 1", moves[i].move);
             }
         }
         return moves.size();
@@ -62,7 +63,7 @@ uint64_t perft(const Position& old_pos, BoardHistory& history, int depth) {
         auto& board = old_pos.make_move(moves[i].move, history);
         val = perft<false>(board, history, depth - 1);
         if constexpr (print_debug) {
-            std::cout << moves[i].move.to_string() << ": " << val << std::endl;
+            fmt::println("{}: {}", moves[i].move, val);
         }
         to_return += val;
         history.pop_board();
@@ -82,8 +83,8 @@ uint64_t Perft::run_perft(Position& board, int depth, bool print_debug) {
     if (print_debug) {
         const auto perft_time = std::max(
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - perft_start_point).count(), (int64_t) 1);
-        std::cout << std::endl << "Nodes searched: " << nodes << std::endl;
-        std::cout << "NPS: " << static_cast<uint64_t>(nodes / (static_cast<float>(perft_time) / 1000)) << std::endl;
+        fmt::println("\nNodes searched: {}", nodes);
+        fmt::println("NPS: {}", static_cast<uint64_t>(nodes / (static_cast<float>(perft_time) / 1000)));
     }
     return nodes;
 }
@@ -674,15 +675,17 @@ Move SearchHandler::run_iterative_deepening_search() {
 
         if (!search_cancelled && print_info) {
             const auto nps = static_cast<uint64_t>(node_count / (static_cast<float>(time_so_far) / 1000));
-            std::cout << "info depth " << depth << " nodes " << node_count << " nps " << nps << " score "
-                      << ((std::abs(current_score) >= (MagicNumbers::PositiveInfinity - MAX_PLY))
-                              ? ("mate " + std::to_string(((current_score / std::abs(current_score)) * (depth + 1)) / 2))
-                              : ("cp " + std::to_string(current_score)))
-                      << " time " << time_so_far << " pv ";
-            for (int i = 0; i < (pv_table.pv_length[PLY_OFFSET] - PLY_OFFSET); i++) {
-                std::cout << pv_table.pv_array[PLY_OFFSET][i + PLY_OFFSET].to_string() << " ";
+            fmt::print("info depth {} nodes {} nps {} score ", depth, node_count, nps);
+            if ((std::abs(current_score) >= (MagicNumbers::PositiveInfinity - MAX_PLY))) {
+                fmt::print("mate {} ", ((current_score / std::abs(current_score)) * (depth + 1)) / 2);
+            } else {
+                fmt::print("cp {} ", current_score);
             }
-            std::cout << std::endl;
+            fmt::print("time {} pv ", time_so_far);
+            for (int i = 0; i < (pv_table.pv_length[PLY_OFFSET] - PLY_OFFSET); i++) {
+                fmt::print("{} ", pv_table.pv_array[PLY_OFFSET][i + PLY_OFFSET]);
+            }
+            fmt::println("");
         }
 
         if (current_score >= (MagicNumbers::PositiveInfinity - MAX_PLY)) {

@@ -7,7 +7,7 @@ option(PGO "Whether to enable or disable profile-guided optimisations" OFF)
 file(GLOB SOURCES "src/*.cpp" "src/**/*.cpp")
 file(GLOB TESTS "tests/*.cpp" "tests/**/*.cpp")
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -Wextra -Wno-unused-private-field -march=native -mtune=native")
@@ -48,6 +48,12 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
+FetchContent_Declare(
+  fmt
+  GIT_REPOSITORY https://github.com/fmtlib/fmt
+  GIT_TAG        e69e5f977d458f2650bb346dadf2ad30c5320281) # 10.2.1
+FetchContent_MakeAvailable(fmt)
+
 enable_testing()
 
 include(GoogleTest)
@@ -70,6 +76,9 @@ target_link_libraries(
     chessatron_tests
     GTest::gtest_main
 )
+
+target_link_libraries(Chessatron fmt)
+target_link_libraries(chessatron_tests fmt)
 
 target_compile_definitions(chessatron_tests PUBLIC IS_TESTING)
 
