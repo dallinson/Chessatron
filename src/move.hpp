@@ -3,7 +3,7 @@
 #include <array>
 #include <cstdint>
 #include <cstring>
-#include <format>
+#include <fmt/format.h>
 #include <string>
 
 #include "pieces.hpp"
@@ -65,15 +65,15 @@ class Move {
 };
 
 template <>
-struct std::formatter<Move> {
-    constexpr auto parse(std::format_parse_context& ctx) {
+struct fmt::formatter<Move> {
+    constexpr auto parse(fmt::format_parse_context& ctx) {
         return ctx.begin();
     }
 
-    auto format(const Move& move, std::format_context& ctx) const {
+    auto format(const Move& move, fmt::format_context& ctx) const {
         if (move.src_sq() == Square::A1 && move.dst_sq() == Square::A1) {
             // if this is a null move
-            return std::format_to(ctx.out(), "{}", "0000");
+            return fmt::format_to(ctx.out(), "{}", "0000");
         }
         std::string to_return;
         to_return.push_back(move.src_fle() + 97);
@@ -101,7 +101,7 @@ struct std::formatter<Move> {
             }
         }
         
-        return std::format_to(ctx.out(), "{}", to_return);
+        return fmt::format_to(ctx.out(), "{}", to_return);
     }
 };
 

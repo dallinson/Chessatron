@@ -48,6 +48,12 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
+FetchContent_Declare(
+  fmt
+  GIT_REPOSITORY https://github.com/fmtlib/fmt
+  GIT_TAG        e69e5f977d458f2650bb346dadf2ad30c5320281) # 10.2.1
+FetchContent_MakeAvailable(fmt)
+
 enable_testing()
 
 include(GoogleTest)
@@ -70,6 +76,9 @@ target_link_libraries(
     chessatron_tests
     GTest::gtest_main
 )
+
+target_link_libraries(Chessatron fmt)
+target_link_libraries(chessatron_tests fmt)
 
 target_compile_definitions(chessatron_tests PUBLIC IS_TESTING)
 

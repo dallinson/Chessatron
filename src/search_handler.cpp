@@ -30,7 +30,7 @@ void SearchHandler::search_thread_function() {
                     // Just choose a random move
                 }
                 if (this_search_id == current_search_id && print_info) {
-                    std::println("bestmove {}", move);
+                    fmt::println("bestmove {}", move);
                     std::fflush(stdout);
                 }
                 // We've had issues with stdout not being flushed in the past
@@ -158,9 +158,9 @@ void SearchHandler::run_bench(uint16_t depth) {
         cv.wait(lock, [this] { return !this->is_searching(); });
         // loop until search completes
         total_nodes += node_count;
-        std::println("{} {}", fen, node_count);
+        fmt::println("{} {}", fen, node_count);
     }
     const auto duration =
         std::max(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count(), (int64_t) 1);
-    std::println("{} nodes {} nps", total_nodes, (total_nodes / duration) * 1000);
+    fmt::println("{} nodes {} nps", total_nodes, (total_nodes / duration) * 1000);
 }
