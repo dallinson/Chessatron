@@ -131,6 +131,7 @@ int main(int argc, char** argv) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 #endif
+    std::setvbuf(stdout, nullptr, _IONBF, 0);
     srand(time(NULL));
     SearchHandler s;
 
