@@ -156,7 +156,7 @@ int main(int argc, char** argv) {
             for (const auto& element : uci_options()) {
                 fmt::println("option name {}{}", element.first, element.second);
             }
-            fmt::print("uciok");
+            fmt::println("uciok");
         } else if (line == "isready") {
             fmt::println("readyok");
         } else if (line == "ucinewgame") {
