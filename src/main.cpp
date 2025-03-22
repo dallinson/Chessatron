@@ -19,6 +19,10 @@
 
 #include "move_generator.hpp"
 
+#ifndef CHESSATRON_VERSION
+    #define CHESSATRON_VERSION ""
+#endif
+
 std::vector<std::string> split_on_whitespace(const std::string& data) {
     std::vector<std::string> to_return;
     std::string s;
@@ -73,7 +77,7 @@ void process_position_command(const std::string& line, SearchHandler& s) {
 }
 
 void process_go_command(const std::vector<std::string>& line, SearchHandler& s) {
-    uint32_t wtime = 0, btime = 0, winc = 0, binc = 0, movetime = 0;
+    int32_t wtime = 0, btime = 0, winc = 0, binc = 0, movetime = 0; // This handles negative values
     uint32_t movestogo = 1;
     uint16_t depth = std::numeric_limits<uint16_t>::max();
     if (line.size() == 0) {
@@ -109,13 +113,19 @@ void process_go_command(const std::vector<std::string>& line, SearchHandler& s) 
         }
     }
     if (movetime != 0) {
-        s.search(FixedTimeTC{movetime});
+        movetime -= uci_options()["Move Overhead"];
+        if (movetime < 0) {
+            movetime = 4000; // Use 4 seconds in case we get negative time
+        }
+        s.search(FixedTimeTC{static_cast<uint32_t>(movetime)});
         return;
     }
+
     const auto current_side = s.get_pos().stm();
     // auto halfmoves_so_far = (2 * s.get_pos().get_fullmove_counter()) + static_cast<int>(current_side);
-    const auto remaining_time = ((current_side == Side::WHITE) ? wtime : btime) - uci_options()["Move Overhead"];
-    const auto increment = ((current_side == Side::WHITE) ? winc : binc) / movestogo;
+    const auto remaining_time = ((current_side == Side::WHITE) ? wtime : btime);
+    const auto increment = ((current_side == Side::WHITE) ? winc : binc) / static_cast<int32_t>(movestogo);
+
     // next we determine how to use our allocated time using the formula
     // 59.3 + (72830 - 2330 k)/(2644 + k (10 + k)), where k is the number of halfmoves
     // so far.  This formula is taken from https://chess.stackexchange.com/questions/2506/what-is-the-average-length-of-a-game-of-chess.
@@ -152,7 +162,8 @@ int main(int argc, char** argv) {
 
     for (std::string line; std::getline(std::cin, line);) {
         if (line == "uci") {
-            fmt::println("id name Chessatron");
+            fmt::println("id name Chessatron {}", CHESSATRON_VERSION);
+            fmt::println("id author Daniel Allinson");
             for (const auto& element : uci_options()) {
                 fmt::println("option name {}{}", element.first, element.second);
             }
