@@ -71,7 +71,7 @@ namespace TimeManagement {
             if constexpr (std::is_same_v<std::decay_t<decltype(tc)>, DepthTC>) {
                 return tc.depth;
             } else {
-                return static_cast<uint16_t>(250);
+                return static_cast<uint16_t>(MAX_PLY - PLY_OFFSET);
             }
         }, tc);
     }
