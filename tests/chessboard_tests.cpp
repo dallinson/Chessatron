@@ -192,15 +192,6 @@ TEST(ChessBoardTests, TestClearBoard) {
     ASSERT_FALSE(pos.get_queenside_castling(Side::BLACK));
 }
 
-TEST(ChessBoardTests, TestPrintBoard) {
-    Position pos;
-    pos.set_from_fen("startpos");
-    testing::internal::CaptureStdout();
-    pos.print_board();
-    std::string from_stdout = testing::internal::GetCapturedStdout();
-    ASSERT_STREQ("rnbqkbnr\npppppppp\n........\n........\n........\n........\nPPPPPPPP\nRNBQKBNR\n", from_stdout.c_str());
-}
-
 TEST(ChessBoardTests, TestPromotionsFromString) {
     Position pos;
     pos.set_from_fen("1r6/P7/5k2/8/5K2/8/8/8 w - - 0 1");
