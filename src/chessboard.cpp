@@ -96,6 +96,28 @@ void Position::print_board() const {
         }
         fmt::println("");
     }
+    std::string castle_string = "";
+    if (get_kingside_castling(Side::WHITE)) {
+        castle_string.push_back('K');
+    }
+    if (get_kingside_castling(Side::WHITE)) {
+        castle_string.push_back('Q');
+    }
+    if (get_kingside_castling(Side::BLACK)) {
+        castle_string.push_back('k');
+    }
+    if (get_kingside_castling(Side::BLACK)) {
+        castle_string.push_back('q');
+    }
+    if (castle_string.length() == 0) {
+        castle_string = "-";
+    }
+    fmt::println("Side to move: {}", stm() == Side::WHITE ? "WHITE" : "BLACK");
+    fmt::println("Castling: {}", castle_string);
+    const char ep_chr = en_passant_file != 9 ? (static_cast<char>(en_passant_file) + 'a') : '-';
+    fmt::println("En passant file: {}", ep_chr);
+    fmt::println("Halfmove counter: {}", halfmove_clock);
+    fmt::println("Fullmove counter: {}", fullmove_counter);
 }
 
 #define RETURN_NONE_IF_PAST_END                                                                                                                      \
