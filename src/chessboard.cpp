@@ -40,10 +40,6 @@ const static std::array<ZobristKey, 16> castling_keys = {
 // Bit 2 is white queenside castling
 // Bit 3 is black kingside castline
 
-constexpr int castling_rights[64] = {0b1011, 15, 15, 15, 0b1010, 15, 15, 0b1110, 15, 15, 15, 15, 15,     15, 15, 15, 15,     15, 15, 15,    15, 15,
-                                     15,     15, 15, 15, 15,     15, 15, 15,     15, 15, 15, 15, 15,     15, 15, 15, 15,     15, 15, 15,    15, 15,
-                                     15,     15, 15, 15, 15,     15, 15, 15,     15, 15, 15, 15, 0b0111, 15, 15, 15, 0b0101, 15, 15, 0b1101};
-
 void Position::set_piece(Piece piece, Square sq) {
     auto pos = sq_to_int(sq);
     piece_bbs[static_cast<int>(piece.type()) - 1] |= sq;
@@ -77,7 +73,8 @@ void Position::clear_board() {
 
     side_to_move = Side::WHITE;
     en_passant_file = 9;
-    castling = 0;
+    castling_rights = 0;
+    castling_files.fill(9);
 
     _zobrist_key = ZobristKeys::SideToMove;
     _pawn_hash = 0;
@@ -282,6 +279,25 @@ std::optional<int> Position::set_from_fen(const std::string input) {
     return std::optional<int>(char_idx);
 }
 
+void Position::set_castling_from_fen(char _chr) {
+    const auto side = static_cast<u8>(_chr) >= static_cast<u8>('a') ? Side::BLACK : Side::WHITE;
+    // Black pieces/castling is lowercase
+    if (side == Side::BLACK) {
+        _chr -= ('a' - 'A'); // Convert to uppercase
+    }
+    const auto chr = _chr;
+    const auto target_file = chr - 'A'; // We treat the A-file as 0
+    const auto king_file = file(kings().lsb());
+    const auto is_kingside = target_file > king_file; // We can never castle TO the king's file
+    if (is_kingside) {
+        set_kingside_castling(side, true);
+    } else {
+        set_queenside_castling(side, true);
+    }
+    castling_files[castling_idx(side, is_kingside)] = target_file;
+    const auto rank = side == Side::WHITE ? 0 : 7;
+}
+
 Position::Position(const Position& origin, const Move to_make) {
     assert(MoveGenerator::is_move_legal(origin, to_make));
 
@@ -398,10 +414,10 @@ Position::Position(const Position& origin, const Move to_make) {
             scores[static_cast<int>(side)] += get_psqt_score(Piece(side, ROOK), rook_dest);
         }
 
-        const auto offset_diff = castling_rights[sq_to_int(to_make.src_sq())] & castling_rights[sq_to_int(dest_sq)];
-        const auto new_castling = castling & offset_diff;
-        _zobrist_key ^= castling_keys[new_castling ^ castling];
-        castling = new_castling;
+        const auto offset_diff = castling_rights_per_square[sq_to_int(to_make.src_sq())] & castling_rights_per_square[sq_to_int(dest_sq)];
+        const auto new_castling = castling_rights & offset_diff;
+        _zobrist_key ^= castling_keys[new_castling ^ castling_rights];
+        castling_rights = new_castling;
     }
     fullmove_counter += static_cast<int>(side_to_move);
     side_to_move = enemy_side(side_to_move);

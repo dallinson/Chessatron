@@ -13,6 +13,8 @@
 
 template <PieceTypes p> uint8_t bb_idx = static_cast<int>(p) - 1;
 
+constexpr u8 castling_idx(const Side side, const bool is_kingside) { return (2 * static_cast<u8>(!is_kingside)) + static_cast<u8>(side); };
+
 class BoardHistory;
 
 class Position {
@@ -25,8 +27,11 @@ class Position {
         uint8_t en_passant_file = 9; 
 
         // first 2 elems are kingside, second two queenside
-        uint8_t castling = 0;
-
+        u8 castling_rights = 0;
+        std::array<u8, 64> castling_rights_per_square = { 0b1011, 15, 15, 15, 0b1010, 15, 15, 0b1110, 15, 15, 15, 15, 15,     15, 15, 15, 15,     15, 15, 15,    15, 15,
+            15,     15, 15, 15, 15,     15, 15, 15,     15, 15, 15, 15, 15,     15, 15, 15, 15,     15, 15, 15,    15, 15,
+            15,     15, 15, 15, 15,     15, 15, 15,     15, 15, 15, 15, 0b0111, 15, 15, 15, 0b0101, 15, 15, 0b1101 };
+        std::array<u8, 4> castling_files = { 9 };
         Side side_to_move = Side(0);
 
 
@@ -41,6 +46,8 @@ class Position {
         std::array<ZobristKey, 2> _side_non_pawn_hashes = { 0, 0 };
         int halfmove_clock = 0;
         int fullmove_counter = 0;
+
+        void set_castling_from_fen(char chr);
 
     public:
         Position() = default;
@@ -102,21 +109,21 @@ class Position {
             _zobrist_key ^= ZobristKeys::EnPassantKeys[file];
         };
 
-        inline bool get_queenside_castling(const Side side) const { return get_bit(castling, 2 + static_cast<uint8_t>(side)); };
-        inline bool get_kingside_castling(const Side side) const { return get_bit(castling, static_cast<uint8_t>(side)); };
-        inline uint8_t get_castling() const { return castling; };
+        inline bool get_queenside_castling(const Side side) const { return get_bit(castling_rights, castling_idx(side, false)); };
+        inline bool get_kingside_castling(const Side side) const { return get_bit(castling_rights, castling_idx(side, true)); };
+        inline uint8_t get_castling() const { return castling_rights; };
         inline void set_kingside_castling(const Side side, const bool val) {
-            const int offset = static_cast<int>(side);
-            if (get_bit(castling, offset) != val) {
+            const int offset = castling_idx(side, true);
+            if (get_bit(castling_rights, offset) != val) {
                 _zobrist_key ^= ZobristKeys::CastlingKeys[offset];
-                toggle_bit(castling, offset);
+                toggle_bit(castling_rights, offset);
             }
         };
         inline void set_queenside_castling(const Side side, const bool val) {
-            const int offset = 2 + static_cast<int>(side);
-            if (get_bit(castling, offset) != val) {
+            const int offset = castling_idx(side, false);
+            if (get_bit(castling_rights, offset) != val) {
                 _zobrist_key ^= ZobristKeys::CastlingKeys[offset];
-                toggle_bit(castling, offset);
+                toggle_bit(castling_rights, offset);
             }
         };
 
