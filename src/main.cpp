@@ -113,7 +113,7 @@ void process_go_command(const std::vector<std::string>& line, SearchHandler& s) 
         }
     }
     if (movetime != 0) {
-        movetime -= uci_options()["Move Overhead"];
+        movetime -= static_cast<i32>(uci_options()["Move Overhead"]);
         if (movetime < 0) {
             movetime = 4000; // Use 4 seconds in case we get negative time
         }
@@ -145,7 +145,7 @@ int main(int argc, char** argv) {
     srand(time(NULL));
     SearchHandler s;
 
-    uci_options().insert(std::make_pair("Hash", UCIOption(1, 2048, "16", [](UCIOption& opt) { tt.resize(size_t(opt)); })));
+    uci_options().insert(std::make_pair("Hash", UCIOption(1, 2048, "16", [](UCIOption& opt) { tt.resize(static_cast<i32>(opt)); })));
     uci_options().insert(std::make_pair("Threads", UCIOption(1, 1, "1", [](UCIOption& opt) { (void) opt; })));
     uci_options().insert(std::make_pair("Move Overhead", UCIOption(0, 1000, "10", [](UCIOption& opt) { (void) opt; })));
 
@@ -178,6 +178,10 @@ int main(int argc, char** argv) {
             s.EndSearch();
         } else if (line == "d") {
             s.get_pos().print_board();
+        } else if (line == "listoptions") {
+            for (const auto& element : uci_options()) {
+                fmt::println("option name {}{} value {}", element.first, element.second, element.second.value());
+            }
         } else if (line == "bench") {
             s.run_bench();
         } else {

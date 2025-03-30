@@ -105,7 +105,7 @@ namespace TimeManagement {
      */
     inline uint32_t calculate_hard_limit(const int32_t side_time, const int32_t side_increment) {
         auto est_time = side_time / hard_limit_time_divisor + side_increment / hard_limit_inc_divisor;
-        est_time -= uci_options()["Move Overhead"];
+        est_time -= static_cast<i32>(uci_options()["Move Overhead"]);
         if (est_time < 0) {
             est_time = 4000;
         }
