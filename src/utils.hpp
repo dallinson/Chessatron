@@ -10,6 +10,9 @@ using ZobristKey = uint64_t;
 using Score = int16_t;
 
 using u8 = uint8_t;
+using usize = size_t;
+
+using i32 = int32_t;
 
 constexpr int MAX_TURN_MOVE_COUNT = 218;
 constexpr int MAX_GAME_MOVE_COUNT = 5899;
