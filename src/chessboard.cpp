@@ -342,6 +342,23 @@ Position::Position(const Position& origin, const Move to_make) {
         piece_bbs[static_cast<int>(moved.type()) - 1] &= ~Bitboard(src_sq);
         side_bbs[static_cast<int>(moved.side())] &= ~Bitboard(src_sq);
         piece_mb[sq_to_int(src_sq)] = 0;
+        // Remove the moving piece
+
+        if (to_make.is_castling_move()) {
+            const auto king_dest = dest_sq;
+            const auto rook_origin = king_dest + (to_make.flags() == MoveFlags::KINGSIDE_CASTLE ? 1 : -2);
+
+            // we moved the king, now move the rook
+
+            this->piece_bbs[bb_idx<ROOK>] &= ~Bitboard(rook_origin);
+            this->side_bbs[static_cast<int>(side)] &= ~Bitboard(rook_origin);
+            piece_mb[sq_to_int(rook_origin)] = 0;
+            _zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, ROOK), rook_origin)];
+            _side_non_pawn_hashes[static_cast<int>(side)] ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, ROOK), rook_origin)];
+            scores[static_cast<int>(side)] -= get_psqt_score(Piece(side, ROOK), rook_origin);
+            // Remove the rook first
+        }
+
         if (at_target.get_value()) {
             // If there _was_ a piece there
             // we do this as en passant captures without a piece at the position
@@ -406,18 +423,6 @@ Position::Position(const Position& origin, const Move to_make) {
         if (to_make.is_castling_move()) {
             const auto king_dest = dest_sq;
             const auto rook_dest = king_dest + (to_make.flags() == MoveFlags::KINGSIDE_CASTLE ? -1 : 1);
-            const auto rook_origin = to_make.dst_sq();
-
-            // we moved the king, now move the rook
-
-            this->piece_bbs[bb_idx<ROOK>] &= ~Bitboard(rook_origin);
-            if (piece_mb[sq_to_int(rook_origin)].type() == PieceTypes::ROOK) {
-                piece_mb[sq_to_int(rook_origin)] = 0;
-                this->side_bbs[static_cast<int>(side)] &= ~Bitboard(rook_origin);
-            }
-            _zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, ROOK), rook_origin)];
-            _side_non_pawn_hashes[static_cast<int>(side)] ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, ROOK), rook_origin)];
-            scores[static_cast<int>(side)] -= get_psqt_score(Piece(side, ROOK), rook_origin);
 
             this->piece_bbs[bb_idx<ROOK>] |= rook_dest;
             this->side_bbs[static_cast<int>(side)] |= rook_dest;
@@ -425,6 +430,7 @@ Position::Position(const Position& origin, const Move to_make) {
             _zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, ROOK), rook_dest)];
             _side_non_pawn_hashes[static_cast<int>(side)] ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, ROOK), rook_dest)];
             scores[static_cast<int>(side)] += get_psqt_score(Piece(side, ROOK), rook_dest);
+            // Add the rook back
         }
 
         const auto offset_diff = castling_rights_per_square[sq_to_int(to_make.src_sq())] & castling_rights_per_square[sq_to_int(dest_sq)];
