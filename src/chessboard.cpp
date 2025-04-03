@@ -8,6 +8,7 @@
 #include "magic_numbers.hpp"
 #include "magic_numbers/piece_square_tables.hpp"
 #include "move_generator.hpp"
+#include "uci_options.hpp"
 #include "zobrist_hashing.hpp"
 
 using namespace PieceSquareTables;
@@ -75,6 +76,7 @@ void Position::clear_board() {
     en_passant_file = 9;
     castling_rights = 0;
     castling_files.fill(9);
+    castling_rights_per_square.fill(15);
 
     _zobrist_key = ZobristKeys::SideToMove;
     _pawn_hash = 0;
@@ -219,23 +221,16 @@ std::optional<int> Position::set_from_fen(const std::string input) {
     // set castling
     while (input[char_idx] != ' ') {
         RETURN_NONE_IF_PAST_END;
-        switch (input[char_idx]) {
-        case 'K':
-            set_kingside_castling(Side::WHITE, true);
-            break;
-        case 'Q':
-            set_queenside_castling(Side::WHITE, true);
-            break;
-        case 'k':
-            set_kingside_castling(Side::BLACK, true);
-            break;
-        case 'q':
-            set_queenside_castling(Side::BLACK, true);
-            break;
-        case '-':
-            break;
-        default:
-            return std::optional<int>();
+        const auto chr = input[char_idx];
+        if (chr == 'K' || chr == 'k') {
+            uci_options()["UCI_Chess960"].set_value("false");
+            set_castling_from_fen(chr - ('K' - 'H'));
+        } else if (chr == 'Q' || chr == 'q') {
+            uci_options()["UCI_Chess960"].set_value("false");
+            set_castling_from_fen(chr - ('Q' - 'A'));
+        } else if (chr != '-') {
+            uci_options()["UCI_Chess960"].set_value("true");
+            set_castling_from_fen(chr);
         }
         char_idx += 1;
     }
@@ -287,7 +282,8 @@ void Position::set_castling_from_fen(char _chr) {
     }
     const auto chr = _chr;
     const auto target_file = chr - 'A'; // We treat the A-file as 0
-    const auto king_file = file(kings().lsb());
+    const auto king_sq = kings(side).lsb();
+    const auto king_file = file(king_sq);
     const auto is_kingside = target_file > king_file; // We can never castle TO the king's file
     if (is_kingside) {
         set_kingside_castling(side, true);
@@ -295,7 +291,13 @@ void Position::set_castling_from_fen(char _chr) {
         set_queenside_castling(side, true);
     }
     castling_files[castling_idx(side, is_kingside)] = target_file;
-    const auto rank = side == Side::WHITE ? 0 : 7;
+    const auto rank = ((side == Side::WHITE) ? 0 : 7);
+
+    const auto rook_sq = square(rank, target_file);
+    const u8 castling_mask = ~(1 << castling_idx(side, is_kingside));
+
+    castling_rights_per_square[static_cast<i32>(rook_sq)] &= castling_mask;
+    castling_rights_per_square[static_cast<i32>(king_sq)] &= castling_mask;
 }
 
 Position::Position(const Position& origin, const Move to_make) {
@@ -303,7 +305,16 @@ Position::Position(const Position& origin, const Move to_make) {
 
     *this = origin;
     const auto src_sq = to_make.src_sq();
-    const auto dest_sq = to_make.dst_sq();
+    const auto dest_sq = [&]() {
+        if (!to_make.is_castling_move()) {
+            return to_make.dst_sq();
+        } else {
+            const auto target_rnk = to_make.dst_rnk(); // A legal castling move will end on the same rank
+            const auto target_fle = to_make.flags() == MoveFlags::KINGSIDE_CASTLE ? 6 : 2;
+            return square(target_rnk, target_fle);
+        }
+    }();
+    //fmt::println("{}", static_cast<i32>(dest_sq));
     const auto moved = piece_at(src_sq);
     Piece at_target = static_cast<Piece>(0);
     if (occupancy()[dest_sq]) {
@@ -352,7 +363,7 @@ Position::Position(const Position& origin, const Move to_make) {
             // Any value >= 8 is a promotion
             Piece promoted_piece = Piece(side, PieceTypes((static_cast<int>(to_make.flags()) & 0b0011) + 2));
             _zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(promoted_piece, dest_sq)];
-            _side_non_pawn_hashes[static_cast<int>(promoted_piece.side())] ^= ZobristKeys::PositionKeys[calculate_zobrist_key(promoted_piece, to_make.dst_sq())];
+            _side_non_pawn_hashes[static_cast<int>(promoted_piece.side())] ^= ZobristKeys::PositionKeys[calculate_zobrist_key(promoted_piece, dest_sq)];
             // promoted_piece += side;
             this->piece_bbs[static_cast<int>(promoted_piece.type()) - 1] |= dest_sq;
             piece_mb[sq_to_int(dest_sq)] = promoted_piece;
@@ -365,9 +376,9 @@ Position::Position(const Position& origin, const Move to_make) {
             piece_mb[sq_to_int(dest_sq)] = moved;
             _zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, dest_sq)];
             if (moved.type() == PAWN) {
-                _pawn_hash ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, to_make.dst_sq())];
+                _pawn_hash ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, dest_sq)];
             } else {
-                _side_non_pawn_hashes[static_cast<int>(moved.side())] ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, to_make.dst_sq())];
+                _side_non_pawn_hashes[static_cast<int>(moved.side())] ^= ZobristKeys::PositionKeys[calculate_zobrist_key(moved, dest_sq)];
             }
             scores[static_cast<int>(side)] += get_psqt_score(Piece(side, moved.type()), dest_sq);
             // otherwise sets pieces if moved normally
@@ -395,13 +406,15 @@ Position::Position(const Position& origin, const Move to_make) {
         if (to_make.is_castling_move()) {
             const auto king_dest = dest_sq;
             const auto rook_dest = king_dest + (to_make.flags() == MoveFlags::KINGSIDE_CASTLE ? -1 : 1);
-            const auto rook_origin = king_dest + (to_make.flags() == MoveFlags::KINGSIDE_CASTLE ? 1 : -2);
+            const auto rook_origin = to_make.dst_sq();
 
             // we moved the king, now move the rook
 
             this->piece_bbs[bb_idx<ROOK>] &= ~Bitboard(rook_origin);
-            this->side_bbs[static_cast<int>(side)] &= ~Bitboard(rook_origin);
-            piece_mb[sq_to_int(rook_origin)] = 0;
+            if (piece_mb[sq_to_int(rook_origin)].type() == PieceTypes::ROOK) {
+                piece_mb[sq_to_int(rook_origin)] = 0;
+                this->side_bbs[static_cast<int>(side)] &= ~Bitboard(rook_origin);
+            }
             _zobrist_key ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, ROOK), rook_origin)];
             _side_non_pawn_hashes[static_cast<int>(side)] ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(side, ROOK), rook_origin)];
             scores[static_cast<int>(side)] -= get_psqt_score(Piece(side, ROOK), rook_origin);
@@ -522,7 +535,7 @@ std::optional<Move> Position::generate_move_from_string(const std::string& s) co
     const auto start_sq = get_position(s.at(1) - 49, s.at(0) - 97);
     const auto end_sq = get_position(s.at(3) - 49, s.at(2) - 97);
     // Side move_side = this->stm();
-    PieceTypes moving_type = this->piece_at(start_sq).type();
+    const auto moving_type = this->piece_at(start_sq).type();
     const auto offset = sq_to_int(start_sq) - sq_to_int(end_sq);
     if (moving_type == PAWN && (std::abs(offset) == 7 || std::abs(offset) == 9)) {
         // so a capture
@@ -537,14 +550,18 @@ std::optional<Move> Position::generate_move_from_string(const std::string& s) co
         // A 16-space gap is a double pawn push
         m = MoveFlags::DOUBLE_PAWN_PUSH;
     } else if (moving_type == KING) {
-        if (offset == 2) {
+        const auto side = this->piece_at(start_sq).side();
+        const auto end_pc = this->piece_at(end_sq);
+        const auto rook_castle = end_pc.side() == side && end_pc.type() == PieceTypes::ROOK;
+        const auto offset_castle = std::abs(offset) == 2;
+        if ((rook_castle && end_sq < start_sq) || (offset_castle && offset == 2)) {
             // this is a queenside castle
             m = MoveFlags::QUEENSIDE_CASTLE;
-        } else if (offset == -2) {
+        } else if ((rook_castle && end_sq > start_sq) || (offset_castle && offset == -2)) {
             m = MoveFlags::KINGSIDE_CASTLE;
         }
     }
-    if (occupancy()[end_sq]) {
+    if (occupancy()[end_sq] && !(m == MoveFlags::QUEENSIDE_CASTLE || m == MoveFlags::KINGSIDE_CASTLE)) {
         m = MoveFlags(static_cast<int>(m) | static_cast<int>(MoveFlags::CAPTURE));
     }
 

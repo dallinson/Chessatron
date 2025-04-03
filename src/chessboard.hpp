@@ -13,8 +13,6 @@
 
 template <PieceTypes p> uint8_t bb_idx = static_cast<int>(p) - 1;
 
-constexpr u8 castling_idx(const Side side, const bool is_kingside) { return (2 * static_cast<u8>(!is_kingside)) + static_cast<u8>(side); };
-
 class BoardHistory;
 
 class Position {
@@ -28,9 +26,7 @@ class Position {
 
         // first 2 elems are kingside, second two queenside
         u8 castling_rights = 0;
-        std::array<u8, 64> castling_rights_per_square = { 0b1011, 15, 15, 15, 0b1010, 15, 15, 0b1110, 15, 15, 15, 15, 15,     15, 15, 15, 15,     15, 15, 15,    15, 15,
-            15,     15, 15, 15, 15,     15, 15, 15,     15, 15, 15, 15, 15,     15, 15, 15, 15,     15, 15, 15,    15, 15,
-            15,     15, 15, 15, 15,     15, 15, 15,     15, 15, 15, 15, 0b0111, 15, 15, 15, 0b0101, 15, 15, 0b1101 };
+        std::array<u8, 64> castling_rights_per_square = { 0 };
         std::array<u8, 4> castling_files = { 9 };
         Side side_to_move = Side(0);
 
@@ -126,6 +122,7 @@ class Position {
                 toggle_bit(castling_rights, offset);
             }
         };
+        u8 castling_file(const Side side, const bool is_kingside) const { return castling_files[castling_idx(side, is_kingside)]; };
 
         void set_piece(Piece piece, Square sq);
         void print_board() const;

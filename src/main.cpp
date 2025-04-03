@@ -148,6 +148,7 @@ int main(int argc, char** argv) {
     uci_options().insert(std::make_pair("Hash", UCIOption(1, 2048, "16", [](UCIOption& opt) { tt.resize(static_cast<i32>(opt)); })));
     uci_options().insert(std::make_pair("Threads", UCIOption(1, 1, "1", [](UCIOption& opt) { (void) opt; })));
     uci_options().insert(std::make_pair("Move Overhead", UCIOption(0, 1000, "10", [](UCIOption& opt) { (void) opt; })));
+    uci_options().insert(std::make_pair("UCI_Chess960", UCIOption(0, 0, "false", UCIOptionTypes::CHECK, [](UCIOption& opt) { (void) opt; })));
 
     if (argc > 1) {
         if (std::string(argv[1]) == "bench") {
