@@ -345,8 +345,7 @@ Position::Position(const Position& origin, const Move to_make) {
         // Remove the moving piece
 
         if (to_make.is_castling_move()) {
-            const auto king_dest = dest_sq;
-            const auto rook_origin = king_dest + (to_make.flags() == MoveFlags::KINGSIDE_CASTLE ? 1 : -2);
+            const auto rook_origin = to_make.dst_sq();
 
             // we moved the king, now move the rook
 
