@@ -100,7 +100,10 @@ bool MoveGenerator::can_castle(const Position& pos, const Side side, const bool 
         return false;
     }
     // No pieces obstruct either king or rook movement
-    _king_movement_bb &= ~Bitboard(king_sq); // Clear the origin square as this has already been evaluated
+    if (_king_movement_bb.popcnt() > 1) {
+        _king_movement_bb &= ~Bitboard(king_sq); // Clear the origin square as this has already been evaluated
+        // if a king castles to itself we need to check this again
+    }
     const auto blocker_bb = occupancy_bb | rook_dest_sq;
     while (!_king_movement_bb.empty()) {
         // Iterate over every remaining square to check for check

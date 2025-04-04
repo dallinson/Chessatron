@@ -313,3 +313,9 @@ TEST(MoveGeneratorTests, TestThreatenedCastle) {
     MoveGenerator::generate_castling_moves(pos, pos.stm(), moves);
     ASSERT_EQ(moves.size(), 0);
 }
+
+TEST(MoveGeneratorTests, TestDFRCPinnedCastle) {
+    Position pos;
+    pos.set_from_fen("nrkb2nr/ppppp1p1/6bp/5p2/1PP1P1P1/8/P1BPQP1P/qRK1B1NR w HBhb - 0 11");
+    ASSERT_FALSE(MoveGenerator::can_castle(pos, Side::WHITE, false));
+}
