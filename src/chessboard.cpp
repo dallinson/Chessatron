@@ -3,6 +3,7 @@
 #include <bit>
 #include <cstring>
 #include <string>
+#include <utility>
 #include <fmt/format.h>
 
 #include "magic_numbers.hpp"
