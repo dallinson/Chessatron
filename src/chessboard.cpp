@@ -351,7 +351,7 @@ auto Position::makemove_remove_piece(const Square sq) -> void {
     }
     scores[static_cast<i32>(p.side())] -= get_psqt_score(p, sq);
     // And finally adjust the mg phase
-    mg_phase -= mg_phase_vals[static_cast<i32>(p.type())];
+    mg_phase -= mg_phase_vals[static_cast<i32>(p.type()) - 1];
 }
 
 auto Position::makemove_add_piece(const Piece p, const Square sq) -> void {
@@ -371,7 +371,7 @@ auto Position::makemove_add_piece(const Piece p, const Square sq) -> void {
     }
     scores[static_cast<i32>(p.side())] += get_psqt_score(p, sq);
     // And finally adjust the mg phase
-    mg_phase += mg_phase_vals[static_cast<i32>(p.type())];
+    mg_phase += mg_phase_vals[static_cast<i32>(p.type()) - 1];
 }
 
 Position::Position(const Position& origin, const Move to_make) {
