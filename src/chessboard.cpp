@@ -100,13 +100,13 @@ void Position::print_board() const {
     if (get_kingside_castling(Side::WHITE)) {
         castle_string.push_back('K');
     }
-    if (get_kingside_castling(Side::WHITE)) {
+    if (get_queenside_castling(Side::WHITE)) {
         castle_string.push_back('Q');
     }
     if (get_kingside_castling(Side::BLACK)) {
         castle_string.push_back('k');
     }
-    if (get_kingside_castling(Side::BLACK)) {
+    if (get_queenside_castling(Side::BLACK)) {
         castle_string.push_back('q');
     }
     if (castle_string.length() == 0) {
@@ -234,9 +234,9 @@ std::optional<int> Position::set_from_fen(const std::string input) {
             // We subtract this from chr to get the case-matched 'a'
             // Then we add the rook file
         } else if (chr == 'Q' || chr == 'q') {
-            const auto rook_fle = find_outer_rook(chr == 'Q' ? Side::WHITE : Side::BLACK, true);
+            const auto rook_fle = find_outer_rook(chr == 'Q' ? Side::WHITE : Side::BLACK, false);
             is_dfrc |= (rook_fle != 7);
-            is_dfrc |= file(kings(chr == 'K' ? Side::WHITE : Side::BLACK).lsb()) != 4;
+            is_dfrc |= file(kings(chr == 'Q' ? Side::WHITE : Side::BLACK).lsb()) != 4;
             set_castling_from_fen((chr - ('Q' - 'A')) + rook_fle);
         } else if (chr != '-') {
             is_dfrc |= true;
