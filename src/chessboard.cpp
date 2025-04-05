@@ -133,12 +133,12 @@ std::optional<int> Position::set_from_fen(const std::string input) {
     }
     clear_board();
     int rank = 7;
-    int file = 0;
+    int fle = 0;
     int char_idx = 0;
     // set up the board
     while (input[char_idx] != ' ') {
         if (input[char_idx] == '/') {
-            file = 0;
+            fle = 0;
             rank -= 1;
             if (rank < 0) {
                 return false;
@@ -185,7 +185,7 @@ std::optional<int> Position::set_from_fen(const std::string input) {
             case '7':
                 [[fallthrough]];
             case '8':
-                file += (current - 48);
+                fle += (current - 48);
                 char_idx += 1;
                 continue;
 
@@ -193,10 +193,10 @@ std::optional<int> Position::set_from_fen(const std::string input) {
                 return std::optional<int>();
             }
             Piece piece = Piece(piece_side, piece_value);
-            set_piece(piece, get_position(rank, file));
+            set_piece(piece, get_position(rank, fle));
             // zobrist_key ^= ZobristKeys::PositionKeys[(piece * 64) + get_position(rank, file)];
-            file += 1;
-            if (file > 8) {
+            fle += 1;
+            if (fle > 8) {
                 return std::optional<int>();
             }
         }
@@ -226,6 +226,7 @@ std::optional<int> Position::set_from_fen(const std::string input) {
         if (chr == 'K' || chr == 'k') {
             const auto rook_fle = find_outer_rook(chr == 'K' ? Side::WHITE : Side::BLACK, true);
             is_dfrc |= (rook_fle != 7);
+            is_dfrc |= file(kings(chr == 'K' ? Side::WHITE : Side::BLACK).lsb()) != 4; // if the king file != 4 then we are definitely not in normal chess
             set_castling_from_fen((chr - ('K' - 'A')) + rook_fle);
             // this is kinda hard to get
             // 'K' - 'A' is the offset between these two chars
@@ -234,6 +235,7 @@ std::optional<int> Position::set_from_fen(const std::string input) {
         } else if (chr == 'Q' || chr == 'q') {
             const auto rook_fle = find_outer_rook(chr == 'Q' ? Side::WHITE : Side::BLACK, true);
             is_dfrc |= (rook_fle != 7);
+            is_dfrc |= file(kings(chr == 'K' ? Side::WHITE : Side::BLACK).lsb()) != 4;
             set_castling_from_fen((chr - ('Q' - 'A')) + rook_fle);
         } else if (chr != '-') {
             is_dfrc |= true;
