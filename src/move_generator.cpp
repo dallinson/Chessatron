@@ -76,6 +76,7 @@ bool MoveGenerator::can_castle(const Position& pos, const Side side, const bool 
     const auto enemy = enemy_side(side);
     const auto king_sq = pos.kings(side).lsb();
     const auto side_rnk = side == Side::WHITE ? 0 : 7;
+
     const auto king_dest_fle = is_kingside ? 6 : 2;
     const auto rook_dest_fle = is_kingside ? 5 : 3;
     const auto rook_dest_sq = square(side_rnk, rook_dest_fle);

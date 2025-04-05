@@ -17,3 +17,5 @@ namespace ZobristKeys {
     extern const std::array<ZobristKey, 4> CastlingKeys;
     extern const std::array<Bitboard, 16> EnPassantCheckBitboards;
 } // namespace ZobristKeys
+
+constexpr auto get_zkey(const Piece p, const Square sq)-> ZobristKey { return ZobristKeys::PositionKeys[calculate_zobrist_key(p, sq)]; };
