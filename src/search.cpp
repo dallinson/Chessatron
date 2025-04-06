@@ -665,6 +665,7 @@ Move SearchHandler::run_iterative_deepening_search() {
     }
     std::for_each(search_stack.begin(), search_stack.end(), [](SearchStackFrame& elem) { elem = SearchStackFrame(); });
 
+    Score prev_score = 0;
     Score current_score = 0;
     for (int depth = 1; depth <= TimeManagement::get_search_depth(tc) && !search_cancelled; depth++) {
 
@@ -692,9 +693,10 @@ Move SearchHandler::run_iterative_deepening_search() {
             return pv_move;
         }
 
-        if (TimeManagement::is_time_based_tc(tc) && time_so_far > TimeManagement::calculate_soft_limit(tc, node_spent_table, pv_move, node_count)) {
+        if (TimeManagement::is_time_based_tc(tc) && time_so_far > TimeManagement::calculate_soft_limit(tc, node_spent_table, pv_move, node_count, depth == 1 ? 0 : current_score - prev_score)) {
             break;
         }
+        prev_score = current_score;
     }
     tt.age(); // Age the TT after every search
     return pv_move;

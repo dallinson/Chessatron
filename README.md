@@ -17,6 +17,6 @@ The PVS implementation in [search.cpp](src/search.cpp#L273) is taken from Weiss
 
 The [SEE tests](tests/see_tests.cpp) are from Starzix
 
-Testing was performed using OpenBench
+Testing was performed using OpenBench with support from Pyrobench
 
 And most importantly, the development of this engine would not be possible without the brilliant people in the Stockfish Discord

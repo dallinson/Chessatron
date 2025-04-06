@@ -113,6 +113,18 @@ namespace TimeManagement {
     }
 
 
+    /**
+     * @brief Scales the soft limit higher if score is improving, less if it isn't.  Taken from stash at https://github.com/mhouppin/stash-bot/blob/517c56b0bc514c103aa917581430ea43f473a565/src/sources/timeman.c#L99.
+     * 
+     * @param score_prog
+     * @return f64
+     */
+    TUNABLE_SPECIFIER auto score_prog_power_base = TUNABLE_FLOAT("score_prog_power_base", 2.0, 1.5, 2.5);
+    TUNABLE_SPECIFIER auto score_prog_power_limit = TUNABLE_INT("score_prog_power_limit", 100, 50, 150);
+    inline auto scale_score_prog(const Score score_prog) -> f64 {
+        return pow(score_prog_power_base, std::clamp(-score_prog, -score_prog_power_limit, score_prog_power_limit) / static_cast<f64>(score_prog_power_limit));
+    }
+
     TUNABLE_SPECIFIER auto soft_limit_multi = TUNABLE_FLOAT("soft_limit_multi", 0.2901, 0.1, 0.75);
     /**
      * @brief Calculates the soft limit of the search from the search time
@@ -120,9 +132,9 @@ namespace TimeManagement {
      * @param tc 
      * @return uint32_t 
      */
-    inline uint32_t calculate_soft_limit(const TimeControlInfo& tc, const std::array<uint64_t, 4096>& node_spent_table, const Move pv_move, const uint64_t node_count) {
+    inline uint32_t calculate_soft_limit(const TimeControlInfo& tc, const std::array<uint64_t, 4096>& node_spent_table, const Move pv_move, const uint64_t node_count, const Score score_prog) {
         const auto best_move_fraction = static_cast<double>(node_spent_table[pv_move.value() & 0x0FFF]) / static_cast<double>(node_count);
-        return (get_search_time(tc) * soft_limit_multi) * (1.6 - best_move_fraction) * 1.5;
+        return (get_search_time(tc) * soft_limit_multi) * (1.6 - best_move_fraction) * 1.5 * scale_score_prog(score_prog);
     }
 
 };
