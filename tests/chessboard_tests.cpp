@@ -223,8 +223,8 @@ TEST(ChessBoardTests, TestEnPassantFromString) {
 TEST(ChessBoardTests, TestCastlingFromString) {
     Position pos;
     pos.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/R3K2R w KQkq - 0 1");
-    ASSERT_EQ(pos.generate_move_from_string("e1c1"), Move(MoveFlags::QUEENSIDE_CASTLE, 2, 4));
-    ASSERT_EQ(pos.generate_move_from_string("e1g1"), Move(MoveFlags::KINGSIDE_CASTLE, 6, 4));
+    ASSERT_EQ(pos.generate_move_from_string("e1c1"), Move(MoveFlags::QUEENSIDE_CASTLE, 0, 4));
+    ASSERT_EQ(pos.generate_move_from_string("e1g1"), Move(MoveFlags::KINGSIDE_CASTLE, 7, 4));
     ASSERT_EQ(pos.generate_move_from_string("e1f1"), Move(MoveFlags::QUIET_MOVE, 5, 4));
     // not a castling move but included just to cover this branch
 }
