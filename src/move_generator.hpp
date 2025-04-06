@@ -34,6 +34,7 @@ namespace MoveGenerator {
     template <PieceTypes piece_type, MoveGenType gen_type> void generate_moves(const Position& c, const Side side, MoveList& move_list);
     template <MoveGenType gen_type, Side stm> void generate_pawn_moves(const Position& c, MoveList& move_list);
     void generate_castling_moves(const Position& c, const Side side, MoveList& move_list);
+    bool can_castle(const Position& pos, const Side side, const bool is_kingside);
 
     bool is_move_legal(const Position& c, const Move m);
     bool is_move_pseudolegal(const Position& c, const Move to_test);

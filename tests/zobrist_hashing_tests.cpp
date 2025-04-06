@@ -345,7 +345,7 @@ TEST(ZobristHashingTests, TestCastling) {
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::ROOK), 7)] ^
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::BLACK, PieceTypes::KING), 45)] ^
                                        ZobristKeys::CastlingKeys[0] ^ ZobristKeys::CastlingKeys[2] ^ ZobristKeys::SideToMove);
-    pos = pos.make_move(Move(MoveFlags::QUEENSIDE_CASTLE, 2, 4), hist);
+    pos = pos.make_move(Move(MoveFlags::QUEENSIDE_CASTLE, 0, 4), hist);
     ASSERT_EQ(pos.zobrist_key(), ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::ROOK), 3)] ^
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::KING), 2)] ^
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::ROOK), 7)] ^
@@ -356,7 +356,7 @@ TEST(ZobristHashingTests, TestCastling) {
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::ROOK), 7)] ^
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::BLACK, PieceTypes::KING), 45)] ^
                                        ZobristKeys::CastlingKeys[0] ^ ZobristKeys::CastlingKeys[2] ^ ZobristKeys::SideToMove);
-    pos = pos.make_move(Move(MoveFlags::KINGSIDE_CASTLE, 6, 4), hist);
+    pos = pos.make_move(Move(MoveFlags::KINGSIDE_CASTLE, 7, 4), hist);
     ASSERT_EQ(pos.zobrist_key(), ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::ROOK), 0)] ^
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::KING), 6)] ^
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::ROOK), 5)] ^
@@ -393,13 +393,13 @@ TEST(ZobristHashingTests, TestCastlingPawnHash) {
     pos = hist.pop_board();
     ASSERT_EQ(pos.pawn_hash(), 0);
 
-    pos = pos.make_move(Move(MoveFlags::QUEENSIDE_CASTLE, 2, 4), hist);
+    pos = pos.make_move(Move(MoveFlags::QUEENSIDE_CASTLE, 0, 4), hist);
     ASSERT_EQ(pos.pawn_hash(), 0);
 
     pos = hist.pop_board();
     ASSERT_EQ(pos.pawn_hash(), 0);
 
-    pos = pos.make_move(Move(MoveFlags::KINGSIDE_CASTLE, 6, 4), hist);
+    pos = pos.make_move(Move(MoveFlags::KINGSIDE_CASTLE, 7, 4), hist);
     ASSERT_EQ(pos.pawn_hash(), 0);
 
     pos = hist.pop_board();
@@ -444,7 +444,7 @@ TEST(ZobristHashingTests, TestCastlingNonPawnHash) {
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::KING), 4)] ^
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::ROOK), 7)] ^
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::BLACK, PieceTypes::KING), 45)]);
-    pos = pos.make_move(Move(MoveFlags::QUEENSIDE_CASTLE, 2, 4), hist);
+    pos = pos.make_move(Move(MoveFlags::QUEENSIDE_CASTLE, 0, 4), hist);
     ASSERT_EQ(pos.non_pawn_hash(), ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::ROOK), 3)] ^
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::KING), 2)] ^
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::ROOK), 7)] ^
@@ -454,7 +454,7 @@ TEST(ZobristHashingTests, TestCastlingNonPawnHash) {
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::KING), 4)] ^
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::ROOK), 7)] ^
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::BLACK, PieceTypes::KING), 45)]);
-    pos = pos.make_move(Move(MoveFlags::KINGSIDE_CASTLE, 6, 4), hist);
+    pos = pos.make_move(Move(MoveFlags::KINGSIDE_CASTLE, 7, 4), hist);
     ASSERT_EQ(pos.non_pawn_hash(), ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::ROOK), 0)] ^
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::KING), 6)] ^
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::ROOK), 5)] ^

@@ -7,6 +7,7 @@
 #include <string>
 
 #include "pieces.hpp"
+#include "uci_options.hpp"
 #include "utils.hpp"
 
 enum class MoveFlags : uint8_t {
@@ -70,17 +71,28 @@ struct fmt::formatter<Move> {
         return ctx.begin();
     }
 
-    auto format(const Move& move, fmt::format_context& ctx) const {
+    auto format(const Move& _move, fmt::format_context& ctx) const {
+        const auto move = [&]() {
+            if ((!_move.is_castling_move()) || (static_cast<bool>(uci_options()["UCI_Chess960"]))) {
+                // if this isn't castling, or dfrc is enabled
+                return _move;
+            } else {
+                auto rnk = _move.dst_rnk();
+                auto dst_fle = _move.flags() == MoveFlags::KINGSIDE_CASTLE ? 6 : 2;
+                const auto dst = square(rnk, dst_fle);
+                return Move(_move.flags(), dst, _move.src_sq());
+            }
+        }();
         if (move.src_sq() == Square::A1 && move.dst_sq() == Square::A1) {
             // if this is a null move
             return fmt::format_to(ctx.out(), "{}", "0000");
         }
         std::string to_return;
-        to_return.push_back(move.src_fle() + 97);
-        to_return.push_back(move.src_rnk() + 49);
+        to_return.push_back(move.src_fle() + 'a');
+        to_return.push_back(move.src_rnk() + '1');
     
-        to_return.push_back(move.dst_fle() + 97);
-        to_return.push_back(move.dst_rnk() + 49);
+        to_return.push_back(move.dst_fle() + 'a');
+        to_return.push_back(move.dst_rnk() + '1');
     
         if (move.is_promotion()) {
             switch (move.promo_type()) {
