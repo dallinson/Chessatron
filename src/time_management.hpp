@@ -122,7 +122,7 @@ namespace TimeManagement {
     TUNABLE_SPECIFIER auto score_prog_power_base = TUNABLE_FLOAT("score_prog_power_base", 2.0, 1.5, 2.5);
     TUNABLE_SPECIFIER auto score_prog_power_limit = TUNABLE_INT("score_prog_power_limit", 100, 50, 150);
     inline auto scale_score_prog(const Score score_prog) -> f64 {
-        return pow(score_prog_power_base, std::clamp(-score_prog, -score_prog_power_limit, score_prog_power_limit) / static_cast<f64>(score_prog_power_limit));
+        return pow(score_prog_power_base, std::clamp(-score_prog, -static_cast<i32>(score_prog_power_limit), static_cast<i32>(score_prog_power_limit)) / static_cast<f64>(score_prog_power_limit));
     }
 
     TUNABLE_SPECIFIER auto soft_limit_multi = TUNABLE_FLOAT("soft_limit_multi", 0.2901, 0.1, 0.75);

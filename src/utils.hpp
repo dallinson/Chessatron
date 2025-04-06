@@ -15,6 +15,7 @@ using usize = size_t;
 
 using i32 = int32_t;
 
+using f32 = float;
 using f64 = double;
 
 constexpr int MAX_TURN_MOVE_COUNT = 218;

@@ -28,7 +28,7 @@ class Tunable {
 };
 
 using TunableInt = Tunable<int>;
-using TunableFloat = Tunable<double>;
+using TunableFloat = Tunable<f64>;
 
 template<>
 inline TunableInt::Tunable(std::string_view name, int value, int min, int max, double desired_learning_rate, std::function<void(void)> custom_callback) {
