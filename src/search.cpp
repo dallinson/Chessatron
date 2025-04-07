@@ -39,7 +39,9 @@ TUNABLE_SPECIFIER auto see_prune_depth = TUNABLE_INT("see_prune_depth", 10, 5, 1
 TUNABLE_SPECIFIER auto noisy_see_prune_multi = TUNABLE_INT("noisy_see_prune_multi", -20, -35, -5);
 TUNABLE_SPECIFIER auto quiet_see_prune_multi = TUNABLE_INT("quiet_see_prune_multi", -61, -100, -30);
 
-TUNABLE_SPECIFIER auto asp_window = TUNABLE_INT("asp_window", 25, 10, 50);
+TUNABLE_SPECIFIER auto asp_window_depth = TUNABLE_INT("asp_window_depth", 4, 2, 6);
+TUNABLE_SPECIFIER auto alpha_asp_window = TUNABLE_INT("alpha_asp_window", 25, 10, 50);
+TUNABLE_SPECIFIER auto beta_asp_window = TUNABLE_INT("beta_asp_window", 25, 10, 50);
 
 template <bool print_debug> // this could just as easily be done as a parameter but this gives some practice with templates
 uint64_t perft(const Position& old_pos, BoardHistory& history, int depth) {
@@ -614,15 +616,16 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
 }
 
 Score SearchHandler::run_aspiration_window_search(int depth, Score previous_score) {
-    Score window = asp_window;
+    Score alpha_window = alpha_asp_window;
+    Score beta_window = beta_asp_window;
     Score alpha, beta;
 
-    if (depth <= 4) {
+    if (depth <= asp_window_depth) {
         alpha = MagicNumbers::NegativeInfinity;
         beta = MagicNumbers::PositiveInfinity;
     } else {
-        alpha = previous_score - window;
-        beta = previous_score + window;
+        alpha = previous_score - alpha_window;
+        beta = previous_score + beta_window;
     }
 
     while (true) {
@@ -633,14 +636,14 @@ Score SearchHandler::run_aspiration_window_search(int depth, Score previous_scor
         }
 
         if (previous_score <= alpha) {
-            alpha = previous_score - window;
+            alpha = previous_score - alpha_window;
+            alpha_window *= 2;
         } else if (previous_score >= beta) {
-            beta = previous_score + window;
+            beta = previous_score + beta_window;
+            beta_window *= 2;
         } else {
             break;
         }
-
-        window *= 2;
     }
 
     return previous_score;
