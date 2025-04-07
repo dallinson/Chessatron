@@ -199,7 +199,7 @@ bool MoveGenerator::is_move_pseudolegal(const Position& pos, const Move m) {
 
     {
         MoveList generated_moves;
-        if (m.is_castling_move()) {
+        if (m.is_castling()) {
             if (pos.in_check()) return false;
             generate_castling_moves(pos, stm, generated_moves);
             return std::find_if(generated_moves.begin(), generated_moves.end(), [&](ScoredMove s){ return s.move == m; }) != generated_moves.end();

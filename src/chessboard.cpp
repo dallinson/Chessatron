@@ -385,7 +385,7 @@ Position::Position(const Position& origin, const Move to_make) {
     if (!to_make.is_null_move()) [[likely]] {
         const auto src_sq = to_make.src_sq();
         const auto dst_sq = [&]() {
-            if (!to_make.is_castling_move()) {
+            if (!to_make.is_castling()) {
                 return to_make.dst_sq();
             } else {
                 const auto target_rnk = to_make.dst_rnk();
@@ -402,7 +402,7 @@ Position::Position(const Position& origin, const Move to_make) {
 
         makemove_remove_piece(src_sq);
 
-        if (to_make.is_castling_move()) {
+        if (to_make.is_castling()) {
             makemove_remove_piece(to_make.dst_sq());
         }
 
@@ -430,7 +430,7 @@ Position::Position(const Position& origin, const Move to_make) {
         // the en passant zobrist key for 9 is 0 so no need to XOR (would be a no-op)
         // set where the last en passant happened, else clear it
 
-        if (to_make.is_castling_move()) {
+        if (to_make.is_castling()) {
             makemove_add_piece(Piece(side, PieceTypes::ROOK), dst_sq + (to_make.flags() == MoveFlags::KINGSIDE_CASTLE ? -1 : 1));
         }
 
@@ -503,7 +503,7 @@ ZobristKey Position::key_after(const Move move) const {
         to_return ^= ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(enemy, PAWN), enemy_pawn_idx)];
     }
 
-    if (move.is_castling_move()) {
+    if (move.is_castling()) {
         const auto king_dest = move.dst_sq();
         const auto rook_dest = king_dest + (move.flags() == MoveFlags::KINGSIDE_CASTLE ? -1 : 1);
         const auto rook_origin = king_dest + (move.flags() == MoveFlags::KINGSIDE_CASTLE ? 1 : -2);

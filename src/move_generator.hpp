@@ -53,7 +53,7 @@ template <MoveGenType gen_type> MoveList MoveGenerator::generate_legal_moves(con
         return to_return;
     }
 
-    if (gen_quiets(gen_type) && checking_piece_count == 0) {
+    if (gen_noisies(gen_type) && checking_piece_count == 0) {
         MoveGenerator::generate_castling_moves(c, side, to_return);
     }
     MoveGenerator::generate_moves<PieceTypes::QUEEN, gen_type>(c, side, to_return);
