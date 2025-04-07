@@ -1,9 +1,9 @@
 #include "search.hpp"
 
 #include <cinttypes>
+#include <fmt/format.h>
 #include <iostream>
 #include <limits>
-#include <fmt/format.h>
 #include <vector>
 
 #include "move_generator.hpp"
@@ -230,12 +230,10 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     const auto entry = tt.probe(old_pos);
     const auto tt_hit = entry.has_value();
     if constexpr (!is_pv_node(node_type)) {
-        const bool should_cutoff =
-            tt_hit
-            && entry->get().depth() >= depth
-            && (entry->get().bound_type() == BoundTypes::EXACT_BOUND
-                || (entry->get().bound_type() == BoundTypes::LOWER_BOUND && entry->get().score() >= beta)
-                || (entry->get().bound_type() == BoundTypes::UPPER_BOUND && entry->get().score() <= alpha));
+        const bool should_cutoff = tt_hit && entry->get().depth() >= depth
+                                   && (entry->get().bound_type() == BoundTypes::EXACT_BOUND
+                                       || (entry->get().bound_type() == BoundTypes::LOWER_BOUND && entry->get().score() >= beta)
+                                       || (entry->get().bound_type() == BoundTypes::UPPER_BOUND && entry->get().score() <= alpha));
         if (should_cutoff) {
             // Positive infinity is a a mate at this square
             // Negative infinity is being mated at this square
@@ -278,13 +276,12 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     }();
 
     const auto static_eval = [&]() {
-        if (tt_hit
-            && entry->get().score() > (MagicNumbers::NegativeInfinity + MAX_PLY)
+        if (tt_hit && entry->get().score() > (MagicNumbers::NegativeInfinity + MAX_PLY)
             && (entry->get().bound_type() == BoundTypes::EXACT_BOUND
                 || (entry->get().bound_type() == BoundTypes::LOWER_BOUND && entry->get().score() > raw_eval)
                 || (entry->get().bound_type() == BoundTypes::UPPER_BOUND && entry->get().score() < raw_eval))) {
-                    return entry->get().score();
-                }
+            return entry->get().score();
+        }
         return adjusted_eval;
     }();
 
@@ -327,12 +324,9 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
             if (!board_hist.move_at(board_hist.len() - 1).is_null_move()) {
                 auto& board = old_pos.make_move(Move::NULL_MOVE(), board_hist);
-                
-                const auto nmp_reduction = base_nmp_reduction
-                    + (depth / nmp_depth_divisor)
-                    + std::min((static_eval - beta) / nmp_se_divisor, 2);
-                auto null_score =
-                    -negamax_step<pv_node_type>(board, -beta, -alpha, depth - nmp_reduction, ply + 1, node_count, child_cutnode_type);
+
+                const auto nmp_reduction = base_nmp_reduction + (depth / nmp_depth_divisor) + std::min((static_eval - beta) / nmp_se_divisor, 2);
+                auto null_score = -negamax_step<pv_node_type>(board, -beta, -alpha, depth - nmp_reduction, ply + 1, node_count, child_cutnode_type);
 
                 board_hist.pop_board();
                 if (null_score >= beta) {
@@ -359,9 +353,10 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     }
     // mate and draw detection
 
-    const bool tt_move = tt_hit && MoveGenerator::is_move_pseudolegal(old_pos, entry->get().move()) && MoveGenerator::is_move_legal(old_pos, entry->get().move());
+    const bool tt_move =
+        tt_hit && MoveGenerator::is_move_pseudolegal(old_pos, entry->get().move()) && MoveGenerator::is_move_legal(old_pos, entry->get().move());
     auto mp = MovePicker(std::move(moves), old_pos, board_hist, tt_move ? entry->get().move() : Move::NULL_MOVE(), history_table,
-                                search_stack[ply].killer_move);
+                         search_stack[ply].killer_move);
     // move reordering
     // tt_hit in tt_move condition guards against null entry access
 
@@ -384,7 +379,8 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
         if constexpr (!is_pv_node(node_type)) {
             // late move pruning
-            if (depth <= lmp_depth && !old_pos.in_check() && move.move.is_quiet() && evaluated_moves.size() >= static_cast<size_t>(((depth * depth) + lmp_offset) / (2 - improving))) {
+            if (depth <= lmp_depth && !old_pos.in_check() && move.move.is_quiet()
+                && evaluated_moves.size() >= static_cast<size_t>(((depth * depth) + lmp_offset) / (2 - improving))) {
                 skip_quiets = true;
                 continue;
             }
@@ -399,13 +395,15 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
         // history pruning
         if constexpr (!is_pv_node(node_type)) {
-            if (best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && evaluated_moves.size() > 0 && depth <= hp_depth && static_eval <= alpha && history_table.score(board_hist, move.move, old_pos.stm()) < -(depth * depth) * hp_multi) {
+            if (best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && evaluated_moves.size() > 0 && depth <= hp_depth && static_eval <= alpha
+                && history_table.score(board_hist, move.move, old_pos.stm()) < -(depth * depth) * hp_multi) {
                 continue;
             }
         }
 
         if (depth <= see_prune_depth && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY)
-            && !Search::static_exchange_evaluation(old_pos, move.move, move.move.is_capture() ? (noisy_see_prune_multi * depth * depth) : (quiet_see_prune_multi * depth))) {
+            && !Search::static_exchange_evaluation(
+                old_pos, move.move, move.move.is_capture() ? (noisy_see_prune_multi * depth * depth) : (quiet_see_prune_multi * depth))) {
             continue;
         }
 
@@ -419,33 +417,35 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
         // See if we can perform LMR
         if (depth > 2
             && evaluated_moves.size() >= std::max((size_t) 1, static_cast<size_t>(is_pv_node(node_type)) + static_cast<size_t>(!tt_move)
-                                            + static_cast<size_t>(node_type == NodeTypes::ROOT_NODE)
-                                            + static_cast<size_t>(move.move.is_capture() || move.move.is_promotion()))) {
-            const auto lmr_depth = std::clamp(new_depth - [&]() {
-                int lmr_reduction = LmrTable[depth][evaluated_moves.size()];
-                // default log formula for lmr
-                lmr_reduction += static_cast<int>(!is_pv_node(node_type) && is_cut_node && ((tt_move && !entry->get().move().is_null_move()) || (tt_hit && entry->get().depth() + 4 <= depth)));
-                // reduce more if we are not in a pv node and we're in a cut node
-                lmr_reduction -= static_cast<int>(pos.in_check());
-                // reduce less if we're in check
-                lmr_reduction += static_cast<int>(!improving);
-                // Reduce more if we aren't improving
-                return lmr_reduction;
-            }(), 1, MAX_PLY - ply);
-            
-            score = -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, lmr_depth, ply + 1, node_count,
-                                                          child_cutnode_type);
+                                                                  + static_cast<size_t>(node_type == NodeTypes::ROOT_NODE)
+                                                                  + static_cast<size_t>(move.move.is_capture() || move.move.is_promotion()))) {
+            const auto lmr_depth = std::clamp(
+                new_depth -
+                    [&]() {
+                        int lmr_reduction = LmrTable[depth][evaluated_moves.size()];
+                        // default log formula for lmr
+                        lmr_reduction +=
+                            static_cast<int>(!is_pv_node(node_type) && is_cut_node
+                                             && ((tt_move && !entry->get().move().is_null_move()) || (tt_hit && entry->get().depth() + 4 <= depth)));
+                        // reduce more if we are not in a pv node and we're in a cut node
+                        lmr_reduction -= static_cast<int>(pos.in_check());
+                        // reduce less if we're in check
+                        lmr_reduction += static_cast<int>(!improving);
+                        // Reduce more if we aren't improving
+                        return lmr_reduction;
+                    }(),
+                1, MAX_PLY - ply);
+
+            score = -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, lmr_depth, ply + 1, node_count, child_cutnode_type);
 
             // it's possible the LMR score will raise alpha; in this case we re-search with the full depth
             if (score > alpha) {
-                score = -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, new_depth, ply + 1, node_count,
-                                                              child_cutnode_type);
+                score = -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, new_depth, ply + 1, node_count, child_cutnode_type);
             }
         }
         // if we didn't perform LMR
         else if (!is_pv_node(node_type) || evaluated_moves.size() >= 1) {
-            score =
-                -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, new_depth, ply + 1, node_count, child_cutnode_type);
+            score = -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, new_depth, ply + 1, node_count, child_cutnode_type);
         }
 
         if (is_pv_node(node_type) && (evaluated_moves.size() == 0 || score > alpha)) {
@@ -486,13 +486,11 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     const BoundTypes bound_type =
         (best_score >= beta ? BoundTypes::LOWER_BOUND : (alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND));
 
-    if (!old_pos.in_check()
-        && std::abs(best_score) < MATE_FOUND
-        && (best_move.is_null_move() || best_move.is_quiet())
+    if (!old_pos.in_check() && std::abs(best_score) < MATE_FOUND && (best_move.is_null_move() || best_move.is_quiet())
         && !(bound_type == BoundTypes::LOWER_BOUND && best_score <= adjusted_eval)
         && !(bound_type == BoundTypes::UPPER_BOUND && best_score >= adjusted_eval)) {
-            history_table.update_corrhist_score(old_pos, adjusted_eval, best_score, depth);
-        }
+        history_table.update_corrhist_score(old_pos, adjusted_eval, best_score, depth);
+    }
 
     tt.store(best_score, raw_eval, best_move, depth, bound_type, old_pos);
     return best_score;
@@ -506,20 +504,19 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
 
     const auto entry = tt.probe(old_pos);
     const auto tt_hit = entry.has_value();
-    if constexpr(!is_pv_node(node_type)) {
-        if (tt_hit
-            && entry->get().key() == static_cast<uint16_t>(old_pos.zobrist_key())
+    if constexpr (!is_pv_node(node_type)) {
+        if (tt_hit && entry->get().key() == static_cast<uint16_t>(old_pos.zobrist_key())
             && (entry->get().bound_type() == BoundTypes::EXACT_BOUND
                 || (entry->get().bound_type() == BoundTypes::LOWER_BOUND && entry->get().score() >= beta)
                 || (entry->get().bound_type() == BoundTypes::UPPER_BOUND && entry->get().score() <= alpha))) {
-                    return entry->get().score();
+            return entry->get().score();
         }
     }
 
     const auto raw_eval = [&]() {
         if (old_pos.in_check()) {
             return MagicNumbers::NegativeInfinity;
-        }  else if (tt_hit && entry->get().static_eval() > (MagicNumbers::NegativeInfinity + MAX_PLY)) {
+        } else if (tt_hit && entry->get().static_eval() > (MagicNumbers::NegativeInfinity + MAX_PLY)) {
             return entry->get().static_eval();
         } else {
             return Evaluation::evaluate_board(old_pos);
@@ -550,7 +547,8 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
     } else {
         moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIESCENCE>(old_pos, old_pos.stm());
     }
-    if (moves.size() == 0 && (old_pos.in_check() || MoveGenerator::generate_legal_moves<MoveGenType::NON_QUIESCENCE>(old_pos, old_pos.stm()).size() == 0)) {
+    if (moves.size() == 0
+        && (old_pos.in_check() || MoveGenerator::generate_legal_moves<MoveGenType::NON_QUIESCENCE>(old_pos, old_pos.stm()).size() == 0)) {
         if (old_pos.in_check()) {
             // if in check
             return ply + MagicNumbers::NegativeInfinity;
@@ -618,22 +616,27 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
 Score SearchHandler::run_aspiration_window_search(int depth, Score previous_score) {
     Score window = asp_window;
     Score alpha, beta;
-    while (true) {
-        if (depth <= 4) {
-            alpha = MagicNumbers::NegativeInfinity;
-            beta = MagicNumbers::PositiveInfinity;
-        } else {
-            alpha = previous_score - window;
-            beta = previous_score + window;
-        }
 
+    if (depth <= 4) {
+        alpha = MagicNumbers::NegativeInfinity;
+        beta = MagicNumbers::PositiveInfinity;
+    } else {
+        alpha = previous_score - window;
+        beta = previous_score + window;
+    }
+
+    while (true) {
         previous_score = negamax_step<NodeTypes::ROOT_NODE>(board_hist[board_hist.len() - 1], alpha, beta, depth, PLY_OFFSET, node_count, false);
 
         if (search_cancelled) {
             return previous_score;
         }
 
-        if (alpha < previous_score && previous_score < beta) {
+        if (previous_score <= alpha) {
+            alpha = previous_score - window;
+        } else if (previous_score >= beta) {
+            beta = previous_score + window;
+        } else {
             break;
         }
 
