@@ -17,8 +17,8 @@ using HistoryValue = int32_t;
 class HistoryTable {
     private:
         std::array<HistoryValue, 8192> main_hist;
-        std::unique_ptr<MDArray<HistoryValue, 4096, 4096>> cont_hist;
-        std::unique_ptr<MDArray<HistoryValue, 4096, 6>> capt_hist;
+        std::unique_ptr<MDArray<HistoryValue, 1024, 1024>> cont_hist;
+        std::unique_ptr<MDArray<HistoryValue, 1024, 6>> capt_hist;
         std::unique_ptr<MDArray<Score, 16384, 2>> pawn_corr_hist;
         std::unique_ptr<MDArray<Score, 16384, 2>> white_non_pawn_corr_hist;
         std::unique_ptr<MDArray<Score, 16384, 2>> black_non_pawn_corr_hist;
@@ -29,8 +29,8 @@ class HistoryTable {
 
     public:
         HistoryTable() {
-            cont_hist = std::make_unique<MDArray<HistoryValue, 4096, 4096>>();
-            capt_hist = std::make_unique<MDArray<HistoryValue, 4096, 6>>();
+            cont_hist = std::make_unique<MDArray<HistoryValue, 1024, 1024>>();
+            capt_hist = std::make_unique<MDArray<HistoryValue, 1024, 6>>();
             pawn_corr_hist = std::make_unique<MDArray<Score, 16384, 2>>();
             white_non_pawn_corr_hist = std::make_unique<MDArray<Score, 16384, 2>>();
             black_non_pawn_corr_hist = std::make_unique<MDArray<Score, 16384, 2>>();
