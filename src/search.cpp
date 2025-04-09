@@ -271,7 +271,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
         if (old_pos.in_check()) {
             return MagicNumbers::NegativeInfinity;
         } else {
-            return history_table.corrhist_score(old_pos, raw_eval);
+            return history_table.corrhist_score(old_pos, raw_eval, board_hist);
         }
     }();
 
@@ -489,7 +489,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     if (!old_pos.in_check() && std::abs(best_score) < MATE_FOUND && (best_move.is_null_move() || best_move.is_quiet())
         && !(bound_type == BoundTypes::LOWER_BOUND && best_score <= adjusted_eval)
         && !(bound_type == BoundTypes::UPPER_BOUND && best_score >= adjusted_eval)) {
-        history_table.update_corrhist_score(old_pos, adjusted_eval, best_score, depth);
+        history_table.update_corrhist_score(old_pos, adjusted_eval, best_score, depth, board_hist);
     }
 
     tt.store(best_score, raw_eval, best_move, depth, bound_type, old_pos);
@@ -527,7 +527,7 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
         if (old_pos.in_check()) {
             return MagicNumbers::NegativeInfinity;
         } else {
-            return history_table.corrhist_score(old_pos, raw_eval);
+            return history_table.corrhist_score(old_pos, raw_eval, board_hist);
         }
     }();
 
