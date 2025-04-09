@@ -113,7 +113,7 @@ TEST(MoveGeneratorTests, TestCastling) {
     Position pos;
     MoveList m;
 
-    pos.set_kingside_castling(Side::WHITE, true);
+    pos.set_castling(Side::WHITE, true, true);
     pos.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQK2R w KQkq - 0 1");
     m = MoveList();
     MoveGenerator::generate_castling_moves(pos, Side::WHITE, m);
@@ -124,7 +124,7 @@ TEST(MoveGeneratorTests, TestCastling) {
     MoveGenerator::generate_castling_moves(pos, Side::WHITE, m);
     ASSERT_EQ(m.size(), 0);
 
-    pos.set_queenside_castling(Side::WHITE, true);
+    pos.set_castling(Side::WHITE, false, true);
     pos.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/R3KBNR w KQkq - 0 1");
     m = MoveList();
     MoveGenerator::generate_castling_moves(pos, Side::WHITE, m);
@@ -134,7 +134,7 @@ TEST(MoveGeneratorTests, TestCastling) {
     MoveGenerator::generate_castling_moves(pos, Side::WHITE, m);
     ASSERT_EQ(m.size(), 0);
 
-    pos.set_kingside_castling(Side::BLACK, true);
+    pos.set_castling(Side::BLACK, true, true);
     pos.set_from_fen("rnbqk2r/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     m = MoveList();
     MoveGenerator::generate_castling_moves(pos, Side::BLACK, m);
@@ -144,7 +144,7 @@ TEST(MoveGeneratorTests, TestCastling) {
     MoveGenerator::generate_castling_moves(pos, Side::BLACK, m);
     ASSERT_EQ(m.size(), 0);
 
-    pos.set_queenside_castling(Side::WHITE, true);
+    pos.set_castling(Side::WHITE, false, true);
     pos.set_from_fen("r3kbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     m = MoveList();
     MoveGenerator::generate_castling_moves(pos, Side::BLACK, m);

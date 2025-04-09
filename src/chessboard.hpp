@@ -26,7 +26,6 @@ class Position {
 
         // first 2 elems are kingside, second two queenside
         u8 castling_rights = 0;
-        std::array<u8, 64> castling_rights_per_square = { 0 };
         std::array<u8, 4> castling_files = { 9 };
         Side side_to_move = Side(0);
 
@@ -108,22 +107,17 @@ class Position {
             _zobrist_key ^= ZobristKeys::EnPassantKeys[file];
         };
 
-        inline bool get_queenside_castling(const Side side) const { return get_bit(castling_rights, castling_idx(side, false)); };
-        inline bool get_kingside_castling(const Side side) const { return get_bit(castling_rights, castling_idx(side, true)); };
+        inline bool get_queenside_castling(const Side side) const { return get_castling(side, false); };
+        inline bool get_kingside_castling(const Side side) const { return get_castling(side, true); };
+        inline bool get_castling(const Side side, const bool is_kingside) const { return get_bit(castling_rights, castling_idx(side, is_kingside)); };
         inline uint8_t get_castling() const { return castling_rights; };
-        inline void set_kingside_castling(const Side side, const bool val) {
-            const int offset = castling_idx(side, true);
-            if (get_bit(castling_rights, offset) != val) {
+        inline void set_castling(const Side side, const bool is_kingside, const bool val) {
+            const auto offset = castling_idx(side, is_kingside);
+            if (static_cast<bool>(get_castling(side, is_kingside)) != val) {
                 _zobrist_key ^= ZobristKeys::CastlingKeys[offset];
                 toggle_bit(castling_rights, offset);
             }
-        };
-        inline void set_queenside_castling(const Side side, const bool val) {
-            const int offset = castling_idx(side, false);
-            if (get_bit(castling_rights, offset) != val) {
-                _zobrist_key ^= ZobristKeys::CastlingKeys[offset];
-                toggle_bit(castling_rights, offset);
-            }
+
         };
         u8 castling_file(const Side side, const bool is_kingside) const { return castling_files[castling_idx(side, is_kingside)]; };
 

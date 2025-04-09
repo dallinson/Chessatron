@@ -77,7 +77,6 @@ void Position::clear_board() {
     en_passant_file = 9;
     castling_rights = 0;
     castling_files.fill(9);
-    castling_rights_per_square.fill(15);
 
     _zobrist_key = ZobristKeys::SideToMove;
     _pawn_hash = 0;
@@ -317,19 +316,8 @@ void Position::set_castling_from_fen(char _chr) {
     const auto king_sq = kings(side).lsb();
     const auto king_file = file(king_sq);
     const auto is_kingside = target_file > king_file; // We can never castle TO the king's file
-    if (is_kingside) {
-        set_kingside_castling(side, true);
-    } else {
-        set_queenside_castling(side, true);
-    }
+    set_castling(side, is_kingside, true);
     castling_files[castling_idx(side, is_kingside)] = target_file;
-    const auto rank = ((side == Side::WHITE) ? 0 : 7);
-
-    const auto rook_sq = square(rank, target_file);
-    const u8 castling_mask = ~(1 << castling_idx(side, is_kingside));
-
-    castling_rights_per_square[static_cast<i32>(rook_sq)] &= castling_mask;
-    castling_rights_per_square[static_cast<i32>(king_sq)] &= castling_mask;
 }
 
 auto Position::makemove_remove_piece(const Square sq) -> void {
@@ -434,10 +422,21 @@ Position::Position(const Position& origin, const Move to_make) {
             makemove_add_piece(Piece(side, PieceTypes::ROOK), dst_sq + (to_make.flags() == MoveFlags::KINGSIDE_CASTLE ? -1 : 1));
         }
 
-        const auto offset_diff = castling_rights_per_square[sq_to_int(to_make.src_sq())] & castling_rights_per_square[sq_to_int(dst_sq)];
-        const auto new_castling = castling_rights & offset_diff;
-        _zobrist_key ^= castling_keys[new_castling ^ castling_rights];
-        castling_rights = new_castling;
+        if (moved.type() == PieceTypes::KING) {
+            set_castling(side, true, false);
+            set_castling(side, false, false);
+        }
+        for (const auto cside : std::to_array({ Side::WHITE, Side::BLACK })) {
+            for (const auto is_kingside : { true, false }) {
+                if (!get_castling(cside, is_kingside)) {
+                    continue;
+                }
+                const auto sq = square(cside == Side::WHITE ? 0 : 7, castling_file(cside, is_kingside));
+                if (to_make.src_sq() == sq || to_make.dst_sq() == sq) {
+                    set_castling(cside, is_kingside, false);
+                }
+            }
+        }
     }
     fullmove_counter += static_cast<int>(side_to_move);
     side_to_move = enemy_side(side_to_move);
