@@ -393,10 +393,12 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
             continue;
         }
 
+        auto stat_score = history_table.score(board_hist, move.move, old_pos.stm());
+
         // history pruning
         if constexpr (!is_pv_node(node_type)) {
             if (best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && evaluated_moves.size() > 0 && depth <= hp_depth && static_eval <= alpha
-                && history_table.score(board_hist, move.move, old_pos.stm()) < -(depth * depth) * hp_multi) {
+                && stat_score < -(depth * depth) * hp_multi) {
                 continue;
             }
         }
@@ -432,9 +434,11 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
                         // reduce less if we're in check
                         lmr_reduction += static_cast<int>(!improving);
                         // Reduce more if we aren't improving
+                        if (!move.move.is_noisy())
+                            lmr_reduction -= stat_score / 16384;
                         return lmr_reduction;
                     }(),
-                1, MAX_PLY - ply);
+                1, new_depth);
 
             score = -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, lmr_depth, ply + 1, node_count, child_cutnode_type);
 
