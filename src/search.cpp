@@ -393,12 +393,12 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
             continue;
         }
 
-        auto stat_score = history_table.score(board_hist, move.move, old_pos.stm());
+        const auto hist_score = history_table.score(board_hist, move.move, old_pos.stm());
 
         // history pruning
         if constexpr (!is_pv_node(node_type)) {
             if (best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && evaluated_moves.size() > 0 && depth <= hp_depth && static_eval <= alpha
-                && stat_score < -(depth * depth) * hp_multi) {
+                && hist_score < -(depth * depth) * hp_multi) {
                 continue;
             }
         }
@@ -434,8 +434,8 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
                         // reduce less if we're in check
                         lmr_reduction += static_cast<int>(!improving);
                         // Reduce more if we aren't improving
-                        if (!move.move.is_noisy())
-                            lmr_reduction -= stat_score / 16384;
+                        lmr_reduction -= hist_score / 16384;
+                        // Reduce more if this move has a good score
                         return lmr_reduction;
                     }(),
                 1, new_depth);
