@@ -442,6 +442,8 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
                         // Reduce less if this move has a good score
                         lmr_reduction += static_cast<i32>(!tt_pv);
                         // Reduce more if not tt pv
+                        lmr_reduction -= (move.move == search_stack[ply].killer_move);
+                        // Reduce less if this move is a killer move
                         return lmr_reduction;
                     }(),
                 1, new_depth);
