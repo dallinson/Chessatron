@@ -360,7 +360,9 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     // move reordering
     // tt_hit in tt_move condition guards against null entry access
 
-    if (depth >= iir_depth && !tt_move) {
+    if (depth >= iir_depth
+        && (is_pv_node(node_type) || is_cut_node)
+        && (!tt_hit || entry->get().move().is_null_move())) {
         extensions -= 1;
     }
     // iir
