@@ -216,7 +216,7 @@ bool Search::detect_insufficient_material(const Position& board, const Side side
 }
 
 template <NodeTypes node_type>
-Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score beta, int depth, int ply, uint64_t& node_count, bool is_cut_node) {
+Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score beta, int depth, int ply, uint64_t& node_count, bool is_cutnode) {
 
     pv_table.pv_length[ply] = ply;
     if (Search::is_draw(old_pos, board_hist)) {
@@ -224,7 +224,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     }
 
     constexpr auto pv_node_type = is_pv_node(node_type) ? NodeTypes::PV_NODE : NodeTypes::NON_PV_NODE;
-    const auto child_cutnode_type = is_pv_node(node_type) ? true : !is_cut_node;
+    const auto child_cutnode_type = is_pv_node(node_type) ? true : !is_cutnode;
     int extensions = 0;
 
     const auto entry = tt.probe(old_pos);
@@ -363,7 +363,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     // tt_hit in tt_move condition guards against null entry access
 
     if (depth >= iir_depth
-        && (is_pv_node(node_type) || is_cut_node)
+        && (is_pv_node(node_type) || is_cutnode)
         && (!tt_hit || entry->get().move().is_null_move())) {
         extensions -= 1;
     }
@@ -431,7 +431,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
                         int lmr_reduction = LmrTable[depth][evaluated_moves.size()];
                         // default log formula for lmr
                         lmr_reduction +=
-                            static_cast<int>(!is_pv_node(node_type) && is_cut_node
+                            static_cast<int>(!is_pv_node(node_type) && is_cutnode
                                              && ((tt_move && !entry->get().move().is_null_move()) || (tt_hit && entry->get().depth() + 4 <= depth)));
                         // reduce more if we are not in a pv node and we're in a cut node
                         lmr_reduction -= static_cast<int>(pos.in_check());
@@ -442,6 +442,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
                         // Reduce less if this move has a good score
                         lmr_reduction += static_cast<i32>(!tt_pv);
                         // Reduce more if not tt pv
+                        lmr_reduction += static_cast<i32>(is_cutnode);
                         return lmr_reduction;
                     }(),
                 1, new_depth);
