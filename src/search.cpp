@@ -248,6 +248,8 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
         }
     }
 
+    const auto tt_pv = is_pv_node(node_type) || (tt_hit && entry->get().tt_pv());
+
     if (depth <= 0) {
         return quiescent_search<pv_node_type>(old_pos, alpha, beta, ply, node_count);
         // return c.evaluate();
@@ -437,7 +439,9 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
                         lmr_reduction += static_cast<int>(!improving);
                         // Reduce more if we aren't improving
                         lmr_reduction -= hist_score / 16384;
-                        // Reduce more if this move has a good score
+                        // Reduce less if this move has a good score
+                        lmr_reduction += static_cast<i32>(!tt_pv);
+                        // Reduce more if not tt pv
                         return lmr_reduction;
                     }(),
                 1, new_depth);
@@ -498,7 +502,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
         history_table.update_corrhist_score(old_pos, adjusted_eval, best_score, depth, board_hist);
     }
 
-    tt.store(best_score, raw_eval, best_move, depth, bound_type, old_pos);
+    tt.store(best_score, raw_eval, best_move, depth, bound_type, old_pos, tt_pv);
     return best_score;
 }
 
@@ -518,6 +522,8 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
             return entry->get().score();
         }
     }
+
+    const auto tt_pv = is_pv_node(node_type) || (tt_hit && entry->get().tt_pv());
 
     const auto raw_eval = [&]() {
         if (old_pos.in_check()) {
@@ -615,7 +621,7 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
     }
     const BoundTypes bound_type =
         (best_score >= beta ? BoundTypes::LOWER_BOUND : (alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND));
-    tt.store(best_score, raw_eval, best_move, 0, bound_type, old_pos);
+    tt.store(best_score, raw_eval, best_move, 0, bound_type, old_pos, tt_pv);
     return best_score;
 }
 

@@ -13,7 +13,7 @@ class TranspositionTable;
 extern TranspositionTable tt;
 
 constexpr int TT_CLUSTER_SIZE = 3;
-constexpr int AGE_BITS = 6;
+constexpr int AGE_BITS = 5;
 constexpr int AGE_MOD = 1 << AGE_BITS;
 constexpr int AGE_MASK = powi(2, AGE_BITS) - 1;
 
@@ -36,6 +36,7 @@ class TranspositionTableEntry {
         uint8_t _depth;
         uint8_t _age : AGE_BITS;
         BoundTypes _bound : 2;
+        bool _pv_node: 1;
 
         friend class TranspositionTable;
         void set_score(Score new_score) { this->_score = new_score; };
@@ -43,7 +44,7 @@ class TranspositionTableEntry {
         void set_age(uint8_t new_age) { assert(new_age < AGE_MOD); _age = new_age; };
     public:
         TranspositionTableEntry() : _key(0), pv_move(Move::NULL_MOVE()), _depth(0), _age(0), _bound(BoundTypes::NONE) {};
-        TranspositionTableEntry(Move pv_move, uint8_t depth, BoundTypes bound, Score score, Score static_eval, ZobristKey key, u8 age) : _key(static_cast<uint16_t>(key)), _score(score), _static_eval(static_eval), pv_move(pv_move), _depth(depth), _age(age), _bound(bound) {};
+        TranspositionTableEntry(Move pv_move, uint8_t depth, BoundTypes bound, Score score, Score static_eval, ZobristKey key, u8 age, bool pv_node) : _key(static_cast<uint16_t>(key)), _score(score), _static_eval(static_eval), pv_move(pv_move), _depth(depth), _age(age), _bound(bound), _pv_node(pv_node) {};
 
         Move move() const { return this->pv_move; };
         uint8_t depth() const { return this->_depth; };
@@ -52,6 +53,7 @@ class TranspositionTableEntry {
         Score score() const { return this->_score; };
         Score static_eval() const { return this->_static_eval; };
         uint16_t key() const { return this->_key; };
+        bool tt_pv() const { return this->_pv_node; };
 };
 
 struct Cluster {
@@ -70,7 +72,7 @@ class TranspositionTable {
 
         uint64_t tt_index(const ZobristKey key) const { return static_cast<uint64_t>((static_cast<__uint128_t>(key) * static_cast<__uint128_t>(table.size())) >> 64); };
 
-        void store(const Score score, const Score static_eval, Move pv_move, const u8 depth, const BoundTypes bound, const Position& pos) {
+        void store(const Score score, const Score static_eval, Move pv_move, const u8 depth, const BoundTypes bound, const Position& pos, const bool tt_pv) {
             const auto key = static_cast<uint16_t>(pos.zobrist_key());
             auto& cluster = table[tt_index(pos.zobrist_key())];
 
@@ -107,7 +109,7 @@ class TranspositionTable {
                 pv_move = entry->get().move();
             }
             
-            entry->get() = TranspositionTableEntry(pv_move, depth, bound, score, static_eval, key, current_age);
+            entry->get() = TranspositionTableEntry(pv_move, depth, bound, score, static_eval, key, current_age, tt_pv);
         }
 
         std::optional<std::reference_wrapper<const TranspositionTableEntry>> probe(const Position& pos) const {
