@@ -216,7 +216,7 @@ bool Search::detect_insufficient_material(const Position& board, const Side side
 }
 
 template <NodeTypes node_type>
-Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score beta, int depth, int ply, uint64_t& node_count, bool is_cut_node) {
+Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score beta, int depth, int ply, uint64_t& node_count, bool is_cutnode) {
 
     pv_table.pv_length[ply] = ply;
     if (Search::is_draw(old_pos, board_hist)) {
@@ -224,7 +224,6 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     }
 
     constexpr auto pv_node_type = is_pv_node(node_type) ? NodeTypes::PV_NODE : NodeTypes::NON_PV_NODE;
-    const auto child_cutnode_type = is_pv_node(node_type) ? true : !is_cut_node;
     int extensions = 0;
 
     const auto entry = tt.probe(old_pos);
@@ -326,7 +325,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
                 auto& board = old_pos.make_move(Move::NULL_MOVE(), board_hist);
 
                 const auto nmp_reduction = base_nmp_reduction + (depth / nmp_depth_divisor) + std::min((static_eval - beta) / nmp_se_divisor, 2);
-                auto null_score = -negamax_step<pv_node_type>(board, -beta, -alpha, depth - nmp_reduction, ply + 1, node_count, child_cutnode_type);
+                auto null_score = -negamax_step<pv_node_type>(board, -beta, -alpha, depth - nmp_reduction, ply + 1, node_count, !is_cutnode);
 
                 board_hist.pop_board();
                 if (null_score >= beta) {
@@ -427,7 +426,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
                         int lmr_reduction = LmrTable[depth][evaluated_moves.size()];
                         // default log formula for lmr
                         lmr_reduction +=
-                            static_cast<int>(!is_pv_node(node_type) && is_cut_node
+                            static_cast<int>(!is_pv_node(node_type) && is_cutnode
                                              && ((tt_move && !entry->get().move().is_null_move()) || (tt_hit && entry->get().depth() + 4 <= depth)));
                         // reduce more if we are not in a pv node and we're in a cut node
                         lmr_reduction -= static_cast<int>(pos.in_check());
@@ -440,20 +439,20 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
                     }(),
                 1, new_depth);
 
-            score = -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, lmr_depth, ply + 1, node_count, child_cutnode_type);
+            score = -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, lmr_depth, ply + 1, node_count, true);
 
             // it's possible the LMR score will raise alpha; in this case we re-search with the full depth
             if (score > alpha) {
-                score = -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, new_depth, ply + 1, node_count, child_cutnode_type);
+                score = -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, new_depth, ply + 1, node_count, !is_cutnode);
             }
         }
         // if we didn't perform LMR
         else if (!is_pv_node(node_type) || evaluated_moves.size() >= 1) {
-            score = -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, new_depth, ply + 1, node_count, child_cutnode_type);
+            score = -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, new_depth, ply + 1, node_count, !is_cutnode);
         }
 
         if (is_pv_node(node_type) && (evaluated_moves.size() == 0 || score > alpha)) {
-            score = -negamax_step<NodeTypes::PV_NODE>(pos, -beta, -alpha, new_depth, ply + 1, node_count, child_cutnode_type);
+            score = -negamax_step<NodeTypes::PV_NODE>(pos, -beta, -alpha, new_depth, ply + 1, node_count, false);
         }
 
         board_hist.pop_board();
