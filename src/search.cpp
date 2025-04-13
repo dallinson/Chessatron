@@ -39,6 +39,8 @@ TUNABLE_SPECIFIER auto see_prune_depth = TUNABLE_INT("see_prune_depth", 10, 5, 1
 TUNABLE_SPECIFIER auto noisy_see_prune_multi = TUNABLE_INT("noisy_see_prune_multi", -20, -35, -5);
 TUNABLE_SPECIFIER auto quiet_see_prune_multi = TUNABLE_INT("quiet_see_prune_multi", -61, -100, -30);
 
+TUNABLE_SPECIFIER auto qs_futility_prune_margin = TUNABLE_INT("qs_futility_prune_margin", 150, 100, 200);
+
 TUNABLE_SPECIFIER auto asp_window = TUNABLE_INT("asp_window", 25, 10, 50);
 
 template <bool print_debug> // this could just as easily be done as a parameter but this gives some practice with templates
@@ -571,6 +573,7 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
 
     Score best_score = static_eval;
     const auto original_alpha = alpha;
+    const auto fut_score = static_cast<Score>(best_score + qs_futility_prune_margin);
     auto mp = MovePicker(std::move(moves), old_pos, board_hist, Move::NULL_MOVE(), history_table, search_stack[ply].killer_move);
     int total_moves = 0;
     Move best_move = Move::NULL_MOVE();
@@ -583,6 +586,11 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
 
         if (move.move.is_noisy()) {
             if (!move.see_ordering_result) {
+                continue;
+            }
+
+            if (!old_pos.in_check() && move.move.is_capture() && fut_score <= alpha && !Search::static_exchange_evaluation(old_pos, move.move, 1)) {
+                best_score = std::max(best_score, fut_score);
                 continue;
             }
         }
