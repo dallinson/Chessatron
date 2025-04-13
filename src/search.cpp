@@ -391,7 +391,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
         }
 
         // futility pruning
-        if (!old_pos.in_check() && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && !move.move.is_capture() && depth <= fp_depth
+        if (!old_pos.in_check() && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && !move.move.is_noisy() && depth <= fp_depth
             && static_eval + fp_multi * depth < alpha) {
             skip_quiets = true;
             continue;
@@ -409,7 +409,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
         if (depth <= see_prune_depth && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY)
             && !Search::static_exchange_evaluation(
-                old_pos, move.move, move.move.is_capture() ? (noisy_see_prune_multi * depth * depth) : (quiet_see_prune_multi * depth))) {
+                old_pos, move.move, move.move.is_noisy() ? (noisy_see_prune_multi * depth * depth) : (quiet_see_prune_multi * depth))) {
             continue;
         }
 
@@ -424,7 +424,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
         if (depth > 2
             && evaluated_moves.size() >= std::max((size_t) 1, static_cast<size_t>(is_pv_node(node_type)) + static_cast<size_t>(!tt_move)
                                                                   + static_cast<size_t>(node_type == NodeTypes::ROOT_NODE)
-                                                                  + static_cast<size_t>(move.move.is_capture() || move.move.is_promotion()))) {
+                                                                  + static_cast<size_t>(move.move.is_noisy()))) {
             const auto lmr_depth = std::clamp(
                 new_depth -
                     [&]() {
