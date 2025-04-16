@@ -327,7 +327,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
             if (!board_hist.move_at(board_hist.len() - 1).is_null_move()) {
                 auto& board = old_pos.make_move(Move::NULL_MOVE(), board_hist);
 
-                const auto nmp_reduction = base_nmp_reduction + (depth / nmp_depth_divisor) + std::min((static_eval - beta) / nmp_se_divisor, 2);
+                const auto nmp_reduction = base_nmp_reduction + (depth / nmp_depth_divisor) + std::min((static_eval - beta) / nmp_se_divisor, 2) + static_cast<i32>(improving);
                 auto null_score = -negamax_step<pv_node_type>(board, -beta, -alpha, depth - nmp_reduction, ply + 1, node_count, child_cutnode_type);
 
                 board_hist.pop_board();
