@@ -306,7 +306,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
     // Reverse futility pruning
     if constexpr (!is_pv_node(node_type)) {
-        if (!old_pos.in_check() && depth < rfp_depth && (static_eval - (rfp_margin * depth)) >= beta) {
+        if (!old_pos.in_check() && depth < rfp_depth && (static_eval - (rfp_margin * depth)) >= beta && !tt_pv) {
             return static_eval;
         }
     }
