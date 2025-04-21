@@ -8,6 +8,10 @@ HistoryValue HistoryTable::score(const BoardHistory& hist, Move move, Side stm) 
     if (move.is_noisy()) {
         return capthist_score(hist, move);
     } else {
+        __builtin_prefetch(&main_hist[move.hist_idx(stm)]);
+        if (!hist.move_at(hist.len() - 1).is_null_move()) {
+            __builtin_prefetch(&(*cont_hist)[hist[hist.len() - 2].piece_to(hist.move_at(hist.len() - 1))][hist[hist.len() - 1].piece_to(move)]);
+        }
         return mainhist_score(move, stm) + 2 * conthist_score(hist, move);
     }
 }
