@@ -72,7 +72,7 @@ class TranspositionTable {
 
         uint64_t tt_index(const ZobristKey key) const { return static_cast<uint64_t>((static_cast<__uint128_t>(key) * static_cast<__uint128_t>(table.size())) >> 64); };
 
-        void store(const Score score, const Score static_eval, Move pv_move, const u8 depth, const BoundTypes bound, const Position& pos, const bool tt_pv) {
+        void store(const Score score, const Score static_eval, Move pv_move, const u8 depth, const BoundTypes bound, const Position& pos, const bool tt_pv, const bool pv_node) {
             const auto key = static_cast<uint16_t>(pos.zobrist_key());
             auto& cluster = table[tt_index(pos.zobrist_key())];
 
@@ -100,7 +100,7 @@ class TranspositionTable {
                    bound == BoundTypes::EXACT_BOUND // Replace if the new one is an exact bound
                 || entry->get().key() != key // Or doesn't match the existing key
                 || entry->get().age() != current_age // Or the entry wasn't inserted this search
-                || depth + tt_depth_offset > entry->get().depth()
+                || depth + tt_depth_offset + static_cast<i32>(pv_node) > entry->get().depth()
             )) {
                 return;
             }

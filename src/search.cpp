@@ -502,7 +502,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
         history_table.update_corrhist_score(old_pos, adjusted_eval, best_score, depth, board_hist);
     }
 
-    tt.store(best_score, raw_eval, best_move, depth, bound_type, old_pos, tt_pv);
+    tt.store(best_score, raw_eval, best_move, depth, bound_type, old_pos, tt_pv, is_pv_node(node_type));
     return best_score;
 }
 
@@ -621,7 +621,7 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
     }
     const BoundTypes bound_type =
         (best_score >= beta ? BoundTypes::LOWER_BOUND : (alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND));
-    tt.store(best_score, raw_eval, best_move, 0, bound_type, old_pos, tt_pv);
+    tt.store(best_score, raw_eval, best_move, 0, bound_type, old_pos, tt_pv, is_pv_node(node_type));
     return best_score;
 }
 
