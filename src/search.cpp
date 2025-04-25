@@ -381,6 +381,19 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
         }
         const auto move = opt_move.value();
 
+        const auto move_specific_extensions = [&]() {
+            auto to_return = extensions;
+
+            if (node_type != NodeTypes::ROOT_NODE
+                && move.move == entry->get().move()
+                && entry->get().bound_type() != BoundTypes::UPPER_BOUND
+                && entry->get().score() > beta) {
+                    to_return -= 1;
+                }
+
+            return to_return;
+        }();
+
         if constexpr (!is_pv_node(node_type)) {
             // late move pruning
             if (depth <= lmp_depth && !old_pos.in_check() && move.move.is_quiet()
@@ -418,7 +431,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
         auto& pos = old_pos.make_move(move.move, board_hist);
         node_count += 1;
         Score score;
-        const auto new_depth = depth - 1 + extensions;
+        const auto new_depth = depth - 1 + move_specific_extensions;
 
         // See if we can perform LMR
         if (depth > 2
