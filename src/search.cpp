@@ -385,6 +385,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
             auto to_return = extensions;
 
             if (node_type != NodeTypes::ROOT_NODE
+                && tt_hit
                 && move.move == entry->get().move()
                 && entry->get().bound_type() != BoundTypes::UPPER_BOUND
                 && entry->get().score() > beta) {
