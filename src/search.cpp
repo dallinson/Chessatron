@@ -357,8 +357,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
     const bool tt_move =
         tt_hit && MoveGenerator::is_move_pseudolegal(old_pos, entry->get().move()) && MoveGenerator::is_move_legal(old_pos, entry->get().move());
-    auto mp = MovePicker(std::move(moves), old_pos, board_hist, tt_move ? entry->get().move() : Move::NULL_MOVE(), history_table,
-                         search_stack[ply].killer_move);
+    auto mp = MovePicker(false, old_pos, board_hist, tt_move ? entry->get().move() : Move::NULL_MOVE(), history_table, search_stack[ply].killer_move);
     // move reordering
     // tt_hit in tt_move condition guards against null entry access
 
