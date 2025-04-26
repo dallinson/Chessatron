@@ -342,19 +342,6 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
         }
     }
 
-    auto moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(old_pos, old_pos.stm());
-    if (moves.size() == 0) {
-        if (old_pos.in_check()) {
-            // if in check
-            return ply + MagicNumbers::NegativeInfinity;
-        } else {
-            return 0;
-        }
-    } else if (moves.size() == 1) {
-        extensions += 1;
-    }
-    // mate and draw detection
-
     const bool tt_move =
         tt_hit && MoveGenerator::is_move_pseudolegal(old_pos, entry->get().move()) && MoveGenerator::is_move_legal(old_pos, entry->get().move());
     auto mp = MovePicker(false, old_pos, board_hist, tt_move ? entry->get().move() : Move::NULL_MOVE(), history_table, search_stack[ply].killer_move);
@@ -374,11 +361,13 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     std::optional<ScoredMove> opt_move;
     UnscoredMoveList evaluated_moves;
     bool skip_quiets = false;
+    auto moves_found = 0;
     while ((opt_move = mp.next(skip_quiets)).has_value()) {
         if (search_cancelled) {
             break;
         }
         const auto move = opt_move.value();
+        moves_found += 1;
 
         if constexpr (!is_pv_node(node_type)) {
             // late move pruning
@@ -492,6 +481,14 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
         evaluated_moves.add(move.move);
     }
 
+    if (moves_found == 0) {
+        if (old_pos.in_check()) {
+            return ply + MagicNumbers::NegativeInfinity;
+        } else {
+            return 0;
+        }
+    }
+
     const BoundTypes bound_type =
         (best_score >= beta ? BoundTypes::LOWER_BOUND : (alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND));
 
@@ -552,26 +549,12 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
     }
 
     alpha = std::max(static_eval, alpha);
-    MoveList moves;
-    if (old_pos.in_check()) {
-        moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(old_pos, old_pos.stm());
-    } else {
-        moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIESCENCE>(old_pos, old_pos.stm());
-    }
-    if (moves.size() == 0
-        && (old_pos.in_check() || MoveGenerator::generate_legal_moves<MoveGenType::NON_QUIESCENCE>(old_pos, old_pos.stm()).size() == 0)) {
-        if (old_pos.in_check()) {
-            // if in check
-            return ply + MagicNumbers::NegativeInfinity;
-        } else {
-            return 0;
-        }
-    }
 
     Score best_score = static_eval;
     const auto original_alpha = alpha;
-    auto mp = MovePicker(std::move(moves), old_pos, board_hist, Move::NULL_MOVE(), history_table, search_stack[ply].killer_move);
+    auto mp = MovePicker(true, old_pos, board_hist, Move::NULL_MOVE(), history_table, search_stack[ply].killer_move);
     int total_moves = 0;
+    auto moves_found = 0;
     Move best_move = Move::NULL_MOVE();
     std::optional<ScoredMove> opt_move;
     while ((opt_move = mp.next(false)).has_value()) {
@@ -579,6 +562,7 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
             break;
         }
         const auto move = *opt_move;
+        moves_found += 1;
 
         if (move.move.is_noisy()) {
             if (!move.see_ordering_result) {
@@ -618,6 +602,16 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
             }
         }
     }
+    if (moves_found == 0
+        && (old_pos.in_check() // In check we generate all moves
+            || MoveGenerator::generate_legal_moves<MoveGenType::NON_QUIESCENCE>(old_pos, old_pos.stm()).size() == 0)) { // Or no other legal moves
+                if (old_pos.in_check()) {
+                    // if in check
+                    return ply + MagicNumbers::NegativeInfinity;
+                } else {
+                    return 0;
+                }
+            }
     const BoundTypes bound_type =
         (best_score >= beta ? BoundTypes::LOWER_BOUND : (alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND));
     tt.store(best_score, raw_eval, best_move, 0, bound_type, old_pos, tt_pv);

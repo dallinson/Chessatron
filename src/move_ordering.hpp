@@ -30,7 +30,7 @@ class MovePicker {
               _tt_move(tt_move),
               _history_table(history_table),
               _killer_move(killer_move) {
-                if (_is_qsearch) {
+                if (_is_qsearch && !_pos.in_check()) {
                     moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIESCENCE>(_pos, _pos.stm());
                 } else {
                     moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(_pos, _pos.stm());
