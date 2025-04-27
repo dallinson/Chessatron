@@ -41,10 +41,9 @@ auto MovePicker::score_moves() -> void {
     std::swap(moves[0], moves[best_idx]);
 }
 
-
-std::optional<ScoredMove> MovePicker::next(const bool skip_quiets) {
+auto MovePicker::pick_move(const bool skip_quiets) -> std::optional<ScoredMove> {
     if (this->idx >= this->moves.size()) {
-        return std::nullopt;
+        return std::nullopt; // If we're past the end of the moves
     } else if (this->idx == 0) {
         this->idx += 1;
         return std::optional(this->moves[0]);
@@ -72,4 +71,30 @@ std::optional<ScoredMove> MovePicker::next(const bool skip_quiets) {
     const auto best_move = moves[idx];
     idx += 1;
     return best_move;
+}
+
+std::optional<ScoredMove> MovePicker::next(const bool skip_quiets) {
+    if (stage == MovePickerStage::PICK_TT) {
+        stage = MovePickerStage::GEN_MOVES;
+        return ScoredMove(_tt_move);
+    } else if (stage == MovePickerStage::GEN_MOVES) {
+        if (_is_qsearch && !_pos.in_check()) {
+            moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIESCENCE>(_pos, _pos.stm());
+        } else {
+            moves = MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(_pos, _pos.stm());
+        }
+        idx = 0;
+        score_moves();
+        stage = MovePickerStage::PICK_MOVES;
+        return next(skip_quiets);
+    } else if (stage == MovePickerStage::PICK_MOVES) {
+        const auto move = pick_move(skip_quiets);
+        if (move.has_value() && move->move == _tt_move) {
+            return next(skip_quiets);
+        } else {
+            return move; // Either std::nullopt or the move isn't the tt move
+        }
+    } else {
+        __builtin_unreachable();
+    }
 }
