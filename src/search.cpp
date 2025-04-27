@@ -559,6 +559,7 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
     } else {
         moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIESCENCE>(old_pos, old_pos.stm());
     }
+
     if (moves.size() == 0
         && (old_pos.in_check() || MoveGenerator::generate_legal_moves<MoveGenType::NON_QUIESCENCE>(old_pos, old_pos.stm()).size() == 0)) {
         if (old_pos.in_check()) {
@@ -571,7 +572,9 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
 
     Score best_score = static_eval;
     const auto original_alpha = alpha;
-    auto mp = MovePicker(std::move(moves), old_pos, board_hist, Move::NULL_MOVE(), history_table, search_stack[ply].killer_move);
+    const bool tt_move =
+        tt_hit && MoveGenerator::is_move_pseudolegal(old_pos, entry->get().move()) && MoveGenerator::is_move_legal(old_pos, entry->get().move());
+    auto mp = MovePicker(std::move(moves), old_pos, board_hist, tt_move ? entry->get().move() : Move::NULL_MOVE(), history_table, search_stack[ply].killer_move);
     int total_moves = 0;
     Move best_move = Move::NULL_MOVE();
     std::optional<ScoredMove> opt_move;
