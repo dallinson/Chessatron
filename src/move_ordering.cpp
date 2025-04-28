@@ -15,10 +15,7 @@ auto MovePicker::score_moves() -> void {
     for (size_t i = 0; i < moves.size(); i++) {
         auto& move = moves[i];
         move.score = 0;
-        if (move.move == _tt_move) {
-            move.score = std::numeric_limits<int32_t>::min();
-            // Score the TT move last because we did this in a different stage
-        } else if (move.move.is_noisy()) {
+        if (move.move.is_noisy()) {
             move.score = 900000000;
             move.see_ordering_result = Search::static_exchange_evaluation(_pos, move.move, -20);
             if (!move.see_ordering_result) {
