@@ -155,6 +155,11 @@ bool MoveGenerator::is_move_legal(const Position& c, const Move m) {
         cleared_occupancy |= m.dst_sq();
         return !((MoveGenerator::generate_bishop_mm(cleared_occupancy, king_idx) & (c.bishops(enemy) | c.queens(enemy)))
                  || (MoveGenerator::generate_rook_mm(cleared_occupancy, king_idx) & (c.rooks(enemy) | c.queens(enemy))));
+    } else if (m.is_castling_move()) {
+        if (c.in_check()) {
+            return false; // We can't castle when in check
+        }
+        return can_castle(c, c.stm(), m.flags() == MoveFlags::KINGSIDE_CASTLE);
     } else if (c.kings()[m.src_sq()]) {
         Bitboard cleared_bitboard = c.occupancy() ^ m.src_sq();
         const auto target_idx = m.dst_sq();
