@@ -137,7 +137,7 @@ template <PieceTypes piece_type, MoveGenType gen_type> void MoveGenerator::gener
     }
 }
 
-template <MoveGenType gen_type, MoveFlags base_flags> void gen_promotions(MoveList& move_list, const Square src, const Square dst) {
+template <MoveFlags base_flags> void gen_promotions(MoveList& move_list, const Square src, const Square dst) {
     move_list.add(Move(MoveFlags::QUEEN_PROMOTION | base_flags, dst, src));
     move_list.add(Move(MoveFlags::KNIGHT_PROMOTION | base_flags, dst, src));
     move_list.add(Move(MoveFlags::ROOK_PROMOTION | base_flags, dst, src));
@@ -176,7 +176,7 @@ template <MoveGenType gen_type> void MoveGenerator::generate_pawn_moves(const Po
     if constexpr (gen_noisies(gen_type)) {
         while (!promotable.empty()) {
             const auto lsb = promotable.pop_lsb();
-            gen_promotions<gen_type, MoveFlags::QUIET_MOVE>(move_list, lsb - ahead, lsb);
+            gen_promotions<MoveFlags::QUIET_MOVE>(move_list, lsb - ahead, lsb);
         }
     }
 
@@ -202,7 +202,7 @@ template <MoveGenType gen_type> void MoveGenerator::generate_pawn_moves(const Po
             while (!capturing_pieces.empty()) {
                 const auto lsb = capturing_pieces.pop_lsb();
                 if (rank(lsb) == back_rank) {
-                    gen_promotions<MoveGenType::ALL_LEGAL, MoveFlags::CAPTURE>(move_list, lsb - offset, lsb);
+                    gen_promotions<MoveFlags::CAPTURE>(move_list, lsb - offset, lsb);
                 } else {
                     move_list.add(Move(MoveFlags::CAPTURE, lsb, lsb - offset));
                 }
@@ -221,7 +221,7 @@ template <MoveGenType gen_type> void MoveGenerator::generate_pawn_moves(const Po
             while (!capturing_pieces.empty()) {
                 const auto lsb = capturing_pieces.pop_lsb();
                 if (rank(lsb) == back_rank) {
-                    gen_promotions<MoveGenType::ALL_LEGAL, MoveFlags::CAPTURE>(move_list, lsb - offset, lsb);
+                    gen_promotions<MoveFlags::CAPTURE>(move_list, lsb - offset, lsb);
                 } else {
                     move_list.add(Move(MoveFlags::CAPTURE, lsb, lsb - offset));
                 }

@@ -209,7 +209,7 @@ bool MoveGenerator::is_move_pseudolegal(const Position& pos, const Move m) {
             generate_castling_moves(pos, stm, generated_moves);
             return std::find_if(generated_moves.begin(), generated_moves.end(), [&](ScoredMove s){ return s.move == m; }) != generated_moves.end();
         } else if (m.is_promotion()) {
-            generate_pawn_moves<MoveGenType::ALL_LEGAL>(pos, stm, generated_moves);
+            generate_pawn_moves<MoveGenType::NOISY>(pos, stm, generated_moves);
             return std::find_if(generated_moves.begin(), generated_moves.end(), [&](ScoredMove s){ return s.move == m; }) != generated_moves.end();
         } else if (m.flags() == MoveFlags::EN_PASSANT_CAPTURE) {
             generate_pawn_moves<MoveGenType::NOISY>(pos, stm, generated_moves);
