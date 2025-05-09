@@ -16,8 +16,8 @@ enum class MoveGenType {
     NOISY,
 };
 
-constexpr bool gen_quiets(MoveGenType gen_type) { return gen_type == MoveGenType::ALL_LEGAL || gen_type == MoveGenType::NON_QUIESCENCE || gen_type == MoveGenType::QUIETS; };
-constexpr bool gen_noisies(MoveGenType gen_type) { return gen_type == MoveGenType::ALL_LEGAL || gen_type == MoveGenType::QUIESCENCE || gen_type == MoveGenType::NOISY; };
+template<MoveGenType gen_type> constexpr bool gen_quiets = (gen_type == MoveGenType::ALL_LEGAL || gen_type == MoveGenType::NON_QUIESCENCE || gen_type == MoveGenType::QUIETS); 
+template<MoveGenType gen_type> constexpr bool gen_noisies = (gen_type == MoveGenType::ALL_LEGAL || gen_type == MoveGenType::QUIESCENCE || gen_type == MoveGenType::NOISY); 
 
 namespace MoveGenerator {
     template <MoveGenType gen_type> MoveList generate_legal_moves(const Position& c, const Side side);
@@ -53,7 +53,7 @@ template <MoveGenType gen_type> MoveList MoveGenerator::generate_legal_moves(con
         return to_return;
     }
 
-    if (gen_quiets(gen_type) && checking_piece_count == 0) {
+    if (gen_quiets<gen_type> && checking_piece_count == 0) {
         MoveGenerator::generate_castling_moves(c, side, to_return);
     }
     MoveGenerator::generate_moves<PieceTypes::QUEEN, gen_type>(c, side, to_return);
@@ -104,9 +104,9 @@ template <PieceTypes piece_type, MoveGenType gen_type> void MoveGenerator::gener
     while (!pieces.empty()) {
         const auto piece_idx = pieces.pop_lsb();
         auto potential_moves = generate_mm<piece_type>(all_bb, piece_idx) & ~friendly_bb;
-        if constexpr (!gen_quiets(gen_type)) {
+        if constexpr (!gen_quiets<gen_type>) {
             potential_moves &= enemy_bb;
-        } else if constexpr (!gen_noisies(gen_type)) {
+        } else if constexpr (!gen_noisies<gen_type>) {
             potential_moves &= ~enemy_bb;
         }
         if constexpr (piece_type != PieceTypes::KING) {
@@ -159,7 +159,7 @@ template <MoveGenType gen_type> void MoveGenerator::generate_pawn_moves(const Po
     const auto advanceable = unpinned_pawns | (pinned_pawns & file_bb(file(ksq)));
     auto advancing = (stm == Side::WHITE ? advanceable << 8 : advanceable >> 8) & ~occupied;
     // Generate double pawn pushes
-    if constexpr (gen_quiets(gen_type)) {
+    if constexpr (gen_quiets<gen_type>) {
         auto double_advancing = (stm == Side::WHITE ? advancing << 8 : advancing >> 8) & ~occupied & valid_dests;
         double_advancing &= rank_bb(stm == Side::WHITE ? 3 : 4);
 
@@ -173,21 +173,21 @@ template <MoveGenType gen_type> void MoveGenerator::generate_pawn_moves(const Po
     advancing &= valid_dests;
     auto promotable = advancing & rank_bb(stm == Side::WHITE ? 7 : 0);
     auto non_promotable = promotable ^ advancing;
-    if constexpr (gen_noisies(gen_type)) {
+    if constexpr (gen_noisies<gen_type>) {
         while (!promotable.empty()) {
             const auto lsb = promotable.pop_lsb();
             gen_promotions<MoveFlags::QUIET_MOVE>(move_list, lsb - ahead, lsb);
         }
     }
 
-    if constexpr (gen_quiets(gen_type)) {
+    if constexpr (gen_quiets<gen_type>) {
         while (!non_promotable.empty()) {
             const auto lsb = non_promotable.pop_lsb();
             move_list.add(Move(MoveFlags::QUIET_MOVE, lsb, lsb - ahead));
         }
     }
 
-    if constexpr (gen_noisies(gen_type)) {
+    if constexpr (gen_noisies<gen_type>) {
         // now gen captures
         {
             // towards a file
