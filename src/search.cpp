@@ -444,6 +444,8 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
                         // Reduce more if not tt pv
                         lmr_reduction -= static_cast<i32>(move.move.is_noisy());
                         // Reduce less if a noisy move
+                        lmr_reduction += static_cast<i32>(move.move.is_quiet());
+                        // Reduce more if a noisy move
                         return lmr_reduction;
                     }(),
                 1, new_depth);
