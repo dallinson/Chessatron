@@ -57,9 +57,9 @@ template <MoveGenType gen_type> MoveList MoveGenerator::generate_legal_moves(con
         MoveGenerator::generate_castling_moves(c, side, to_return);
     }
     MoveGenerator::generate_moves<PieceTypes::QUEEN, gen_type>(c, side, to_return);
+    MoveGenerator::generate_moves<PieceTypes::ROOK, gen_type>(c, side, to_return);
     MoveGenerator::generate_moves<PieceTypes::BISHOP, gen_type>(c, side, to_return);
     MoveGenerator::generate_moves<PieceTypes::KNIGHT, gen_type>(c, side, to_return);
-    MoveGenerator::generate_moves<PieceTypes::ROOK, gen_type>(c, side, to_return);
     MoveGenerator::generate_pawn_moves<gen_type>(c, side, to_return);
     return to_return;
 }
