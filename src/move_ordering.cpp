@@ -7,7 +7,7 @@
 #include "move_generator.hpp"
 #include "search.hpp"
 
-constexpr std::array<uint8_t, 6> ordering_scores = {1, 2, 3, 4, 5, 6};
+constexpr std::array<uint8_t, 7> ordering_scores = {0, 1, 2, 3, 4, 5, 6};
 
 MovePicker::MovePicker(MoveList&& input_moves, const Position& pos, const BoardHistory& hist, const Move pv_move, const HistoryTable& history_table, Move killer) {
     this->moves = input_moves;
@@ -27,10 +27,10 @@ MovePicker::MovePicker(MoveList&& input_moves, const Position& pos, const BoardH
             if (!move.see_ordering_result) {
                 move.score = -1000000;
             }
-            const auto dest_type = (move.move.is_promotion() || move.move.flags() == MoveFlags::EN_PASSANT_CAPTURE)
+            const auto dest_type = move.move.flags() == MoveFlags::EN_PASSANT_CAPTURE
                                        ? PieceTypes::PAWN
                                        : pos.piece_at(move.move.dst_sq()).type();
-            const auto dest_score = ordering_scores[static_cast<uint8_t>(dest_type) - 1];
+            const auto dest_score = ordering_scores[static_cast<uint8_t>(dest_type)];
             move.score += ((100000 * dest_score) + history_table.capthist_score(hist, move.move));
         } else if (move.move == killer) {
             move.score = 800000000;
