@@ -421,7 +421,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
         const auto new_depth = depth - 1 + extensions;
 
         // See if we can perform LMR
-        if (depth > 2
+        if (depth > 3
             && evaluated_moves.size() >= std::max((size_t) 1, static_cast<size_t>(is_pv_node(node_type)) + static_cast<size_t>(!tt_move)
                                                                   + static_cast<size_t>(node_type == NodeTypes::ROOT_NODE)
                                                                   + static_cast<size_t>(move.move.is_noisy()))) {
