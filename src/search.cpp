@@ -40,6 +40,7 @@ TUNABLE_SPECIFIER auto noisy_see_prune_multi = TUNABLE_INT("noisy_see_prune_mult
 TUNABLE_SPECIFIER auto quiet_see_prune_multi = TUNABLE_INT("quiet_see_prune_multi", -61, -100, -30);
 
 TUNABLE_SPECIFIER auto asp_window = TUNABLE_INT("asp_window", 25, 10, 50);
+TUNABLE_SPECIFIER auto high_corrplexity_threshold = TUNABLE_INT("high_corrplexity_threshold", 80, 60, 100);
 
 template <bool print_debug> // this could just as easily be done as a parameter but this gives some practice with templates
 uint64_t perft(const Position& old_pos, BoardHistory& history, int depth) {
@@ -291,6 +292,8 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
         return static_eval;
     }
 
+    const auto corrplexity = std::abs(raw_eval - static_eval);
+
     const auto improving = [&]() {
         if (old_pos.in_check()) {
             return false;
@@ -444,6 +447,8 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
                         // Reduce more if not tt pv
                         lmr_reduction -= static_cast<i32>(move.move.is_noisy());
                         // Reduce less if a noisy move
+                        lmr_reduction -= static_cast<i32>(corrplexity >= high_corrplexity_threshold);
+                        // Reduce less if significant correction to static eval via corrhist
                         return lmr_reduction;
                     }(),
                 1, new_depth);
