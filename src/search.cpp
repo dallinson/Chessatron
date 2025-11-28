@@ -216,7 +216,7 @@ bool Search::detect_insufficient_material(const Position& board, const Side side
 }
 
 template <NodeTypes node_type>
-Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score beta, int depth, int ply, uint64_t& node_count, bool is_cut_node) {
+Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score beta, int depth, int ply, uint64_t& node_count) {
 
     pv_table.pv_length[ply] = ply;
     if (Search::is_draw(old_pos, board_hist)) {
@@ -224,7 +224,6 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     }
 
     constexpr auto pv_node_type = is_pv_node(node_type) ? NodeTypes::PV_NODE : NodeTypes::NON_PV_NODE;
-    const auto child_cutnode_type = is_pv_node(node_type) ? true : !is_cut_node;
     int extensions = 0;
 
     const auto entry = tt.probe(old_pos);
@@ -291,6 +290,8 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
         return static_eval;
     }
 
+    const auto is_cut_node = (static_eval >= beta);
+
     const auto improving = [&]() {
         if (old_pos.in_check()) {
             return false;
@@ -328,7 +329,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
                 auto& board = old_pos.make_move(Move::NULL_MOVE(), board_hist);
 
                 const auto nmp_reduction = base_nmp_reduction + (depth / nmp_depth_divisor) + std::min((static_eval - beta) / nmp_se_divisor, 2);
-                auto null_score = -negamax_step<pv_node_type>(board, -beta, -alpha, depth - nmp_reduction, ply + 1, node_count, child_cutnode_type);
+                auto null_score = -negamax_step<pv_node_type>(board, -beta, -alpha, depth - nmp_reduction, ply + 1, node_count);
 
                 board_hist.pop_board();
                 if (null_score >= beta) {
@@ -448,20 +449,20 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
                     }(),
                 1, new_depth);
 
-            score = -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, lmr_depth, ply + 1, node_count, child_cutnode_type);
+            score = -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, lmr_depth, ply + 1, node_count);
 
             // it's possible the LMR score will raise alpha; in this case we re-search with the full depth
             if (score > alpha) {
-                score = -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, new_depth, ply + 1, node_count, child_cutnode_type);
+                score = -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, new_depth, ply + 1, node_count);
             }
         }
         // if we didn't perform LMR
         else if (!is_pv_node(node_type) || evaluated_moves.size() >= 1) {
-            score = -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, new_depth, ply + 1, node_count, child_cutnode_type);
+            score = -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, new_depth, ply + 1, node_count);
         }
 
         if (is_pv_node(node_type) && (evaluated_moves.size() == 0 || score > alpha)) {
-            score = -negamax_step<NodeTypes::PV_NODE>(pos, -beta, -alpha, new_depth, ply + 1, node_count, child_cutnode_type);
+            score = -negamax_step<NodeTypes::PV_NODE>(pos, -beta, -alpha, new_depth, ply + 1, node_count);
         }
 
         board_hist.pop_board();
@@ -640,7 +641,7 @@ Score SearchHandler::run_aspiration_window_search(int depth, Score previous_scor
     }
 
     while (true) {
-        previous_score = negamax_step<NodeTypes::ROOT_NODE>(board_hist[board_hist.len() - 1], alpha, beta, depth, PLY_OFFSET, node_count, false);
+        previous_score = negamax_step<NodeTypes::ROOT_NODE>(board_hist[board_hist.len() - 1], alpha, beta, depth, PLY_OFFSET, node_count);
 
         if (search_cancelled) {
             return previous_score;

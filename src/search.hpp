@@ -118,7 +118,7 @@ class SearchHandler {
 
         void search_thread_function();
         Score run_aspiration_window_search(int depth, Score previous_score);
-        template <NodeTypes node_type> Score negamax_step(const Position& pos, Score alpha, Score beta, int depth, int ply, uint64_t& node_count, bool is_cut_node);
+        template <NodeTypes node_type> Score negamax_step(const Position& pos, Score alpha, Score beta, int depth, int ply, uint64_t& node_count);
         template <NodeTypes node_type> Score quiescent_search(const Position& pos, Score alpha, Score beta, int ply, uint64_t& node_count);
         Move run_iterative_deepening_search();
 
