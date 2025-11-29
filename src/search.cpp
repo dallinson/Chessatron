@@ -26,6 +26,13 @@ TUNABLE_SPECIFIER auto nmp_se_divisor = TUNABLE_INT("nmp_se_divisor", 201, 100, 
 
 TUNABLE_SPECIFIER auto iir_depth = TUNABLE_INT("iir_depth", 5, 2, 8);
 
+TUNABLE_SPECIFIER auto non_pv_cutnode_lmr_constant = TUNABLE_INT("non_pv_cutnode_lmr_constant", 1024, 512, 2048);
+TUNABLE_SPECIFIER auto in_check_lmr_constant = TUNABLE_INT("in_check_lmr_constant", -1024, -2048, -512);
+TUNABLE_SPECIFIER auto not_improving_lmr_constant = TUNABLE_INT("not_improving_lmr_constant", 1024, 512, 2048);
+TUNABLE_SPECIFIER auto hist_score_lmr_constant = TUNABLE_INT("hist_score_lmr_constant", -1024, -2048, -512);
+TUNABLE_SPECIFIER auto not_ttpv_lmr_constant = TUNABLE_INT("not_ttpv_lmr_constant", 1024, 512, 2048);
+TUNABLE_SPECIFIER auto noisy_lmr_constant = TUNABLE_INT("noisy_lmr_constant", -1024, -2048, -512);
+
 TUNABLE_SPECIFIER auto lmp_depth = TUNABLE_INT("lmp_depth", 6, 2, 10);
 TUNABLE_SPECIFIER auto lmp_offset = TUNABLE_INT("lmp_offset", 3, 1, 5);
 
@@ -428,23 +435,24 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
             const auto lmr_depth = std::clamp(
                 new_depth -
                     [&]() {
-                        int lmr_reduction = LmrTable[depth][evaluated_moves.size()];
+                        i32 lmr_reduction = LmrTable[depth][evaluated_moves.size()];
                         // default log formula for lmr
-                        lmr_reduction +=
-                            static_cast<int>(!is_pv_node(node_type) && is_cut_node
-                                             && ((tt_move && !entry->get().move().is_null_move()) || (tt_hit && entry->get().depth() + 4 <= depth)));
+                        if (!is_pv_node(node_type) && is_cut_node
+                                             && ((tt_move && !entry->get().move().is_null_move()) || (tt_hit && entry->get().depth() + 4 <= depth))) {
+                                                lmr_reduction += non_pv_cutnode_lmr_constant;
+                                             }
                         // reduce more if we are not in a pv node and we're in a cut node
-                        lmr_reduction -= static_cast<int>(pos.in_check());
+                        if (pos.in_check()) lmr_reduction += in_check_lmr_constant;
                         // reduce less if we're in check
-                        lmr_reduction += static_cast<int>(!improving);
+                        if (!improving) lmr_reduction += not_improving_lmr_constant;
                         // Reduce more if we aren't improving
-                        lmr_reduction -= hist_score / 16384;
+                        lmr_reduction += (hist_score_lmr_constant * hist_score) / 16384;
                         // Reduce less if this move has a good score
-                        lmr_reduction += static_cast<i32>(!tt_pv);
+                        if (!tt_pv) lmr_reduction += not_ttpv_lmr_constant;
                         // Reduce more if not tt pv
-                        lmr_reduction -= static_cast<i32>(move.move.is_noisy());
+                        if (move.move.is_noisy()) lmr_reduction += noisy_lmr_constant;
                         // Reduce less if a noisy move
-                        return lmr_reduction;
+                        return lmr_reduction / LMR_QUANT_CONSTANT;
                     }(),
                 1, new_depth);
 
