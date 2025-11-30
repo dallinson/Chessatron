@@ -17,11 +17,13 @@
 #include "ttable.hpp"
 #include "tunable.hpp"
 
-constexpr auto default_see_pawn_value = 97;
-constexpr auto default_see_knight_value = 292;
-constexpr auto default_see_bishop_value = 281;
-constexpr auto default_see_rook_value = 509;
-constexpr auto default_see_queen_value = 920;
+constexpr auto default_see_pawn_value = 94;
+constexpr auto default_see_knight_value = 276;
+constexpr auto default_see_bishop_value = 296;
+constexpr auto default_see_rook_value = 474;
+constexpr auto default_see_queen_value = 933;
+
+constexpr auto LMR_QUANT_CONSTANT = 1024;
 
 enum class NodeTypes {
     ROOT_NODE,
@@ -61,22 +63,22 @@ namespace Search {
     bool detect_insufficient_material(const Position& pos, const Side side);
 } // namespace Search
 
-inline std::array<std::array<int, MAX_TURN_MOVE_COUNT + 1>, MAX_PLY + 1> LmrTable;
-inline std::array<std::array<int, MAX_TURN_MOVE_COUNT + 1>, MAX_PLY + 1> generate_lmr_table();
+inline MDArray<i32, MAX_PLY + 1, MAX_TURN_MOVE_COUNT + 1> LmrTable;
+inline MDArray<i32, MAX_PLY + 1, MAX_TURN_MOVE_COUNT + 1> generate_lmr_table();
 inline void recompute_table() { LmrTable = generate_lmr_table(); };
 
-TUNABLE_SPECIFIER auto log_table_offset = TUNABLE_FLOAT_CALLBACK("lmr_table_offset", 0.3274, 0.05, 0.95, 0.002, [](){ recompute_table(); });
-TUNABLE_SPECIFIER auto log_table_divisor = TUNABLE_FLOAT_CALLBACK("lmr_table_divisor", 2.1816, 1.0, 3.0, 0.002, [](){ recompute_table(); });
+TUNABLE_SPECIFIER auto log_table_offset = TUNABLE_FLOAT_CALLBACK("lmr_table_offset", 0.3428, 0.05, 0.95, 0.002, [](){ recompute_table(); });
+TUNABLE_SPECIFIER auto log_table_divisor = TUNABLE_FLOAT_CALLBACK("lmr_table_divisor", 2.1491, 1.0, 3.0, 0.002, [](){ recompute_table(); });
 
-inline std::array<std::array<int, MAX_TURN_MOVE_COUNT + 1>, MAX_PLY + 1> generate_lmr_table() {
-    std::array<std::array<int, MAX_TURN_MOVE_COUNT + 1>, MAX_PLY + 1> to_return = {};
+inline MDArray<i32, MAX_PLY + 1, MAX_TURN_MOVE_COUNT + 1> generate_lmr_table() {
+    MDArray<i32, MAX_PLY + 1, MAX_TURN_MOVE_COUNT + 1> to_return = {};
     for (int i = 0; i <= MAX_PLY; i++) {
-        std::array<int, MAX_TURN_MOVE_COUNT + 1> data;
+        std::array<i32, MAX_TURN_MOVE_COUNT + 1> data;
         for (int j = 0; j <= MAX_TURN_MOVE_COUNT; j++) {
             if (i == 0 || j == 0) {
                 data[j] = 0;
             } else {
-                data[j] = static_cast<int>(log_table_offset + std::log(i) * std::log(j) / log_table_divisor);
+                data[j] = static_cast<int>(LMR_QUANT_CONSTANT * (log_table_offset + std::log(i) * std::log(j) / log_table_divisor));
             }
         }
         to_return[i] = data;
