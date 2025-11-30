@@ -25,7 +25,6 @@ endif()
 add_executable(Chessatron ${SOURCES})
 target_include_directories(Chessatron PRIVATE src)
 target_compile_options(Chessatron PRIVATE -march=native -mtune=native)
-add_definitions(-DIS_TUNE)
 
 if(RELEASES)
     add_definitions(-DCHESSATRON_VERSION="${CHESSATRON_VERSION}")

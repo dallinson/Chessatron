@@ -14,39 +14,39 @@
 TranspositionTable tt;
 
 TUNABLE_SPECIFIER auto rfp_depth = TUNABLE_INT("rfp_depth", 7, 3, 9);
-TUNABLE_SPECIFIER auto rfp_margin = TUNABLE_INT("rfp_margin", 72, 50, 90);
+TUNABLE_SPECIFIER auto rfp_margin = TUNABLE_INT("rfp_margin", 70, 50, 90);
 
-TUNABLE_SPECIFIER auto razoring_offset = TUNABLE_INT("razoring_offset", 381, 200, 600);
-TUNABLE_SPECIFIER auto razoring_multi = TUNABLE_INT("razoring_multi", 248, 100, 400);
+TUNABLE_SPECIFIER auto razoring_offset = TUNABLE_INT("razoring_offset", 339, 200, 600);
+TUNABLE_SPECIFIER auto razoring_multi = TUNABLE_INT("razoring_multi", 239, 100, 400);
 
 TUNABLE_SPECIFIER auto nmp_depth = TUNABLE_INT("nmp_depth", 3, 1, 5);
 TUNABLE_SPECIFIER auto base_nmp_reduction = TUNABLE_INT("base_nmp_reduction", 4, 1, 7);
 TUNABLE_SPECIFIER auto nmp_depth_divisor = TUNABLE_INT("nmp_depth_divisor", 4, 1, 7);
-TUNABLE_SPECIFIER auto nmp_se_divisor = TUNABLE_INT("nmp_se_divisor", 201, 100, 300);
+TUNABLE_SPECIFIER auto nmp_se_divisor = TUNABLE_INT("nmp_se_divisor", 207, 100, 300);
 
 TUNABLE_SPECIFIER auto iir_depth = TUNABLE_INT("iir_depth", 5, 2, 8);
 
-TUNABLE_SPECIFIER auto non_pv_cutnode_lmr_constant = TUNABLE_INT("non_pv_cutnode_lmr_constant", 1024, 512, 2048);
-TUNABLE_SPECIFIER auto in_check_lmr_constant = TUNABLE_INT("in_check_lmr_constant", -1024, -2048, -512);
-TUNABLE_SPECIFIER auto not_improving_lmr_constant = TUNABLE_INT("not_improving_lmr_constant", 1024, 512, 2048);
-TUNABLE_SPECIFIER auto hist_score_lmr_constant = TUNABLE_INT("hist_score_lmr_constant", -1024, -2048, -512);
-TUNABLE_SPECIFIER auto not_ttpv_lmr_constant = TUNABLE_INT("not_ttpv_lmr_constant", 1024, 512, 2048);
-TUNABLE_SPECIFIER auto noisy_lmr_constant = TUNABLE_INT("noisy_lmr_constant", -1024, -2048, -512);
+TUNABLE_SPECIFIER auto non_pv_cutnode_lmr_constant = TUNABLE_INT("non_pv_cutnode_lmr_constant", 1106, 512, 2048);
+TUNABLE_SPECIFIER auto in_check_lmr_constant = TUNABLE_INT("in_check_lmr_constant", -889, -2048, -512);
+TUNABLE_SPECIFIER auto not_improving_lmr_constant = TUNABLE_INT("not_improving_lmr_constant", 1145, 512, 2048);
+TUNABLE_SPECIFIER auto hist_score_lmr_constant = TUNABLE_INT("hist_score_lmr_constant", -1185, -2048, -512);
+TUNABLE_SPECIFIER auto not_ttpv_lmr_constant = TUNABLE_INT("not_ttpv_lmr_constant", 1028, 512, 2048);
+TUNABLE_SPECIFIER auto noisy_lmr_constant = TUNABLE_INT("noisy_lmr_constant", -1102, -2048, -512);
 
 TUNABLE_SPECIFIER auto lmp_depth = TUNABLE_INT("lmp_depth", 6, 2, 10);
 TUNABLE_SPECIFIER auto lmp_offset = TUNABLE_INT("lmp_offset", 3, 1, 5);
 
 TUNABLE_SPECIFIER auto fp_depth = TUNABLE_INT("fp_depth", 6, 2, 10);
-TUNABLE_SPECIFIER auto fp_multi = TUNABLE_INT("fp_multi", 209, 100, 300);
+TUNABLE_SPECIFIER auto fp_multi = TUNABLE_INT("fp_multi", 208, 100, 300);
 
 TUNABLE_SPECIFIER auto hp_depth = TUNABLE_INT("hp_depth", 6, 2, 10);
 TUNABLE_SPECIFIER auto hp_multi = TUNABLE_INT("hp_multi", 14, 4, 24);
 
-TUNABLE_SPECIFIER auto see_prune_depth = TUNABLE_INT("see_prune_depth", 10, 5, 15);
+TUNABLE_SPECIFIER auto see_prune_depth = TUNABLE_INT("see_prune_depth", 11, 5, 15);
 TUNABLE_SPECIFIER auto noisy_see_prune_multi = TUNABLE_INT("noisy_see_prune_multi", -20, -35, -5);
-TUNABLE_SPECIFIER auto quiet_see_prune_multi = TUNABLE_INT("quiet_see_prune_multi", -61, -100, -30);
+TUNABLE_SPECIFIER auto quiet_see_prune_multi = TUNABLE_INT("quiet_see_prune_multi", -50, -100, -30);
 
-TUNABLE_SPECIFIER auto asp_window = TUNABLE_INT("asp_window", 25, 10, 50);
+TUNABLE_SPECIFIER auto asp_window = TUNABLE_INT("asp_window", 22, 10, 50);
 
 template <bool print_debug> // this could just as easily be done as a parameter but this gives some practice with templates
 uint64_t perft(const Position& old_pos, BoardHistory& history, int depth) {
