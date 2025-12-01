@@ -36,6 +36,9 @@ MovePicker::MovePicker(MoveList&& input_moves, const Position& pos, const BoardH
             move.score = 800000000;
         } else {
             move.score += history_table.score(hist, move.move, pos.stm());
+            if (pos.gives_check(move.move)) {
+                move.score += 100000;
+            }
         }
         if (move.score > moves[best_idx].score) {
             best_idx = i;

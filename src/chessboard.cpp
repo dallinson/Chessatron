@@ -577,6 +577,17 @@ std::optional<Move> Position::generate_move_from_string(const std::string& s) co
     return std::optional<Move>(Move(m, end_sq, start_sq));
 }
 
+bool Position::gives_check(const Move move) const {
+    const auto src_sq = move.src_sq();
+    const auto src_pc = piece_at(src_sq);
+    // We have our origin piece, now we get a movemask
+    const auto enemy_king_sq = kings(enemy_side(src_pc.side())).lsb();
+    // this is where the enemy king is
+    const auto movemask = MoveGenerator::generate_mm(src_pc.type(), occupancy(), enemy_king_sq);
+    return !(Bitboard(move.dst_sq()) & movemask).empty();
+    // If the destination square is in the movemask
+}
+
 bool operator==(const Position& lhs, const Position& rhs) {
     bool is_equal = true;
     for (int pt = 0; pt < 6; pt++) {
