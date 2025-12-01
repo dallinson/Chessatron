@@ -5,6 +5,7 @@
 #include "chessboard.hpp"
 #include "history.hpp"
 #include "move.hpp"
+#include "search.hpp"
 
 class MovePicker {
     private:
@@ -12,6 +13,6 @@ class MovePicker {
         size_t idx;
 
     public:
-        MovePicker(MoveList&& input_moves, const Position& pos, const BoardHistory& hist, const Move pv_move, const HistoryTable& history_table, Move killer);
+        MovePicker(MoveList&& input_moves, const Position& pos, const BoardHistory& hist, const Move pv_move, const HistoryTable& history_table, KillerMoves& killers);
         std::optional<ScoredMove> next(const bool skip_quiets);
 };

@@ -365,7 +365,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     const bool tt_move =
         tt_hit && MoveGenerator::is_move_pseudolegal(old_pos, entry->get().move()) && MoveGenerator::is_move_legal(old_pos, entry->get().move());
     auto mp = MovePicker(std::move(moves), old_pos, board_hist, tt_move ? entry->get().move() : Move::NULL_MOVE(), history_table,
-                         search_stack[ply].killer_move);
+                         search_stack[ply].killers);
     // move reordering
     // tt_hit in tt_move condition guards against null entry access
 
@@ -492,7 +492,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
                 }
                 if (score >= beta) {
                     if (move.move.is_quiet()) {
-                        search_stack[ply].killer_move = move.move;
+                        add_killer(search_stack[ply].killers, move.move);
                     }
                     history_table.update_scores(board_hist, evaluated_moves, move, old_pos.stm(), depth);
                     break;
@@ -581,7 +581,7 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
 
     Score best_score = static_eval;
     const auto original_alpha = alpha;
-    auto mp = MovePicker(std::move(moves), old_pos, board_hist, Move::NULL_MOVE(), history_table, search_stack[ply].killer_move);
+    auto mp = MovePicker(std::move(moves), old_pos, board_hist, Move::NULL_MOVE(), history_table, search_stack[ply].killers);
     int total_moves = 0;
     Move best_move = Move::NULL_MOVE();
     std::optional<ScoredMove> opt_move;
@@ -621,7 +621,7 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
                 best_move = move.move;
                 if (score >= beta) {
                     if (move.move.is_quiet()) {
-                        search_stack[ply].killer_move = move.move;
+                        add_killer(search_stack[ply].killers, move.move);
                     }
                     break;
                 }

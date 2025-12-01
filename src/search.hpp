@@ -86,9 +86,15 @@ inline MDArray<i32, MAX_PLY + 1, MAX_TURN_MOVE_COUNT + 1> generate_lmr_table() {
     return to_return;
 }
 
+using KillerMoves = StackVector<Move, 2>;
+
+inline void add_killer(KillerMoves& killers, const Move move) {
+    memmove(&killers[1], &killers[0], sizeof(Move) * (killers.max_len() - 1));
+    killers[0] = move;
+}
 
 struct SearchStackFrame {
-    Move killer_move = Move::NULL_MOVE();
+    KillerMoves killers = {};
 };
 
 struct PvTable {
@@ -151,3 +157,4 @@ class SearchHandler {
 
         void shutdown();
 };
+

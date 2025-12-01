@@ -9,7 +9,16 @@
 
 constexpr std::array<uint8_t, 7> ordering_scores = {0, 1, 2, 3, 4, 5, 6};
 
-MovePicker::MovePicker(MoveList&& input_moves, const Position& pos, const BoardHistory& hist, const Move pv_move, const HistoryTable& history_table, Move killer) {
+bool is_killer(const KillerMoves& killers, const Move move) {
+    for (const auto killer : killers) {
+        if (move == killer) {
+            return true;
+        }
+    }
+    return false;
+}
+
+MovePicker::MovePicker(MoveList&& input_moves, const Position& pos, const BoardHistory& hist, const Move pv_move, const HistoryTable& history_table, KillerMoves& killers) {
     this->moves = input_moves;
     this->idx = 0;
 
@@ -32,7 +41,7 @@ MovePicker::MovePicker(MoveList&& input_moves, const Position& pos, const BoardH
                                        : pos.piece_at(move.move.dst_sq()).type();
             const auto dest_score = ordering_scores[static_cast<uint8_t>(dest_type)];
             move.score += ((100000 * dest_score) + history_table.capthist_score(hist, move.move));
-        } else if (move.move == killer) {
+        } else if (is_killer(killers, move.move)) {
             move.score = 800000000;
         } else {
             move.score += history_table.score(hist, move.move, pos.stm());
