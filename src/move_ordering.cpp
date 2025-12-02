@@ -18,7 +18,7 @@ bool is_killer(const KillerMoves& killers, const Move move) {
     return false;
 }
 
-MovePicker::MovePicker(MoveList&& input_moves, const Position& pos, const BoardHistory& hist, const Move pv_move, const HistoryTable& history_table, KillerMoves& killers) {
+MovePicker::MovePicker(MoveList&& input_moves, const Position& pos, const BoardHistory& hist, const Move pv_move, const HistoryTable& history_table, const KillerMoves& killers) {
     this->moves = input_moves;
     this->idx = 0;
 

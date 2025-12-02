@@ -24,6 +24,7 @@ constexpr auto default_see_rook_value = 474;
 constexpr auto default_see_queen_value = 933;
 
 constexpr auto LMR_QUANT_CONSTANT = 1024;
+constexpr auto KILLER_MOVE_COUNT = 2;
 
 enum class NodeTypes {
     ROOT_NODE,
@@ -86,10 +87,11 @@ inline MDArray<i32, MAX_PLY + 1, MAX_TURN_MOVE_COUNT + 1> generate_lmr_table() {
     return to_return;
 }
 
-using KillerMoves = StackVector<Move, 2>;
+using KillerMoves = std::array<Move, KILLER_MOVE_COUNT>;
 
 inline void add_killer(KillerMoves& killers, const Move move) {
-    memmove(&killers[1], &killers[0], sizeof(Move) * (killers.max_len() - 1));
+    memmove(&killers[1], &killers[0], sizeof(Move) * (killers.size() - 1));
+    //killers[1] = killers[0];
     killers[0] = move;
 }
 
