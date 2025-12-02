@@ -36,7 +36,7 @@ class Move {
         uint16_t move;
 
     public:
-        constexpr Move(){};
+        constexpr Move() : move(0){};
         constexpr Move(uint16_t v) : move(v){};
         constexpr Move(MoveFlags flags, uint_fast8_t dest, uint_fast8_t src) : move((((uint16_t) flags) << 12) | (((uint16_t) dest) << 6) | src){};
         constexpr Move(MoveFlags flags, Square dest, Square src) : Move(flags, sq_to_int(dest), sq_to_int(src)) {};
