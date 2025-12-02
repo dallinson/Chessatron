@@ -305,8 +305,6 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
         if (board_hist.len() >= 3 && !board_hist[board_hist.len() - 3].in_check()) {
             return static_eval > Evaluation::evaluate_board(board_hist[board_hist.len() - 3]);
-        } else if (board_hist.len() >= 5 && !board_hist[board_hist.len() - 5].in_check()) {
-            return static_eval > Evaluation::evaluate_board(board_hist[board_hist.len() - 5]);
         }
         return false;
     }();
