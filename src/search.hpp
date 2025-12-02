@@ -24,7 +24,7 @@ constexpr auto default_see_rook_value = 474;
 constexpr auto default_see_queen_value = 933;
 
 constexpr auto LMR_QUANT_CONSTANT = 1024;
-constexpr auto KILLER_MOVE_COUNT = 1;
+constexpr auto KILLER_MOVE_COUNT = 2;
 
 enum class NodeTypes {
     ROOT_NODE,
@@ -96,7 +96,7 @@ inline void add_killer(KillerMoves& killers, const Move move) {
 }
 
 struct SearchStackFrame {
-    KillerMoves killers = {};
+    KillerMoves killers = static_cast<KillerMoves>(make_array<Move, KILLER_MOVE_COUNT>(Move::NULL_MOVE()));
 };
 
 struct PvTable {

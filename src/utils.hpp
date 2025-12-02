@@ -5,6 +5,7 @@
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
+#include <array>
 
 using ZobristKey = uint64_t;
 using Score = int16_t;
@@ -81,4 +82,10 @@ template <std::integral T> constexpr T powi(T x, T n) {
         n /= 2;
     }
     return result;
+}
+
+template <typename T, size_t size> constexpr std::array<T, size> make_array(T val) {
+    std::array<T, size> to_return;
+    to_return.fill(val);
+    return to_return;
 }
