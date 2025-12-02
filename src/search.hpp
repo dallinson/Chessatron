@@ -24,7 +24,7 @@ constexpr auto default_see_rook_value = 474;
 constexpr auto default_see_queen_value = 933;
 
 constexpr auto LMR_QUANT_CONSTANT = 1024;
-constexpr auto KILLER_MOVE_COUNT = 2;
+constexpr auto KILLER_MOVE_COUNT = 1;
 
 enum class NodeTypes {
     ROOT_NODE,
