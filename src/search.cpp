@@ -435,10 +435,12 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
                     [&]() {
                         i32 lmr_reduction = LmrTable[depth][evaluated_moves.size()];
                         // default log formula for lmr
-                        if (!is_pv_node(node_type) && is_cut_node
-                                             && ((tt_move && !entry->get().move().is_null_move()) || (tt_hit && entry->get().depth() + 4 <= depth))) {
-                                                lmr_reduction += non_pv_cutnode_lmr_constant;
-                                             }
+                        if (!is_pv_node(node_type) 
+                            && is_cut_node
+                            && ((tt_move && !entry->get().move().is_null_move())
+                                || (tt_hit && entry->get().depth() + 4 <= depth))) {
+                            lmr_reduction += non_pv_cutnode_lmr_constant;
+                        }
                         // reduce more if we are not in a pv node and we're in a cut node
                         if (pos.in_check()) lmr_reduction += in_check_lmr_constant;
                         // reduce less if we're in check
@@ -452,7 +454,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
                         // Reduce less if a noisy move
                         return lmr_reduction / LMR_QUANT_CONSTANT;
                     }(),
-                1, new_depth);
+                1, depth - 1);
 
             score = -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, lmr_depth, ply + 1, node_count, child_cutnode_type);
 
