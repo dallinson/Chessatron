@@ -100,7 +100,7 @@ class TranspositionTable {
                    bound == BoundTypes::EXACT_BOUND // Replace if the new one is an exact bound
                 || entry->get().key() != key // Or doesn't match the existing key
                 || entry->get().age() != current_age // Or the entry wasn't inserted this search
-                || depth + tt_depth_offset > entry->get().depth()
+                || depth + tt_depth_offset + (2 * static_cast<i32>(tt_pv)) > entry->get().depth()
             )) {
                 return;
             }
