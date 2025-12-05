@@ -17,7 +17,6 @@ constexpr int AGE_BITS = 5;
 constexpr int AGE_MOD = 1 << AGE_BITS;
 constexpr int AGE_MASK = powi(2, AGE_BITS) - 1;
 
-TUNABLE_SPECIFIER TunableInt tt_depth_offset = TUNABLE_INT("tt_depth_offset", 5, 3, 6);
 TUNABLE_SPECIFIER TunableInt tt_cluster_relative_age = TUNABLE_INT("tt_cluster_relative_age", 2, 1, 4);
 
 enum class BoundTypes : uint8_t {
@@ -100,7 +99,7 @@ class TranspositionTable {
                    bound == BoundTypes::EXACT_BOUND // Replace if the new one is an exact bound
                 || entry->get().key() != key // Or doesn't match the existing key
                 || entry->get().age() != current_age // Or the entry wasn't inserted this search
-                || depth + tt_depth_offset > entry->get().depth()
+                || depth > entry->get().depth()
             )) {
                 return;
             }
