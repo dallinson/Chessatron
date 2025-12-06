@@ -458,7 +458,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
             // it's possible the LMR score will raise alpha; in this case we re-search with the full depth
             if (score > alpha && lmr_depth < new_depth) {
-                score = -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, new_depth, ply + 1, node_count, child_cutnode_type);
+                score = -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, new_depth - (hist_score / 16384), ply + 1, node_count, child_cutnode_type);
             }
         }
         // if we didn't perform LMR
