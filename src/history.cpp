@@ -76,7 +76,6 @@ int corrhist_idx(const ZobristKey pawn_hash) {
     return pawn_hash & (16384 - 1);
 }
 
-
 Score HistoryTable::corrhist_score(const Position& pos, const Score static_eval, const BoardHistory& hist) const {
     Score entry = (*pawn_corr_hist)[corrhist_idx(pos.pawn_hash())][static_cast<int>(pos.stm())];
     entry += (*white_non_pawn_corr_hist)[corrhist_idx(pos.white_non_pawn_hash())][static_cast<int>(pos.stm())];

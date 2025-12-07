@@ -32,6 +32,7 @@ TUNABLE_SPECIFIER auto not_improving_lmr_constant = TUNABLE_INT("not_improving_l
 TUNABLE_SPECIFIER auto hist_score_lmr_constant = TUNABLE_INT("hist_score_lmr_constant", -1185, -2048, -512);
 TUNABLE_SPECIFIER auto not_ttpv_lmr_constant = TUNABLE_INT("not_ttpv_lmr_constant", 1028, 512, 2048);
 TUNABLE_SPECIFIER auto noisy_lmr_constant = TUNABLE_INT("noisy_lmr_constant", -1102, -2048, -512);
+TUNABLE_SPECIFIER auto killer_move_lmr_constant = TUNABLE_INT("noisy_lmr_constant", -1024, -2048, -512);
 
 TUNABLE_SPECIFIER auto lmp_depth = TUNABLE_INT("lmp_depth", 6, 2, 10);
 TUNABLE_SPECIFIER auto lmp_offset = TUNABLE_INT("lmp_offset", 3, 1, 5);
@@ -441,7 +442,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
                                              }
                         // reduce more if we are not in a pv node and we're in a cut node
                         if (pos.in_check()) lmr_reduction += in_check_lmr_constant;
-                        // reduce less if we're in check
+                        // reduce less if we're in check/the current move gives check
                         if (!improving) lmr_reduction += not_improving_lmr_constant;
                         // Reduce more if we aren't improving
                         lmr_reduction += (hist_score_lmr_constant * hist_score) / 16384;
@@ -450,6 +451,8 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
                         // Reduce more if not tt pv
                         if (move.move.is_noisy()) lmr_reduction += noisy_lmr_constant;
                         // Reduce less if a noisy move
+                        if (move.move == search_stack[ply].killer_move) lmr_reduction += killer_move_lmr_constant;
+                        // Reduce less if a killer move
                         return lmr_reduction / LMR_QUANT_CONSTANT;
                     }(),
                 1, new_depth);
