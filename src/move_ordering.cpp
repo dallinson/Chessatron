@@ -31,7 +31,8 @@ MovePicker::MovePicker(MoveList&& input_moves, const Position& pos, const BoardH
                                        ? PieceTypes::PAWN
                                        : pos.piece_at(move.move.dst_sq()).type();
             const auto dest_score = ordering_scores[static_cast<uint8_t>(dest_type)];
-            move.score += ((100000 * dest_score) + history_table.capthist_score(hist, move.move));
+            const auto src_score = ordering_scores[static_cast<u8>(pos.piece_at(move.move.src_sq()).type())];
+            move.score += ((100000 * dest_score) - (100000 * src_score) + history_table.capthist_score(hist, move.move));
         } else if (move.move == killer) {
             move.score = 800000000;
         } else {
