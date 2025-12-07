@@ -440,6 +440,8 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
                                                 lmr_reduction += non_pv_cutnode_lmr_constant;
                                              }
                         // reduce more if we are not in a pv node and we're in a cut node
+                        if (is_cut_node) lmr_reduction += 1024 * !tt_move;
+                        // reduce even more if in a cutnode
                         if (pos.in_check()) lmr_reduction += in_check_lmr_constant;
                         // reduce less if we're in check
                         if (!improving) lmr_reduction += not_improving_lmr_constant;
