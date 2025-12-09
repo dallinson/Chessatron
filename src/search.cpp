@@ -634,15 +634,16 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
 }
 
 Score SearchHandler::run_aspiration_window_search(int depth, Score previous_score) {
-    Score window = asp_window;
+    Score alpha_window = asp_window;
+    Score beta_window = asp_window;
     Score alpha, beta;
 
     if (depth <= 4) {
         alpha = MagicNumbers::NegativeInfinity;
         beta = MagicNumbers::PositiveInfinity;
     } else {
-        alpha = previous_score - window;
-        beta = previous_score + window;
+        alpha = previous_score - alpha_window;
+        beta = previous_score + beta_window;
     }
 
     while (true) {
@@ -653,14 +654,14 @@ Score SearchHandler::run_aspiration_window_search(int depth, Score previous_scor
         }
 
         if (previous_score <= alpha) {
-            alpha = previous_score - window;
+            alpha = previous_score - alpha_window;
+            alpha_window *= 2;
         } else if (previous_score >= beta) {
-            beta = previous_score + window;
+            beta = previous_score + beta_window;
+            beta_window *= 2;
         } else {
             break;
         }
-
-        window *= 2;
     }
 
     return previous_score;
