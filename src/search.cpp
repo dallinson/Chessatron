@@ -660,7 +660,7 @@ Score SearchHandler::run_aspiration_window_search(int depth, Score previous_scor
             break;
         }
 
-        window *= 2;
+        window += window;
     }
 
     return previous_score;
