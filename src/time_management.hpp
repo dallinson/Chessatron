@@ -25,8 +25,8 @@ struct FixedTimeTC {
 
 struct VariableTimeTC {
     uint32_t search_time;
-    uint32_t side_time;
-    uint32_t side_increment; 
+    int32_t side_time;
+    int32_t side_increment; 
 };
 
 struct DepthTC {
@@ -71,7 +71,7 @@ namespace TimeManagement {
             if constexpr (std::is_same_v<std::decay_t<decltype(tc)>, DepthTC>) {
                 return tc.depth;
             } else {
-                return static_cast<uint16_t>(250);
+                return static_cast<uint16_t>(MAX_PLY - PLY_OFFSET);
             }
         }, tc);
     }
@@ -94,7 +94,7 @@ namespace TimeManagement {
         }, tc);
     }
 
-    TUNABLE_SPECIFIER auto hard_limit_time_divisor = TUNABLE_INT("hard_limit_time_divisor", 13, 1, 20);
+    TUNABLE_SPECIFIER auto hard_limit_time_divisor = TUNABLE_INT("hard_limit_time_divisor", 10, 1, 20);
     TUNABLE_SPECIFIER auto hard_limit_inc_divisor = TUNABLE_INT("hard_limit_inc_divisor", 1, 1, 5);
     /**
      * @brief Calculates the hard limit of the search from the time of the side to move and the increment
@@ -103,12 +103,17 @@ namespace TimeManagement {
      * @param side_increment 
      * @return uint32_t 
      */
-    inline uint32_t calculate_hard_limit(const uint32_t side_time, const uint32_t side_increment) {
-        return side_time / hard_limit_time_divisor + side_increment / hard_limit_inc_divisor;
+    inline uint32_t calculate_hard_limit(const int32_t side_time, const int32_t side_increment) {
+        auto est_time = side_time / hard_limit_time_divisor + side_increment / hard_limit_inc_divisor;
+        est_time -= static_cast<i32>(uci_options()["Move Overhead"]);
+        if (est_time < 0) {
+            est_time = 4000;
+        }
+        return est_time;
     }
 
 
-    TUNABLE_SPECIFIER auto soft_limit_multi = TUNABLE_FLOAT("soft_limit_multi", 0.2901, 0.1, 0.75);
+    TUNABLE_SPECIFIER auto soft_limit_multi = TUNABLE_FLOAT("soft_limit_multi", 0.2378, 0.1, 0.75);
     /**
      * @brief Calculates the soft limit of the search from the search time
      * 

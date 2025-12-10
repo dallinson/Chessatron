@@ -72,26 +72,61 @@ Bitboard MoveGenerator::generate_mm(const PieceTypes pc_type, const Bitboard occ
     }
 }
 
-void MoveGenerator::generate_castling_moves(const Position& c, const Side side, MoveList& move_list) {
-    const Bitboard total_occupancy = c.occupancy();
+bool MoveGenerator::can_castle(const Position& pos, const Side side, const bool is_kingside) {
     const auto enemy = enemy_side(side);
-    if (c.get_kingside_castling(side)) {
-        int shift_val = 56 * static_cast<int>(side);
-        if ((Bitboard(0b10010000) ^ ((c.occupancy() >> shift_val) & Bitboard(0xF0))).empty()) {
-            // if only these spaces are occupied
-            if (get_attackers(c, enemy, static_cast<Square>(5 + shift_val), total_occupancy).empty() && get_attackers(c, enemy, static_cast<Square>(6 + shift_val), total_occupancy).empty()) {
-                move_list.add(Move(MoveFlags::KINGSIDE_CASTLE, 6 + shift_val, 4 + shift_val));
-            }
+    const auto king_sq = pos.kings(side).lsb();
+    const auto side_rnk = side == Side::WHITE ? 0 : 7;
+
+    const auto king_dest_fle = is_kingside ? 6 : 2;
+    const auto rook_dest_fle = is_kingside ? 5 : 3;
+    const auto rook_dest_sq = square(side_rnk, rook_dest_fle);
+
+    const auto rook_file = pos.castling_file(side, is_kingside);
+    const auto rook_sq = square(side_rnk, rook_file);
+    const auto occupancy_bb = pos.occupancy() ^ king_sq ^ rook_sq;
+    const auto king_dest_sq = square(side_rnk, king_dest_fle);
+    const auto king_min_sq = std::min(king_sq, king_dest_sq);
+    const auto king_max_sq = std::max(king_sq, king_dest_sq);
+    auto _king_movement_bb = Bitboard(0);
+    for (u8 i = sq_to_int(king_min_sq); i <= sq_to_int(king_max_sq); i++) {
+        _king_movement_bb |= static_cast<Square>(i);
+    }
+    auto _movement_bb = _king_movement_bb;
+    const auto rook_min_sq = std::min(rook_sq, rook_dest_sq);
+    const auto rook_max_sq = std::max(rook_sq, rook_dest_sq);
+    for (u8 i = sq_to_int(rook_min_sq); i <= sq_to_int(rook_max_sq); i++) {
+        _movement_bb |= static_cast<Square>(i);
+    }
+    if (!(occupancy_bb & _movement_bb).empty()) {
+        return false;
+    }
+    // No pieces obstruct either king or rook movement
+    if (_king_movement_bb.popcnt() > 1) {
+        _king_movement_bb &= ~Bitboard(king_sq); // Clear the origin square as this has already been evaluated
+        // if a king castles to itself we need to check this again
+    }
+    const auto blocker_bb = occupancy_bb | rook_dest_sq;
+    while (!_king_movement_bb.empty()) {
+        // Iterate over every remaining square to check for check
+        const auto sq = _king_movement_bb.pop_lsb();
+        if (!get_attackers(pos, enemy, sq, blocker_bb).empty()) {
+            return false; // break early
         }
     }
-    if (c.get_queenside_castling(side)) {
-        int shift_val = 56 * static_cast<int>(side);
-        if ((Bitboard(0b00010001) ^ ((c.occupancy() >> shift_val) & Bitboard(0x1F))).empty()) {
-            // if only these spaces are occupied
-            if (get_attackers(c, enemy, static_cast<Square>(3 + shift_val), total_occupancy).empty() && get_attackers(c, enemy, static_cast<Square>(2 + shift_val), total_occupancy).empty()) {
-                move_list.add(Move(MoveFlags::QUEENSIDE_CASTLE, 2 + shift_val, 4 + shift_val));
-            }
-        }
+    return true;
+}
+
+void MoveGenerator::generate_castling_moves(const Position& c, const Side side, MoveList& move_list) {
+    const auto king_sq = c.kings(side).lsb();
+    if (c.get_kingside_castling(side) && can_castle(c, side, true)) {
+        const auto rook_file = c.castling_file(side, true);
+        const auto rook_sq = square(side == Side::WHITE ? 0 : 7, rook_file);
+        move_list.add(Move(MoveFlags::KINGSIDE_CASTLE, rook_sq, king_sq));
+    }
+    if (c.get_queenside_castling(side) && can_castle(c, side, false)) {
+        const auto rook_file = c.castling_file(side, false);
+        const auto rook_sq = square(side == Side::WHITE ? 0 : 7, rook_file);
+        move_list.add(Move(MoveFlags::QUEENSIDE_CASTLE, rook_sq, king_sq));
     }
 }
 
@@ -120,6 +155,11 @@ bool MoveGenerator::is_move_legal(const Position& c, const Move m) {
         cleared_occupancy |= m.dst_sq();
         return !((MoveGenerator::generate_bishop_mm(cleared_occupancy, king_idx) & (c.bishops(enemy) | c.queens(enemy)))
                  || (MoveGenerator::generate_rook_mm(cleared_occupancy, king_idx) & (c.rooks(enemy) | c.queens(enemy))));
+    } else if (m.is_castling_move()) {
+        if (c.in_check()) {
+            return false; // We can't castle when in check
+        }
+        return can_castle(c, c.stm(), m.flags() == MoveFlags::KINGSIDE_CASTLE);
     } else if (c.kings()[m.src_sq()]) {
         Bitboard cleared_bitboard = c.occupancy() ^ m.src_sq();
         const auto target_idx = m.dst_sq();
@@ -169,18 +209,10 @@ bool MoveGenerator::is_move_pseudolegal(const Position& pos, const Move m) {
             generate_castling_moves(pos, stm, generated_moves);
             return std::find_if(generated_moves.begin(), generated_moves.end(), [&](ScoredMove s){ return s.move == m; }) != generated_moves.end();
         } else if (m.is_promotion()) {
-            if (stm == Side::WHITE) {
-                generate_pawn_moves<MoveGenType::ALL_LEGAL, Side::WHITE>(pos, generated_moves);
-            } else {
-                generate_pawn_moves<MoveGenType::ALL_LEGAL, Side::BLACK>(pos, generated_moves);
-            }
+            generate_pawn_moves<MoveGenType::NOISY>(pos, stm, generated_moves);
             return std::find_if(generated_moves.begin(), generated_moves.end(), [&](ScoredMove s){ return s.move == m; }) != generated_moves.end();
         } else if (m.flags() == MoveFlags::EN_PASSANT_CAPTURE) {
-            if (stm == Side::WHITE) {
-                generate_pawn_moves<MoveGenType::NOISY, Side::WHITE>(pos, generated_moves);
-            } else {
-                generate_pawn_moves<MoveGenType::NOISY, Side::BLACK>(pos, generated_moves);
-            }
+            generate_pawn_moves<MoveGenType::NOISY>(pos, stm, generated_moves);
             return std::find_if(generated_moves.begin(), generated_moves.end(), [&](ScoredMove s){ return s.move == m; }) != generated_moves.end();
         }
     }

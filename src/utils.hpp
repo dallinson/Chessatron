@@ -10,13 +10,17 @@ using ZobristKey = uint64_t;
 using Score = int16_t;
 
 using u8 = uint8_t;
+using u64 = uint64_t;
+using usize = size_t;
+
+using i32 = int32_t;
 
 constexpr int MAX_TURN_MOVE_COUNT = 218;
 constexpr int MAX_GAME_MOVE_COUNT = 5899;
 // the maximum possible number of moves, currently 218 on position R6R/3Q4/1Q4Q1/4Q3/2Q4Q/Q4Q2/pp1Q4/kBNN1KB1
 
 constexpr static int PLY_OFFSET = 4;
-constexpr static int MAX_PLY = 250 + PLY_OFFSET;
+constexpr static int MAX_PLY = 225 + PLY_OFFSET;
 
 enum class Side : uint8_t {
     WHITE = 0,
@@ -61,7 +65,9 @@ constexpr inline uint8_t file(Square sq) { return get_bits(sq_to_int(sq), 2, 0);
 // rank is the row and file the column
 
 constexpr inline Square get_position(uint8_t rank, uint8_t file) { return static_cast<Square>(((rank & 0x7) << 3) | (file & 0x7)); };
+constexpr auto square(u8 rnk, u8 fil) -> Square { return static_cast<Square>(((rnk & 0x7) << 3) | (fil & 0x7)); };
 constexpr inline Side enemy_side(Side stm) { return (stm == Side::WHITE) ? Side::BLACK : Side::WHITE; };
+constexpr u8 castling_idx(const Side side, const bool is_kingside) { return (2 * static_cast<u8>(!is_kingside)) + static_cast<u8>(side); };
 
 bool is_aligned(int sq_1, int sq_2, int sq_3);
 

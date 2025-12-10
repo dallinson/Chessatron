@@ -32,8 +32,9 @@ namespace MoveGenerator {
     Bitboard generate_mm(const PieceTypes pc_type, const Bitboard occupancy, const Square sq);
 
     template <PieceTypes piece_type, MoveGenType gen_type> void generate_moves(const Position& c, const Side side, MoveList& move_list);
-    template <MoveGenType gen_type, Side stm> void generate_pawn_moves(const Position& c, MoveList& move_list);
+    template <MoveGenType gen_type> void generate_pawn_moves(const Position& c, const Side stm, MoveList& move_list);
     void generate_castling_moves(const Position& c, const Side side, MoveList& move_list);
+    bool can_castle(const Position& pos, const Side side, const bool is_kingside);
 
     bool is_move_legal(const Position& c, const Move m);
     bool is_move_pseudolegal(const Position& c, const Move to_test);
@@ -59,12 +60,7 @@ template <MoveGenType gen_type> MoveList MoveGenerator::generate_legal_moves(con
     MoveGenerator::generate_moves<PieceTypes::BISHOP, gen_type>(c, side, to_return);
     MoveGenerator::generate_moves<PieceTypes::KNIGHT, gen_type>(c, side, to_return);
     MoveGenerator::generate_moves<PieceTypes::ROOK, gen_type>(c, side, to_return);
-    if (side == Side::WHITE) {
-        MoveGenerator::generate_pawn_moves<gen_type, Side::WHITE>(c, to_return);
-    } else {
-        MoveGenerator::generate_pawn_moves<gen_type, Side::BLACK>(c, to_return);
-    }
-
+    MoveGenerator::generate_pawn_moves<gen_type>(c, side, to_return);
     return to_return;
 }
 
@@ -141,23 +137,23 @@ template <PieceTypes piece_type, MoveGenType gen_type> void MoveGenerator::gener
     }
 }
 
-template <MoveGenType gen_type, MoveFlags base_flags> void gen_promotions(MoveList& move_list, const Square src, const Square dst) {
+template <MoveFlags base_flags> void gen_promotions(MoveList& move_list, const Square src, const Square dst) {
     move_list.add(Move(MoveFlags::QUEEN_PROMOTION | base_flags, dst, src));
     move_list.add(Move(MoveFlags::KNIGHT_PROMOTION | base_flags, dst, src));
     move_list.add(Move(MoveFlags::ROOK_PROMOTION | base_flags, dst, src));
     move_list.add(Move(MoveFlags::BISHOP_PROMOTION | base_flags, dst, src));
 }
 
-template <MoveGenType gen_type, Side stm> void MoveGenerator::generate_pawn_moves(const Position& c, MoveList& move_list) {
+template <MoveGenType gen_type> void MoveGenerator::generate_pawn_moves(const Position& c, const Side stm, MoveList& move_list) {
     const auto friendly_pawns = c.pawns(stm);
     const auto occupied = c.occupancy();
     const auto pinned_pawns = friendly_pawns & c.pinned_pieces();
     const auto unpinned_pawns = pinned_pawns ^ friendly_pawns;
     const auto enemy_bb = c.occupancy(enemy_side(stm));
     const auto ksq = c.kings(stm).lsb();
-    constexpr auto ahead = stm == Side::WHITE ? 8 : -8;
-    constexpr auto back_rank = stm == Side::WHITE ? 7 : 0;
-    constexpr auto back_rank_bb = rank_bb(back_rank);
+    const auto ahead = stm == Side::WHITE ? 8 : -8;
+    const auto back_rank = stm == Side::WHITE ? 7 : 0;
+    const auto back_rank_bb = rank_bb(back_rank);
     const auto valid_dests = c.in_check() ? MagicNumbers::ConnectingSquares[sq_to_int(ksq)][sq_to_int(c.checkers().lsb())] : Bitboard(0xFFFFFFFFFFFFFFFF);
 
     const auto advanceable = unpinned_pawns | (pinned_pawns & file_bb(file(ksq)));
@@ -180,7 +176,7 @@ template <MoveGenType gen_type, Side stm> void MoveGenerator::generate_pawn_move
     if constexpr (gen_noisies(gen_type)) {
         while (!promotable.empty()) {
             const auto lsb = promotable.pop_lsb();
-            gen_promotions<gen_type, MoveFlags::QUIET_MOVE>(move_list, lsb - ahead, lsb);
+            gen_promotions<MoveFlags::QUIET_MOVE>(move_list, lsb - ahead, lsb);
         }
     }
 
@@ -195,8 +191,8 @@ template <MoveGenType gen_type, Side stm> void MoveGenerator::generate_pawn_move
         // now gen captures
         {
             // towards a file
-            constexpr auto a_file = file_bb(0);
-            constexpr auto offset = stm == Side::WHITE ? 7 : -9;
+            const auto a_file = file_bb(0);
+            const auto offset = stm == Side::WHITE ? 7 : -9;
             Bitboard capturing_pieces = ([&]() {
                 const auto invalid_bb = a_file | back_rank_bb;
                 if (!(c.kings(stm) & invalid_bb).empty()) return static_cast<Bitboard>(0);
@@ -206,7 +202,7 @@ template <MoveGenType gen_type, Side stm> void MoveGenerator::generate_pawn_move
             while (!capturing_pieces.empty()) {
                 const auto lsb = capturing_pieces.pop_lsb();
                 if (rank(lsb) == back_rank) {
-                    gen_promotions<MoveGenType::ALL_LEGAL, MoveFlags::CAPTURE>(move_list, lsb - offset, lsb);
+                    gen_promotions<MoveFlags::CAPTURE>(move_list, lsb - offset, lsb);
                 } else {
                     move_list.add(Move(MoveFlags::CAPTURE, lsb, lsb - offset));
                 }
@@ -214,8 +210,8 @@ template <MoveGenType gen_type, Side stm> void MoveGenerator::generate_pawn_move
         }
         {
             // towards h file
-            constexpr auto h_file = file_bb(7);
-            constexpr auto offset = stm == Side::WHITE ? 9 : -7;
+            const auto h_file = file_bb(7);
+            const auto offset = stm == Side::WHITE ? 9 : -7;
             Bitboard capturing_pieces = ([&]() {
                 const auto invalid_bb = h_file | back_rank_bb;
                 if (!(c.kings(stm) & invalid_bb).empty()) return static_cast<Bitboard>(0);
@@ -225,7 +221,7 @@ template <MoveGenType gen_type, Side stm> void MoveGenerator::generate_pawn_move
             while (!capturing_pieces.empty()) {
                 const auto lsb = capturing_pieces.pop_lsb();
                 if (rank(lsb) == back_rank) {
-                    gen_promotions<MoveGenType::ALL_LEGAL, MoveFlags::CAPTURE>(move_list, lsb - offset, lsb);
+                    gen_promotions<MoveFlags::CAPTURE>(move_list, lsb - offset, lsb);
                 } else {
                     move_list.add(Move(MoveFlags::CAPTURE, lsb, lsb - offset));
                 }
@@ -234,11 +230,11 @@ template <MoveGenType gen_type, Side stm> void MoveGenerator::generate_pawn_move
 
 
         constexpr std::array<Bitboard, 10> ep_masks { 0x202020202020202, 0x505050505050505, 0xa0a0a0a0a0a0a0a, 0x1414141414141414, 0x2828282828282828, 0x5050505050505050, 0xa0a0a0a0a0a0a0a0, 0x4040404040404040, 0, 0 };
-        constexpr Bitboard ep_rank_mask = stm == Side::WHITE ? rank_bb(4) : rank_bb(3);
+        const Bitboard ep_rank_mask = stm == Side::WHITE ? rank_bb(4) : rank_bb(3);
         auto ep_pawns = ep_masks[c.get_en_passant_file()] & ep_rank_mask & c.pawns(stm);
         while (!ep_pawns.empty()) {
             const auto lsb = ep_pawns.pop_lsb();
-            constexpr auto ep_offset = stm == Side::WHITE ? 1 : -1;
+            const auto ep_offset = stm == Side::WHITE ? 1 : -1;
             const auto ep_target_square = get_position((stm == Side::WHITE ? 4 : 3) + ep_offset, c.get_en_passant_file());
             const auto cleared_bb = occupied ^ lsb ^ ep_target_square ^ (ep_target_square - (8 * ep_offset));
             const Bitboard threatening_bishops =

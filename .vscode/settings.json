@@ -91,7 +91,18 @@
         "coroutine": "cpp",
         "resumable": "cpp",
         "span": "cpp",
-        "charconv": "cpp"
+        "charconv": "cpp",
+        "print": "cpp",
+        "codecvt": "cpp",
+        "complex": "cpp",
+        "filesystem": "cpp",
+        "queue": "cpp",
+        "ranges": "cpp",
+        "source_location": "cpp",
+        "stack": "cpp",
+        "typeindex": "cpp",
+        "cfenv": "cpp",
+        "expected": "cpp"
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
 }

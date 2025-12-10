@@ -1,6 +1,7 @@
 #include "search.hpp"
 
 #include <cinttypes>
+#include <fmt/format.h>
 #include <iostream>
 #include <limits>
 #include <vector>
@@ -13,32 +14,39 @@
 TranspositionTable tt;
 
 TUNABLE_SPECIFIER auto rfp_depth = TUNABLE_INT("rfp_depth", 7, 3, 9);
-TUNABLE_SPECIFIER auto rfp_margin = TUNABLE_INT("rfp_margin", 72, 50, 90);
+TUNABLE_SPECIFIER auto rfp_margin = TUNABLE_INT("rfp_margin", 70, 50, 90);
 
-TUNABLE_SPECIFIER auto razoring_offset = TUNABLE_INT("razoring_offset", 381, 200, 600);
-TUNABLE_SPECIFIER auto razoring_multi = TUNABLE_INT("razoring_multi", 248, 100, 400);
+TUNABLE_SPECIFIER auto razoring_offset = TUNABLE_INT("razoring_offset", 339, 200, 600);
+TUNABLE_SPECIFIER auto razoring_multi = TUNABLE_INT("razoring_multi", 239, 100, 400);
 
 TUNABLE_SPECIFIER auto nmp_depth = TUNABLE_INT("nmp_depth", 3, 1, 5);
 TUNABLE_SPECIFIER auto base_nmp_reduction = TUNABLE_INT("base_nmp_reduction", 4, 1, 7);
 TUNABLE_SPECIFIER auto nmp_depth_divisor = TUNABLE_INT("nmp_depth_divisor", 4, 1, 7);
-TUNABLE_SPECIFIER auto nmp_se_divisor = TUNABLE_INT("nmp_se_divisor", 201, 100, 300);
+TUNABLE_SPECIFIER auto nmp_se_divisor = TUNABLE_INT("nmp_se_divisor", 207, 100, 300);
 
 TUNABLE_SPECIFIER auto iir_depth = TUNABLE_INT("iir_depth", 5, 2, 8);
+
+TUNABLE_SPECIFIER auto non_pv_cutnode_lmr_constant = TUNABLE_INT("non_pv_cutnode_lmr_constant", 1106, 512, 2048);
+TUNABLE_SPECIFIER auto in_check_lmr_constant = TUNABLE_INT("in_check_lmr_constant", -889, -2048, -512);
+TUNABLE_SPECIFIER auto not_improving_lmr_constant = TUNABLE_INT("not_improving_lmr_constant", 1145, 512, 2048);
+TUNABLE_SPECIFIER auto hist_score_lmr_constant = TUNABLE_INT("hist_score_lmr_constant", -1185, -2048, -512);
+TUNABLE_SPECIFIER auto not_ttpv_lmr_constant = TUNABLE_INT("not_ttpv_lmr_constant", 1028, 512, 2048);
+TUNABLE_SPECIFIER auto noisy_lmr_constant = TUNABLE_INT("noisy_lmr_constant", -1102, -2048, -512);
 
 TUNABLE_SPECIFIER auto lmp_depth = TUNABLE_INT("lmp_depth", 6, 2, 10);
 TUNABLE_SPECIFIER auto lmp_offset = TUNABLE_INT("lmp_offset", 3, 1, 5);
 
 TUNABLE_SPECIFIER auto fp_depth = TUNABLE_INT("fp_depth", 6, 2, 10);
-TUNABLE_SPECIFIER auto fp_multi = TUNABLE_INT("fp_multi", 209, 100, 300);
+TUNABLE_SPECIFIER auto fp_multi = TUNABLE_INT("fp_multi", 208, 100, 300);
 
 TUNABLE_SPECIFIER auto hp_depth = TUNABLE_INT("hp_depth", 6, 2, 10);
 TUNABLE_SPECIFIER auto hp_multi = TUNABLE_INT("hp_multi", 14, 4, 24);
 
-TUNABLE_SPECIFIER auto see_prune_depth = TUNABLE_INT("see_prune_depth", 10, 5, 15);
+TUNABLE_SPECIFIER auto see_prune_depth = TUNABLE_INT("see_prune_depth", 11, 5, 15);
 TUNABLE_SPECIFIER auto noisy_see_prune_multi = TUNABLE_INT("noisy_see_prune_multi", -20, -35, -5);
-TUNABLE_SPECIFIER auto quiet_see_prune_multi = TUNABLE_INT("quiet_see_prune_multi", -61, -100, -30);
+TUNABLE_SPECIFIER auto quiet_see_prune_multi = TUNABLE_INT("quiet_see_prune_multi", -50, -100, -30);
 
-TUNABLE_SPECIFIER auto asp_window = TUNABLE_INT("asp_window", 25, 10, 50);
+TUNABLE_SPECIFIER auto asp_window = TUNABLE_INT("asp_window", 22, 10, 50);
 
 template <bool print_debug> // this could just as easily be done as a parameter but this gives some practice with templates
 uint64_t perft(const Position& old_pos, BoardHistory& history, int depth) {
@@ -51,7 +59,7 @@ uint64_t perft(const Position& old_pos, BoardHistory& history, int depth) {
     if (depth == 1) {
         if constexpr (print_debug) {
             for (size_t i = 0; i < moves.size(); i++) {
-                printf("%s: 1\n", moves[i].move.to_string().c_str());
+                fmt::println("{}: 1", moves[i].move);
             }
         }
         return moves.size();
@@ -62,7 +70,7 @@ uint64_t perft(const Position& old_pos, BoardHistory& history, int depth) {
         auto& board = old_pos.make_move(moves[i].move, history);
         val = perft<false>(board, history, depth - 1);
         if constexpr (print_debug) {
-            std::cout << moves[i].move.to_string() << ": " << val << std::endl;
+            fmt::println("{}: {}", moves[i].move, val);
         }
         to_return += val;
         history.pop_board();
@@ -82,8 +90,8 @@ uint64_t Perft::run_perft(Position& board, int depth, bool print_debug) {
     if (print_debug) {
         const auto perft_time = std::max(
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - perft_start_point).count(), (int64_t) 1);
-        std::cout << std::endl << "Nodes searched: " << nodes << std::endl;
-        std::cout << "NPS: " << static_cast<uint64_t>(nodes / (static_cast<float>(perft_time) / 1000)) << std::endl;
+        fmt::println("\nNodes searched: {}", nodes);
+        fmt::println("NPS: {}", static_cast<uint64_t>(nodes / (static_cast<float>(perft_time) / 1000)));
     }
     return nodes;
 }
@@ -252,6 +260,8 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
         }
     }
 
+    const auto tt_pv = is_pv_node(node_type) || (tt_hit && entry->get().tt_pv());
+
     if (depth <= 0) {
         return quiescent_search<pv_node_type>(old_pos, alpha, beta, ply, node_count);
         // return c.evaluate();
@@ -275,18 +285,17 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
         if (old_pos.in_check()) {
             return MagicNumbers::NegativeInfinity;
         } else {
-            return history_table.corrhist_score(old_pos, raw_eval);
+            return history_table.corrhist_score(old_pos, raw_eval, board_hist);
         }
     }();
 
     const auto static_eval = [&]() {
-        if (tt_hit
-            && entry->get().score() > (MagicNumbers::NegativeInfinity + MAX_PLY)
+        if (tt_hit && entry->get().score() > (MagicNumbers::NegativeInfinity + MAX_PLY)
             && (entry->get().bound_type() == BoundTypes::EXACT_BOUND
                 || (entry->get().bound_type() == BoundTypes::LOWER_BOUND && entry->get().score() > raw_eval)
                 || (entry->get().bound_type() == BoundTypes::UPPER_BOUND && entry->get().score() < raw_eval))) {
-                    return entry->get().score();
-                }
+            return entry->get().score();
+        }
         return adjusted_eval;
     }();
 
@@ -301,8 +310,6 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
         if (board_hist.len() >= 3 && !board_hist[board_hist.len() - 3].in_check()) {
             return static_eval > Evaluation::evaluate_board(board_hist[board_hist.len() - 3]);
-        } else if (board_hist.len() >= 5 && !board_hist[board_hist.len() - 5].in_check()) {
-            return static_eval > Evaluation::evaluate_board(board_hist[board_hist.len() - 5]);
         }
         return false;
     }();
@@ -329,12 +336,9 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
             if (!board_hist.move_at(board_hist.len() - 1).is_null_move()) {
                 auto& board = old_pos.make_move(Move::NULL_MOVE(), board_hist);
-                
-                const auto nmp_reduction = base_nmp_reduction
-                    + (depth / nmp_depth_divisor)
-                    + std::min((static_eval - beta) / nmp_se_divisor, 2);
-                auto null_score =
-                    -negamax_step<pv_node_type>(board, -beta, -alpha, depth - nmp_reduction, ply + 1, node_count, child_cutnode_type);
+
+                const auto nmp_reduction = base_nmp_reduction + (depth / nmp_depth_divisor) + std::min((static_eval - beta) / nmp_se_divisor, 2);
+                auto null_score = -negamax_step<pv_node_type>(board, -beta, -alpha, depth - nmp_reduction, ply + 1, node_count, child_cutnode_type);
 
                 board_hist.pop_board();
                 if (null_score >= beta) {
@@ -359,13 +363,16 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     }
     // mate and draw detection
 
-    const bool tt_move = tt_hit && MoveGenerator::is_move_pseudolegal(old_pos, entry->get().move()) && MoveGenerator::is_move_legal(old_pos, entry->get().move());
+    const bool tt_move =
+        tt_hit && MoveGenerator::is_move_pseudolegal(old_pos, entry->get().move()) && MoveGenerator::is_move_legal(old_pos, entry->get().move());
     auto mp = MovePicker(std::move(moves), old_pos, board_hist, tt_move ? entry->get().move() : Move::NULL_MOVE(), history_table,
-                                search_stack[ply].killer_move);
+                         search_stack[ply].killer_move);
     // move reordering
     // tt_hit in tt_move condition guards against null entry access
 
-    if (depth >= iir_depth && !tt_move) {
+    if (depth >= iir_depth
+        && (is_pv_node(node_type) || is_cut_node)
+        && (!tt_hit || entry->get().move().is_null_move())) {
         extensions -= 1;
     }
     // iir
@@ -385,28 +392,33 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
         if constexpr (!is_pv_node(node_type)) {
             // late move pruning
-            if (depth <= lmp_depth && !old_pos.in_check() && move.move.is_quiet() && evaluated_moves.size() >= static_cast<size_t>(((depth * depth) + lmp_offset) / (2 - improving))) {
+            if (depth <= lmp_depth && !old_pos.in_check() && move.move.is_quiet()
+                && evaluated_moves.size() >= static_cast<size_t>(((depth * depth) + lmp_offset) / (2 - improving))) {
                 skip_quiets = true;
                 continue;
             }
         }
 
         // futility pruning
-        if (!old_pos.in_check() && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && !move.move.is_capture() && depth <= fp_depth
+        if (!old_pos.in_check() && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && !move.move.is_noisy() && depth <= fp_depth
             && static_eval + fp_multi * depth < alpha) {
             skip_quiets = true;
             continue;
         }
 
+        const auto hist_score = history_table.score(board_hist, move.move, old_pos.stm());
+
         // history pruning
         if constexpr (!is_pv_node(node_type)) {
-            if (best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && evaluated_moves.size() > 0 && depth <= hp_depth && static_eval <= alpha && history_table.score(board_hist, move.move, old_pos.stm()) < -(depth * depth) * hp_multi) {
+            if (best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && evaluated_moves.size() > 0 && depth <= hp_depth && static_eval <= alpha
+                && hist_score < -(depth * depth) * hp_multi) {
                 continue;
             }
         }
 
         if (depth <= see_prune_depth && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY)
-            && !Search::static_exchange_evaluation(old_pos, move.move, move.move.is_capture() ? (noisy_see_prune_multi * depth * depth) : (quiet_see_prune_multi * depth))) {
+            && !Search::static_exchange_evaluation(
+                old_pos, move.move, move.move.is_noisy() ? (noisy_see_prune_multi * depth * depth) : (quiet_see_prune_multi * depth))) {
             continue;
         }
 
@@ -436,33 +448,42 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
         // See if we can perform LMR
         if (depth > 2
             && evaluated_moves.size() >= std::max((size_t) 1, static_cast<size_t>(is_pv_node(node_type)) + static_cast<size_t>(!tt_move)
-                                            + static_cast<size_t>(node_type == NodeTypes::ROOT_NODE)
-                                            + static_cast<size_t>(move.move.is_capture() || move.move.is_promotion()))) {
-            const auto lmr_depth = std::clamp(new_depth - [&]() {
-                int lmr_reduction = LmrTable[depth][evaluated_moves.size()];
-                // default log formula for lmr
-                lmr_reduction += static_cast<int>(!is_pv_node(node_type) && is_cut_node && ((tt_move && !entry->get().move().is_null_move()) || (tt_hit && entry->get().depth() + 4 <= depth)));
-                // reduce more if we are not in a pv node and we're in a cut node
-                lmr_reduction -= static_cast<int>(pos.in_check());
-                // reduce less if we're in check
-                lmr_reduction += static_cast<int>(!improving);
-                // Reduce more if we aren't improving
-                return lmr_reduction;
-            }(), 1, MAX_PLY - ply);
-            
-            score = -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, lmr_depth, ply + 1, node_count,
-                                                          child_cutnode_type);
+                                                                  + static_cast<size_t>(node_type == NodeTypes::ROOT_NODE)
+                                                                  + static_cast<size_t>(move.move.is_noisy()))) {
+            const auto lmr_depth = std::clamp(
+                new_depth -
+                    [&]() {
+                        i32 lmr_reduction = LmrTable[depth][evaluated_moves.size()];
+                        // default log formula for lmr
+                        if (!is_pv_node(node_type) && is_cut_node
+                                             && ((tt_move && !entry->get().move().is_null_move()) || (tt_hit && entry->get().depth() + 4 <= depth))) {
+                                                lmr_reduction += non_pv_cutnode_lmr_constant;
+                                             }
+                        // reduce more if we are not in a pv node and we're in a cut node
+                        if (pos.in_check()) lmr_reduction += in_check_lmr_constant;
+                        // reduce less if we're in check
+                        if (!improving) lmr_reduction += not_improving_lmr_constant;
+                        // Reduce more if we aren't improving
+                        lmr_reduction += (hist_score_lmr_constant * hist_score) / 16384;
+                        // Reduce less if this move has a good score
+                        if (!tt_pv) lmr_reduction += not_ttpv_lmr_constant;
+                        // Reduce more if not tt pv
+                        if (move.move.is_noisy()) lmr_reduction += noisy_lmr_constant;
+                        // Reduce less if a noisy move
+                        return lmr_reduction / LMR_QUANT_CONSTANT;
+                    }(),
+                1, new_depth);
+
+            score = -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, lmr_depth, ply + 1, node_count, child_cutnode_type);
 
             // it's possible the LMR score will raise alpha; in this case we re-search with the full depth
-            if (score > alpha) {
-                score = -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, new_depth, ply + 1, node_count,
-                                                              child_cutnode_type);
+            if (score > alpha && lmr_depth < new_depth) {
+                score = -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, new_depth, ply + 1, node_count, child_cutnode_type);
             }
         }
         // if we didn't perform LMR
         else if (!is_pv_node(node_type) || evaluated_moves.size() >= 1) {
-            score =
-                -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, new_depth, ply + 1, node_count, child_cutnode_type);
+            score = -negamax_step<NodeTypes::NON_PV_NODE>(pos, -(alpha + 1), -alpha, new_depth, ply + 1, node_count, child_cutnode_type);
         }
 
         if (is_pv_node(node_type) && (evaluated_moves.size() == 0 || score > alpha)) {
@@ -503,15 +524,13 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     const BoundTypes bound_type =
         (best_score >= beta ? BoundTypes::LOWER_BOUND : (alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND));
 
-    if (!old_pos.in_check()
-        && std::abs(best_score) < MATE_FOUND
-        && (best_move.is_null_move() || best_move.is_quiet())
+    if (!old_pos.in_check() && std::abs(best_score) < MATE_FOUND && (best_move.is_null_move() || best_move.is_quiet())
         && !(bound_type == BoundTypes::LOWER_BOUND && best_score <= adjusted_eval)
         && !(bound_type == BoundTypes::UPPER_BOUND && best_score >= adjusted_eval)) {
-            history_table.update_corrhist_score(old_pos, adjusted_eval, best_score, depth);
-        }
+        history_table.update_corrhist_score(old_pos, adjusted_eval, best_score, depth, board_hist);
+    }
 
-    if (!in_singular_search) tt.store(best_score, raw_eval, best_move, depth, bound_type, old_pos);
+    if (!in_singular_search) tt.store(best_score, raw_eval, best_move, depth, bound_type, old_pos, tt_pv);
     return best_score;
 }
 
@@ -523,20 +542,21 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
 
     const auto entry = tt.probe(old_pos);
     const auto tt_hit = entry.has_value();
-    if constexpr(!is_pv_node(node_type)) {
-        if (tt_hit
-            && entry->get().key() == static_cast<uint16_t>(old_pos.zobrist_key())
+    if constexpr (!is_pv_node(node_type)) {
+        if (tt_hit && entry->get().key() == static_cast<uint16_t>(old_pos.zobrist_key())
             && (entry->get().bound_type() == BoundTypes::EXACT_BOUND
                 || (entry->get().bound_type() == BoundTypes::LOWER_BOUND && entry->get().score() >= beta)
                 || (entry->get().bound_type() == BoundTypes::UPPER_BOUND && entry->get().score() <= alpha))) {
-                    return entry->get().score();
+            return entry->get().score();
         }
     }
+
+    const auto tt_pv = is_pv_node(node_type) || (tt_hit && entry->get().tt_pv());
 
     const auto raw_eval = [&]() {
         if (old_pos.in_check()) {
             return MagicNumbers::NegativeInfinity;
-        }  else if (tt_hit && entry->get().static_eval() > (MagicNumbers::NegativeInfinity + MAX_PLY)) {
+        } else if (tt_hit && entry->get().static_eval() > (MagicNumbers::NegativeInfinity + MAX_PLY)) {
             return entry->get().static_eval();
         } else {
             return Evaluation::evaluate_board(old_pos);
@@ -547,7 +567,7 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
         if (old_pos.in_check()) {
             return MagicNumbers::NegativeInfinity;
         } else {
-            return history_table.corrhist_score(old_pos, raw_eval);
+            return history_table.corrhist_score(old_pos, raw_eval, board_hist);
         }
     }();
 
@@ -567,7 +587,8 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
     } else {
         moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIESCENCE>(old_pos, old_pos.stm());
     }
-    if (moves.size() == 0 && (old_pos.in_check() || MoveGenerator::generate_legal_moves<MoveGenType::NON_QUIESCENCE>(old_pos, old_pos.stm()).size() == 0)) {
+    if (moves.size() == 0
+        && (old_pos.in_check() || MoveGenerator::generate_legal_moves<MoveGenType::NON_QUIESCENCE>(old_pos, old_pos.stm()).size() == 0)) {
         if (old_pos.in_check()) {
             // if in check
             return ply + MagicNumbers::NegativeInfinity;
@@ -628,29 +649,34 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
     }
     const BoundTypes bound_type =
         (best_score >= beta ? BoundTypes::LOWER_BOUND : (alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND));
-    tt.store(best_score, raw_eval, best_move, 0, bound_type, old_pos);
+    tt.store(best_score, raw_eval, best_move, 0, bound_type, old_pos, tt_pv);
     return best_score;
 }
 
 Score SearchHandler::run_aspiration_window_search(int depth, Score previous_score) {
     Score window = asp_window;
     Score alpha, beta;
-    while (true) {
-        if (depth <= 4) {
-            alpha = MagicNumbers::NegativeInfinity;
-            beta = MagicNumbers::PositiveInfinity;
-        } else {
-            alpha = previous_score - window;
-            beta = previous_score + window;
-        }
 
+    if (depth <= 4) {
+        alpha = MagicNumbers::NegativeInfinity;
+        beta = MagicNumbers::PositiveInfinity;
+    } else {
+        alpha = previous_score - window;
+        beta = previous_score + window;
+    }
+
+    while (true) {
         previous_score = negamax_step<NodeTypes::ROOT_NODE>(board_hist[board_hist.len() - 1], alpha, beta, depth, PLY_OFFSET, node_count, false);
 
         if (search_cancelled) {
             return previous_score;
         }
 
-        if (alpha < previous_score && previous_score < beta) {
+        if (previous_score <= alpha) {
+            alpha = previous_score - window;
+        } else if (previous_score >= beta) {
+            beta = previous_score + window;
+        } else {
             break;
         }
 
@@ -692,15 +718,17 @@ Move SearchHandler::run_iterative_deepening_search() {
 
         if (!search_cancelled && print_info) {
             const auto nps = static_cast<uint64_t>(node_count / (static_cast<float>(time_so_far) / 1000));
-            std::cout << "info depth " << depth << " nodes " << node_count << " nps " << nps << " score "
-                      << ((std::abs(current_score) >= (MagicNumbers::PositiveInfinity - MAX_PLY))
-                              ? ("mate " + std::to_string(((current_score / std::abs(current_score)) * (depth + 1)) / 2))
-                              : ("cp " + std::to_string(current_score)))
-                      << " time " << time_so_far << " pv ";
-            for (int i = 0; i < (pv_table.pv_length[PLY_OFFSET] - PLY_OFFSET); i++) {
-                std::cout << pv_table.pv_array[PLY_OFFSET][i + PLY_OFFSET].to_string() << " ";
+            fmt::print("info depth {} nodes {} nps {} score ", depth, node_count, nps);
+            if ((std::abs(current_score) >= (MagicNumbers::PositiveInfinity - MAX_PLY))) {
+                fmt::print("mate {} ", ((current_score / std::abs(current_score)) * (depth + 1)) / 2);
+            } else {
+                fmt::print("cp {} ", current_score);
             }
-            std::cout << std::endl;
+            fmt::print("time {} pv ", time_so_far);
+            for (int i = 0; i < (pv_table.pv_length[PLY_OFFSET] - PLY_OFFSET); i++) {
+                fmt::print("{} ", pv_table.pv_array[PLY_OFFSET][i + PLY_OFFSET]);
+            }
+            fmt::println("");
         }
 
         if (current_score >= (MagicNumbers::PositiveInfinity - MAX_PLY)) {

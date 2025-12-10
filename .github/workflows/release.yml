@@ -1,0 +1,149 @@
+name: Build Release Binaries
+
+on:
+  release:
+    types: [created]
+
+permissions:
+  contents: write
+
+jobs:
+  build_linux:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create build dir
+        run: mkdir build
+
+      - name: Set up Clang
+        run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 18
+
+      - name: Install LLVM tools
+        run: |
+          sudo apt update
+          sudo apt install llvm-18 clang-tools
+
+      - name: Setup initial engine build
+        run: cmake -B build/ -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18 -DPGO=ON
+        
+      - name: Run initial engine build
+        run: cmake --build build/ --target Chessatron -- -j $(nproc)
+
+      - name: Bench engine
+        working-directory: build
+        run: ./Chessatron bench
+
+      - name: Merge profiling data
+        run: llvm-profdata-18 merge -output="build/chessatron.profdata" build/*.profraw
+
+      - name: Setup final engine build
+        run: cmake -B build/ -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18 -DPGO=ON -DRELEASES=ON -DCHESSATRON_VERSION="${{ github.event.release.tag_name }}"
+
+      - name: Run final engine build
+        run: cmake --build build/ --target Chessatron_x86-64-v3 Chessatron_x86-64-v2 -- -j $(nproc)
+
+      - name: Rename executables
+        working-directory: build
+        run: |
+          mv Chessatron_x86-64-v3 Chessatron_${{ github.event.release.tag_name }}_Linux_x86-64-v3
+          mv Chessatron_x86-64-v2 Chessatron_${{ github.event.release.tag_name }}_Linux_x86-64-v2
+        
+      - name: Upload binaries
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/Chessatron_${{ github.event.release.tag_name }}_Linux_x86-64-v3
+            build/Chessatron_${{ github.event.release.tag_name }}_Linux_x86-64-v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  build_windows-v3:
+    runs-on: windows-2022
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Ninja
+        run: choco install ninja
+
+      - name: Create build dir
+        run: mkdir build
+
+      - name: Setup initial engine build
+        run: cmake -B build/ -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DPGO=ON -DRELEASES=ON
+        
+      - name: Run initial engine build
+        run: cmake --build build/ --target Chessatron_x86-64-v3 -- -j $(nproc)
+
+      - name: Bench engine
+        working-directory: build
+        run: ./Chessatron_x86-64-v3.exe bench
+
+      - name: Merge profiling data
+        run: llvm-profdata merge -output="build/chessatron.profdata" build/*.profraw
+
+      - name: Setup final engine build
+        run: cmake -B build/ -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DPGO=ON -DRELEASES=ON -DCHESSATRON_VERSION="${{ github.event.release.tag_name }}"
+
+      - name: Run final engine build
+        run: cmake --build build/ --target Chessatron_x86-64-v3 -- -j $(nproc)
+
+      - name: Rename executables
+        working-directory: build
+        run: |
+          mv Chessatron_x86-64-v3.exe Chessatron_${{ github.event.release.tag_name }}_Windows_x86-64-v3.exe
+        
+      - name: Upload binaries
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/Chessatron_${{ github.event.release.tag_name }}_Windows_x86-64-v3.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  build_windows-v2:
+    runs-on: windows-2022
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Ninja
+        run: choco install ninja
+
+      - name: Create build dir
+        run: mkdir build
+
+      - name: Setup initial engine build
+        run: cmake -B build/ -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DPGO=ON -DRELEASES=ON
+        
+      - name: Run initial engine build
+        run: cmake --build build/ --target Chessatron_x86-64-v2 -- -j $(nproc)
+
+      - name: Bench engine
+        working-directory: build
+        run: ./Chessatron_x86-64-v2.exe bench
+
+      - name: Merge profiling data
+        run: llvm-profdata merge -output="build/chessatron.profdata" build/*.profraw
+
+      - name: Setup final engine build
+        run: cmake -B build/ -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DPGO=ON -DRELEASES=ON -DCHESSATRON_VERSION="${{ github.event.release.tag_name }}"
+
+      - name: Run final engine build
+        run: cmake --build build/ --target Chessatron_x86-64-v2 -- -j $(nproc)
+
+      - name: Rename executables
+        working-directory: build
+        run: |
+          mv Chessatron_x86-64-v2.exe Chessatron_${{ github.event.release.tag_name }}_Windows_x86-64-v2.exe
+        
+      - name: Upload binaries
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/Chessatron_${{ github.event.release.tag_name }}_Windows_x86-64-v2.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

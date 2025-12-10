@@ -11,7 +11,7 @@
 #include "utils.hpp"
 #include "zobrist_hashing.hpp"
 
-template <PieceTypes p> uint8_t bb_idx = static_cast<int>(p) - 1;
+constexpr auto bb_idx(PieceTypes p) -> u8 { return static_cast<u8>(p) - 1; };
 
 class BoardHistory;
 
@@ -25,8 +25,9 @@ class Position {
         uint8_t en_passant_file = 9; 
 
         // first 2 elems are kingside, second two queenside
-        uint8_t castling = 0;
-
+        u8 castling_rights = 0;
+        std::array<u8, 64> castling_rights_per_square = { 0 };
+        std::array<u8, 4> castling_files = { 9 };
         Side side_to_move = Side(0);
 
 
@@ -42,6 +43,11 @@ class Position {
         int halfmove_clock = 0;
         int fullmove_counter = 0;
 
+        void set_castling_from_fen(char chr);
+        auto makemove_remove_piece(const Square sq) -> void;
+        auto makemove_add_piece(const Piece p, const Square sq) -> void;
+        auto find_outer_rook(const Side side, const bool is_kingside) const -> u8;
+        
     public:
         Position() = default;
         Position(const Position& origin, const Move to_make);
@@ -55,35 +61,35 @@ class Position {
             return side_bbs[static_cast<int>(side)];
         };
 
-        inline Bitboard kings() const { return piece_bbs[bb_idx<PieceTypes::KING>]; };
-        inline Bitboard queens() const { return piece_bbs[bb_idx<PieceTypes::QUEEN>]; };
-        inline Bitboard bishops() const { return piece_bbs[bb_idx<PieceTypes::BISHOP>]; };
-        inline Bitboard knights() const { return piece_bbs[bb_idx<PieceTypes::KNIGHT>]; };
-        inline Bitboard rooks() const { return piece_bbs[bb_idx<PieceTypes::ROOK>]; };
-        inline Bitboard pawns() const { return piece_bbs[bb_idx<PieceTypes::PAWN>]; };
+        inline Bitboard kings() const { return piece_bbs[bb_idx(PieceTypes::KING)]; };
+        inline Bitboard queens() const { return piece_bbs[bb_idx(PieceTypes::QUEEN)]; };
+        inline Bitboard bishops() const { return piece_bbs[bb_idx(PieceTypes::BISHOP)]; };
+        inline Bitboard knights() const { return piece_bbs[bb_idx(PieceTypes::KNIGHT)]; };
+        inline Bitboard rooks() const { return piece_bbs[bb_idx(PieceTypes::ROOK)]; };
+        inline Bitboard pawns() const { return piece_bbs[bb_idx(PieceTypes::PAWN)]; };
         inline Bitboard get_bb(const int piece_type, const int side) const {
             return piece_bbs[piece_type] & side_bbs[side];
         }
-        template <PieceTypes piece_type> inline Bitboard pieces() const { return piece_bbs[bb_idx<piece_type>()]; };
-        template <PieceTypes piece_type> inline Bitboard pieces(const Side side) const { return piece_bbs[bb_idx<piece_type>] & side_bbs[static_cast<int>(side)]; };
+        template <PieceTypes piece_type> inline Bitboard pieces() const { return piece_bbs[bb_idx(piece_type)]; };
+        template <PieceTypes piece_type> inline Bitboard pieces(const Side side) const { return piece_bbs[bb_idx(piece_type)] & side_bbs[static_cast<int>(side)]; };
 
         inline Bitboard kings(const Side side) const {
-            return piece_bbs[bb_idx<PieceTypes::KING>] & side_bbs[static_cast<uint8_t>(side)];
+            return piece_bbs[bb_idx(PieceTypes::KING)] & side_bbs[static_cast<uint8_t>(side)];
         };
         inline Bitboard queens(const Side side) const {
-            return piece_bbs[bb_idx<PieceTypes::QUEEN>] & side_bbs[static_cast<uint8_t>(side)];
+            return piece_bbs[bb_idx(PieceTypes::QUEEN)] & side_bbs[static_cast<uint8_t>(side)];
         };
         inline Bitboard bishops(const Side side) const {
-            return piece_bbs[bb_idx<PieceTypes::BISHOP>] & side_bbs[static_cast<uint8_t>(side)];
+            return piece_bbs[bb_idx(PieceTypes::BISHOP)] & side_bbs[static_cast<uint8_t>(side)];
         };
         inline Bitboard knights(const Side side) const {
-            return piece_bbs[bb_idx<PieceTypes::KNIGHT>] & side_bbs[static_cast<uint8_t>(side)];
+            return piece_bbs[bb_idx(PieceTypes::KNIGHT)] & side_bbs[static_cast<uint8_t>(side)];
         };
         inline Bitboard rooks(const Side side) const {
-            return piece_bbs[bb_idx<PieceTypes::ROOK>] & side_bbs[static_cast<uint8_t>(side)];
+            return piece_bbs[bb_idx(PieceTypes::ROOK)] & side_bbs[static_cast<uint8_t>(side)];
         };
         inline Bitboard pawns(const Side side) const {
-            return piece_bbs[bb_idx<PieceTypes::PAWN>] & side_bbs[static_cast<uint8_t>(side)];
+            return piece_bbs[bb_idx(PieceTypes::PAWN)] & side_bbs[static_cast<uint8_t>(side)];
         };
 
         inline Piece piece_at(const Square sq) const {
@@ -102,23 +108,24 @@ class Position {
             _zobrist_key ^= ZobristKeys::EnPassantKeys[file];
         };
 
-        inline bool get_queenside_castling(const Side side) const { return get_bit(castling, 2 + static_cast<uint8_t>(side)); };
-        inline bool get_kingside_castling(const Side side) const { return get_bit(castling, static_cast<uint8_t>(side)); };
-        inline uint8_t get_castling() const { return castling; };
+        inline bool get_queenside_castling(const Side side) const { return get_bit(castling_rights, castling_idx(side, false)); };
+        inline bool get_kingside_castling(const Side side) const { return get_bit(castling_rights, castling_idx(side, true)); };
+        inline uint8_t get_castling() const { return castling_rights; };
         inline void set_kingside_castling(const Side side, const bool val) {
-            const int offset = static_cast<int>(side);
-            if (get_bit(castling, offset) != val) {
+            const int offset = castling_idx(side, true);
+            if (get_bit(castling_rights, offset) != val) {
                 _zobrist_key ^= ZobristKeys::CastlingKeys[offset];
-                toggle_bit(castling, offset);
+                toggle_bit(castling_rights, offset);
             }
         };
         inline void set_queenside_castling(const Side side, const bool val) {
-            const int offset = 2 + static_cast<int>(side);
-            if (get_bit(castling, offset) != val) {
+            const int offset = castling_idx(side, false);
+            if (get_bit(castling_rights, offset) != val) {
                 _zobrist_key ^= ZobristKeys::CastlingKeys[offset];
-                toggle_bit(castling, offset);
+                toggle_bit(castling_rights, offset);
             }
         };
+        u8 castling_file(const Side side, const bool is_kingside) const { return castling_files[castling_idx(side, is_kingside)]; };
 
         void set_piece(Piece piece, Square sq);
         void print_board() const;
@@ -133,7 +140,7 @@ class Position {
 
         void recompute_blockers_and_checkers(const Side side);
 
-        int piece_to(Move move) const { return piece_at(move.src_sq()).get_value() << 6 | sq_to_int(move.dst_sq()); };
+        int piece_to(Move move) const { return piece_at(move.src_sq()).val() << 6 | sq_to_int(move.dst_sq()); };
 
         inline Bitboard checkers() const { return _checkers; };
         inline Bitboard pinned_pieces() const { return _pinned_pieces; };
@@ -204,7 +211,7 @@ class BoardHistory {
         Move move_at(size_t idx) const { return move_hist[idx]; };
         size_t conthist_idx(size_t idx) const {
             const auto move = move_hist[idx];
-            return (board_hist[idx - 1].piece_at(move.src_sq()).get_value() << 6) | sq_to_int(move.dst_sq());
+            return (board_hist[idx - 1].piece_at(move.src_sq()).val() << 6) | sq_to_int(move.dst_sq());
         };
 
         void clear() { idx = 0; };

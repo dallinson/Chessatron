@@ -3,9 +3,11 @@
 #include <array>
 #include <cstdint>
 #include <cstring>
+#include <fmt/format.h>
 #include <string>
 
 #include "pieces.hpp"
+#include "uci_options.hpp"
 #include "utils.hpp"
 
 enum class MoveFlags : uint8_t {
@@ -61,8 +63,58 @@ class Move {
         constexpr bool is_noisy() const { return !is_quiet(); };
 
         constexpr uint16_t hist_idx(Side stm) const { return (static_cast<int>(stm) << 12) + get_bits(move, 11, 0); };
+};
 
-        std::string to_string() const;
+template <>
+struct fmt::formatter<Move> {
+    constexpr auto parse(fmt::format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    auto format(const Move& _move, fmt::format_context& ctx) const {
+        const auto move = [&]() {
+            if ((!_move.is_castling_move()) || (static_cast<bool>(uci_options()["UCI_Chess960"]))) {
+                // if this isn't castling, or dfrc is enabled
+                return _move;
+            } else {
+                auto rnk = _move.dst_rnk();
+                auto dst_fle = _move.flags() == MoveFlags::KINGSIDE_CASTLE ? 6 : 2;
+                const auto dst = square(rnk, dst_fle);
+                return Move(_move.flags(), dst, _move.src_sq());
+            }
+        }();
+        if (move.src_sq() == Square::A1 && move.dst_sq() == Square::A1) {
+            // if this is a null move
+            return fmt::format_to(ctx.out(), "{}", "0000");
+        }
+        std::string to_return;
+        to_return.push_back(move.src_fle() + 'a');
+        to_return.push_back(move.src_rnk() + '1');
+    
+        to_return.push_back(move.dst_fle() + 'a');
+        to_return.push_back(move.dst_rnk() + '1');
+    
+        if (move.is_promotion()) {
+            switch (move.promo_type()) {
+            case PieceTypes::ROOK:
+                to_return.push_back('r');
+                break;
+            case PieceTypes::KNIGHT:
+                to_return.push_back('n');
+                break;
+            case PieceTypes::BISHOP:
+                to_return.push_back('b');
+                break;
+            case PieceTypes::QUEEN:
+                to_return.push_back('q');
+                break;
+            default:
+                break;
+            }
+        }
+        
+        return fmt::format_to(ctx.out(), "{}", to_return);
+    }
 };
 
 struct ScoredMove {

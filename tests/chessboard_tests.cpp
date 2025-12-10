@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <cstdint>
+#include "fmt/format.h"
 
 #include "../src/chessboard.hpp"
 #include "../src/evaluation.hpp"
@@ -112,10 +113,10 @@ TEST(ChessBoardTests, TestMakeUnmakeMove) {
         pos = pos.make_move(m, hist);
         ASSERT_EQ(hist.len(), 2);
         pos = hist.pop_board();
-        ASSERT_EQ(original_score, pos.get_score(Side::WHITE)) << "Score mismatch after move " << m.to_string();
+        ASSERT_EQ(original_score, pos.get_score(Side::WHITE)) << "Score mismatch after move " << fmt::format("{}", m);
     for (Square sq = Square::A1; sq != Square::NONE; sq++) {
-            ASSERT_EQ(pos.piece_at(sq).get_value(), original.piece_at(sq).get_value())
-                << "Mismatch at square " << std::to_string(sq_to_int(sq)) << " after move " << m.to_string() << " with flags "
+            ASSERT_EQ(pos.piece_at(sq).val(), original.piece_at(sq).val())
+                << "Mismatch at square " << std::to_string(sq_to_int(sq)) << " after move " << fmt::format("{}", m) << " with flags "
                 << std::to_string(static_cast<int>(m.flags())) << " (value " << std::to_string(m.value()) << ")";
         }
     }
@@ -126,7 +127,7 @@ TEST(ChessBoardTests, TestMakeUnmakeMove) {
     pos = pos.make_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, 24, 8), hist);
     pos = hist.pop_board();
     for (Square sq = Square::A1; sq != Square::NONE; sq++) {
-        ASSERT_EQ(pos.piece_at(sq).get_value(), original.piece_at(sq).get_value()) << "Mismatch at square " << std::to_string(sq_to_int(sq)) << "!";
+        ASSERT_EQ(pos.piece_at(sq).val(), original.piece_at(sq).val()) << "Mismatch at square " << std::to_string(sq_to_int(sq)) << "!";
     }
 
     pos.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R2K3R b kq - 1 1");
@@ -135,7 +136,7 @@ TEST(ChessBoardTests, TestMakeUnmakeMove) {
     pos = pos.make_move(Move(6322), hist);
     pos = hist.pop_board();
     for (Square sq = Square::A1; sq != Square::NONE; sq++) {
-        ASSERT_EQ(pos.piece_at(sq).get_value(), original.piece_at(sq).get_value()) << "Mismatch at square " << std::to_string(sq_to_int(sq)) << "!";
+        ASSERT_EQ(pos.piece_at(sq).val(), original.piece_at(sq).val()) << "Mismatch at square " << std::to_string(sq_to_int(sq)) << "!";
     }
 }
 
@@ -145,18 +146,18 @@ TEST(ChessBoardTests, TestMakeMove) {
     original.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/1PN2Q1p/P1PBBPPP/R3K2R b KQkq - 0 1");
     BoardHistory hist(pos);
     pos = pos.make_move(Move(MoveFlags::QUIET_MOVE, 17, 9), hist);
-    ASSERT_STREQ(Move(MoveFlags::QUIET_MOVE, 17, 9).to_string().c_str(), "b2b3");
+    ASSERT_STREQ(fmt::format("{}", Move(MoveFlags::QUIET_MOVE, 17, 9)).c_str(), "b2b3");
     for (Square sq = Square::A1; sq != Square::NONE; sq++) {
-        ASSERT_EQ(pos.piece_at(sq).get_value(), original.piece_at(sq).get_value()) << "Mismatch at square " << std::to_string(sq_to_int(sq)) << "!";
+        ASSERT_EQ(pos.piece_at(sq).val(), original.piece_at(sq).val()) << "Mismatch at square " << std::to_string(sq_to_int(sq)) << "!";
     }
     pos.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
     original.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/Pp2P3/2N2Q1p/1PPBBPPP/R3K2R b KQkq a3 0 1");
     hist = BoardHistory(pos);
     pos = pos.make_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, 24, 8), hist);
-    ASSERT_STREQ(Move(MoveFlags::DOUBLE_PAWN_PUSH, 24, 8).to_string().c_str(), "a2a4");
+    ASSERT_STREQ(fmt::format("{}", Move(MoveFlags::DOUBLE_PAWN_PUSH, 24, 8)).c_str(), "a2a4");
     ASSERT_EQ(Move(MoveFlags::DOUBLE_PAWN_PUSH, 24, 8).value(), 5640);
     for (Square sq = Square::A1; sq != Square::NONE; sq++) {
-        ASSERT_EQ(pos.piece_at(sq).get_value(), original.piece_at(sq).get_value()) << "Mismatch at square " << std::to_string(sq_to_int(sq)) << "!";
+        ASSERT_EQ(pos.piece_at(sq).val(), original.piece_at(sq).val()) << "Mismatch at square " << std::to_string(sq_to_int(sq)) << "!";
     }
 }
 
@@ -191,15 +192,6 @@ TEST(ChessBoardTests, TestClearBoard) {
     ASSERT_FALSE(pos.get_queenside_castling(Side::BLACK));
 }
 
-TEST(ChessBoardTests, TestPrintBoard) {
-    Position pos;
-    pos.set_from_fen("startpos");
-    testing::internal::CaptureStdout();
-    pos.print_board();
-    std::string from_stdout = testing::internal::GetCapturedStdout();
-    ASSERT_STREQ("rnbqkbnr\npppppppp\n........\n........\n........\n........\nPPPPPPPP\nRNBQKBNR\n", from_stdout.c_str());
-}
-
 TEST(ChessBoardTests, TestPromotionsFromString) {
     Position pos;
     pos.set_from_fen("1r6/P7/5k2/8/5K2/8/8/8 w - - 0 1");
@@ -231,8 +223,8 @@ TEST(ChessBoardTests, TestEnPassantFromString) {
 TEST(ChessBoardTests, TestCastlingFromString) {
     Position pos;
     pos.set_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/R3K2R w KQkq - 0 1");
-    ASSERT_EQ(pos.generate_move_from_string("e1c1"), Move(MoveFlags::QUEENSIDE_CASTLE, 2, 4));
-    ASSERT_EQ(pos.generate_move_from_string("e1g1"), Move(MoveFlags::KINGSIDE_CASTLE, 6, 4));
+    ASSERT_EQ(pos.generate_move_from_string("e1c1"), Move(MoveFlags::QUEENSIDE_CASTLE, 0, 4));
+    ASSERT_EQ(pos.generate_move_from_string("e1g1"), Move(MoveFlags::KINGSIDE_CASTLE, 7, 4));
     ASSERT_EQ(pos.generate_move_from_string("e1f1"), Move(MoveFlags::QUIET_MOVE, 5, 4));
     // not a castling move but included just to cover this branch
 }
@@ -352,6 +344,6 @@ TEST(ChessBoardTests, TestUnmakeScores) {
     for (size_t i = 0; i < moves.size(); i++) {
         pos.make_move(moves[i].move, hist);
         hist.pop_board();
-        ASSERT_EQ(pos.get_score(Side::WHITE), mg_score) << "Score mismatch on move " << moves[i].move.to_string();
+        ASSERT_EQ(pos.get_score(Side::WHITE), mg_score) << "Score mismatch on move " << fmt::format("{}", moves[i].move);
     }
 }
