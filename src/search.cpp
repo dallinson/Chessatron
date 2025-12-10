@@ -429,7 +429,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
         const auto new_depth = depth - 1 + extensions + static_cast<int>([&](){
             // Singular Extensions
             if constexpr (node_type == NodeTypes::ROOT_NODE) return false;
-            if (depth >= 8 && move.move == entry->get().move() && !in_singular_search
+            if (depth >= 6 && move.move == entry->get().move() && !in_singular_search
                 && entry->get().depth() + 4 >= depth && entry->get().bound_type() != BoundTypes::UPPER_BOUND
                 && std::abs(entry->get().score()) < (MagicNumbers::PositiveInfinity - MAX_PLY)) {
                     // Do SE
