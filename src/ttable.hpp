@@ -65,6 +65,13 @@ class TranspositionTable {
     private:
         std::vector<Cluster> table;
         uint8_t current_age = 0;
+        u32 rseedu32 = 0x15171131;
+        auto rand_u32() -> u32 {
+            rseedu32 ^= rseedu32 << 13;
+            rseedu32 ^= rseedu32 >> 17;
+            rseedu32 ^= rseedu32 << 5;
+            return rseedu32;
+        }
     public:
         TranspositionTable() {
             this->resize(16);
@@ -77,26 +84,19 @@ class TranspositionTable {
             auto& cluster = table[tt_index(pos.zobrist_key())];
 
             std::optional<std::reference_wrapper<TranspositionTableEntry>> entry = std::nullopt;
-            auto min_val = std::numeric_limits<int32_t>::max();
 
             for (auto& candidate : cluster.entries) {
                 if (candidate.key() == key || candidate.bound_type() == BoundTypes::NONE) {
                     entry = std::optional(std::ref(candidate));
                     break;
                 }
-
-                const auto relative_age = (AGE_MOD + current_age - candidate.age()) & AGE_MASK;
-                const auto entry_value = candidate.depth() - relative_age * 2;
-
-                if (entry_value < min_val) {
-                    min_val = entry_value;
-                    entry = std::optional(std::ref(candidate));
-                }
             }
 
-            assert(entry.has_value());
+            if (!entry.has_value() && (rand_u32() & 0x1F) < 2) {
+                entry = std::optional(std::ref(cluster.entries[rand_u32() % TT_CLUSTER_SIZE]));
+            }
 
-            if (!(
+            if (!entry.has_value() || !(
                    bound == BoundTypes::EXACT_BOUND // Replace if the new one is an exact bound
                 || entry->get().key() != key // Or doesn't match the existing key
                 || entry->get().age() != current_age // Or the entry wasn't inserted this search
