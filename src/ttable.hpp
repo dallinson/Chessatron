@@ -86,7 +86,7 @@ class TranspositionTable {
                 }
 
                 const auto relative_age = (AGE_MOD + current_age - candidate.age()) & AGE_MASK;
-                const auto entry_value = candidate.depth() - relative_age * 2;
+                const auto entry_value = candidate.depth() + candidate.tt_pv() * 2 - relative_age * 2;
 
                 if (entry_value < min_val) {
                     min_val = entry_value;
