@@ -89,6 +89,7 @@ inline MDArray<i32, MAX_PLY + 1, MAX_TURN_MOVE_COUNT + 1> generate_lmr_table() {
 
 struct SearchStackFrame {
     Move killer_move = Move::NULL_MOVE();
+    Move excluded_move = Move::NULL_MOVE();
 };
 
 struct PvTable {
