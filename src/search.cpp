@@ -227,6 +227,8 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
     const auto in_singular_search = !search_stack[ply].excluded_move.is_null_move();
 
+    if (node_count % 4096 == 0 && (TimeManagement::is_time_based_tc(tc) && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - search_start_point).count() > TimeManagement::get_search_time(tc))) { search_cancelled = true; };
+
     if (!in_singular_search) pv_table.pv_length[ply] = ply;
     if (Search::is_draw(old_pos, board_hist)) {
         return 0;
@@ -536,6 +538,9 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
 template <NodeTypes node_type>
 Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Score beta, int ply, uint64_t& node_count) {
+
+    if (node_count % 4096 == 0 && (TimeManagement::is_time_based_tc(tc) && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - search_start_point).count() > TimeManagement::get_search_time(tc))) { search_cancelled = true; };
+
     if (Search::is_draw(old_pos, board_hist)) {
         return 0;
     }
@@ -690,7 +695,7 @@ Move SearchHandler::run_iterative_deepening_search() {
     node_count = 0;
     pv_move = Move::NULL_MOVE();
     // reset pv move so we don't accidentally play an illegal one from a previous search
-    const auto search_start_point = std::chrono::steady_clock::now();
+    search_start_point = std::chrono::steady_clock::now();
     // TranspositionTable transpositions;
     auto moves =
         MoveGenerator::generate_legal_moves<MoveGenType::ALL_LEGAL>(board_hist[board_hist.len() - 1], board_hist[board_hist.len() - 1].stm());

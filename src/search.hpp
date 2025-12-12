@@ -115,6 +115,7 @@ class SearchHandler {
         std::future<void> cancelFuture;
         uint16_t perft_depth;
         TimeControlInfo tc;
+        std::chrono::steady_clock::time_point search_start_point;
         Move pv_move;
         uint64_t node_count;
         bool print_info = true;
