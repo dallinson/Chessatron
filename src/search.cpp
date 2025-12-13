@@ -32,6 +32,7 @@ TUNABLE_SPECIFIER auto not_improving_lmr_constant = TUNABLE_INT("not_improving_l
 TUNABLE_SPECIFIER auto hist_score_lmr_constant = TUNABLE_INT("hist_score_lmr_constant", -1185, -2048, -512);
 TUNABLE_SPECIFIER auto not_ttpv_lmr_constant = TUNABLE_INT("not_ttpv_lmr_constant", 1028, 512, 2048);
 TUNABLE_SPECIFIER auto noisy_lmr_constant = TUNABLE_INT("noisy_lmr_constant", -1102, -2048, -512);
+TUNABLE_SPECIFIER auto post_lmr_lmr_constant = TUNABLE_INT("noisy_lmr_constant", 1024, 512, 2048);
 
 TUNABLE_SPECIFIER auto lmp_depth = TUNABLE_INT("lmp_depth", 6, 2, 10);
 TUNABLE_SPECIFIER auto lmp_offset = TUNABLE_INT("lmp_offset", 3, 1, 5);
@@ -383,6 +384,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     std::optional<ScoredMove> opt_move;
     UnscoredMoveList evaluated_moves;
     bool skip_quiets = false;
+    const auto previous_move_is_null = !board_hist.move_at(board_hist.len() - 1).is_null_move();
     while ((opt_move = mp.next(skip_quiets)).has_value()) {
         if (search_cancelled) {
             break;
@@ -470,6 +472,8 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
                         // Reduce more if not tt pv
                         if (move.move.is_noisy()) lmr_reduction += noisy_lmr_constant;
                         // Reduce less if a noisy move
+                        if (previous_move_is_null && !(move.move.is_capture() || pos.in_check())) lmr_reduction += post_lmr_lmr_constant;
+                        // Reduce more if immediately post LMR and move is not a capture or check;
                         return lmr_reduction / LMR_QUANT_CONSTANT;
                     }(),
                 1, new_depth);
