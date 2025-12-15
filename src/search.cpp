@@ -35,6 +35,7 @@ TUNABLE_SPECIFIER auto noisy_lmr_constant = TUNABLE_INT("noisy_lmr_constant", -1
 
 TUNABLE_SPECIFIER auto lmp_depth = TUNABLE_INT("lmp_depth", 6, 2, 10);
 TUNABLE_SPECIFIER auto lmp_offset = TUNABLE_INT("lmp_offset", 3, 1, 5);
+TUNABLE_SPECIFIER auto lmp_multiplier = TUNABLE_INT("lmp_multiplier", 2, 1, 4);
 
 TUNABLE_SPECIFIER auto fp_depth = TUNABLE_INT("fp_depth", 6, 2, 10);
 TUNABLE_SPECIFIER auto fp_multi = TUNABLE_INT("fp_multi", 208, 100, 300);
@@ -393,7 +394,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
         if constexpr (!is_pv_node(node_type)) {
             // late move pruning
             if (depth <= lmp_depth && !old_pos.in_check() && move.move.is_quiet()
-                && evaluated_moves.size() >= static_cast<size_t>(((depth * depth) + lmp_offset) / (2 - improving))) {
+                && evaluated_moves.size() >= static_cast<size_t>(((depth * depth * lmp_multiplier) + lmp_offset) / (2 - improving))) {
                 skip_quiets = true;
                 continue;
             }
