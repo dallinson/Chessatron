@@ -410,7 +410,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
         // history pruning
         if constexpr (!is_pv_node(node_type)) {
-            if (best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && evaluated_moves.size() > 0 && depth <= hp_depth && static_eval <= alpha
+            if (best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && evaluated_moves.size() > 0 && depth <= hp_depth && move.move.is_noisy() && static_eval <= alpha
                 && hist_score < -(depth * depth) * hp_multi) {
                 continue;
             }
