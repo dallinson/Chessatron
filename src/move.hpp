@@ -121,7 +121,7 @@ struct ScoredMove {
     int32_t score;
     Move move;
     bool see_ordering_result;
-    uint8_t padding;
+    MovePickerStage stage = MovePickerStage::NONE;
 
     ScoredMove() {};
     ScoredMove(Move move) : move(move) {};

@@ -22,12 +22,12 @@ constexpr int MAX_GAME_MOVE_COUNT = 5899;
 constexpr static int PLY_OFFSET = 4;
 constexpr static int MAX_PLY = 225 + PLY_OFFSET;
 
-enum class Side : uint8_t {
+enum class Side : u8 {
     WHITE = 0,
     BLACK = 1,
 };
 
-enum class Square: uint8_t {
+enum class Square: u8 {
     A1, B1, C1, D1, E1, F1, G1, H1,
     A2, B2, C2, D2, E2, F2, G2, H2,
     A3, B3, C3, D3, E3, F3, G3, H3,
@@ -39,6 +39,31 @@ enum class Square: uint8_t {
 
     NONE
 };
+
+enum class MovePickerStage: u8 {
+    TT_MOVE = 0,
+    GOOD_NOISY = 1,
+    KILLER = 2,
+    QUIET = 3,
+    BAD_NOISY = 4,
+    NONE = 5
+};
+
+inline auto next_stage(const MovePickerStage stage) -> MovePickerStage {
+    if (stage == MovePickerStage::TT_MOVE) {
+        return MovePickerStage::GOOD_NOISY;
+    } else if (stage == MovePickerStage::GOOD_NOISY) {
+        return MovePickerStage::KILLER;
+    }  else if (stage == MovePickerStage::KILLER) {
+        return MovePickerStage::QUIET;
+    } else if (stage == MovePickerStage::QUIET) {
+        return MovePickerStage::BAD_NOISY;
+    } else if (stage == MovePickerStage::BAD_NOISY) {
+        return MovePickerStage::NONE;
+    } else {
+        return MovePickerStage::NONE;
+    }
+}
 
 constexpr Square& operator++(Square& sq, int) {
     assert(sq != Square::NONE);

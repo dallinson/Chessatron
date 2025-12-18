@@ -9,7 +9,8 @@
 class MovePicker {
     private:
         MoveList moves;
-        size_t idx;
+        size_t start_idx;
+        MovePickerStage stage = MovePickerStage::NONE;
 
     public:
         MovePicker(MoveList&& input_moves, const Position& pos, const BoardHistory& hist, const Move pv_move, const HistoryTable& history_table, Move killer);
