@@ -9,7 +9,7 @@
 
 constexpr std::array<uint8_t, 7> ordering_scores = {0, 1, 2, 3, 4, 5, 6};
 
-MovePicker::MovePicker(MoveList&& input_moves, const Position& pos, const BoardHistory& hist, const Move pv_move, const HistoryTable& history_table, Move killer) {
+MovePicker::MovePicker(MoveList&& input_moves, const Position& pos, const BoardHistory& hist, const Move pv_move, const HistoryTable& history_table, Move killer, const i32 depth) {
     this->moves = input_moves;
     this->idx = 0;
 
@@ -23,7 +23,7 @@ MovePicker::MovePicker(MoveList&& input_moves, const Position& pos, const BoardH
             //continue;
         } else if (move.move.is_noisy()) {
             move.score = 900000000;
-            move.see_ordering_result = Search::static_exchange_evaluation(pos, move.move, -20);
+            move.see_ordering_result = Search::static_exchange_evaluation(pos, move.move, -20 * depth * depth);
             if (!move.see_ordering_result) {
                 move.score = -1000000;
             }

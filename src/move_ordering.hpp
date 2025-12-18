@@ -12,6 +12,6 @@ class MovePicker {
         size_t idx;
 
     public:
-        MovePicker(MoveList&& input_moves, const Position& pos, const BoardHistory& hist, const Move pv_move, const HistoryTable& history_table, Move killer);
+        MovePicker(MoveList&& input_moves, const Position& pos, const BoardHistory& hist, const Move pv_move, const HistoryTable& history_table, Move killer, const i32 depth = 1);
         std::optional<ScoredMove> next(const bool skip_quiets);
 };
