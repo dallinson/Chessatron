@@ -536,9 +536,6 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
 template <NodeTypes node_type>
 Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Score beta, int ply, uint64_t& node_count) {
-    if (Search::is_draw(old_pos, board_hist)) {
-        return 0;
-    }
 
     const auto entry = tt.probe(old_pos);
     const auto tt_hit = entry.has_value();
