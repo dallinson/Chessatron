@@ -9,70 +9,129 @@
 
 constexpr std::array<uint8_t, 7> ordering_scores = {0, 1, 2, 3, 4, 5, 6};
 
-MovePicker::MovePicker(MoveList&& input_moves, const Position& pos, const BoardHistory& hist, const Move pv_move, const HistoryTable& history_table, Move killer) {
-    this->moves = input_moves;
-    this->idx = 0;
-
-    auto best_idx = 0;
-    
-    for (size_t i = 0; i < moves.size(); i++) {
-        auto& move = moves[i];
-        move.score = 0;
-        if (move.move == pv_move) {
-            move.score = std::numeric_limits<int32_t>::max();
-            //continue;
-        } else if (move.move.is_noisy()) {
-            move.score = 900000000;
-            move.see_ordering_result = Search::static_exchange_evaluation(pos, move.move, -20);
-            if (!move.see_ordering_result) {
-                move.score = -1000000;
-            }
-            const auto dest_type = move.move.flags() == MoveFlags::EN_PASSANT_CAPTURE
-                                       ? PieceTypes::PAWN
-                                       : pos.piece_at(move.move.dst_sq()).type();
-            const auto dest_score = ordering_scores[static_cast<uint8_t>(dest_type)];
-            move.score += ((100000 * dest_score) + history_table.capthist_score(hist, move.move));
-        } else if (move.move == killer) {
-            move.score = 800000000;
-        } else {
-            move.score += history_table.score(hist, move.move, pos.stm());
-        }
-        if (move.score > moves[best_idx].score) {
-            best_idx = i;
-        }
+auto MovePicker::next_stage(MovePickerStage stage) -> MovePickerStage {
+    if (stage == MovePickerStage::NONE) {
+        return MovePickerStage::NONE;
+    } else {
+        return static_cast<MovePickerStage>(static_cast<i32>(stage) + 1);
     }
-    std::swap(moves[0], moves[best_idx]);
 }
 
+auto MovePicker::score_noisies() -> void {
+    for (auto& move : moves) {
+        const auto dest_type = move.move.flags() == MoveFlags::EN_PASSANT_CAPTURE
+                                    ? PieceTypes::PAWN
+                                    : pos.piece_at(move.move.dst_sq()).type();
+        const auto dest_score = ordering_scores[static_cast<uint8_t>(dest_type)];
+        move.score = ((100000 * dest_score) + hist_table.capthist_score(board_hist, move.move));
+    }
+}
+
+auto MovePicker::score_quiets() -> void {
+    for (auto& move : moves) {
+        move.score = hist_table.score(board_hist, move.move, pos.stm());
+    }
+}
+
+auto MovePicker::pick_good_noisies() -> std::optional<ScoredMove> {
+    auto opt_move = pick_move(moves);
+    if (!opt_move.has_value()) {
+        return std::nullopt;
+    } 
+    auto move = opt_move.value();
+    move.see_ordering_result = Search::static_exchange_evaluation(pos, move.move, -20);
+    if (move.see_ordering_result) {
+        return move;
+    } else {
+        bad_noisies.add(move);
+        return pick_good_noisies();
+    }
+}
+
+auto MovePicker::pick_move(MoveList& moves_to_search) -> std::optional<ScoredMove> {
+    if (idx >= moves_to_search.size()) {
+        return std::nullopt;
+    }
+
+    auto best_score = moves_to_search[idx].score;
+    auto best_idx = idx;
+    for (usize i = idx + 1; i < moves_to_search.size(); i++) {
+        if (moves_to_search[i].score > best_score) {
+            best_score = moves_to_search[i].score;
+            best_idx = idx;
+        }
+    }
+    std::swap(moves_to_search[idx], moves_to_search[best_idx]);
+    return moves_to_search[idx++];
+}
 
 std::optional<ScoredMove> MovePicker::next(const bool skip_quiets) {
-    if (this->idx >= this->moves.size()) {
-        return std::nullopt;
-    } else if (this->idx == 0) {
-        this->idx += 1;
-        return std::optional(this->moves[0]);
-    }
-
-    if (skip_quiets) {
-        while (idx < this->moves.size() && moves[idx].move.is_quiet()) {
-            idx += 1;
+    if (stage == MovePickerStage::TT_MOVE) {
+        stage = MovePickerStage::GEN_NOISY;
+        if (tt_move.is_null_move() || !MoveGenerator::is_move_pseudolegal(pos, tt_move) || !MoveGenerator::is_move_legal(pos, tt_move)) {
+            return next(skip_quiets);
         }
-    }
-
-    if (idx >= this->moves.size()) {
+        assert(!tt_move.is_null_move());
+        return ScoredMove(tt_move);
+    } else if (stage == MovePickerStage::GEN_NOISY) {
+        moves = MoveGenerator::generate_legal_moves<MoveGenType::NOISY>(pos, pos.stm());
+        stage = MovePickerStage::PICK_GOOD_NOISY;
+        idx = 0;
+        score_noisies();
+        return next(skip_quiets);
+    } else if (stage == MovePickerStage::PICK_GOOD_NOISY) {
+        const auto to_return = pick_good_noisies();
+        if (!to_return.has_value()) {
+            stage = MovePickerStage::KILLER;
+            return next(skip_quiets);
+        } else if (to_return.value().move == tt_move) {
+            return next(skip_quiets);
+        }
+        assert(!to_return->move.is_null_move());
+        return to_return;
+    } else if (stage == MovePickerStage::KILLER) {
+        if (is_quiescence) {
+            stage = MovePickerStage::GEN_BAD_NOISY;
+        } else {
+            stage = MovePickerStage::GEN_QUIET;
+        }
+        if (killer_move == tt_move || killer_move.is_null_move() || !(MoveGenerator::is_move_pseudolegal(pos, killer_move) && MoveGenerator::is_move_legal(pos, killer_move))) {
+            return next(skip_quiets);
+        }
+        return ScoredMove(killer_move);
+    } else if (stage == MovePickerStage::GEN_QUIET) {
+        moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIETS>(pos, pos.stm());
+        stage = MovePickerStage::PICK_QUIET;
+        idx = 0;
+        score_quiets();
+        return next(skip_quiets);
+    } else if (stage == MovePickerStage::PICK_QUIET) {
+        const auto to_return = pick_move(moves);
+        if (!to_return.has_value()) {
+            stage = MovePickerStage::PICK_BAD_NOISY;
+            return next(skip_quiets);
+        }
+        if (to_return->move == tt_move || to_return->move == killer_move) {
+            return next(skip_quiets);
+        }
+        assert(!to_return->move.is_null_move());
+        return to_return;
+    } else if (stage == MovePickerStage::GEN_BAD_NOISY) {
+        stage = MovePickerStage::PICK_BAD_NOISY;
+        idx = 0;
+        return next(skip_quiets);
+    } else if (stage == MovePickerStage::PICK_BAD_NOISY) {
+        const auto to_return = pick_move(bad_noisies);
+        if (!to_return.has_value()) {
+            stage = MovePickerStage::NONE;
+            return std::nullopt;
+        }
+        if (to_return->move == tt_move || to_return->move == killer_move) {
+            return next(skip_quiets);
+        }
+        assert(!to_return->move.is_null_move());
+        return to_return;
+    } else {
         return std::nullopt;
     }
-
-    int best_idx = this->idx;
-
-    for (size_t i = (this->idx + 1); i < this->moves.size(); i++) {
-        if (moves[i].score > moves[best_idx].score) {
-            best_idx = i;
-        }
-    }
-    std::swap(moves[best_idx], moves[idx]);
-
-    const auto best_move = moves[idx];
-    idx += 1;
-    return best_move;
 }
