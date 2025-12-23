@@ -600,7 +600,7 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
     int total_moves = 0;
     Move best_move = Move::NULL_MOVE();
     std::optional<ScoredMove> opt_move;
-    while ((opt_move = mp.next(false)).has_value()) {
+    while ((opt_move = mp.next(best_score <= (MagicNumbers::NegativeInfinity + MAX_PLY))).has_value()) {
         if (search_cancelled) {
             break;
         }
