@@ -36,7 +36,7 @@ auto MovePicker::score_quiets() -> void {
 auto MovePicker::pick_good_noisies() -> std::optional<ScoredMove> {
     auto opt_move = pick_move(moves);
     if (!opt_move.has_value()) {
-        return std::nullopt;
+        return std::nullopt; // because we've evaluated all noisies
     } 
     auto move = opt_move.value();
     move.see_ordering_result = Search::static_exchange_evaluation(pos, move.move, -20);
@@ -44,10 +44,11 @@ auto MovePicker::pick_good_noisies() -> std::optional<ScoredMove> {
         return move;
     } else {
         bad_noisies.add(move);
-        return pick_good_noisies();
+        return pick_good_noisies(); // keep trying until we get a good one
     }
 }
 
+// Gets the next move with the highest possible score in this list
 auto MovePicker::pick_move(MoveList& moves_to_search) -> std::optional<ScoredMove> {
     if (idx >= moves_to_search.size()) {
         return std::nullopt;
@@ -56,6 +57,7 @@ auto MovePicker::pick_move(MoveList& moves_to_search) -> std::optional<ScoredMov
     auto best_score = moves_to_search[idx].score;
     auto best_idx = idx;
     for (usize i = idx + 1; i < moves_to_search.size(); i++) {
+        // No need to check idx; we can swap with itself
         if (moves_to_search[i].score > best_score) {
             best_score = moves_to_search[i].score;
             best_idx = idx;
@@ -69,6 +71,7 @@ std::optional<ScoredMove> MovePicker::next(const bool skip_quiets) {
     if (stage == MovePickerStage::TT_MOVE) {
         stage = MovePickerStage::GEN_NOISY;
         if (tt_move.is_null_move() || !MoveGenerator::is_move_pseudolegal(pos, tt_move) || !MoveGenerator::is_move_legal(pos, tt_move)) {
+            // Make sure the move is legal in this position
             return next(skip_quiets);
         }
         assert(!tt_move.is_null_move());
@@ -91,6 +94,7 @@ std::optional<ScoredMove> MovePicker::next(const bool skip_quiets) {
         return to_return;
     } else if (stage == MovePickerStage::KILLER) {
         if (is_quiescence) {
+            // If the qsearch is in check it's considered to _not_ be a quiescent search
             stage = MovePickerStage::GEN_BAD_NOISY;
         } else {
             stage = MovePickerStage::GEN_QUIET;
