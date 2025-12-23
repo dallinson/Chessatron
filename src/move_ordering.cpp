@@ -85,7 +85,7 @@ std::optional<ScoredMove> MovePicker::next(const bool skip_quiets) {
     } else if (stage == MovePickerStage::PICK_GOOD_NOISY) {
         const auto to_return = pick_good_noisies();
         if (!to_return.has_value()) {
-            stage = MovePickerStage::KILLER;
+            stage = is_quiescence ? MovePickerStage::GEN_BAD_NOISY : MovePickerStage::KILLER;
             return next(skip_quiets);
         } else if (to_return.value().move == tt_move) {
             return next(skip_quiets);
@@ -112,7 +112,7 @@ std::optional<ScoredMove> MovePicker::next(const bool skip_quiets) {
     } else if (stage == MovePickerStage::PICK_QUIET) {
         const auto to_return = pick_move(moves);
         if (!to_return.has_value()) {
-            stage = MovePickerStage::PICK_BAD_NOISY;
+            stage = MovePickerStage::GEN_BAD_NOISY;
             return next(skip_quiets);
         }
         if (to_return->move == tt_move || to_return->move == killer_move) {
