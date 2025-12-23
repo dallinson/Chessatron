@@ -273,7 +273,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
     const auto raw_eval = [&]() {
         if (old_pos.in_check()) {
-            return MagicNumbers::NegativeInfinity;
+            return static_cast<Score>(MagicNumbers::NegativeInfinity + ply);
         } else if (tt_hit && entry->get().static_eval() > (MagicNumbers::NegativeInfinity + MAX_PLY)) {
             return entry->get().static_eval();
         } else {
@@ -283,7 +283,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
     const auto adjusted_eval = [&]() {
         if (old_pos.in_check()) {
-            return MagicNumbers::NegativeInfinity;
+            return static_cast<Score>(MagicNumbers::NegativeInfinity + ply);
         } else {
             return history_table.corrhist_score(old_pos, raw_eval, board_hist);
         }
@@ -356,7 +356,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     if (moves.size() == 0) {
         if (old_pos.in_check()) {
             // if in check
-            return ply + MagicNumbers::NegativeInfinity;
+            return MagicNumbers::NegativeInfinity + ply;
         } else {
             return 0;
         }
@@ -378,7 +378,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     // iir
 
     Move best_move = Move::NULL_MOVE();
-    Score best_score = MagicNumbers::NegativeInfinity;
+    Score best_score = MagicNumbers::NegativeInfinity + ply;
     const Score original_alpha = alpha;
     std::optional<ScoredMove> opt_move;
     UnscoredMoveList evaluated_moves;
@@ -552,7 +552,7 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
 
     const auto raw_eval = [&]() {
         if (old_pos.in_check()) {
-            return MagicNumbers::NegativeInfinity;
+            return static_cast<Score>(MagicNumbers::NegativeInfinity + ply);
         } else if (tt_hit && entry->get().static_eval() > (MagicNumbers::NegativeInfinity + MAX_PLY)) {
             return entry->get().static_eval();
         } else {
@@ -562,7 +562,7 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
 
     const auto static_eval = [&]() {
         if (old_pos.in_check()) {
-            return MagicNumbers::NegativeInfinity;
+            return static_cast<Score>(MagicNumbers::NegativeInfinity + ply);
         } else {
             return history_table.corrhist_score(old_pos, raw_eval, board_hist);
         }
@@ -588,7 +588,7 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
         && (old_pos.in_check() || MoveGenerator::generate_legal_moves<MoveGenType::NON_QUIESCENCE>(old_pos, old_pos.stm()).size() == 0)) {
         if (old_pos.in_check()) {
             // if in check
-            return ply + MagicNumbers::NegativeInfinity;
+            return MagicNumbers::NegativeInfinity + ply;
         } else {
             return 0;
         }
