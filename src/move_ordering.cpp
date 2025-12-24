@@ -7,14 +7,13 @@
 #include "move_generator.hpp"
 #include "search.hpp"
 
-constexpr std::array<uint8_t, 7> ordering_scores = {0, 1, 2, 3, 4, 5, 6};
 
 auto MovePicker::score_noisies() -> void {
     for (auto& move : moves) {
         const auto dest_type = move.move.flags() == MoveFlags::EN_PASSANT_CAPTURE
                                     ? PieceTypes::PAWN
                                     : pos.piece_at(move.move.dst_sq()).type();
-        const auto dest_score = ordering_scores[static_cast<u8>(dest_type)];
+        const auto dest_score = Search::SEEScores[static_cast<u8>(dest_type)];
         move.score = ((100000 * dest_score) + hist_table.capthist_score(board_hist, move.move));
     }
 }

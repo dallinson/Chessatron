@@ -354,7 +354,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
     const bool tt_move =
         tt_hit && MoveGenerator::is_move_pseudolegal(old_pos, entry->get().move()) && MoveGenerator::is_move_legal(old_pos, entry->get().move());
-    auto mp = MovePicker(false, tt_move ? entry->get().move() : Move::NULL_MOVE(), search_stack[ply].killer_move, old_pos, history_table, board_hist, depth);
+    auto mp = MovePicker(false, tt_move ? entry->get().move() : Move::NULL_MOVE(), search_stack[ply].killer_move, old_pos, history_table, board_hist);
     // move reordering
     // tt_hit in tt_move condition guards against null entry access
 
@@ -583,7 +583,7 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
 
     Score best_score = static_eval;
     const auto original_alpha = alpha;
-    auto mp = MovePicker(!old_pos.in_check(), Move::NULL_MOVE(), search_stack[ply].killer_move, old_pos, history_table, board_hist, 0);
+    auto mp = MovePicker(!old_pos.in_check(), Move::NULL_MOVE(), search_stack[ply].killer_move, old_pos, history_table, board_hist);
     int total_moves = 0;
     Move best_move = Move::NULL_MOVE();
     std::optional<ScoredMove> opt_move;

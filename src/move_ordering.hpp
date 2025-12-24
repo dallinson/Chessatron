@@ -34,7 +34,6 @@ class MovePicker {
         MoveList bad_noisies;
         size_t idx;
         MovePickerStage stage;
-        i32 depth;
 
         auto gen_noisies() -> void;
         auto score_noisies() -> void;
@@ -45,14 +44,13 @@ class MovePicker {
         auto pick_move(MoveList& moves) -> std::optional<ScoredMove>;
 
     public:
-        MovePicker(bool is_quiescence, Move tt_move, Move killer_move, const Position& pos, HistoryTable& hist_table, BoardHistory& board_hist, i32 depth)
+        MovePicker(bool is_quiescence, Move tt_move, Move killer_move, const Position& pos, HistoryTable& hist_table, BoardHistory& board_hist)
             : is_quiescence(is_quiescence),
               tt_move(tt_move),
               killer_move(killer_move),
               pos(pos),
               hist_table(hist_table),
-              board_hist(board_hist),
-              depth(depth) {
+              board_hist(board_hist) {
                 idx = 0;
                 stage = [&] {
                     if (tt_move.is_null_move() || is_quiescence) {
