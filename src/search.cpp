@@ -371,6 +371,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     std::optional<ScoredMove> opt_move;
     UnscoredMoveList evaluated_moves;
     bool skip_quiets = false;
+    auto found_move = false;
     while ((opt_move = mp.next(skip_quiets)).has_value()) {
         if (search_cancelled) {
             break;
@@ -378,6 +379,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
         assert(opt_move.has_value());
         const auto move = opt_move.value();
         assert(!move.move.is_null_move());
+        found_move = true;
         if (in_singular_search && search_stack[ply].excluded_move == move.move) continue;
 
         if constexpr (!is_pv_node(node_type)) {
@@ -511,7 +513,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
         evaluated_moves.add(move.move);
     }
 
-    if (evaluated_moves.size() == 0) {
+    if (!found_move) {
         if (old_pos.in_check()) {
             // if in check
             return ply + MagicNumbers::NegativeInfinity;

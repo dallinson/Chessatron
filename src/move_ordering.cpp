@@ -9,20 +9,12 @@
 
 constexpr std::array<uint8_t, 7> ordering_scores = {0, 1, 2, 3, 4, 5, 6};
 
-auto MovePicker::next_stage(MovePickerStage stage) -> MovePickerStage {
-    if (stage == MovePickerStage::NONE) {
-        return MovePickerStage::NONE;
-    } else {
-        return static_cast<MovePickerStage>(static_cast<i32>(stage) + 1);
-    }
-}
-
 auto MovePicker::score_noisies() -> void {
     for (auto& move : moves) {
         const auto dest_type = move.move.flags() == MoveFlags::EN_PASSANT_CAPTURE
                                     ? PieceTypes::PAWN
                                     : pos.piece_at(move.move.dst_sq()).type();
-        const auto dest_score = ordering_scores[static_cast<uint8_t>(dest_type)];
+        const auto dest_score = ordering_scores[static_cast<u8>(dest_type)];
         move.score = ((100000 * dest_score) + hist_table.capthist_score(board_hist, move.move));
     }
 }
@@ -62,13 +54,15 @@ auto MovePicker::pick_move(MoveList& moves_to_search) -> std::optional<ScoredMov
         }
     }
     std::swap(moves_to_search[idx], moves_to_search[best_idx]);
-    return moves_to_search[idx++];
+    const auto best_move = moves_to_search[idx];
+    idx += 1;
+    return best_move;
 }
 
 std::optional<ScoredMove> MovePicker::next(const bool skip_quiets) {
     if (stage == MovePickerStage::TT_MOVE) {
         stage = MovePickerStage::GEN_NOISY;
-        if (tt_move.is_null_move() || !MoveGenerator::is_move_pseudolegal(pos, tt_move) || !MoveGenerator::is_move_legal(pos, tt_move)) {
+        if (tt_move.is_null_move() || !(MoveGenerator::is_move_pseudolegal(pos, tt_move) && MoveGenerator::is_move_legal(pos, tt_move))) {
             // Make sure the move is legal in this position
             return next(skip_quiets);
         }
@@ -102,12 +96,20 @@ std::optional<ScoredMove> MovePicker::next(const bool skip_quiets) {
         }
         return ScoredMove(killer_move);
     } else if (stage == MovePickerStage::GEN_QUIET) {
+        if (skip_quiets) {
+            stage = MovePickerStage::GEN_BAD_NOISY;
+            return next(skip_quiets);
+        }
         moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIETS>(pos, pos.stm());
         stage = MovePickerStage::PICK_QUIET;
         idx = 0;
         score_quiets();
         return next(skip_quiets);
     } else if (stage == MovePickerStage::PICK_QUIET) {
+        if (skip_quiets) {
+            stage = MovePickerStage::GEN_BAD_NOISY;
+            return next(skip_quiets);
+        }
         const auto to_return = pick_move(moves);
         if (!to_return.has_value()) {
             stage = MovePickerStage::GEN_BAD_NOISY;

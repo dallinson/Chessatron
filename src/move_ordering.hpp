@@ -44,7 +44,6 @@ class MovePicker {
         auto score_quiets() -> void;
         auto pick_move(MoveList& moves) -> std::optional<ScoredMove>;
 
-        static auto next_stage(MovePickerStage stage) -> MovePickerStage;
     public:
         MovePicker(bool is_quiescence, Move tt_move, Move killer_move, const Position& pos, HistoryTable& hist_table, BoardHistory& board_hist, i32 depth)
             : is_quiescence(is_quiescence),
