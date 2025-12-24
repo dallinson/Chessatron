@@ -52,7 +52,7 @@ class Move {
         constexpr uint8_t dst_rnk() const { return get_bits(move, 11, 9); };
         constexpr uint8_t dst_fle() const { return get_bits(move, 8, 6); };
 
-        constexpr MoveFlags flags() const { return (MoveFlags) get_bits(move, 15, 12); };
+        constexpr MoveFlags flags() const { return static_cast<MoveFlags>(get_bits(move, 15, 12)); };
         constexpr PieceTypes promo_type() const { return static_cast<PieceTypes>((static_cast<int>(flags()) & 0b0011) + 2); };
 
         constexpr bool is_null_move() const { return move == 0; };
@@ -61,6 +61,7 @@ class Move {
         constexpr bool is_castling_move() const { return flags() == MoveFlags::QUEENSIDE_CASTLE || flags() == MoveFlags::KINGSIDE_CASTLE; };
         constexpr bool is_quiet() const { return !(is_capture() || is_promotion()); };
         constexpr bool is_noisy() const { return !is_quiet(); };
+        constexpr auto is_underpromotion() const { return is_promotion() && (promo_type() == PieceTypes::BISHOP || promo_type() == PieceTypes::ROOK); };
 
         constexpr uint16_t hist_idx(Side stm) const { return (static_cast<int>(stm) << 12) + get_bits(move, 11, 0); };
 };

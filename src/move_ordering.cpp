@@ -32,7 +32,7 @@ auto MovePicker::pick_good_noisies() -> std::optional<ScoredMove> {
     } 
     auto move = opt_move.value();
     move.see_ordering_result = Search::static_exchange_evaluation(pos, move.move, -20);
-    if (move.see_ordering_result) {
+    if (move.see_ordering_result && !move.move.is_underpromotion()) {
         return move;
     } else {
         bad_noisies.add(move);
