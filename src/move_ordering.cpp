@@ -34,7 +34,7 @@ auto MovePicker::pick_good_noisies() -> std::optional<ScoredMove> {
         return std::nullopt; // because we've evaluated all noisies
     } 
     auto move = opt_move.value();
-    move.see_ordering_result = Search::static_exchange_evaluation(pos, move.move, -20);
+    move.see_ordering_result = Search::static_exchange_evaluation(pos, move.move, -move.score / 4);
     if (move.see_ordering_result) {
         return move;
     } else {
