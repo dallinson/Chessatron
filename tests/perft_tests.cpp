@@ -19,7 +19,7 @@ TEST(PerftTests, TestStartPos) {
 
 TEST(PerftTests, TestKiwipete) {
     Position pos;
-    pos.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");
+    pos.set_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
     ASSERT_EQ(Perft::run_perft(pos, 1), 48);
     ASSERT_EQ(Perft::run_perft(pos, 2), 2039);
     ASSERT_EQ(Perft::run_perft(pos, 3), 97862);
@@ -29,7 +29,7 @@ TEST(PerftTests, TestKiwipete) {
 
 TEST(PerftTests, TestPosition3) {
     Position pos;
-    pos.set_from_fen("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - ");
+    pos.set_from_fen("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1");
     ASSERT_EQ(Perft::run_perft(pos, 1), 14);
     ASSERT_EQ(Perft::run_perft(pos, 2), 191);
     ASSERT_EQ(Perft::run_perft(pos, 3), 2812);

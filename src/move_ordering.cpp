@@ -54,13 +54,11 @@ auto MovePicker::pick_move(MoveList& moves_to_search) -> std::optional<ScoredMov
         return std::nullopt;
     }
 
-    auto best_score = moves_to_search[idx].score;
     auto best_idx = idx;
     for (usize i = idx + 1; i < moves_to_search.size(); i++) {
         // No need to check idx; we can swap with itself
-        if (moves_to_search[i].score > best_score) {
-            best_score = moves_to_search[i].score;
-            best_idx = idx;
+        if (moves_to_search[i].score > moves_to_search[best_idx].score) {
+            best_idx = i;
         }
     }
     std::swap(moves_to_search[idx], moves_to_search[best_idx]);
