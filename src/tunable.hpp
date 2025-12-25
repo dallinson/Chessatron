@@ -27,8 +27,8 @@ class Tunable {
         operator T() const { return value; };
 };
 
-using TunableInt = Tunable<int>;
-using TunableFloat = Tunable<double>;
+using TunableInt = Tunable<i32>;
+using TunableFloat = Tunable<f64>;
 
 template<>
 inline TunableInt::Tunable(std::string_view name, int value, int min, int max, double desired_learning_rate, std::function<void(void)> custom_callback) {
@@ -59,8 +59,8 @@ inline TunableFloat::Tunable(std::string_view name, double value, double min, do
     uci_options().insert(std::make_pair(this->name, UCIOption(this->min, this->max, std::to_string(this->value), UCIOptionTypes::TUNE_STRING, [this, custom_callback](UCIOption& opt) { this->value = std::stod(opt); custom_callback(); })));
 }
 #else
-using TunableInt = int;
-using TunableFloat = double;
+using TunableInt = i32;
+using TunableFloat = f64;
 #define TUNABLE_INT(name, val, min, max) (val)
 #define TUNABLE_FLOAT(name, val, min, max) (val)
 #define TUNABLE_INT_CALLBACK(name, val, min, max, learning_rate, callback) (val)

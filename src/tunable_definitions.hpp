@@ -31,3 +31,6 @@ inline void update_see_values() {
 }
 #endif
 };
+
+TUNABLE_SPECIFIER TunableInt ordering_noisy_history_divisor = TUNABLE_INT("ordering_noisy_history_divisor", 64, 4, 128);
+TUNABLE_SPECIFIER TunableInt ordering_noisy_see_threshold_divisor = TUNABLE_INT("ordering_noisy_see_threshold_divisor", 4, 1, 16);

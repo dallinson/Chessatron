@@ -6,7 +6,7 @@
 #include "evaluation.hpp"
 #include "move_generator.hpp"
 #include "search.hpp"
-
+#include "tunable_definitions.hpp"
 
 auto MovePicker::score_noisies() -> void {
     for (auto& move : moves) {
@@ -14,7 +14,7 @@ auto MovePicker::score_noisies() -> void {
                                     ? PieceTypes::PAWN
                                     : pos.piece_at(move.move.dst_sq()).type();
         const auto dest_score = Search::SEEScores[static_cast<u8>(dest_type)];
-        move.score = hist_table.capthist_score(board_hist, move.move) / 64;
+        move.score = hist_table.capthist_score(board_hist, move.move) / ordering_noisy_history_divisor;
         move.score += dest_score;
         if (move.move.is_promotion()) {
             move.score += (Search::SEEScores[static_cast<u8>(move.move.promo_type())] - Search::SEEScores[static_cast<u8>(PieceTypes::PAWN)]);
@@ -34,7 +34,7 @@ auto MovePicker::pick_good_noisies() -> std::optional<ScoredMove> {
         return std::nullopt; // because we've evaluated all noisies
     } 
     auto move = opt_move.value();
-    move.see_ordering_result = Search::static_exchange_evaluation(pos, move.move, -move.score / 4);
+    move.see_ordering_result = Search::static_exchange_evaluation(pos, move.move, -move.score / ordering_noisy_see_threshold_divisor);
     if (move.see_ordering_result) {
         return move;
     } else {
