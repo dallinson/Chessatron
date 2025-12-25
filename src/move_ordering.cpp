@@ -14,7 +14,7 @@ auto MovePicker::score_noisies() -> void {
                                     ? PieceTypes::PAWN
                                     : pos.piece_at(move.move.dst_sq()).type();
         const auto dest_score = Search::SEEScores[static_cast<u8>(dest_type)];
-        move.score = hist_table.capthist_score(board_hist, move.move) / 16;
+        move.score = hist_table.capthist_score(board_hist, move.move) / 64;
         move.score += dest_score;
         if (move.move.is_promotion()) {
             move.score += (Search::SEEScores[static_cast<u8>(move.move.promo_type())] - Search::SEEScores[static_cast<u8>(PieceTypes::PAWN)]);
