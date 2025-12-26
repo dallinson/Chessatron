@@ -44,8 +44,8 @@ inline MDArray<i32, MAX_PLY + 1, MAX_TURN_MOVE_COUNT + 1> LmrTable;
 inline MDArray<i32, MAX_PLY + 1, MAX_TURN_MOVE_COUNT + 1> generate_lmr_table();
 inline void recompute_table() { LmrTable = generate_lmr_table(); };
 
-TUNABLE_SPECIFIER auto log_table_offset = TUNABLE_FLOAT_CALLBACK("lmr_table_offset", 0.3428, 0.05, 0.95, 0.002, [](){ recompute_table(); });
-TUNABLE_SPECIFIER auto log_table_divisor = TUNABLE_FLOAT_CALLBACK("lmr_table_divisor", 2.1491, 1.0, 3.0, 0.002, [](){ recompute_table(); });
+TUNABLE_SPECIFIER auto log_table_offset = TUNABLE_FLOAT_CALLBACK("lmr_table_offset", 0.3290, 0.05, 0.95, 0.002, [](){ recompute_table(); });
+TUNABLE_SPECIFIER auto log_table_divisor = TUNABLE_FLOAT_CALLBACK("lmr_table_divisor", 2.1977, 1.0, 3.0, 0.002, [](){ recompute_table(); });
 
 inline MDArray<i32, MAX_PLY + 1, MAX_TURN_MOVE_COUNT + 1> generate_lmr_table() {
     MDArray<i32, MAX_PLY + 1, MAX_TURN_MOVE_COUNT + 1> to_return = {};

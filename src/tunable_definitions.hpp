@@ -5,11 +5,11 @@
 #include "tunable.hpp"
 #include "utils.hpp"
 
-constexpr auto default_see_pawn_value = 94;
-constexpr auto default_see_knight_value = 276;
-constexpr auto default_see_bishop_value = 296;
-constexpr auto default_see_rook_value = 474;
-constexpr auto default_see_queen_value = 933;
+constexpr auto default_see_pawn_value = 90;
+constexpr auto default_see_knight_value = 268;
+constexpr auto default_see_bishop_value = 301;
+constexpr auto default_see_rook_value = 490;
+constexpr auto default_see_queen_value = 937;
 
 namespace Search {
     TUNABLE_SPECIFIER std::array<Score, 7> SEEScores = { 0, default_see_pawn_value, default_see_knight_value, default_see_bishop_value, default_see_rook_value, default_see_queen_value, 0 };
