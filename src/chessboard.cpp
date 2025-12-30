@@ -118,6 +118,7 @@ void Position::print_board() const {
     fmt::println("En passant file: {}", ep_chr);
     fmt::println("Halfmove counter: {}", halfmove_clock);
     fmt::println("Fullmove counter: {}", fullmove_counter);
+    fmt::println("FEN: {}", to_fen());
 }
 
 #define RETURN_NONE_IF_PAST_END                                                                                                                      \
@@ -593,4 +594,72 @@ bool operator==(const Position& lhs, const Position& rhs) {
     }
 
     return is_equal;
+}
+
+auto Position::to_fen() const -> std::string {
+    std::string to_return;
+    i32 squares_since_piece = 0;
+    for (i32 rank = 7; rank >= 0; rank--) {
+        for (i32 file = 0; file <= 7; file++) {
+            const auto curr_piece = piece_at(static_cast<Square>((rank * 8) + file));
+            if (curr_piece.type() == PieceTypes::NONE) {
+                squares_since_piece += 1;
+            } else {
+                if (squares_since_piece != 0) {
+                    to_return += (squares_since_piece + '0');
+                    squares_since_piece = 0;
+                }
+                to_return += curr_piece.to_fen();
+            }
+        }
+        if (squares_since_piece != 0) {
+            to_return += (squares_since_piece + '0');
+            squares_since_piece = 0;
+        }
+        if (rank != 0) {
+            to_return += '/';
+        }
+    }
+
+    to_return += ' ';
+    to_return += (stm() == Side::WHITE ? 'w' : 'b');
+
+    to_return += ' ';
+    // castling!
+    const auto is_normal = castling_file(Side::WHITE, false) == 0 && castling_file(Side::BLACK, false) == 0 && castling_file(Side::WHITE, true) == 7 && castling_file(Side::WHITE, true) == 7;
+    const auto can_castle = get_castling() != 0;
+    if (!can_castle) {
+        to_return += '-';
+    } else {
+        if (get_kingside_castling(Side::WHITE)) {
+            to_return += is_normal ? 'K' : (castling_file(Side::WHITE, true) + 'A');
+        }
+        if (get_queenside_castling(Side::WHITE)) {
+            to_return += is_normal ? 'Q' : (castling_file(Side::WHITE, false) + 'A');
+        }
+
+        if (get_kingside_castling(Side::BLACK)) {
+            to_return += is_normal ? 'k' : (castling_file(Side::BLACK, true) + 'a');
+        }
+        if (get_queenside_castling(Side::BLACK)) {
+            to_return += is_normal ? 'q' : (castling_file(Side::BLACK, false) + 'a');
+        }
+    }
+
+    to_return += ' ';
+    // ep square
+    if (en_passant_file == 9) {
+        to_return += '-';
+    } else {
+        to_return += ('a' + en_passant_file);
+        to_return += (stm() == Side::WHITE ? '6' : '3');
+    }
+
+    to_return += ' ';
+    to_return += std::to_string(halfmove_clock);
+
+    to_return += ' ';
+    to_return += std::to_string(fullmove_counter);
+
+    return to_return;
 }
