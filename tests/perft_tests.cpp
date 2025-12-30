@@ -77,3 +77,13 @@ TEST(PerftTests, TestCastlingPosition) {
     ASSERT_EQ(Perft::run_perft(pos, 4), 591483);
     ASSERT_EQ(Perft::run_perft(pos, 5), 13795582);
 }
+
+TEST(PerftTests, TestChess960Position) {
+    Position pos;
+    pos.set_from_fen("nbkr1qbr/1pp1pppp/pn1p4/8/3P2P1/5R2/PPP1PP1P/NBN1KQBR w H - 2 9 ");
+    ASSERT_EQ(Perft::run_perft(pos, 1), 30);
+    ASSERT_EQ(Perft::run_perft(pos, 2), 627);
+    ASSERT_EQ(Perft::run_perft(pos, 3), 18669);
+    ASSERT_EQ(Perft::run_perft(pos, 4), 423329);
+    ASSERT_EQ(Perft::run_perft(pos, 5), 12815016);
+}

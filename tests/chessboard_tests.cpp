@@ -347,3 +347,21 @@ TEST(ChessBoardTests, TestUnmakeScores) {
         ASSERT_EQ(pos.get_score(Side::WHITE), mg_score) << "Score mismatch on move " << fmt::format("{}", moves[i].move);
     }
 }
+
+TEST(ChessBoardTests, TestBoardToFen) {
+    Position pos;
+    ASSERT_TRUE(pos.set_from_fen("startpos"));
+    ASSERT_STREQ(pos.to_fen().c_str(), "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+
+    auto board_hist = BoardHistory(pos);
+    pos = pos.make_move(pos.generate_move_from_string("c2c4").value(), board_hist);
+    pos = pos.make_move(pos.generate_move_from_string("b8a6").value(), board_hist);
+    pos = pos.make_move(pos.generate_move_from_string("c4c5").value(), board_hist);
+    pos = pos.make_move(pos.generate_move_from_string("d7d5").value(), board_hist);
+
+    ASSERT_STREQ(pos.to_fen().c_str(), "r1bqkbnr/ppp1pppp/n7/2Pp4/8/8/PP1PPPPP/RNBQKBNR w KQkq d6 0 3");
+
+
+    pos.set_from_fen("nrbkqnrb/pppppppp/8/8/8/8/PPPPPPPP/NRBKQNRB w KQkq - 0 1");
+    ASSERT_STREQ(pos.to_fen().c_str(), "nrbkqnrb/pppppppp/8/8/8/8/PPPPPPPP/NRBKQNRB w GBgb - 0 1");
+}

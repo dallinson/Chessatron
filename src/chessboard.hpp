@@ -170,6 +170,7 @@ class Position {
         ZobristKey key_after(const Move move) const;
 
         std::optional<Move> generate_move_from_string(const std::string& m) const;
+        auto to_fen() const -> std::string;
 };
 
 bool operator==(const Position& lhs, const Position& rhs);
