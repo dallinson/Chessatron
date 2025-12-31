@@ -142,6 +142,9 @@ bool MoveGenerator::is_move_legal(const Position& c, const Move m) {
     const auto king_idx = c.kings(c.stm()).lsb();
     const auto move_side = static_cast<Side>(c.occupancy(Side::BLACK)[m.src_sq()]);
     const Side enemy = enemy_side(move_side);
+    if (c.checkers().popcnt() >= 2 && !c.kings()[m.src_sq()]) {
+        return false;
+    }
     if (m.flags() == MoveFlags::EN_PASSANT_CAPTURE) {
         // with en passant knights and pawns _cannot_ capture as the previous
         // move was moving a pawn, and therefore knights/pawns were not in
