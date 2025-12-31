@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <barrier>
 #include <cstdint>
 #include <future>
 #include <mutex>
@@ -100,9 +101,9 @@ struct PvTable {
 class SearchHandler {
     private:
         std::thread search_thread;
-        std::binary_semaphore semaphore{0};
+        std::barrier<> search_barrier = std::barrier<>(2);
         std::mutex search_mutex;
-        std::condition_variable cv;
+        std::condition_variable bench_cv;
         
         BoardHistory board_hist;
         HistoryTable history_table;

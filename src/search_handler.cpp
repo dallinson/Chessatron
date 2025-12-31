@@ -10,7 +10,7 @@
 void SearchHandler::search_thread_function() {
     int this_search_id;
     while (true) {
-        semaphore.acquire();
+        search_barrier.arrive_and_wait();
         this_search_id = current_search_id;
         if (this->shutting_down) {
             return;
@@ -37,7 +37,7 @@ void SearchHandler::search_thread_function() {
             }
         }
         in_search = false;
-        cv.notify_all();
+        bench_cv.notify_all();
     }
 }
 
@@ -45,7 +45,7 @@ void SearchHandler::shutdown() {
     this->shutting_down = true;
     this->search_cancelled = true;
     // If we're in a search, quit searching ASAP
-    semaphore.release();
+    search_barrier.arrive_and_drop();
     this->search_thread.join();
 }
 
@@ -60,7 +60,7 @@ void SearchHandler::search(const TimeControlInfo& tc) {
     // cancel a search if performing one
     in_search = true;
     this->tc = tc;
-    semaphore.release();
+    search_barrier.arrive_and_wait();
     // We then wake up the search thread
     int id_to_cancel = current_search_id;
     const auto tc_search_time = TimeManagement::get_search_time(tc);
@@ -81,7 +81,7 @@ void SearchHandler::run_perft(uint16_t depth) {
     perft_depth = depth;
     should_perft = true;
     in_search = true;
-    semaphore.release();
+    search_barrier.arrive_and_wait();
 }
 
 void SearchHandler::reset() {
@@ -155,7 +155,7 @@ void SearchHandler::run_bench(uint16_t depth) {
         pos.set_from_fen(fen);
         this->set_pos(pos);
         this->search(DepthTC{depth});
-        cv.wait(lock, [this] { return !this->is_searching(); });
+        bench_cv.wait(lock, [this] { return !this->is_searching(); });
         // loop until search completes
         total_nodes += node_count;
         fmt::println("{} {}", fen, node_count);
