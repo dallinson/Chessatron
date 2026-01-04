@@ -37,7 +37,6 @@ void SearchHandler::search_thread_function() {
             }
         }
         in_search = false;
-        cv.notify_all();
     }
 }
 
@@ -149,13 +148,13 @@ void SearchHandler::run_bench(uint16_t depth) {
     uint64_t total_nodes = 0;
     const auto start = std::chrono::steady_clock::now();
     for (const auto& fen : fens) {
-        std::unique_lock<std::mutex> lock(search_mutex);
         this->reset();
         Position pos;
         pos.set_from_fen(fen);
         this->set_pos(pos);
-        this->search(DepthTC{depth});
-        cv.wait(lock, [this] { return !this->is_searching(); });
+        this->tc = DepthTC{depth};
+        search_cancelled = false;
+        run_iterative_deepening_search();
         // loop until search completes
         total_nodes += node_count;
         fmt::println("{} {}", fen, node_count);

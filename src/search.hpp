@@ -102,7 +102,6 @@ class SearchHandler {
         std::thread search_thread;
         std::binary_semaphore semaphore{0};
         std::mutex search_mutex;
-        std::condition_variable cv;
         
         BoardHistory board_hist;
         HistoryTable history_table;
