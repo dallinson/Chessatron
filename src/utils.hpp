@@ -10,6 +10,7 @@ using ZobristKey = uint64_t;
 using Score = int16_t;
 
 using u8 = uint8_t;
+using u32 = uint32_t;
 using u64 = uint64_t;
 using usize = size_t;
 

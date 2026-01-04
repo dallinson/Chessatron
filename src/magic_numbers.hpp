@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <limits>
 
-#include "bitboard.hpp"
+#include "utils/bitboard.hpp"
 #include "mdarray.hpp"
 #include "utils.hpp"
 

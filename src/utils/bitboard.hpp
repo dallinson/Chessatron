@@ -3,7 +3,7 @@
 #include <cassert>
 #include <cstdint>
 
-#include "utils.hpp"
+#include "../utils.hpp"
 
 struct Bitboard {
     public:

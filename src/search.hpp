@@ -16,6 +16,7 @@
 #include "time_management.hpp"
 #include "ttable.hpp"
 #include "tunable.hpp"
+#include "utils/barrier.hpp"
 
 constexpr auto default_see_pawn_value = 94;
 constexpr auto default_see_knight_value = 276;
@@ -100,8 +101,8 @@ struct PvTable {
 class SearchHandler {
     private:
         std::thread search_thread;
-        std::binary_semaphore semaphore{0};
         std::mutex search_mutex;
+        Barrier barrier = Barrier(2);
         
         BoardHistory board_hist;
         HistoryTable history_table;
