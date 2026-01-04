@@ -10,7 +10,7 @@
 void SearchHandler::search_thread_function() {
     int this_search_id;
     while (true) {
-        semaphore.acquire();
+        barrier.wait();
         this_search_id = current_search_id;
         if (this->shutting_down) {
             return;
@@ -44,7 +44,7 @@ void SearchHandler::shutdown() {
     this->shutting_down = true;
     this->search_cancelled = true;
     // If we're in a search, quit searching ASAP
-    semaphore.release();
+    barrier.wait();
     this->search_thread.join();
 }
 
@@ -59,7 +59,7 @@ void SearchHandler::search(const TimeControlInfo& tc) {
     // cancel a search if performing one
     in_search = true;
     this->tc = tc;
-    semaphore.release();
+    barrier.wait();
     // We then wake up the search thread
     int id_to_cancel = current_search_id;
     const auto tc_search_time = TimeManagement::get_search_time(tc);
@@ -80,7 +80,7 @@ void SearchHandler::run_perft(uint16_t depth) {
     perft_depth = depth;
     should_perft = true;
     in_search = true;
-    semaphore.release();
+    barrier.wait();
 }
 
 void SearchHandler::reset() {

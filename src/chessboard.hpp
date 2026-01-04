@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <optional>
 
-#include "bitboard.hpp"
+#include "utils/bitboard.hpp"
 #include "move.hpp"
 #include "pieces.hpp"
 #include "utils.hpp"
