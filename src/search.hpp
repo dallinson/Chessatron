@@ -103,6 +103,8 @@ class SearchHandler {
         std::thread search_thread;
         std::mutex search_mutex;
         Barrier barrier = Barrier(2);
+        std::mutex supervisor_mutex;
+        std::condition_variable supervisor_cv;
         
         BoardHistory board_hist;
         HistoryTable history_table;
