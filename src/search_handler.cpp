@@ -37,6 +37,7 @@ void SearchHandler::search_thread_function() {
             }
         }
         in_search = false;
+        supervisor_cv.notify_all();
     }
 }
 
@@ -63,11 +64,15 @@ void SearchHandler::search(const TimeControlInfo& tc) {
     // We then wake up the search thread
     int id_to_cancel = current_search_id;
     const auto tc_search_time = TimeManagement::get_search_time(tc);
+    const auto tc_end_time = std::chrono::steady_clock::now() + std::chrono::milliseconds(tc_search_time);
     if (TimeManagement::is_time_based_tc(tc)) {
-        cancelFuture = std::async(std::launch::async, [tc_search_time, this, id_to_cancel]() {
-            std::this_thread::sleep_for(std::chrono::milliseconds{tc_search_time});
+        cancelFuture = std::async(std::launch::async, [this, id_to_cancel, tc_end_time]() {
+            auto lk = std::unique_lock(supervisor_mutex);
+            supervisor_cv.wait_until(lk, tc_end_time, [&]() {
+                return !in_search || current_search_id != id_to_cancel || shutting_down;
+            });
             if (this->get_current_search_id() == id_to_cancel) {
-                // only cancel the current searcg
+                // only cancel the current search
                 this->EndSearch();
             }
         });
