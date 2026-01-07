@@ -25,7 +25,7 @@ class HistoryTable {
         std::unique_ptr<MDArray<Score, 1024, 1024>> cont_corr_hist;
 
         static size_t calc_hist_idx(Move move, Side stm) { return move.hist_idx(stm); };
-        static HistoryValue bonus(int depth) { return std::min(16 * (depth + 1) * (depth + 1), 1200); };
+        static HistoryValue bonus(int depth) { return 16 * (depth + 1) * (depth + 1); };
         static HistoryValue malus(int depth) { return -bonus(depth); };
 
     public:
