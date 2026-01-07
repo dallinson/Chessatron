@@ -314,15 +314,17 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
         return false;
     }();
 
+    const bool beta_is_losing_mate = beta <= (MagicNumbers::NegativeInfinity + MAX_PLY);
+
     // Reverse futility pruning
     if constexpr (!is_pv_node(node_type)) {
-        if (!old_pos.in_check() && depth < rfp_depth && (static_eval - (rfp_margin * depth)) >= beta && !in_singular_search) {
+        if (!old_pos.in_check() && depth < rfp_depth && (static_eval - (rfp_margin * depth)) >= beta && !in_singular_search && !beta_is_losing_mate) {
             return static_eval;
         }
     }
 
     if constexpr (!is_pv_node(node_type)) {
-        if (!old_pos.in_check() && static_eval < alpha - razoring_offset - razoring_multi * depth * depth && !in_singular_search) {
+        if (!old_pos.in_check() && static_eval < alpha - razoring_offset - razoring_multi * depth * depth && !in_singular_search && !beta_is_losing_mate) {
             const auto razoring_score = quiescent_search<NodeTypes::NON_PV_NODE>(old_pos, alpha - 1, alpha, ply + 1, node_count);
             if (razoring_score < alpha) {
                 return razoring_score;
@@ -331,7 +333,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     }
 
     if constexpr (!is_pv_node(node_type)) {
-        if (static_eval >= beta && !old_pos.in_check() && depth >= nmp_depth && !in_singular_search) {
+        if (static_eval >= beta && !old_pos.in_check() && depth >= nmp_depth && !in_singular_search && !beta_is_losing_mate) {
             // Try null move pruning if we aren't in check
 
             if (!board_hist.move_at(board_hist.len() - 1).is_null_move()) {
