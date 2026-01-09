@@ -77,7 +77,7 @@ std::optional<ScoredMove> MovePicker::next(const bool skip_quiets) {
     } else if (stage == MovePickerStage::PICK_GOOD_NOISY) {
         const auto to_return = pick_good_noisies();
         if (!to_return.has_value()) {
-            stage = is_quiescence ? MovePickerStage::GEN_BAD_NOISY : MovePickerStage::KILLER;
+            stage = MovePickerStage::KILLER;
             return next(skip_quiets);
         } else if (to_return.value().move == tt_move) {
             return next(skip_quiets);
@@ -131,6 +131,20 @@ std::optional<ScoredMove> MovePicker::next(const bool skip_quiets) {
             return std::nullopt;
         }
         if (to_return->move == tt_move || to_return->move == killer_move) {
+            return next(skip_quiets);
+        }
+        assert(!to_return->move.is_null_move());
+        return to_return;
+    } else if (stage == MovePickerStage::QSEARCH_GEN_NOISY) {
+        moves = MoveGenerator::generate_legal_moves<MoveGenType::QUIESCENCE>(pos, pos.stm());
+        stage = MovePickerStage::QSEARCH_PICK_GOOD_NOISY;
+        idx = 0;
+        score_noisies();
+        return next(skip_quiets);
+    } else if (stage == MovePickerStage::QSEARCH_PICK_GOOD_NOISY) {
+        const auto to_return = pick_good_noisies();
+        if (!to_return.has_value()) {
+            stage = MovePickerStage::GEN_BAD_NOISY;
             return next(skip_quiets);
         }
         assert(!to_return->move.is_null_move());

@@ -19,6 +19,9 @@ enum class MovePickerStage {
     GEN_BAD_NOISY,
     PICK_BAD_NOISY,
 
+    QSEARCH_GEN_NOISY,
+    QSEARCH_PICK_GOOD_NOISY,
+
     NONE
 };
 
@@ -55,8 +58,10 @@ class MovePicker {
               depth(depth) {
                 idx = 0;
                 stage = [&] {
-                    if (tt_move.is_null_move() || is_quiescence) {
+                    if (tt_move.is_null_move()) {
                         return MovePickerStage::GEN_NOISY;
+                    } else if (is_quiescence) {
+                        return MovePickerStage::QSEARCH_GEN_NOISY;
                     } else {
                         return MovePickerStage::TT_MOVE;
                     }
