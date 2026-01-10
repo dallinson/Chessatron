@@ -85,12 +85,7 @@ std::optional<ScoredMove> MovePicker::next(const bool skip_quiets) {
         assert(!to_return->move.is_null_move());
         return to_return;
     } else if (stage == MovePickerStage::KILLER) {
-        if (is_quiescence) {
-            // If the qsearch is in check it's considered to _not_ be a quiescent search
-            stage = MovePickerStage::GEN_BAD_NOISY;
-        } else {
-            stage = MovePickerStage::GEN_QUIET;
-        }
+        stage = MovePickerStage::GEN_QUIET;
         if (killer_move == tt_move || killer_move.is_null_move() || !(MoveGenerator::is_move_pseudolegal(pos, killer_move) && MoveGenerator::is_move_legal(pos, killer_move))) {
             return next(skip_quiets);
         }

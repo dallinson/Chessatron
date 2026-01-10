@@ -58,10 +58,10 @@ class MovePicker {
               depth(depth) {
                 idx = 0;
                 stage = [&] {
-                    if (tt_move.is_null_move()) {
-                        return MovePickerStage::GEN_NOISY;
-                    } else if (is_quiescence) {
+                     if (is_quiescence) {
                         return MovePickerStage::QSEARCH_GEN_NOISY;
+                    } else if (tt_move.is_null_move()) {
+                        return MovePickerStage::GEN_NOISY;
                     } else {
                         return MovePickerStage::TT_MOVE;
                     }
