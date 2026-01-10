@@ -18,6 +18,8 @@ enum class MoveGenType {
 
 constexpr bool gen_quiets(MoveGenType gen_type) { return gen_type == MoveGenType::ALL_LEGAL || gen_type == MoveGenType::NON_QUIESCENCE || gen_type == MoveGenType::QUIETS; };
 constexpr bool gen_noisies(MoveGenType gen_type) { return gen_type == MoveGenType::ALL_LEGAL || gen_type == MoveGenType::QUIESCENCE || gen_type == MoveGenType::NOISY; };
+constexpr bool gen_good_promos(MoveGenType gen_type) { return gen_type == MoveGenType::ALL_LEGAL || gen_type == MoveGenType::QUIESCENCE || gen_type == MoveGenType::NOISY; };
+constexpr bool gen_bad_promos(MoveGenType gen_type) { return gen_type == MoveGenType::ALL_LEGAL || gen_type == MoveGenType::NON_QUIESCENCE || gen_type == MoveGenType::NOISY; };
 
 namespace MoveGenerator {
     template <MoveGenType gen_type> MoveList generate_legal_moves(const Position& c, const Side side);
@@ -137,11 +139,15 @@ template <PieceTypes piece_type, MoveGenType gen_type> void MoveGenerator::gener
     }
 }
 
-template <MoveFlags base_flags> void gen_promotions(MoveList& move_list, const Square src, const Square dst) {
-    move_list.add(Move(MoveFlags::QUEEN_PROMOTION | base_flags, dst, src));
-    move_list.add(Move(MoveFlags::KNIGHT_PROMOTION | base_flags, dst, src));
-    move_list.add(Move(MoveFlags::ROOK_PROMOTION | base_flags, dst, src));
-    move_list.add(Move(MoveFlags::BISHOP_PROMOTION | base_flags, dst, src));
+template <MoveFlags base_flags, MoveGenType gen_type> void gen_promotions(MoveList& move_list, const Square src, const Square dst) {
+    if (gen_good_promos(gen_type)) {
+        move_list.add(Move(MoveFlags::QUEEN_PROMOTION | base_flags, dst, src));
+        move_list.add(Move(MoveFlags::KNIGHT_PROMOTION | base_flags, dst, src));
+    }
+    if (gen_bad_promos(gen_type)) {
+        move_list.add(Move(MoveFlags::ROOK_PROMOTION | base_flags, dst, src));
+        move_list.add(Move(MoveFlags::BISHOP_PROMOTION | base_flags, dst, src));
+    }
 }
 
 template <MoveGenType gen_type> void MoveGenerator::generate_pawn_moves(const Position& c, const Side stm, MoveList& move_list) {
@@ -176,7 +182,7 @@ template <MoveGenType gen_type> void MoveGenerator::generate_pawn_moves(const Po
     if constexpr (gen_noisies(gen_type)) {
         while (!promotable.empty()) {
             const auto lsb = promotable.pop_lsb();
-            gen_promotions<MoveFlags::QUIET_MOVE>(move_list, lsb - ahead, lsb);
+            gen_promotions<MoveFlags::QUIET_MOVE, gen_type>(move_list, lsb - ahead, lsb);
         }
     }
 
@@ -202,7 +208,7 @@ template <MoveGenType gen_type> void MoveGenerator::generate_pawn_moves(const Po
             while (!capturing_pieces.empty()) {
                 const auto lsb = capturing_pieces.pop_lsb();
                 if (rank(lsb) == back_rank) {
-                    gen_promotions<MoveFlags::CAPTURE>(move_list, lsb - offset, lsb);
+                    gen_promotions<MoveFlags::CAPTURE, gen_type>(move_list, lsb - offset, lsb);
                 } else {
                     move_list.add(Move(MoveFlags::CAPTURE, lsb, lsb - offset));
                 }
@@ -221,7 +227,7 @@ template <MoveGenType gen_type> void MoveGenerator::generate_pawn_moves(const Po
             while (!capturing_pieces.empty()) {
                 const auto lsb = capturing_pieces.pop_lsb();
                 if (rank(lsb) == back_rank) {
-                    gen_promotions<MoveFlags::CAPTURE>(move_list, lsb - offset, lsb);
+                    gen_promotions<MoveFlags::CAPTURE, gen_type>(move_list, lsb - offset, lsb);
                 } else {
                     move_list.add(Move(MoveFlags::CAPTURE, lsb, lsb - offset));
                 }
