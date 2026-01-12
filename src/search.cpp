@@ -505,7 +505,9 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
                         search_stack[ply].killer_move = move.move;
                     }
                     history_table.update_scores(board_hist, evaluated_moves, move, old_pos.stm(), depth);
-                    break;
+                    if (node_type != NodeTypes::ROOT_NODE) {
+                        break;
+                    }
                 }
                 alpha = score;
             }
