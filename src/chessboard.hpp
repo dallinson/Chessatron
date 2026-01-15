@@ -92,6 +92,8 @@ class Position {
             return piece_bbs[bb_idx(PieceTypes::PAWN)] & side_bbs[static_cast<uint8_t>(side)];
         };
 
+        inline auto has_valuable_pieces() const { return !(occupancy() ^ (kings() | pawns())).empty(); };
+
         inline Piece piece_at(const Square sq) const {
             return piece_mb[sq_to_int(sq)];
         }
