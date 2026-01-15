@@ -331,7 +331,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     }
 
     if constexpr (!is_pv_node(node_type)) {
-        if (static_eval >= beta && !old_pos.in_check() && depth >= nmp_depth && !in_singular_search) {
+        if (static_eval >= beta && !old_pos.in_check() && depth >= nmp_depth && !in_singular_search && old_pos.has_valuable_pieces()) {
             // Try null move pruning if we aren't in check
 
             if (!board_hist.move_at(board_hist.len() - 1).is_null_move()) {
