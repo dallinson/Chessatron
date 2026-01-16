@@ -53,6 +53,8 @@ class Piece {
             }
             return to_return;
         }
+
+        constexpr auto is_valuable() const -> bool { return type() != PieceTypes::PAWN && type() != PieceTypes::KING; };
 };
 
 inline bool operator==(const Piece& lhs, const Piece& rhs) { return lhs.val() == rhs.val(); }
