@@ -382,9 +382,11 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
         found_move = true;
         if (in_singular_search && search_stack[ply].excluded_move == move.move) continue;
 
+        const auto base_lmr_depth = depth - (LmrTable[depth][evaluated_moves.size()] / LMR_QUANT_CONSTANT);
+
         if constexpr (!is_pv_node(node_type)) {
             // late move pruning
-            if (depth <= lmp_depth && !old_pos.in_check() && move.move.is_quiet()
+            if (base_lmr_depth <= lmp_depth && !old_pos.in_check() && move.move.is_quiet()
                 && evaluated_moves.size() >= static_cast<size_t>(((depth * depth) + lmp_offset) / (2 - improving))) {
                 skip_quiets = true;
                 continue;
