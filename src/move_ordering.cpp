@@ -21,7 +21,7 @@ auto MovePicker::score_noisies() -> void {
 
 auto MovePicker::score_quiets() -> void {
     for (auto& move : moves) {
-        move.score = hist_table.score(board_hist, move.move, pos.stm());
+        move.score = hist_table.score(pos, board_hist, move.move, pos.stm());
     }
 }
 

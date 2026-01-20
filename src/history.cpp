@@ -4,23 +4,23 @@
 
 #include "search.hpp"
 
-HistoryValue HistoryTable::score(const BoardHistory& hist, Move move, Side stm) const {
+HistoryValue HistoryTable::score(const Position& pos, const BoardHistory& hist, Move move, Side stm) const {
     if (move.is_noisy()) {
         return capthist_score(hist, move);
     } else {
-        return mainhist_score(move, stm) + 2 * conthist_score(hist, move);
+        return mainhist_score(pos, move, stm) + 2 * conthist_score(hist, move);
     }
 }
 
-void HistoryTable::update_scores(const BoardHistory& hist, std::span<const Move> moves, ScoredMove current_move, Side stm, int depth) {
+void HistoryTable::update_scores(const Position& pos, const BoardHistory& hist, std::span<const Move> moves, ScoredMove current_move, Side stm, int depth) {
     const auto hist_bonus = bonus(depth);
     const auto hist_malus = malus(depth);
     if (!current_move.move.is_noisy()) {
-        update_mainhist_score(current_move.move, stm, hist_bonus);
+        update_mainhist_score(pos, current_move.move, stm, hist_bonus);
         update_conthist_score(hist, current_move.move, hist_bonus);
         std::for_each(moves.begin(), moves.end(), [&](Move move) {
             if (!move.is_noisy()) {
-                update_mainhist_score(move, stm, hist_malus);
+                update_mainhist_score(pos, move, stm, hist_malus);
                 update_conthist_score(hist, move, hist_malus);
             }
         });
@@ -34,9 +34,12 @@ void HistoryTable::update_scores(const BoardHistory& hist, std::span<const Move>
     });
 }
 
-void HistoryTable::update_mainhist_score(Move move, Side stm, HistoryValue bonus) {
-    const auto scaled_bonus = bonus - mainhist_score(move, stm) * std::abs(bonus) / 32768;
-    main_hist[move.hist_idx(stm)] += scaled_bonus;
+void HistoryTable::update_mainhist_score(const Position& pos, const Move move, const Side stm, HistoryValue bonus) {
+    const auto scaled_fromto_bonus = bonus - quiet_fromto_hist[fromto_idx(move, stm)] * std::abs(bonus) / 32768;
+    quiet_fromto_hist[move.hist_idx(stm)] += scaled_fromto_bonus;
+
+    const auto scaled_pieceto_bonus = bonus - quiet_pieceto_hist[pieceto_idx(pos, move, stm)] * std::abs(bonus) / 32768;
+    quiet_pieceto_hist[move.hist_idx(stm)] += scaled_pieceto_bonus;
 }
 
 

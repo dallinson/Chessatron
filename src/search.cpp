@@ -398,7 +398,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
             continue;
         }
 
-        const auto hist_score = history_table.score(board_hist, move.move, old_pos.stm());
+        const auto hist_score = history_table.score(old_pos, board_hist, move.move, old_pos.stm());
 
         // history pruning
         if constexpr (!is_pv_node(node_type)) {
@@ -504,7 +504,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
                     if (move.move.is_quiet()) {
                         search_stack[ply].killer_move = move.move;
                     }
-                    history_table.update_scores(board_hist, evaluated_moves, move, old_pos.stm(), depth);
+                    history_table.update_scores(old_pos, board_hist, evaluated_moves, move, old_pos.stm(), depth);
                     break;
                 }
                 alpha = score;
