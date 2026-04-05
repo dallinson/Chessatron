@@ -14,7 +14,8 @@
 TranspositionTable tt;
 
 TUNABLE_SPECIFIER auto rfp_depth = TUNABLE_INT("rfp_depth", 7, 3, 9);
-TUNABLE_SPECIFIER auto rfp_margin = TUNABLE_INT("rfp_margin", 70, 50, 90);
+TUNABLE_SPECIFIER auto rfp_depth_margin = TUNABLE_INT("rfp_depth_margin", 70, 50, 90);
+TUNABLE_SPECIFIER auto rfp_improving_margin = TUNABLE_INT("rfp_improving_margin", 35, 25, 45);
 
 TUNABLE_SPECIFIER auto razoring_offset = TUNABLE_INT("razoring_offset", 339, 200, 600);
 TUNABLE_SPECIFIER auto razoring_multi = TUNABLE_INT("razoring_multi", 239, 100, 400);
@@ -316,7 +317,8 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
     // Reverse futility pruning
     if constexpr (!is_pv_node(node_type)) {
-        if (!old_pos.in_check() && depth < rfp_depth && (static_eval - (rfp_margin * depth)) >= beta && !in_singular_search) {
+        const auto rfp_margin = rfp_depth_margin * depth - rfp_improving_margin * static_cast<i32>(improving);
+        if (!old_pos.in_check() && depth < rfp_depth && (static_eval - rfp_margin) >= beta && !in_singular_search) {
             return static_eval;
         }
     }
