@@ -87,7 +87,7 @@ Score HistoryTable::corrhist_score(const Position& pos, const Score static_eval,
 
     const i32 adjusted_score = static_eval + (entry * std::abs(entry)) / 16384;
 
-    return std::clamp(adjusted_score, -MATE_FOUND + 1, MATE_FOUND - 1);
+    return std::clamp(adjusted_score, MATED_IN_MAX_PLY + 1, MATE_IN_MAX_PLY - 1);
 }
 
 void HistoryTable::update_corrhist_score(const Position& pos, const Score static_eval, const Score search_score, const int depth, const BoardHistory& hist) {
