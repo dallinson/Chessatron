@@ -251,9 +251,9 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
             // Negative infinity is being mated at this square
             // A mate score is therefore greater than (positive_infinity - max_ply) or
             // less than (negative_infinity + max_ply)
-            if (entry->get().score() == MagicNumbers::PositiveInfinity) {
+            if (entry->get().score() >= MATE_IN_MAX_PLY) {
                 return MagicNumbers::PositiveInfinity - ply;
-            } else if (entry->get().score() <= (MagicNumbers::NegativeInfinity + MAX_PLY)) {
+            } else if (entry->get().score() <= MATED_IN_MAX_PLY) {
                 return MagicNumbers::NegativeInfinity + ply;
             }
             return entry->get().score();
@@ -274,7 +274,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     const auto raw_eval = [&]() {
         if (old_pos.in_check()) {
             return MagicNumbers::NegativeInfinity;
-        } else if (tt_hit && entry->get().static_eval() > (MagicNumbers::NegativeInfinity + MAX_PLY)) {
+        } else if (tt_hit && entry->get().static_eval() > MATED_IN_MAX_PLY) {
             return entry->get().static_eval();
         } else {
             return Evaluation::evaluate_board(old_pos);
@@ -290,7 +290,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     }();
 
     const auto static_eval = [&]() {
-        if (tt_hit && entry->get().score() > (MagicNumbers::NegativeInfinity + MAX_PLY)
+        if (tt_hit && entry->get().score() > MATED_IN_MAX_PLY
             && (entry->get().bound_type() == BoundTypes::EXACT_BOUND
                 || (entry->get().bound_type() == BoundTypes::LOWER_BOUND && entry->get().score() > raw_eval)
                 || (entry->get().bound_type() == BoundTypes::UPPER_BOUND && entry->get().score() < raw_eval))) {
@@ -342,7 +342,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
                 board_hist.pop_board();
                 if (null_score >= beta) {
-                    if (null_score > MagicNumbers::PositiveInfinity - MAX_PLY) {
+                    if (null_score > MATE_IN_MAX_PLY) {
                         return beta;
                     } else {
                         return null_score;
@@ -392,7 +392,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
         }
 
         // futility pruning
-        if (!old_pos.in_check() && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY) && !move.move.is_noisy() && depth <= fp_depth
+        if (!old_pos.in_check() && best_score > MATED_IN_MAX_PLY && !move.move.is_noisy() && depth <= fp_depth
             && static_eval + fp_multi * depth < alpha) {
             skip_quiets = true;
             continue;
@@ -408,7 +408,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
             }
         }
 
-        if (depth <= see_prune_depth && best_score > (MagicNumbers::NegativeInfinity + MAX_PLY)
+        if (depth <= see_prune_depth && best_score > MATED_IN_MAX_PLY
             && !Search::static_exchange_evaluation(
                 old_pos, move.move, move.move.is_noisy() ? (noisy_see_prune_multi * depth * depth) : (quiet_see_prune_multi * depth))) {
             continue;
@@ -423,7 +423,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
             if constexpr (node_type == NodeTypes::ROOT_NODE) return false;
             if (tt_hit && depth >= 8 && move.move == entry->get().move() && !in_singular_search
                 && entry->get().depth() + 4 >= depth && entry->get().bound_type() != BoundTypes::UPPER_BOUND
-                && std::abs(entry->get().score()) < (MagicNumbers::PositiveInfinity - MAX_PLY)) {
+                && std::abs(entry->get().score()) < MATE_IN_MAX_PLY) {
                     // Do SE
                     const auto se_depth = (depth - 1) / 2;
                     const auto se_beta = entry->get().score() - (3 * depth);
@@ -526,7 +526,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     const BoundTypes bound_type =
         (best_score >= beta ? BoundTypes::LOWER_BOUND : (alpha != original_alpha ? BoundTypes::EXACT_BOUND : BoundTypes::UPPER_BOUND));
 
-    if (!old_pos.in_check() && std::abs(best_score) < MATE_FOUND && (best_move.is_null_move() || best_move.is_quiet())
+    if (!old_pos.in_check() && std::abs(best_score) < MATE_IN_MAX_PLY && (best_move.is_null_move() || best_move.is_quiet())
         && !(bound_type == BoundTypes::LOWER_BOUND && best_score <= adjusted_eval)
         && !(bound_type == BoundTypes::UPPER_BOUND && best_score >= adjusted_eval)) {
         history_table.update_corrhist_score(old_pos, adjusted_eval, best_score, depth, board_hist);
@@ -555,7 +555,7 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
     const auto raw_eval = [&]() {
         if (old_pos.in_check()) {
             return MagicNumbers::NegativeInfinity;
-        } else if (tt_hit && entry->get().static_eval() > (MagicNumbers::NegativeInfinity + MAX_PLY)) {
+        } else if (tt_hit && entry->get().static_eval() > MATED_IN_MAX_PLY) {
             return entry->get().static_eval();
         } else {
             return Evaluation::evaluate_board(old_pos);
@@ -588,7 +588,7 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
     Move best_move = Move::NULL_MOVE();
     std::optional<ScoredMove> opt_move;
     auto found_move = false;
-    while ((opt_move = mp.next(best_score > (MagicNumbers::NegativeInfinity + MAX_PLY))).has_value()) {
+    while ((opt_move = mp.next(best_score > MATED_IN_MAX_PLY)).has_value()) {
         if (search_cancelled) {
             break;
         }
@@ -716,7 +716,7 @@ Move SearchHandler::run_iterative_deepening_search() {
         if (!search_cancelled && print_info) {
             const auto nps = static_cast<uint64_t>(node_count / (static_cast<float>(time_so_far) / 1000));
             fmt::print("info depth {} nodes {} nps {} score ", depth, node_count, nps);
-            if ((std::abs(current_score) >= (MagicNumbers::PositiveInfinity - MAX_PLY))) {
+            if ((std::abs(current_score) >= MATE_IN_MAX_PLY)) {
                 fmt::print("mate {} ", ((current_score / std::abs(current_score)) * (depth + 1)) / 2);
             } else {
                 fmt::print("cp {} ", current_score);
@@ -728,7 +728,7 @@ Move SearchHandler::run_iterative_deepening_search() {
             fmt::println("");
         }
 
-        if (current_score >= (MagicNumbers::PositiveInfinity - MAX_PLY)) {
+        if (current_score >= MATE_IN_MAX_PLY) {
             return pv_move;
         }
 
