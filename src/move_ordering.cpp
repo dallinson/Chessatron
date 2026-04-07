@@ -91,7 +91,7 @@ std::optional<ScoredMove> MovePicker::next(const bool skip_quiets) {
         } else {
             stage = MovePickerStage::GEN_QUIET;
         }
-        if (killer_move == tt_move || killer_move.is_null_move() || !(MoveGenerator::is_move_pseudolegal(pos, killer_move) && MoveGenerator::is_move_legal(pos, killer_move))) {
+        if (skip_quiets || killer_move == tt_move || killer_move.is_null_move() || !(MoveGenerator::is_move_pseudolegal(pos, killer_move) && MoveGenerator::is_move_legal(pos, killer_move))) {
             return next(skip_quiets);
         }
         return ScoredMove(killer_move);
