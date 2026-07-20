@@ -100,7 +100,7 @@ void HistoryTable::update_corrhist_score(const Position& pos, const Score static
     auto& black_non_pawn_score = (*black_non_pawn_corr_hist)[corrhist_idx(pos.black_non_pawn_hash())][static_cast<int>(pos.stm())];
     black_non_pawn_score += bonus - black_non_pawn_score * std::abs(bonus) / 512;
     if (hist.len() >= 2 && !hist.move_at(hist.len() - 2).is_null_move() && !hist.move_at(hist.len() - 1).is_null_move()) {
-        auto& cont_corr_hist_score = (*cont_corr_hist)[hist[hist.len() - 2].piece_to(hist.move_at(hist.len() - 2))][hist[hist.len() - 1].piece_to(hist.move_at(hist.len() - 1))];
+        auto& cont_corr_hist_score = (*cont_corr_hist)[hist[hist.len() - 3].piece_to(hist.move_at(hist.len() - 2))][hist[hist.len() - 2].piece_to(hist.move_at(hist.len() - 1))];
         cont_corr_hist_score += bonus - cont_corr_hist_score * std::abs(bonus) / 512;
     }
 }
