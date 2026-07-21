@@ -221,14 +221,11 @@ std::optional<int> Position::set_from_fen(const std::string input) {
     RETURN_NONE_IF_PAST_END;
     char_idx += 2;
     // set castling
-    bool is_dfrc = false;
     while (input[char_idx] != ' ') {
         RETURN_NONE_IF_PAST_END;
         const auto chr = input[char_idx];
         if (chr == 'K' || chr == 'k') {
             const auto rook_fle = find_outer_rook(chr == 'K' ? Side::WHITE : Side::BLACK, true);
-            is_dfrc |= (rook_fle != 7);
-            is_dfrc |= file(kings(chr == 'K' ? Side::WHITE : Side::BLACK).lsb()) != 4; // if the king file != 4 then we are definitely not in normal chess
             set_castling_from_fen((chr - ('K' - 'A')) + rook_fle);
             // this is kinda hard to get
             // 'K' - 'A' is the offset between these two chars
@@ -236,16 +233,12 @@ std::optional<int> Position::set_from_fen(const std::string input) {
             // Then we add the rook file
         } else if (chr == 'Q' || chr == 'q') {
             const auto rook_fle = find_outer_rook(chr == 'Q' ? Side::WHITE : Side::BLACK, false);
-            is_dfrc |= (rook_fle != 7);
-            is_dfrc |= file(kings(chr == 'Q' ? Side::WHITE : Side::BLACK).lsb()) != 4;
             set_castling_from_fen((chr - ('Q' - 'A')) + rook_fle);
         } else if (chr != '-') {
-            is_dfrc |= true;
             set_castling_from_fen(chr);
         }
         char_idx += 1;
     }
-    uci_options()["UCI_Chess960"].set_value(is_dfrc ? "true" : "false");
     char_idx += 1;
 
     RETURN_NONE_IF_PAST_END;
