@@ -227,7 +227,10 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
     const auto in_singular_search = !search_stack[ply].excluded_move.is_null_move();
 
-    if (!in_singular_search) pv_table.pv_length[ply] = ply;
+    if (is_pv_node(node_type)) {
+        search_stack[ply].pv.clear();
+    }
+
     if (Search::is_draw(old_pos, board_hist)) {
         return 0;
     }
@@ -494,11 +497,11 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
                     pv_move = best_move;
                 }
                 if constexpr (is_pv_node(node_type)) {
-                    pv_table.pv_array[ply][ply] = best_move;
-                    for (int next_ply = ply + 1; next_ply < pv_table.pv_length[ply + 1]; next_ply++) {
-                        pv_table.pv_array[ply][next_ply] = pv_table.pv_array[ply + 1][next_ply];
+                    search_stack[ply].pv.clear();
+                    search_stack[ply].pv.add(move.move);
+                    for (const auto move : search_stack[ply + 1].pv) {
+                        search_stack[ply].pv.add(move);
                     }
-                    pv_table.pv_length[ply] = pv_table.pv_length[ply + 1];
                 }
                 if (score >= beta) {
                     if (move.move.is_quiet()) {
@@ -538,6 +541,10 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
 template <NodeTypes node_type>
 Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Score beta, int ply, uint64_t& node_count) {
+
+    if constexpr (is_pv_node(node_type)) {
+        search_stack[ply].pv.clear();
+    }
 
     if (Search::is_draw(old_pos, board_hist)) {
         return 0;
@@ -694,9 +701,8 @@ Move SearchHandler::run_iterative_deepening_search() {
     const auto search_start_point = std::chrono::steady_clock::now();
 
     node_spent_table.fill(0);
-    pv_table.pv_length.fill(0);
-    for (unsigned int i = 0; i < pv_table.pv_array.size(); i++) {
-        pv_table.pv_array[i].fill(Move::NULL_MOVE());
+    for (auto& frame : search_stack) {
+        frame.pv.clear();
     }
     std::for_each(search_stack.begin(), search_stack.end(), [](SearchStackFrame& elem) { elem = SearchStackFrame(); });
 
@@ -717,8 +723,8 @@ Move SearchHandler::run_iterative_deepening_search() {
                 fmt::print("cp {} ", current_score);
             }
             fmt::print("time {} pv ", time_so_far);
-            for (int i = 0; i < (pv_table.pv_length[PLY_OFFSET] - PLY_OFFSET); i++) {
-                fmt::print("{} ", pv_table.pv_array[PLY_OFFSET][i + PLY_OFFSET]);
+            for (const auto move : search_stack[PLY_OFFSET].pv) {
+                fmt::print("{} ", move);
             }
             fmt::println("");
         }
