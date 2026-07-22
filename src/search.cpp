@@ -105,7 +105,7 @@ bool Search::is_threefold_repetition(const BoardHistory& history, const int half
     int counter = 1;
     const int history_len = history.len();
     const auto castling_rights = history[history_len - 1].get_castling();
-    for (int i = history_len - 3; i > 0 && i > history_len - halfmove_clock - 1; i -= 2) {
+    for (int i = history_len - 3; i > 0 && i >= history_len - halfmove_clock - 1; i -= 2) {
         if (history[i].zobrist_key() == z) {
             counter += 1;
             if (counter >= 3) {
