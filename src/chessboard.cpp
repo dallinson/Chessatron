@@ -418,8 +418,27 @@ Position::Position(const Position& origin, const Move to_make) {
         }
 
         if (to_make.flags() == MoveFlags::DOUBLE_PAWN_PUSH) [[unlikely]] {
-            this->en_passant_file = to_make.dst_fle();
-            this->_zobrist_key ^= ZobristKeys::EnPassantKeys[en_passant_file];
+            constexpr std::array<Bitboard, 10> ep_masks { 0x202020202020202, 0x505050505050505, 0xa0a0a0a0a0a0a0a, 0x1414141414141414, 0x2828282828282828, 0x5050505050505050, 0xa0a0a0a0a0a0a0a0, 0x4040404040404040, 0, 0 };
+            const Bitboard ep_rank_mask = side_to_move == Side::BLACK ? rank_bb(4) : rank_bb(3);
+            auto ep_pawns = ep_masks[to_make.dst_fle()] & ep_rank_mask & pawns(enemy_side(side_to_move));
+            const auto ksq = kings(enemy_side(side_to_move)).lsb();
+            while (!ep_pawns.empty()) {
+                const auto lsb = ep_pawns.pop_lsb();
+                const auto ep_offset = side_to_move == Side::BLACK ? 1 : -1;
+                const auto ep_target_square = get_position((side_to_move == Side::BLACK ? 4 : 3) + ep_offset, to_make.dst_fle());
+                const auto cleared_bb = occupancy() ^ lsb ^ ep_target_square ^ (ep_target_square - (8 * ep_offset));
+                const Bitboard threatening_bishops =
+                    MoveGenerator::generate_bishop_mm(cleared_bb, ksq) & (bishops(side_to_move) | queens(side_to_move));
+                const Bitboard threatening_rooks =
+                    MoveGenerator::generate_rook_mm(cleared_bb, ksq) & (rooks(side_to_move) | queens(side_to_move));
+
+                if (threatening_bishops.empty() && threatening_rooks.empty()) {
+                    this->en_passant_file = to_make.dst_fle();
+                    this->_zobrist_key ^= ZobristKeys::EnPassantKeys[en_passant_file];
+                    break;
+                }
+            }
+
         }
         // the en passant zobrist key for 9 is 0 so no need to XOR (would be a no-op)
         // set where the last en passant happened, else clear it
