@@ -105,7 +105,7 @@ bool Search::is_threefold_repetition(const BoardHistory& history, const int half
     int counter = 1;
     const int history_len = history.len();
     const auto castling_rights = history[history_len - 1].get_castling();
-    for (int i = history_len - 3; i > 0 && i >= history_len - halfmove_clock - 1; i -= 2) {
+    for (int i = history_len - 3; i >= 0 && i >= history_len - halfmove_clock - 1; i -= 2) {
         if (history[i].zobrist_key() == z) {
             counter += 1;
             if (counter >= 3) {
@@ -120,7 +120,7 @@ bool Search::is_threefold_repetition(const BoardHistory& history, const int half
 }
 
 bool Search::is_draw(const Position& pos, const BoardHistory& history) {
-    return pos.get_halfmove_clock() > 100 || is_threefold_repetition(history, pos.get_halfmove_clock(), pos.zobrist_key())
+    return pos.get_halfmove_clock() >= 100 || is_threefold_repetition(history, pos.get_halfmove_clock(), pos.zobrist_key())
            || Search::detect_insufficient_material(pos, pos.stm());
 }
 
@@ -714,11 +714,12 @@ Move SearchHandler::run_iterative_deepening_search() {
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - search_start_point).count(), (int64_t) 1);
         // Set time so far to a minimum of 1 to avoid divide by 0 in nps calculation
 
-        if (!search_cancelled && print_info) {
+        if (print_info) {
             const auto nps = static_cast<uint64_t>(node_count / (static_cast<float>(time_so_far) / 1000));
             fmt::print("info depth {} nodes {} nps {} score ", depth, node_count, nps);
             if ((std::abs(current_score) >= MATE_IN_MAX_PLY)) {
-                fmt::print("mate {} ", ((current_score / std::abs(current_score)) * (depth + 1)) / 2);
+                const auto sign = current_score >= 0 ? 1 : -1;
+                fmt::print("mate {}", sign * ((MagicNumbers::PositiveInfinity - std::abs(current_score) + 1) / 2));
             } else {
                 fmt::print("cp {} ", current_score);
             }
