@@ -23,8 +23,7 @@ TEST(ZobristHashingTests, TestSimplePosition) {
     pos = pos.make_move(Move(MoveFlags::DOUBLE_PAWN_PUSH, 25, 9), hist);
     ASSERT_EQ(pos.zobrist_key(), ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::PAWN), 25)] ^
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::KING), 38)] ^
-                                       ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::BLACK, PieceTypes::KING), 52)] ^
-                                       ZobristKeys::EnPassantKeys[1]);
+                                       ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::BLACK, PieceTypes::KING), 52)]);
     pos = hist.pop_board();
     ASSERT_EQ(pos.zobrist_key(), ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::PAWN), 9)] ^
                                        ZobristKeys::PositionKeys[calculate_zobrist_key(Piece(Side::WHITE, PieceTypes::KING), 38)] ^

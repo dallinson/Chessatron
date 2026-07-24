@@ -24,7 +24,7 @@ TEST(ParsingTests, TestMakeMove) {
     BoardHistory hist;
     SearchHandler s;
     process_position_command("position startpos moves e2e4 d7d5", s);
-    o.set_from_fen("rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 1");
+    o.set_from_fen("rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 1");
     ASSERT_EQ(s.get_pos(), o);
     ASSERT_EQ(s.get_history().len(), 3);
 }
