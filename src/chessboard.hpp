@@ -209,9 +209,9 @@ class BoardHistory {
         }
 
         size_t len() const { return idx; };
-        const Position& operator[](size_t idx) const { return board_hist[idx]; };
-        Position& operator[](size_t idx) { return board_hist[idx]; };
-        Move move_at(size_t idx) const { return move_hist[idx]; };
+        const Position& boards_back(size_t val) const { return board_hist[idx - val - 1]; };
+        const Move moves_back(size_t val) const { return move_hist[idx - val - 1]; };
+
         size_t conthist_idx(size_t idx) const {
             const auto move = move_hist[idx];
             return (board_hist[idx - 1].piece_at(move.src_sq()).val() << 6) | sq_to_int(move.dst_sq());
