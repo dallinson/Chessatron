@@ -104,16 +104,12 @@ Move Search::select_random_move(const Position& pos) {
 bool Search::is_threefold_repetition(const BoardHistory& history, const int halfmove_clock, const ZobristKey z) {
     int counter = 1;
     const int history_len = history.len();
-    const auto castling_rights = history.boards_back(0).get_castling();
     for (auto i = 2; i < history_len && i <= halfmove_clock + 1; i += 2) {
         if (history.boards_back(i).zobrist_key() == z) {
             counter += 1;
             if (counter >= 3) {
                 return true;
             }
-        }
-        if (history.boards_back(i).get_castling() != castling_rights) {
-            break;
         }
     }
     return false;
