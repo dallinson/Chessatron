@@ -20,13 +20,13 @@ void SearchHandler::search_thread_function() {
         {
             std::lock_guard<std::mutex> lock(search_mutex);
             if (should_perft) {
-                Perft::run_perft(board_hist[board_hist.len() - 1], perft_depth, true);
+                Perft::run_perft(board_hist.boards_back(0), perft_depth, true);
                 should_perft = false;
             } else {
                 auto move = run_iterative_deepening_search();
                 if (move.is_null_move()) {
                     // Unlikely, but possible!
-                    move = Search::select_random_move(board_hist[board_hist.len() - 1]);
+                    move = Search::select_random_move(board_hist.boards_back(0));
                     // Just choose a random move
                 }
                 if (this_search_id == current_search_id && print_info) {

@@ -78,7 +78,7 @@ uint64_t perft(const Position& old_pos, BoardHistory& history, int depth) {
     return to_return;
 }
 
-uint64_t Perft::run_perft(Position& board, int depth, bool print_debug) {
+uint64_t Perft::run_perft(const Position& board, int depth, bool print_debug) {
     BoardHistory history(board);
     uint64_t nodes = 0;
     const auto perft_start_point = std::chrono::steady_clock::now();
@@ -104,16 +104,12 @@ Move Search::select_random_move(const Position& pos) {
 bool Search::is_threefold_repetition(const BoardHistory& history, const int halfmove_clock, const ZobristKey z) {
     int counter = 1;
     const int history_len = history.len();
-    const auto castling_rights = history[history_len - 1].get_castling();
-    for (int i = history_len - 3; i >= 0 && i >= history_len - halfmove_clock - 1; i -= 2) {
-        if (history[i].zobrist_key() == z) {
+    for (auto i = 2; i < history_len && i <= halfmove_clock + 1; i += 2) {
+        if (history.boards_back(i).zobrist_key() == z) {
             counter += 1;
             if (counter >= 3) {
                 return true;
             }
-        }
-        if (history[i].get_castling() != castling_rights) {
-            break;
         }
     }
     return false;
@@ -311,8 +307,8 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
             return false;
         }
 
-        if (board_hist.len() >= 3 && !board_hist[board_hist.len() - 3].in_check()) {
-            return static_eval > Evaluation::evaluate_board(board_hist[board_hist.len() - 3]);
+        if (board_hist.len() >= 3 && !board_hist.boards_back(2).in_check()) {
+            return static_eval > Evaluation::evaluate_board(board_hist.boards_back(2));
         }
         return false;
     }();
@@ -337,7 +333,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
         if (static_eval >= beta && !old_pos.in_check() && depth >= nmp_depth && !in_singular_search && old_pos.has_valuable_pieces()) {
             // Try null move pruning if we aren't in check
 
-            if (!board_hist.move_at(board_hist.len() - 1).is_null_move()) {
+            if (!board_hist.moves_back(0).is_null_move()) {
                 auto& board = old_pos.make_move(Move::NULL_MOVE(), board_hist);
 
                 const auto nmp_reduction = base_nmp_reduction + (depth / nmp_depth_divisor) + std::min((static_eval - beta) / nmp_se_divisor, 2);
@@ -674,7 +670,7 @@ Score SearchHandler::run_aspiration_window_search(int depth, Score previous_scor
     }
 
     while (true) {
-        previous_score = negamax_step<NodeTypes::ROOT_NODE>(board_hist[board_hist.len() - 1], alpha, beta, depth, PLY_OFFSET, node_count, false);
+        previous_score = negamax_step<NodeTypes::ROOT_NODE>(board_hist.boards_back(0), alpha, beta, depth, PLY_OFFSET, node_count, false);
 
         if (search_cancelled) {
             return previous_score;

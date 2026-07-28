@@ -34,7 +34,7 @@ enum class NodeTypes {
 constexpr inline bool is_pv_node(NodeTypes n) { return n == NodeTypes::ROOT_NODE || n == NodeTypes::PV_NODE; };
 
 namespace Perft {
-    uint64_t run_perft(Position& c, int depth, bool print_debug = false);
+    uint64_t run_perft(const Position& c, int depth, bool print_debug = false);
 }
 
 namespace Search {
@@ -128,7 +128,7 @@ class SearchHandler {
 
         bool is_searching() { return this->in_search; };
         int get_current_search_id() { return this->current_search_id; };
-        Position& get_pos() { return this->board_hist[board_hist.len() - 1]; };
+        const Position& get_pos() const { return this->board_hist.boards_back(0); };
         BoardHistory& get_history() { return this->board_hist; };
 
         void set_pos(const Position& c) { 

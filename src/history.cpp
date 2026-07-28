@@ -41,22 +41,22 @@ void HistoryTable::update_mainhist_score(Move move, Side stm, HistoryValue bonus
 
 
 void HistoryTable::update_conthist_score(const BoardHistory& hist, Move move, HistoryValue bonus) {
-    if (!hist.move_at(hist.len() - 1).is_null_move()) {
+    if (!hist.moves_back(0).is_null_move()) {
         const auto scaled_bonus = bonus - conthist_score(hist, move) * std::abs(bonus) / 32768;
-        (*cont_hist)[hist[hist.len() - 2].piece_to(hist.move_at(hist.len() - 1))][hist[hist.len() - 1].piece_to(move)] += scaled_bonus;
+        (*cont_hist)[hist.boards_back(1).piece_to(hist.moves_back(0))][hist.boards_back(0).piece_to(move)] += scaled_bonus;
     }
 }
 
 HistoryValue HistoryTable::conthist_score(const BoardHistory& hist, Move move) const {
-    if (!hist.move_at(hist.len() - 1).is_null_move()) {
-        return (*cont_hist)[hist[hist.len() - 2].piece_to(hist.move_at(hist.len() - 1))][hist[hist.len() - 1].piece_to(move)];
+    if (!hist.moves_back(0).is_null_move()) {
+        return (*cont_hist)[hist.boards_back(1).piece_to(hist.moves_back(0))][hist.boards_back(0).piece_to(move)];
     } else {
         return 0;
     }
 }
 
 HistoryValue HistoryTable::capthist_score(const BoardHistory& hist, const Move move) const {
-    const auto& pos = hist[hist.len() - 1];
+    const auto& pos = hist.boards_back(0);
     const auto captured_type = (move.is_promotion() || move.flags() == MoveFlags::EN_PASSANT_CAPTURE)
         ? PieceTypes::PAWN
         : pos.piece_at(move.dst_sq()).type();
@@ -64,7 +64,7 @@ HistoryValue HistoryTable::capthist_score(const BoardHistory& hist, const Move m
 }
 
 void HistoryTable::update_capthist_score(const BoardHistory& hist, Move move, HistoryValue bonus) {
-    const auto& pos = hist[hist.len() - 1];
+    const auto& pos = hist.boards_back(0);
     const auto captured_type = (move.is_promotion() || move.flags() == MoveFlags::EN_PASSANT_CAPTURE)
         ? PieceTypes::PAWN
         : pos.piece_at(move.dst_sq()).type();
@@ -81,8 +81,8 @@ Score HistoryTable::corrhist_score(const Position& pos, const Score static_eval,
     Score entry = (*pawn_corr_hist)[corrhist_idx(pos.pawn_hash())][static_cast<int>(pos.stm())];
     entry += (*white_non_pawn_corr_hist)[corrhist_idx(pos.white_non_pawn_hash())][static_cast<int>(pos.stm())];
     entry += (*black_non_pawn_corr_hist)[corrhist_idx(pos.black_non_pawn_hash())][static_cast<int>(pos.stm())];
-    if (hist.len() >= 2 && !hist.move_at(hist.len() - 2).is_null_move() && !hist.move_at(hist.len() - 1).is_null_move()) {
-        entry += (*cont_corr_hist)[hist[hist.len() - 2].piece_to(hist.move_at(hist.len() - 2))][hist[hist.len() - 1].piece_to(hist.move_at(hist.len() - 1))];
+    if (hist.len() >= 2 && !hist.moves_back(1).is_null_move() && !hist.moves_back(0).is_null_move()) {
+        entry += (*cont_corr_hist)[hist.boards_back(1).piece_to(hist.moves_back(1))][hist.boards_back(0).piece_to(hist.moves_back(0))];
     }
 
     const i32 adjusted_score = static_eval + (entry * std::abs(entry)) / 16384;
@@ -99,8 +99,8 @@ void HistoryTable::update_corrhist_score(const Position& pos, const Score static
     white_non_pawn_score += bonus - white_non_pawn_score * std::abs(bonus) / 512;
     auto& black_non_pawn_score = (*black_non_pawn_corr_hist)[corrhist_idx(pos.black_non_pawn_hash())][static_cast<int>(pos.stm())];
     black_non_pawn_score += bonus - black_non_pawn_score * std::abs(bonus) / 512;
-    if (hist.len() >= 2 && !hist.move_at(hist.len() - 2).is_null_move() && !hist.move_at(hist.len() - 1).is_null_move()) {
-        auto& cont_corr_hist_score = (*cont_corr_hist)[hist[hist.len() - 2].piece_to(hist.move_at(hist.len() - 2))][hist[hist.len() - 1].piece_to(hist.move_at(hist.len() - 1))];
+    if (hist.len() >= 2 && !hist.moves_back(1).is_null_move() && !hist.moves_back(0).is_null_move()) {
+        auto& cont_corr_hist_score = (*cont_corr_hist)[hist.boards_back(1).piece_to(hist.moves_back(1))][hist.boards_back(0).piece_to(hist.moves_back(0))];
         cont_corr_hist_score += bonus - cont_corr_hist_score * std::abs(bonus) / 512;
     }
 }
