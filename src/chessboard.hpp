@@ -142,7 +142,7 @@ class Position {
 
         void recompute_blockers_and_checkers(const Side side);
 
-        int piece_to(Move move) const { return piece_at(move.src_sq()).val() << 6 | sq_to_int(move.dst_sq()); };
+        int pieceto(Move move) const { return piece_at(move.src_sq()).val() << 6 | sq_to_int(move.dst_sq()); };
 
         inline Bitboard checkers() const { return _checkers; };
         inline Bitboard pinned_pieces() const { return _pinned_pieces; };
