@@ -24,8 +24,6 @@ TUNABLE_SPECIFIER auto base_nmp_reduction = TUNABLE_INT("base_nmp_reduction", 4,
 TUNABLE_SPECIFIER auto nmp_depth_divisor = TUNABLE_INT("nmp_depth_divisor", 4, 1, 7);
 TUNABLE_SPECIFIER auto nmp_se_divisor = TUNABLE_INT("nmp_se_divisor", 207, 100, 300);
 
-TUNABLE_SPECIFIER auto iir_depth = TUNABLE_INT("iir_depth", 5, 2, 8);
-
 TUNABLE_SPECIFIER auto non_pv_cutnode_lmr_constant = TUNABLE_INT("non_pv_cutnode_lmr_constant", 1106, 512, 2048);
 TUNABLE_SPECIFIER auto in_check_lmr_constant = TUNABLE_INT("in_check_lmr_constant", -889, -2048, -512);
 TUNABLE_SPECIFIER auto not_improving_lmr_constant = TUNABLE_INT("not_improving_lmr_constant", 1145, 512, 2048);
@@ -356,13 +354,6 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
     auto mp = MovePicker(false, tt_move ? entry->get().move() : Move::NULL_MOVE(), search_stack[ply].killer_move, old_pos, history_table, board_hist, depth);
     // move reordering
     // tt_hit in tt_move condition guards against null entry access
-
-    if (depth >= iir_depth
-        && (is_pv_node(node_type) || is_cut_node)
-        && (!tt_hit || entry->get().move().is_null_move())) {
-        extensions -= 1;
-    }
-    // iir
 
     Move best_move = Move::NULL_MOVE();
     Score best_score = MagicNumbers::NegativeInfinity;
