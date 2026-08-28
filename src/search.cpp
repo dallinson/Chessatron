@@ -25,6 +25,7 @@ TUNABLE_SPECIFIER auto nmp_depth_divisor = TUNABLE_INT("nmp_depth_divisor", 4, 1
 TUNABLE_SPECIFIER auto nmp_se_divisor = TUNABLE_INT("nmp_se_divisor", 207, 100, 300);
 
 TUNABLE_SPECIFIER auto iir_depth = TUNABLE_INT("iir_depth", 5, 2, 8);
+TUNABLE_SPECIFIER auto iir_tt_offset = TUNABLE_INT("iir_tt_offset", 2, 0, 5);
 
 TUNABLE_SPECIFIER auto non_pv_cutnode_lmr_constant = TUNABLE_INT("non_pv_cutnode_lmr_constant", 1106, 512, 2048);
 TUNABLE_SPECIFIER auto in_check_lmr_constant = TUNABLE_INT("in_check_lmr_constant", -889, -2048, -512);
@@ -359,7 +360,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
     if (depth >= iir_depth
         && (is_pv_node(node_type) || is_cut_node)
-        && (!tt_hit || entry->get().move().is_null_move())) {
+        && (!tt_hit || entry->get().move().is_null_move() || entry->get().depth() < depth - iir_tt_offset)) {
         extensions -= 1;
     }
     // iir
