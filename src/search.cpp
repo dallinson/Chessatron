@@ -383,7 +383,7 @@ Score SearchHandler::negamax_step(const Position& old_pos, Score alpha, Score be
 
         if constexpr (!is_pv_node(node_type)) {
             // late move pruning
-            if (depth <= lmp_depth && !old_pos.in_check() && move.move.is_quiet()
+            if (depth <= lmp_depth && !old_pos.in_check() && move.move.is_quiet() && best_score > MATED_IN_MAX_PLY
                 && evaluated_moves.size() >= static_cast<size_t>(((depth * depth) + lmp_offset) / (2 - improving))) {
                 skip_quiets = true;
                 continue;
@@ -715,7 +715,7 @@ Move SearchHandler::run_iterative_deepening_search() {
             fmt::print("info depth {} nodes {} nps {} score ", depth, node_count, nps);
             if ((std::abs(current_score) >= MATE_IN_MAX_PLY)) {
                 const auto sign = current_score >= 0 ? 1 : -1;
-                fmt::print("mate {}", sign * ((MagicNumbers::PositiveInfinity - std::abs(current_score) + 1) / 2));
+                fmt::print("mate {} ", sign * ((MagicNumbers::PositiveInfinity - std::abs(current_score) + 1) / 2));
             } else {
                 fmt::print("cp {} ", current_score);
             }
