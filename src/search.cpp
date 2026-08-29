@@ -600,9 +600,8 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
             break;
         }
         const auto move = *opt_move;
-        found_move = true;
 
-        if (move.move.is_noisy()) {
+        if (move.move.is_noisy() && found_move) {
             if (!move.see_ordering_result) {
                 continue;
             }
@@ -610,6 +609,7 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
 
         auto& pos = old_pos.make_move(move.move, board_hist);
         node_count += 1;
+        found_move = true;
         Score score;
         if constexpr (is_pv_node(node_type)) {
             if (total_moves == 0) {
