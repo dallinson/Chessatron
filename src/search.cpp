@@ -602,10 +602,8 @@ Score SearchHandler::quiescent_search(const Position& old_pos, Score alpha, Scor
         const auto move = *opt_move;
         found_move = true;
 
-        if (move.move.is_noisy()) {
-            if (!move.see_ordering_result) {
-                continue;
-            }
+        if (move.move.is_noisy() && !move.see_ordering_result && best_score > MATED_IN_MAX_PLY) {
+            continue;
         }
 
         auto& pos = old_pos.make_move(move.move, board_hist);
