@@ -125,6 +125,10 @@ std::optional<ScoredMove> MovePicker::next(const bool skip_quiets) {
         idx = 0;
         return next(skip_quiets);
     } else if (stage == MovePickerStage::PICK_BAD_NOISY) {
+        if (skip_quiets) {
+            stage = MovePickerStage::NONE;
+            return next(skip_quiets);
+        }
         const auto to_return = pick_move(bad_noisies);
         if (!to_return.has_value()) {
             stage = MovePickerStage::NONE;
